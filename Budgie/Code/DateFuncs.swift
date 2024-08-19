@@ -1,0 +1,180 @@
+//
+//  DateFuncs.swift
+//  Budgie
+//
+//  Created by Joe Baldwin on 19/08/2024.
+//
+
+import Foundation
+
+func getStartOfDay(date: Date) -> Date {
+    let calendar = NSCalendar.current
+    return calendar.startOfDay(for: date)
+}
+
+func getMidnightOnDayBefore(date: Date) -> Date {
+    let calendar = NSCalendar.current
+    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: -1, to: date)!)
+}
+
+func getHalfHourBefore(date: Date) -> Date {
+    let calendar = NSCalendar.current
+    return calendar.date(byAdding: .minute, value: -30, to: date)!
+}
+
+func getMidnightOnDayAfter(date: Date) -> Date {
+    let calendar = NSCalendar.current
+    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: date)!)
+}
+
+func getWeekBeforeDate(date: Date) -> Date {
+    let calendar = NSCalendar.current
+    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: -7, to: date)!)
+}
+
+func getWeekAfterDate(date: Date) -> Date {
+    let calendar = NSCalendar.current
+    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: 7, to: date)!)
+}
+
+func minutesIntoDay() -> Int {
+    let date = Date()
+    let calendar = Calendar.current
+    return (60 * calendar.component(.hour, from: date)) + calendar.component(.minute, from: date)
+}
+
+func getHoursOfTime(date: Date) -> Int {
+    let calendar = Calendar.current
+    return calendar.component(.hour, from: date)
+}
+
+func getPercentOfDayDone() -> Double {
+    return Double(minutesIntoDay()) / 1440
+}
+
+func weightForCertainty(input: Int) -> Int {
+    var factor: Double = (Double(minutesIntoDay()) + 1) / 1200
+    if factor > 1 {  factor = 1 }
+    return Int(Double(input) * factor)
+}
+
+func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
+    var styleToUse: Int
+    var time: Double
+    if style != nil {
+        styleToUse = style!
+    } else {
+        styleToUse = settingsObj.weightingStyle
+    }
+    
+    if timeInput != nil {
+        time = Double(timeInput!)
+    } else {
+        time = Double(minutesIntoDay())
+    }
+    
+    var startTime: Double
+    var stopTime: Double
+    var weightTime: Double
+    var weightFactor: Double
+    var finalWeightFactor: Double
+    
+    switch styleToUse {
+        case -1: startTime = 240
+        case 0: startTime = 240
+        case 1: startTime = 0
+        default: startTime = 0
+    }
+    switch styleToUse {
+        case -1: stopTime = 1440
+        case 0: stopTime = 1320
+        case 1: stopTime = 1320
+        default: stopTime = 1440
+    }
+
+    if time < startTime {
+        weightTime = startTime
+    } else {
+        weightTime = time
+    }
+    
+    switch styleToUse {
+        case 2: weightFactor = 0
+        default: weightFactor = weightTime/stopTime
+    }
+    
+    switch styleToUse {
+        case -1: finalWeightFactor = 1 - pow(weightFactor, 5)
+        case 0: finalWeightFactor = 1 - pow(weightFactor, 3)
+        case 1: finalWeightFactor = 1 - weightFactor
+        default: finalWeightFactor = 0
+    }
+    
+    let result = Int(finalWeightFactor * Double(input))
+    
+    if result > 0 {
+        return result
+    } else {
+        return 0
+    }
+}
+
+func isAfterToday(date: Date) -> Bool
+{
+    if date > getMidnightOnDayAfter(date: Date()) {
+        return true
+    } else {
+        return false
+    }
+}
+
+func getCurrentTimeonDate(date: Date) -> Date {
+    let calendar = Calendar.current
+    let currentTime = Date()
+    
+    let hours = calendar.component(.hour, from: currentTime)
+    let mins = calendar.component(.minute, from: currentTime)
+    let seconds = calendar.component(.second, from: currentTime)
+    
+    let day = calendar.component(.day, from: date)
+    let month = calendar.component(.month, from: date)
+    let year = calendar.component(.year, from: date)
+    
+    let newDateComps = DateComponents(year: year, month: month, day: day, hour: hours, minute: mins, second: seconds)
+    let newDate = calendar.date(from: newDateComps)
+    return newDate!
+}
+
+extension Calendar {
+    func numberOfDaysBetween(_ from: Date, and to: Date) -> Int {
+        let fromDate = startOfDay(for: from) // <1>
+        let toDate = startOfDay(for: to) // <2>
+        let numberOfDays = dateComponents([.day], from: fromDate, to: toDate) // <3>
+        
+        return numberOfDays.day!
+    }
+}
+
+func negate(value: Int) -> Int {
+    return -value
+}
+
+/// NICETIES
+/// These functions just wrap other functions. It would be best to eliminate them and replace them with calls to the underlying functions.
+
+///Replace with getMidnightOnDayAfter(date: Date()) if seen!
+//func getToday() -> Date {
+//    return getEndDate()
+//}
+
+///Returns 00:00 on the day after today (i.e. the end date for a HealthKit query that you want to include today.)
+///Replace with getMidnightOnDayAfter(date: Date()) if seen!
+//func getEndDate() -> Date {
+//    return getQueryEndDate(date: Date())
+//}
+
+///Takes the "actual" (i.e. displayed/cared about) final date of a query and gives 00:00 on the day after.
+///Replace with getMidnightOnDayAfter(date: Date()) if seen!
+//func getQueryEndDate(date: Date) -> Date {
+//    return getMidnightOnDayAfter(date: date)
+//}
