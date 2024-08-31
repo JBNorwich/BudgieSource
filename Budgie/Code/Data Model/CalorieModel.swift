@@ -123,7 +123,6 @@ class CalorieData: ObservableObject {
             let returns = try context.fetch(FetchDescriptor<Meal>())
             return returns
         } catch {
-            print("getListOfMeals : data is nil")
             return []
         }
     }
@@ -140,7 +139,7 @@ class CalorieData: ObservableObject {
         do {
             try context.save()
         } catch {
-            print("Some sort of error")
+            // nothing
         }
     }
     

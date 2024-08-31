@@ -48,8 +48,6 @@ struct ChartDatePicker: View {
                     Button("", systemImage: "arrow.left") {
                         startDate = prevStartDate // start date becomes 17/8 00:00
                         endDate = prevEndDate // end date becomes 24/8 00:00
-
-                        print("Prev button pressed!")
                         prevStartDate = getWeekBeforeDate(date: startDate) // prev button moves start date to 17/8 00:00
                         prevEndDate = getWeekBeforeDate(date: endDate) //prev button moves end date to 24/8 00:00
                         nextStartDate = getWeekAfterDate(date: startDate) //next button moves start date to 24/8 00:00
@@ -60,14 +58,6 @@ struct ChartDatePicker: View {
                             nextEndDate = getWeekAfterDate(date: endDate)       // we can use the week after the end date
                         }
                         atMax = false
-
-                        print(dateChanged.description)
-                        print("New start date: " + startDate.formatted())
-                        print("New end date: " + endDate.formatted())
-                        print("New prevbutton start date: " + prevStartDate.formatted())
-                        print("New prevbutton end date: " + prevEndDate.formatted())
-                        print("New nextbutton start date" + nextStartDate.formatted())
-                        print("New nextbutton end date" + nextEndDate.formatted())
                         dateChanged = true
                     }
                     .padding()
@@ -92,7 +82,6 @@ struct ChartDatePicker: View {
                     Spacer()
                     
                     Button("", systemImage: "arrow.right") {
-                        print("Next button pressed!")
                         endDate = nextEndDate
                         startDate = nextStartDate
                         prevStartDate = getWeekBeforeDate(date: startDate)
@@ -109,16 +98,10 @@ struct ChartDatePicker: View {
                         } else {
                             atMax = false
                         }
-                        print("New start date: " + startDate.formatted())
-                        print("New end date: " + endDate.formatted())
-                        print("New prevbutton start date: " + prevStartDate.formatted())
-                        print("New prevbutton end date: " + prevEndDate.formatted())
-                        print("New nextbutton start date" + nextStartDate.formatted())
-                        print("New nextbutton end date" + nextEndDate.formatted())
                         dateChanged = true
                     }
-                        .padding()
-                        .disabled(atMax)
+                    .padding()
+                    .disabled(atMax)
                 }
             }
         
@@ -129,8 +112,6 @@ struct ChartDatePicker: View {
             }
         
             .onAppear() {
-                print("Initial start date: " + startDate.formatted())
-                print("Initial end date: " + endDate.formatted())
                 prevStartDate = getWeekBeforeDate(date: startDate)
                 prevEndDate = getWeekBeforeDate(date: endDate)
                 nextStartDate = getWeekAfterDate(date: startDate)
@@ -178,13 +159,11 @@ struct FullDatePicker: View {
                 Spacer()
                 Button("OK") {
                     if (displayedStartDate != origStart || displayedEndDate != origEnd) {
-                        print("New date detected!")
                         startDate = displayedStartDate
                         endDate = unrollPickerDate(date: displayedEndDate)
                         showing = false
                         dateChanged = true
                     } else {
-                        print("New date NOT detected!")
                         showing = false
                     }
                 }.buttonStyle(.borderedProminent)

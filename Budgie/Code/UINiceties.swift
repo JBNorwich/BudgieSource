@@ -8,8 +8,6 @@
 import Foundation
 import SwiftUI
 
-
-
 func getActivityNarrative(activityLevel: Double) -> String {
     switch activityLevel {
         

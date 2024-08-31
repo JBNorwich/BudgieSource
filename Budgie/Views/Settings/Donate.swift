@@ -15,7 +15,7 @@ struct Donate: View {
                         .resizable()
                         .frame(maxWidth: 100,maxHeight: 100)
                     VStack {
-                        Text("Thank you for using Budgie! This app is and always will be free of charge for everyone.\n\nIf you like Budgie, please do send me a protein bar (or rather, the price of one) using the button below!")
+                        Text("Thank you for using Budgie! This app is and always will be free of charge for everyone, with no ads, no tracking, no logins, no faff.\n\nIf you like Budgie, please do send me a protein bar (or rather, the price of one) using the button below!")
                             .padding()
                             
                             ProductView(id: "proteinBar") {

@@ -97,7 +97,6 @@ struct AddCalsSheet: View {
         }
         
         .onAppear() {
-            print("Received date: " + selectedDate.formatted())
             let calorieData = CalorieData()
             mealList = calorieData.getListOfMeals()
             mealList = mealList.sorted(by: { $0.order < $1.order })

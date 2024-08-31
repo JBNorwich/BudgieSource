@@ -14,7 +14,6 @@ struct NewDataView: View {
         Spacer()
         VStack {
             HStack {
-                //Image(systemName: "flame.circle")
                 Image(systemName: "figure.walk")
                     .frame(minWidth: 30)
                     .foregroundStyle(.secondary)
@@ -34,6 +33,7 @@ struct NewDataView: View {
                 }
                 Spacer()
                 Text(dataLump.activeCalories.formatted())
+                    .contentTransition(.numericText())
             }
             if dataLump.projectedActive != 0 {
                 HStack {
@@ -42,6 +42,7 @@ struct NewDataView: View {
                     Text("Projected future")
                     Spacer()
                     Text(dataLump.projectedActive.formatted())
+                        .contentTransition(.numericText())
                 }
             }
         }
@@ -65,6 +66,7 @@ struct NewDataView: View {
                 Text("Burned so far today")
                 Spacer()
                 Text(dataLump.basalCalories.formatted())
+                    .contentTransition(.numericText())
             }
             HStack {
                 Image(systemName: "questionmark.circle")
@@ -72,6 +74,7 @@ struct NewDataView: View {
                 Text("Projected future")
                 Spacer()
                 Text(dataLump.projectedBasal.formatted())
+                    .contentTransition(.numericText())
             }
         }
         HStack {
@@ -89,6 +92,7 @@ struct NewDataView: View {
                 Text("Total calories today")
                 Spacer()
                 Text(dataLump.totalProjCalories.formatted())
+                    .contentTransition(.numericText())
             }
             HStack {
                 if dataLump.desiredDeficit > 0 {
@@ -122,6 +126,7 @@ struct NewDataView: View {
             Spacer()
             Text(dataLump.totalBudget.formatted())
                 .fontWeight(.bold)
+                .contentTransition(.numericText())
         }
         if dataLump.eatenCalories != 0 {
             HStack {
@@ -137,6 +142,7 @@ struct NewDataView: View {
                 Text("Eaten today")
                 Spacer()
                 Text("-" + dataLump.eatenCalories.formatted())
+                    .contentTransition(.numericText())
             }
             if dataLump.totalBudgetRem != 0 {
                 HStack {
@@ -146,12 +152,14 @@ struct NewDataView: View {
                         Text("Left in budget today")
                         Spacer()
                         Text(dataLump.totalBudgetRem.formatted())
+                            .contentTransition(.numericText())
                     } else if dataLump.totalBudgetRem < 0 {
                         Image(systemName: "gauge.with.dots.needle.bottom.100percent")
                             .frame(minWidth: 30)
                         Text("Over total budget by")
                         Spacer()
                         Text(negate(number: dataLump.totalBudgetRem).formatted())
+                            .contentTransition(.numericText())
                     }
                 }
             }

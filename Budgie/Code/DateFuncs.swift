@@ -158,23 +158,3 @@ extension Calendar {
 func negate(value: Int) -> Int {
     return -value
 }
-
-/// NICETIES
-/// These functions just wrap other functions. It would be best to eliminate them and replace them with calls to the underlying functions.
-
-///Replace with getMidnightOnDayAfter(date: Date()) if seen!
-//func getToday() -> Date {
-//    return getEndDate()
-//}
-
-///Returns 00:00 on the day after today (i.e. the end date for a HealthKit query that you want to include today.)
-///Replace with getMidnightOnDayAfter(date: Date()) if seen!
-//func getEndDate() -> Date {
-//    return getQueryEndDate(date: Date())
-//}
-
-///Takes the "actual" (i.e. displayed/cared about) final date of a query and gives 00:00 on the day after.
-///Replace with getMidnightOnDayAfter(date: Date()) if seen!
-//func getQueryEndDate(date: Date) -> Date {
-//    return getMidnightOnDayAfter(date: date)
-//}

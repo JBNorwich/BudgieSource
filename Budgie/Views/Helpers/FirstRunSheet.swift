@@ -226,6 +226,7 @@ struct FirstRunSheet: View {
         .onChange(of: allComplete) {
             if allComplete == true {
                 Task {
+                    dataStore.lastUpdateRequestSource = "Completion of setup"
                     dataStore.dataUpdated = true
                 }
             }

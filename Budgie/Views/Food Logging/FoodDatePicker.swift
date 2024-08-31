@@ -51,15 +51,10 @@ struct FoodDatePicker: View {
                 } else {
                     atMax = false
                 }
-                print("New date: " + curDate.formatted())
-                print("New prevbutton date: " + prevDate.formatted())
-                print("New nextbutton date" + nextDate.formatted())
                 dateChanged = true
             }
         
-            .onAppear() {
-                print("Initial date: " + curDate.formatted())
-                
+            .onAppear() {                
                 prevDate = getMidnightOnDayBefore(date: curDate)
                 nextDate = getMidnightOnDayAfter(date: curDate)
                 

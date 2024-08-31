@@ -81,7 +81,7 @@ struct BMRHelper: View {
             Form {
                 Section(header: Text("About you")) {
                     LabeledContent {
-                        Picker("Sex at birth", selection: $selectedSex) {
+                        Picker("Sex", selection: $selectedSex) {
                             Text("Male").tag(1)
                             Text("Female").tag(2)
                         }
@@ -219,7 +219,6 @@ struct BMRHelper: View {
                         manualBMR = calcBMR(height: calcCM, weight: weightKg, age: age, sex: selectedSex)
                         let activeCals = Double(manualBMR) * activityLevel
                         manualActive = 10 * Int(round(activeCals / 10.0))
-                        print (String(manualActive))
                         settingsObj.manualActive = manualActive
                         settingsObj.manualBMR = manualBMR
                         settingsObj.height = heightCM

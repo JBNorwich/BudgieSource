@@ -54,7 +54,6 @@ struct ChartPage: View {
         }
         .onChange(of: chartDataStore.dataUpdated)
         {
-            print("Chart data has changed, requesting reassembly")
             loadingDone = false
             chartDataStore.assembleChartData()
             loadingDone = true
@@ -62,9 +61,7 @@ struct ChartPage: View {
         }
     
         .onChange(of: dateChanged) {
-            print("Date change noticed!")
             if dateChanged == true {
-                print("New date received!")
                 chartDataStore.startDate = getStartOfDay(date: startDate)
                 chartDataStore.endDate = getStartOfDay(date: endDate)
                 loadingDone = false
@@ -75,10 +72,8 @@ struct ChartPage: View {
         }
         
         .onAppear() {
-            print("Requesting chart data...")
             startDate = chartDataStore.startDate
             endDate = chartDataStore.endDate
-            //loadingDone = false
         }
     }
 }

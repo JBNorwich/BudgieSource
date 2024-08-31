@@ -160,9 +160,7 @@ class HealthData: ObservableObject {
     
     func getCalorieEntries(date: Date) async -> [CalorieEntry]
     {
-        print("Getting entries from: " + date.formatted())
         let endDate = getMidnightOnDayAfter(date: date)
-        print("Getting entries to: " + endDate.formatted())
         let calorieModel = await CalorieData()
         var returnArray: [CalorieEntry] = []
         

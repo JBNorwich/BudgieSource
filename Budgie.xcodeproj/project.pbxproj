@@ -22,8 +22,6 @@
 		D89461A72C73C3FC00138B60 /* BudgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A62C73C3FC00138B60 /* BudgetView.swift */; };
 		D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461A82C73C3FD00138B60 /* Assets.xcassets */; };
 		D89461AC2C73C3FD00138B60 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461AB2C73C3FD00138B60 /* Preview Assets.xcassets */; };
-		D8A05C1D2C7CA1B800FBA793 /* DemisedFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8A05C1C2C7CA1B800FBA793 /* DemisedFuncs.swift */; };
-		D8ADB1792C80ED2A0007C9E8 /* SplashScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8ADB1782C80ED2A0007C9E8 /* SplashScreen.swift */; };
 		D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8B5AE022C78D93700C4533A /* FirstRunSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */; };
 		D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE072C7934B800C4533A /* ChartData.swift */; };
@@ -47,7 +45,6 @@
 		D8E831852C77549200AAF555 /* ChartPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831842C77549200AAF555 /* ChartPage.swift */; };
 		D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E8318A2C7797B200AAF555 /* BMRHelper.swift */; };
-		D8EB9F962C7E0FE700508D0A /* DataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8EB9F952C7E0FE700508D0A /* DataView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -93,8 +90,6 @@
 		D89461A62C73C3FC00138B60 /* BudgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetView.swift; sourceTree = "<group>"; };
 		D89461A82C73C3FD00138B60 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D89461AB2C73C3FD00138B60 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		D8A05C1C2C7CA1B800FBA793 /* DemisedFuncs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemisedFuncs.swift; sourceTree = "<group>"; };
-		D8ADB1782C80ED2A0007C9E8 /* SplashScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreen.swift; sourceTree = "<group>"; };
 		D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPredicates.swift; sourceTree = "<group>"; };
 		D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunSheet.swift; sourceTree = "<group>"; };
 		D8B5AE072C7934B800C4533A /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
@@ -120,7 +115,6 @@
 		D8E831842C77549200AAF555 /* ChartPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPage.swift; sourceTree = "<group>"; };
 		D8E831882C776FCE00AAF555 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
 		D8E8318A2C7797B200AAF555 /* BMRHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMRHelper.swift; sourceTree = "<group>"; };
-		D8EB9F952C7E0FE700508D0A /* DataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -212,7 +206,6 @@
 		D89461A32C73C3FC00138B60 /* Budgie */ = {
 			isa = PBXGroup;
 			children = (
-				D8ADB17C2C82012D0007C9E8 /* Demised */,
 				D8E831812C76906900AAF555 /* Info.plist */,
 				D8E831752C74EBCD00AAF555 /* Code */,
 				D8E831682C748DE200AAF555 /* Views */,
@@ -231,15 +224,6 @@
 				D89461AB2C73C3FD00138B60 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		D8ADB17C2C82012D0007C9E8 /* Demised */ = {
-			isa = PBXGroup;
-			children = (
-				D8A05C1C2C7CA1B800FBA793 /* DemisedFuncs.swift */,
-				D8EB9F952C7E0FE700508D0A /* DataView.swift */,
-			);
-			path = Demised;
 			sourceTree = "<group>";
 		};
 		D8B5AE092C79B56100C4533A /* Chart */ = {
@@ -293,7 +277,6 @@
 			isa = PBXGroup;
 			children = (
 				D89461A62C73C3FC00138B60 /* BudgetView.swift */,
-				D8ADB1782C80ED2A0007C9E8 /* SplashScreen.swift */,
 				D829B0832C79B5B30027841B /* Components */,
 			);
 			path = "Main page";
@@ -383,7 +366,6 @@
 				D8E831722C74CAED00AAF555 /* SettingsView.swift in Sources */,
 				D8D4BF732C7CD04E0061A9A4 /* FoodDatePicker.swift in Sources */,
 				D8BDE7362C7B961200E07471 /* Donate.swift in Sources */,
-				D8A05C1D2C7CA1B800FBA793 /* DemisedFuncs.swift in Sources */,
 				D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */,
 				D8BDE73A2C7BAF7900E07471 /* CalorieModel.swift in Sources */,
 				D868606D2C7BD0E900730373 /* Tests.swift in Sources */,
@@ -406,10 +388,8 @@
 				D83398542C833F4D00A09CDB /* AdjustWeighting.swift in Sources */,
 				D829B08D2C7A7E6E0027841B /* Explainer.swift in Sources */,
 				D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */,
-				D8EB9F962C7E0FE700508D0A /* DataView.swift in Sources */,
 				D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */,
 				D8E831652C73D0BA00AAF555 /* DateFuncs.swift in Sources */,
-				D8ADB1792C80ED2A0007C9E8 /* SplashScreen.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

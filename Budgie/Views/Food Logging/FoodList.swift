@@ -31,17 +31,14 @@ struct FoodList: View {
             
             if healthKitData.count != 0  {
                 if healthKitData[0].calories != 0 {
-                    Section(header: Text("Calories from other apps")) {
+                    Section(header: Text("Calories from other apps"), footer: Text("These are calories logged in Health by other apps. You'll need to go to the app that logged them to change or delete them.")) {
                         ForEach(healthKitData) {
                             CalorieEntryView(calories: $0.calories, narrative: $0.narrative ?? "Quick calories", realEntry: $0.realEntry, date: $0.date)
                         }
-                        Text("These are calories logged in Health by other apps. You'll need to go to the app that logged them to change or delete them.")
-                            .foregroundStyle(.secondary)
                     }.deleteDisabled(true)
                 }
             }
         }.listStyle(.grouped)
-            //.listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
         
         .onAppear {
             let calorieData = CalorieData()
@@ -55,7 +52,6 @@ struct FoodList: View {
             for itemId in offsets {
                 toBin.append(displayedData[itemId])
             }
-            print(toBin.count.formatted())
             displayedData.remove(atOffsets: offsets)
             await dataObject.deleteCalorieEntries(calorieObjects: toBin)
         }

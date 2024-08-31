@@ -126,6 +126,11 @@ struct BudgetView: View {
                                 dataStore.dataUpdated = true
                             }.foregroundColor(Color.white)
                         }
+                        VStack{
+                            Rectangle()
+                                .foregroundStyle(.clear)
+                                .frame(minHeight: 35)
+                        }
                     }
                     
                     .toolbar {
@@ -167,7 +172,6 @@ struct BudgetView: View {
 
             }
         }
-       
         
         .navigationDestination(isPresented: $openingFoodHub)
         {
@@ -195,7 +199,6 @@ struct BudgetView: View {
         }
         
         .onChange(of: colorScheme) {
-            
             switch colorScheme {
             case .dark: backgroundGradient.backgroundGradient = LinearGradient(
                 colors: [Color.black, Color.blue],
@@ -212,7 +215,6 @@ struct BudgetView: View {
             if dataStore.dataUpdated == true {
                 if scenePhase != .background {
                     Task {
-                        print("Update request received, passing to HealthData")
                         await todayLump = dataStore.produceTodayObject()
                     }
                 } else {
@@ -220,11 +222,9 @@ struct BudgetView: View {
                         if todayLump.lastUpdate < getHalfHourBefore(date: Date())
                         {
                             Task {
-                                print("Update request received, passing to HealthData")
                                 await todayLump = dataStore.produceTodayObject()
                             }
                         } else {
-                            print("Update request received, discarding as background + last update <30mins ago")
                             dataStore.isBackgroundPing = false
                         }
                     } else {
@@ -238,6 +238,7 @@ struct BudgetView: View {
         
         .onAppear() {
             firstRun = settingsObj.isFirstRun
+            dataStore.lastUpdateRequestSource = "Initial start"
             dataStore.dataUpdated = true
             
             
@@ -293,7 +294,6 @@ struct BudgetView: View {
         
         .sheet(isPresented: $showingHelp) {
             Explainer(showing: $showingHelp)
-                
         }
             
         .task() {

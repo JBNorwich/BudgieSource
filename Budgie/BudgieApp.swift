@@ -17,10 +17,8 @@ let settingsObj: UserSettings = UserSettings()
 struct BudgieApp: App {
     
     init() {
-        print("Checking to see if meal store is populated...")
         let mealStore = CalorieData()
         if mealStore.getListOfMeals() == [] {
-            print("No meals. Setting up")
             mealStore.setUpMeals()
         }
     }

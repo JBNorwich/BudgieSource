@@ -65,7 +65,6 @@ class ChartDataLump: Identifiable {
     @MainActor func pokeForUpdate() async
     {
         self.cleanDataObject()
-        print ("Poked for update")
         if settingsObj.manualMode == false {
             await fetchChartActive()
             await fetchChartBasal()
@@ -76,9 +75,8 @@ class ChartDataLump: Identifiable {
         await fetchChartEaten()
         var notified: Bool = false
         while allDoneCheck() != true {
-            if notified == false { print ("Checking to see if updated..."); notified = true }
+            if notified == false { notified = true }
         }
-        print("Update done!")
         self.dataUpdated = true
     }
     
@@ -162,7 +160,6 @@ class ChartDataLump: Identifiable {
             }
             
             self.basalDone = true
-            print ("Basal cals updated")
         }
         
         healthStore.execute(actCalsQuery)
@@ -215,7 +212,6 @@ class ChartDataLump: Identifiable {
         let model = CalorieData()
         let objArray = model.fetchCalsBetween(from: self.startDate, to: self.endDate)
         for object in objArray {
-            print (object.date.formatted() + " " + object.calories.formatted())
             self.budgieEatenPackets.append(CalsPacket(date:getStartOfDay(date: object.date), cals:object.calories))
         }
         self.eatenDone = true
@@ -223,7 +219,6 @@ class ChartDataLump: Identifiable {
         
     @MainActor func assembleChartData()
     {
-        print("Assembly requested...")
         var returnValue: [ChartDataLump] = []
         
         if settingsObj.manualMode == true {
@@ -269,8 +264,6 @@ class ChartDataLump: Identifiable {
         for budgieStruct in budgieEatenPackets {
             let packetDate = budgieStruct.date
             for lump in returnValue {
-                print ("Lump date: " + lump.date.formatted())
-                print ("Packet date: " + packetDate.formatted())
                 if lump.date == packetDate {
                     lump.eatenCals = lump.eatenCals + budgieStruct.cals
                 }
@@ -283,6 +276,5 @@ class ChartDataLump: Identifiable {
         self.dataUpdated = false
         
         self.returnedChartData = returnValue
-        print ("Chart data returned")
     }
 }

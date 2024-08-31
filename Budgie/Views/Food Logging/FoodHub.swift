@@ -39,7 +39,6 @@ struct FoodHub: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button("Add eaten calories", systemImage: "plus") {
                     timeToAddOn = getCurrentTimeonDate(date: curDate)
-                    print("Will add calories at: " + timeToAddOn.formatted())
                     addSheetDisplayed = true
                 }
             }

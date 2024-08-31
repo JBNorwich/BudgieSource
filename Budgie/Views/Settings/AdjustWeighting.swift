@@ -85,7 +85,7 @@ class WeightingChartObject {
     }
 }
 
-let weightingText = "This adjusts the style of weighting used for predicted active calories. Most people should stick with the default setting. However, if you find that your budgets are often too high or too low for your usual activity, you can change this.\n\nThis setting does not affect predicted resting calories or calories not predicted from Apple Health data, which are always weighted down linearly.\n\n**Forgiving:** This only really starts weighting down your predictions towards the late evening, and keeps predicting up until midnight. This is likely to suit you if you regularly do most of your day's exercise in the evening, but it will also make your budget less accurate.\n\n**Default:** This is a balanced setting that weights down predictions gradually from the morning until 10pm. It will work for most people, or people whose schedules vary.\n\n**Harsh:** This starts weighting down your predictions immediately and linearly throughout the day, with a hard stop at 10pm. This will be most likely to suit people who do most of their day's exercise early in the morning.\n\n**No projections at all:** Budgie won't project any active calories for you at all. Your budget will only take into account your resting calories for the day, plus any exercise you've actually done. Your budget will be very accurate, but probably quite restrictive."
+let weightingText = "This adjusts how predicted active calories are weighted. Most people should stick with the default, but you can change it if you feel your budgets are often too high or low.\n\nThis setting doesn't affect predicted resting calories or calories not predicted from Apple Health data, which are always predicted linearly.\n\n**Forgiving:** Budgie more strongly adjusts its predictions in the late evening and continues until midnight. This works well if you usually exercise in the evening, but it might make your budget less accurate.\n\n**Default:** This balanced setting gradually adjusts predictions from morning to 10pm. It’s great for most people, or if your exercise schedule varies.\n\n**Harsh:** This setting starts adjusting your predictions right away, and continues throughout the day until 10pm. It’s ideal for early morning exercisers but may significantly reduce your budget otherwise.\n\n**No predictions at all:** Budgie won’t estimate active calories for you. Your budget will only include resting calories and any exercise you’ve done. It’ll be very accurate, but might feel a bit restrictive."
 
 let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": Color.yellow, "Harsh": Color.red])
 
@@ -127,7 +127,7 @@ struct AdjustWeighting: View {
                                         Text("Forgiving").tag(-1)
                                         Text("Default").tag(0)
                                         Text("Harsh").tag(1)
-                                        Text("No projections at all").tag(2)
+                                        Text("No predictions at all").tag(2)
                         }.pickerStyle(.inline)
                             .labelsHidden()
                     }
@@ -140,6 +140,7 @@ struct AdjustWeighting: View {
         
         .onChange(of: selectedOption) {
             settingsObj.weightingStyle = selectedOption
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
             dataStore.isBackgroundPing = false
             dataStore.dataUpdated = true
         }

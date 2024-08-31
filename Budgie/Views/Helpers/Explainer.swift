@@ -21,70 +21,14 @@ struct Explainer: View {
                 VStack {
                     if settingsObj.surplusMode != true
                     {
-                        Text("As a starting point, Budgie predicts the calories you will burn each day based on an average of your previous week's activity. It then subtracts your desired deficit to give you an overall daily budget to eat. You can see your current budget and how it's calculated on the Today screen.")
+                        Text("Budgie estimates your daily calorie burn from last week’s averages, subtracts your desired deficit, and provides your daily eating budget. You can see this budget on the Today screen.")
                             .padding()
                     } else {
-                        Text("Budgie predicts the calories you will burn each day based on an average of your previous week's activities. It then adds your desired surplus to give you an overall daily budget to eat.")
+                        Text("Budgie estimates your daily calorie burn from last week’s averages, adds your desired surplus, and provides your daily eating budget. You can see this budget on the Today screen.")
                             .padding()
                     }
-//                    
-//                    VStack {
-//                        HStack {
-//                            Text("AVERAGE ACTIVE CALORIES")
-//                                .font(.caption)
-//                            Spacer()
-//                            Text(averageActive.formatted())
-//                                .font(.caption)
-//                        }
-//                        HStack {
-//                            Text("AVERAGE RESTING CALORIES")
-//                                .font(.caption)
-//                            Spacer()
-//                            Text(averageBasal.formatted())
-//                                .font(.caption)
-//                        }
-//                        Divider()
-//                        HStack {
-//                            Text("TOTAL BURNED DAILY")
-//                                .font(.caption)
-//                                .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-//                            Spacer()
-//                            Text(totalBurned.formatted())
-//                                .font(.caption)
-//                                .fontWeight(.bold)
-//                        }
-//                        if settingsObj.surplusMode != true
-//                        {
-//                            HStack {
-//                                Text("LESS DESIRED DEFICIT")
-//                                    .font(.caption)
-//                                Spacer()
-//                                Text("-" + settingsObj.desiredDeficit.formatted())
-//                                    .font(.caption)
-//                            }
-//                        } else {
-//                            HStack {
-//                                Text("ADD DESIRED SURPLUS")
-//                                    .font(.caption)
-//                                Spacer()
-//                                Text(negate(number:settingsObj.desiredDeficit).formatted())
-//                                    .font(.caption)
-//                            }
-//                        }
-//                        Divider()
-//                        HStack {
-//                            Text("TOTAL BUDGET")
-//                                .font(.caption)
-//                                .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-//                            Spacer()
-//                            Text(totalBudget.formatted())
-//                                .font(.caption)
-//                                .fontWeight(.bold)
-//                        }
-//                    }
-//                    .frame(maxWidth: 250)
                     
-                    Text("Budgie will adjust your budget throughout the day based on your actual activity; it will go up if you do a lot of exercise, or down if you exercise less than normal. It weights down your predicted exercise over time, to make sure that you're not told you can eat calories you won't burn off later.")
+                    Text("Your budget adjusts throughout the day based on your activity; it will go up if you exercise a lot, or down if you exercise less than usual. It weights down your predicted exercise over time, to make sure that you're not told you can eat calories you won't burn off later.")
                         .padding()
                     
                     VStack {

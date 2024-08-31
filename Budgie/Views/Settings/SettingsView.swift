@@ -103,7 +103,7 @@ struct SettingsView: View {
                 }
                 Button("Calculate this for me") {
                     showingBMRHelper = true
-                }.sheet(isPresented: $showingBMRHelper, onDismiss: { pingManual(); print(String(settingsObj.manualActive)) }) {
+                }.sheet(isPresented: $showingBMRHelper, onDismiss: { pingManual() }) {
                         BMRHelper(isPresented: $showingBMRHelper, manualBMR: $manualBMR, manualActive: $manualActive, settingsObj: settingsObj)
                 }.presentationDragIndicator(.visible)
             }
