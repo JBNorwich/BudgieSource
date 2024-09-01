@@ -105,7 +105,6 @@ struct Provider: TimelineProvider {
             let dataStore = HealthData()
             let lump = await dataStore.produceTodayObject()
             let date = Date()
-            sleep(4)
             let entry = BudgieEntry(date: date, leftToEat: lump.leftToEat, progressDbl: lump.progressToday, totalBudgRem: lump.totalBudgetRem, totalBudg: lump.totalBudget, projBasal: lump.projectedBasal)
             
             let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 30, to: date)!

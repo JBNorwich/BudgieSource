@@ -36,6 +36,17 @@
 		D89A95BC2C84CA2F007796AB /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D89A95BD2C84CA32007796AB /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461A82C73C3FD00138B60 /* Assets.xcassets */; };
+		D89A95C62C84F752007796AB /* BudgieWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89A95C52C84F752007796AB /* BudgieWatchApp.swift */; };
+		D89A95C82C84F752007796AB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89A95C72C84F752007796AB /* ContentView.swift */; };
+		D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89A95C92C84F753007796AB /* Assets.xcassets */; };
+		D89A95CD2C84F753007796AB /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89A95CC2C84F753007796AB /* Preview Assets.xcassets */; };
+		D89A95D62C84F782007796AB /* DataClasses.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */; };
+		D89A95D72C84F782007796AB /* HealthData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831612C73C7EE00AAF555 /* HealthData.swift */; };
+		D89A95D82C84F782007796AB /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
+		D89A95D92C84F782007796AB /* CalorieModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */; };
+		D89A95DC2C84F7DA007796AB /* WatchMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89A95DB2C84F7DA007796AB /* WatchMeter.swift */; };
+		D89A95DD2C84F82B007796AB /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
+		D89A95DE2C84FAC0007796AB /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8B5AE022C78D93700C4533A /* FirstRunSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */; };
 		D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE072C7934B800C4533A /* ChartData.swift */; };
@@ -93,6 +104,16 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D89A95D42C84F753007796AB /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -120,6 +141,13 @@
 		D89A959D2C84BB55007796AB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D89A959F2C84BB55007796AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D89A95B02C84BE3D007796AB /* BudgieWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BudgieWidgetExtension.entitlements; sourceTree = "<group>"; };
+		D89A95C32C84F752007796AB /* Budgie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Budgie.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D89A95C52C84F752007796AB /* BudgieWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgieWatchApp.swift; sourceTree = "<group>"; };
+		D89A95C72C84F752007796AB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D89A95C92C84F753007796AB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D89A95CC2C84F753007796AB /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		D89A95D52C84F75B007796AB /* BudgieWatch Watch App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "BudgieWatch Watch App.entitlements"; sourceTree = "<group>"; };
+		D89A95DB2C84F7DA007796AB /* WatchMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMeter.swift; sourceTree = "<group>"; };
 		D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPredicates.swift; sourceTree = "<group>"; };
 		D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunSheet.swift; sourceTree = "<group>"; };
 		D8B5AE072C7934B800C4533A /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
@@ -161,6 +189,13 @@
 			files = (
 				D89A95972C84BB53007796AB /* SwiftUI.framework in Frameworks */,
 				D89A95962C84BB53007796AB /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89A95C02C84F752007796AB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,6 +266,7 @@
 				D8BDE7372C7B9D3400E07471 /* Donation.storekit */,
 				D89461A32C73C3FC00138B60 /* Budgie */,
 				D89A95982C84BB53007796AB /* BudgieWidget */,
+				D89A95C42C84F752007796AB /* BudgieWatch Watch App */,
 				D89461A22C73C3FC00138B60 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -240,6 +276,7 @@
 			children = (
 				D89461A12C73C3FC00138B60 /* Budgie.app */,
 				D89A95952C84BB53007796AB /* BudgieWidgetExtension.appex */,
+				D89A95C32C84F752007796AB /* Budgie.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -279,6 +316,27 @@
 			path = BudgieWidget;
 			sourceTree = "<group>";
 		};
+		D89A95C42C84F752007796AB /* BudgieWatch Watch App */ = {
+			isa = PBXGroup;
+			children = (
+				D89A95D52C84F75B007796AB /* BudgieWatch Watch App.entitlements */,
+				D89A95C52C84F752007796AB /* BudgieWatchApp.swift */,
+				D89A95C72C84F752007796AB /* ContentView.swift */,
+				D89A95C92C84F753007796AB /* Assets.xcassets */,
+				D89A95CB2C84F753007796AB /* Preview Content */,
+				D89A95DB2C84F7DA007796AB /* WatchMeter.swift */,
+			);
+			path = "BudgieWatch Watch App";
+			sourceTree = "<group>";
+		};
+		D89A95CB2C84F753007796AB /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				D89A95CC2C84F753007796AB /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
 		D8B5AE092C79B56100C4533A /* Chart */ = {
 			isa = PBXGroup;
 			children = (
@@ -297,6 +355,7 @@
 				D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */,
 				D8B5AE072C7934B800C4533A /* ChartData.swift */,
 				D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */,
+				D8E831882C776FCE00AAF555 /* UserSettings.swift */,
 			);
 			path = "Data Model";
 			sourceTree = "<group>";
@@ -319,7 +378,6 @@
 				D8BCE50C2C805486001EA005 /* Data Model */,
 				D8E831642C73D0BA00AAF555 /* DateFuncs.swift */,
 				D8E831662C74835900AAF555 /* UINiceties.swift */,
-				D8E831882C776FCE00AAF555 /* UserSettings.swift */,
 				D8BDE7312C7B4CDA00E07471 /* Strings.swift */,
 				D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */,
 			);
@@ -347,6 +405,7 @@
 				D894619F2C73C3FC00138B60 /* Resources */,
 				D837C6FF2C78B57000A04A33 /* Embed Foundation Extensions */,
 				D878D14C2C80DB480075F770 /* Embed Foundation Extensions */,
+				D89A95D42C84F753007796AB /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
@@ -375,6 +434,23 @@
 			productReference = D89A95952C84BB53007796AB /* BudgieWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		D89A95C22C84F752007796AB /* BudgieWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D89A95D12C84F753007796AB /* Build configuration list for PBXNativeTarget "BudgieWatch Watch App" */;
+			buildPhases = (
+				D89A95BF2C84F752007796AB /* Sources */,
+				D89A95C02C84F752007796AB /* Frameworks */,
+				D89A95C12C84F752007796AB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "BudgieWatch Watch App";
+			productName = "BudgieWatch Watch App";
+			productReference = D89A95C32C84F752007796AB /* Budgie.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -389,6 +465,9 @@
 						CreatedOnToolsVersion = 15.4;
 					};
 					D89A95942C84BB53007796AB = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					D89A95C22C84F752007796AB = {
 						CreatedOnToolsVersion = 15.4;
 					};
 				};
@@ -408,6 +487,7 @@
 			targets = (
 				D89461A02C73C3FC00138B60 /* Budgie */,
 				D89A95942C84BB53007796AB /* BudgieWidgetExtension */,
+				D89A95C22C84F752007796AB /* BudgieWatch Watch App */,
 			);
 		};
 /* End PBXProject section */
@@ -430,6 +510,15 @@
 			files = (
 				D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */,
 				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89A95C12C84F752007796AB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D89A95CD2C84F753007796AB /* Preview Assets.xcassets in Resources */,
+				D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -490,6 +579,22 @@
 				D89A95BA2C84CA2A007796AB /* HealthData.swift in Sources */,
 				D89A95BB2C84CA2A007796AB /* DateFuncs.swift in Sources */,
 				D89A95BD2C84CA32007796AB /* SearchPredicates.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89A95BF2C84F752007796AB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D89A95D62C84F782007796AB /* DataClasses.swift in Sources */,
+				D89A95D72C84F782007796AB /* HealthData.swift in Sources */,
+				D89A95D82C84F782007796AB /* DateFuncs.swift in Sources */,
+				D89A95D92C84F782007796AB /* CalorieModel.swift in Sources */,
+				D89A95DD2C84F82B007796AB /* UserSettings.swift in Sources */,
+				D89A95C82C84F752007796AB /* ContentView.swift in Sources */,
+				D89A95C62C84F752007796AB /* BudgieWatchApp.swift in Sources */,
+				D89A95DC2C84F7DA007796AB /* WatchMeter.swift in Sources */,
+				D89A95DE2C84FAC0007796AB /* SearchPredicates.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -753,6 +858,66 @@
 			};
 			name = Release;
 		};
+		D89A95D22C84F753007796AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = QDNLA5J7JK;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = JoeBaldwin.Budgie;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
+				PRODUCT_NAME = Budgie;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.5;
+			};
+			name = Debug;
+		};
+		D89A95D32C84F753007796AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = QDNLA5J7JK;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = JoeBaldwin.Budgie;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
+				PRODUCT_NAME = Budgie;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.5;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -779,6 +944,15 @@
 			buildConfigurations = (
 				D89A95A42C84BB55007796AB /* Debug */,
 				D89A95A52C84BB55007796AB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D89A95D12C84F753007796AB /* Build configuration list for PBXNativeTarget "BudgieWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D89A95D22C84F753007796AB /* Debug */,
+				D89A95D32C84F753007796AB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

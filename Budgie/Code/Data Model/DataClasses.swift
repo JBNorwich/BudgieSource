@@ -102,9 +102,9 @@ class TodayLump: ObservableObject {
     func getPathColour() -> Color
     {
         let reallyGoodColor = (Color.blue)
-        let goodColour = Color(.systemGreen)
-        let okColour = Color(.systemYellow)
-        let badColour = Color(.systemRed)
+        let goodColour = Color(.green)
+        let okColour = Color(.yellow)
+        let badColour = Color(.red)
         
         let diff = self.progressAgainstTime
         

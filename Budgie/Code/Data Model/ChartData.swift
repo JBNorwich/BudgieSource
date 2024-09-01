@@ -112,6 +112,7 @@ class ChartDataLump: Identifiable {
             { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let date = statistics.startDate
+                    print(quantity.doubleValue(for: .kilocalorie()).formatted())
                     let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
                     
                     self.activePackets.append(CalsPacket(date:date, cals:value))
@@ -152,6 +153,7 @@ class ChartDataLump: Identifiable {
             { statistics, _ in
                 if let quantity = statistics.sumQuantity(){
                     let date = statistics.startDate
+                    print(quantity.doubleValue(for: .kilocalorie()).formatted())
                     let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
                     self.basalPackets.append(CalsPacket(date:date, cals:value))
                 }

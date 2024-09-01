@@ -25,7 +25,7 @@ class HealthData: ObservableObject {
         do {
             let kcals = try await sumActCalsQuery.result(for: healthStore)?
                 .sumQuantity()
-            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded(.up) ?? 0
+            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded() ?? 0
         }
         catch {
             calories = 0
@@ -36,7 +36,8 @@ class HealthData: ObservableObject {
     ///Grabs the calorie total for a given date range and type from HealthKit and (for eaten) Budgie. If manual mode is on, will return either the manual BMR/active amounts or, for eaten calories, just the amount of Budgie calories. You must normalise the date to 00:00 before passing the date. Set hkOnly to true if you only care about HealthKit calories.
     func pullCalorieTotalForDate(date: Date, type: HKQuantityType, hkOnly: Bool) async -> Int {
         var calories: Double = 0
-        let endDate = getMidnightOnDayAfter(date: date)
+        let startDate = getStartOfDay(date: date)
+        let endDate = getMidnightOnDayAfter(date: startDate)
         
         if type == eatenQuantityType && hkOnly == false {
             var budgieCalories: Int = 0
@@ -51,7 +52,7 @@ class HealthData: ObservableObject {
         }
         
         if settingsObj.manualMode == false {
-            let timePredicate = HKQuery.predicateForSamples(withStart: date, end: endDate, options: HKQueryOptions.strictEndDate)
+            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
             let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
             let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
             let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
@@ -63,7 +64,7 @@ class HealthData: ObservableObject {
             catch {
                 calories += 0
             }
-            calories = calories.rounded(.up)
+            calories = calories.rounded()
         } else {
             if hkOnly == false {
                 switch type {
@@ -97,7 +98,7 @@ class HealthData: ObservableObject {
         catch {
             calories = 0
         }
-        calories = calories.rounded(.up)
+        calories = calories.rounded()
         return Int(calories)
     }
     
