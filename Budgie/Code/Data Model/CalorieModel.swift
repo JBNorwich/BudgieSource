@@ -159,7 +159,6 @@ class CalorieData: ObservableObject {
         }
         
         returnedMeals.sort { $0.order < $1.order }
-        
         return returnedMeals
     }
 }

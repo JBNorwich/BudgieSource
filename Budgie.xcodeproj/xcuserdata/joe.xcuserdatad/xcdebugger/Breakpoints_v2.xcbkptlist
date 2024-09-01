@@ -75,10 +75,10 @@
             filePath = "Budgie/Views/Food Logging/SummaryRow.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "98"
-            endingLineNumber = "98"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "99"
+            endingLineNumber = "99"
+            landmarkName = "SummaryRow"
+            landmarkType = "14">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

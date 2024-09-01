@@ -58,11 +58,12 @@ class HealthData: ObservableObject {
             do {
                 let kcals = try await sumActCalsQuery.result(for: healthStore)?
                     .sumQuantity()
-                calories += kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded(.up) ?? 0
+                calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
             }
             catch {
                 calories += 0
             }
+            calories = calories.rounded(.up)
         } else {
             if hkOnly == false {
                 switch type {
@@ -91,11 +92,12 @@ class HealthData: ObservableObject {
         do {
             let kcals = try await sumActCalsQuery.result(for: healthStore)?
                 .sumQuantity()
-            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded(.up) ?? 0
+            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
         }
         catch {
             calories = 0
         }
+        calories = calories.rounded(.up)
         return Int(calories)
     }
     
@@ -164,8 +166,8 @@ class HealthData: ObservableObject {
         let calorieModel = await CalorieData()
         var returnArray: [CalorieEntry] = []
         
-        //await... removed
         let budgieResults = calorieModel.fetchCalsBetween(from: date, to: endDate)
+        
         if budgieResults.count != 0 {
             returnArray = budgieResults
         }

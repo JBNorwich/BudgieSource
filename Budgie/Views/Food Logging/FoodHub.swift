@@ -8,12 +8,34 @@
 import SwiftUI
 import SwiftData
 
+class ListObject: ObservableObject {
+    var curDate: Date
+    var budgieData: [CalorieEntry]
+    var healthKitData: [CalorieEntry]
+    var mealList: [Meal]
+    
+    init() {
+        budgieData = []
+        healthKitData = []
+        mealList = []
+        curDate = Date()
+        
+        let hkCalorieObj = CalorieEntry(date:getStartOfDay(date: Date()), calories: 0, narrative: "Calories from Health", mealUUID: UUID(), isInHK: true, healthKitUUID: nil)
+        hkCalorieObj.realEntry = false
+        healthKitData.append(hkCalorieObj)
+    }
+}
+
 struct FoodHub: View {
     @Binding var dataObject: HealthData
     @Binding var todayLump: TodayLump
     
     @State var displayedData: [CalorieEntry] = []
     @State var healthKitData: [CalorieEntry] = []
+    @State var mealList: [Meal] = []
+    
+    @State var listObject = ListObject()
+    
     @State var curDate: Date
     @State var dateChanged: Bool = false
     @State var firstInit: Bool = true
@@ -25,12 +47,44 @@ struct FoodHub: View {
     
     @State var loadingDone: Bool = false
     
+    func doUpdates() async{
+        timeToAddOn = getCurrentTimeonDate(date: curDate)
+        Task {
+            let calorieData = await CalorieData()
+            loadingDone = false
+            
+            let newData = await dataObject.getCalorieEntries(date: curDate)
+            var budgieCalsOnDate: Int = 0
+            for entry in newData {
+                budgieCalsOnDate += entry.calories
+            }
+            let hkEaten = await dataObject.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
+            let newActive = await dataObject.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
+            let newBasal = await dataObject.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
+            let newLump = ChartDataLump()
+            newLump.eatenCals = hkEaten + budgieCalsOnDate
+            newLump.activeCals = newActive
+            newLump.basalCals = newBasal
+            newLump.date = curDate
+            
+            listObject.mealList = calorieData.cleansedMealList(data: newData)
+            listObject.budgieData = newData
+            listObject.healthKitData[0].calories = hkEaten
+            listObject.healthKitData[0].date = curDate
+            dataLump = newLump
+            
+            timeToAddOn = getCurrentTimeonDate(date: curDate)
+            loadingDone = true
+            dateChanged = false
+        }
+    }
+    
     var body: some View {
         VStack {
             FoodDatePicker(curDate: $curDate, dateChanged: $dateChanged)
-            SummaryRow(dataLump: dataLump, curDate: curDate)
+            SummaryRow(dataLump: dataLump, curDate: $curDate)
                 .frame(maxHeight: 60)
-            FoodList(dataObject: $dataObject, displayedData: $displayedData, healthKitData: $healthKitData, calorieData: CalorieData())
+            FoodList(dataObject: $dataObject, list: listObject)
         }
         .padding()
         .navigationTitle("Food")
@@ -46,40 +100,11 @@ struct FoodHub: View {
         
         .onAppear() {
             curDate = getStartOfDay(date: curDate)
-            dataLump.date = curDate
-            timeToAddOn = getCurrentTimeonDate(date: curDate)
-            let hkCalorieObj = CalorieEntry(date:curDate, calories: 0, narrative: "Calories from Health", mealUUID: UUID(), isInHK: true, healthKitUUID: nil)
-            hkCalorieObj.realEntry = false
-            healthKitData.append(hkCalorieObj)
         }
         
         .onChange(of: dateChanged, initial: true) {
             Task {
-                loadingDone = false
-                
-                let newData = await dataObject.getCalorieEntries(date: curDate)
-                var budgieCalsOnDate: Int = 0
-                for entry in newData {
-                    budgieCalsOnDate += entry.calories
-                }
-                let hkEaten = await dataObject.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
-                let newActive = await dataObject.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
-                let newBasal = await dataObject.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
-                print("Basal: " + newBasal.formatted())
-                print("Active: " + newActive.formatted())
-                let newLump = ChartDataLump()
-                newLump.eatenCals = hkEaten + budgieCalsOnDate
-                newLump.activeCals = newActive
-                newLump.basalCals = newBasal - 1 
-                newLump.date = curDate
-                
-                displayedData = newData
-                dataLump = newLump
-                healthKitData[0].calories = hkEaten
-                healthKitData[0].date = curDate
-                timeToAddOn = getCurrentTimeonDate(date: curDate)
-                loadingDone = true
-                dateChanged = false
+                await doUpdates()
             }
         }
         
@@ -87,32 +112,7 @@ struct FoodHub: View {
             AddCalsSheet(dataStore: $dataObject, isDisplayed: $addSheetDisplayed, curEaten: todayLump.eatenCalories, remBudg: todayLump.totalBudgetRem, selectedDate: timeToAddOn)
                 .onDisappear() {
                     Task {
-                        loadingDone = false
-                        
-                        let newData = await dataObject.getCalorieEntries(date: curDate)
-                        var budgieCalsOnDate: Int = 0
-                        for entry in newData {
-                            budgieCalsOnDate += entry.calories
-                        }
-                        let hkEaten = await dataObject.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
-                        let newActive = await dataObject.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
-                        let newBasal = await dataObject.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
-                        print("Basal: " + newBasal.formatted())
-                        print("Active: " + newBasal.formatted())
-                        let newLump = ChartDataLump()
-                        newLump.eatenCals = hkEaten + budgieCalsOnDate
-                        newLump.activeCals = newActive
-                        newLump.basalCals = newBasal
-                        newLump.date = curDate
-                        
-                        displayedData = newData
-                        dataLump = newLump
-                        healthKitData[0].calories = hkEaten
-                        healthKitData[0].date = curDate
-                        timeToAddOn = getCurrentTimeonDate(date: curDate)
-                        
-                        loadingDone = true
-                        dateChanged = false
+                        await doUpdates()
                     }
             }
         }

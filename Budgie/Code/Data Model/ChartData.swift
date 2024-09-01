@@ -82,10 +82,9 @@ class ChartDataLump: Identifiable {
     
     @MainActor func fetchChartActive() async
     {
-        let actCalsType = HKQuantityType(.activeEnergyBurned)
         let everyDay = DateComponents(day:1)
         let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
-        let actCalsQuery = HKStatisticsCollectionQuery(quantityType: actCalsType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
+        let actCalsQuery = HKStatisticsCollectionQuery(quantityType: activeQuantityType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
         
         // query active calories, digest into packets
         actCalsQuery.initialResultsHandler = {
@@ -113,7 +112,7 @@ class ChartDataLump: Identifiable {
             { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let date = statistics.startDate
-                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded(.up))
+                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
                     
                     self.activePackets.append(CalsPacket(date:date, cals:value))
                 }
@@ -125,10 +124,9 @@ class ChartDataLump: Identifiable {
     
     @MainActor func fetchChartBasal() async
     {
-        let basalCalsType = HKQuantityType(.basalEnergyBurned)
         let everyDay = DateComponents(day:1)
         let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
-        let actCalsQuery = HKStatisticsCollectionQuery(quantityType: basalCalsType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
+        let actCalsQuery = HKStatisticsCollectionQuery(quantityType: basalQuantityType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
         
         // query active calories, digest into packets
         actCalsQuery.initialResultsHandler = {
@@ -154,7 +152,7 @@ class ChartDataLump: Identifiable {
             { statistics, _ in
                 if let quantity = statistics.sumQuantity(){
                     let date = statistics.startDate
-                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded(.up))
+                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
                     self.basalPackets.append(CalsPacket(date:date, cals:value))
                 }
             }
@@ -168,11 +166,10 @@ class ChartDataLump: Identifiable {
     @MainActor func fetchChartEaten() async
     {
         if settingsObj.manualMode == false {
-            let eatenCalsType = HKQuantityType(.dietaryEnergyConsumed)
             let everyDay = DateComponents(day:1)
             let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
             let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,queryPeriod])
-            let actCalsQuery = HKStatisticsCollectionQuery(quantityType: eatenCalsType, quantitySamplePredicate: queryPredicate, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
+            let actCalsQuery = HKStatisticsCollectionQuery(quantityType: eatenQuantityType, quantitySamplePredicate: queryPredicate, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
             
             // query active calories, digest into packets
             actCalsQuery.initialResultsHandler = {

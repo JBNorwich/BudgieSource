@@ -120,11 +120,6 @@ struct BudgetView: View {
                                 .padding()
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Button("Refresh") {
-                                dataStore.lastUpdateRequestSource = "Refresh button"
-                                dataStore.isBackgroundPing = false
-                                dataStore.dataUpdated = true
-                            }.foregroundColor(Color.white)
                         }
                         VStack{
                             Rectangle()
@@ -169,6 +164,11 @@ struct BudgetView: View {
                 .navigationTitle("Today")
                 .padding(.horizontal)
                 .toolbarBackground(.clear, for: .automatic)
+                .refreshable {
+                    dataStore.lastUpdateRequestSource = "Pull to refresh"
+                    dataStore.isBackgroundPing = false
+                    dataStore.dataUpdated = true
+                }
 
             }
         }
