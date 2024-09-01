@@ -29,7 +29,7 @@ struct MeterView: View {
         } else {
             if leftToEat > -1
             {
-                outputString = "Left to eat now"
+                outputString = "Can eat now"
             } else {
                 outputString = "Over target by"
             }
@@ -86,13 +86,13 @@ struct MeterView: View {
                     .shadow(radius: 10)
                     .shadow(radius: 5)
                 VStack {
-                    Text("Left to eat now")
+                    Text("Can eat now")
                         .font(.headline)
                         .minimumScaleFactor(0.01)
                         .scaledToFill()
                         .contentMargins(50)
                         .foregroundColor(.white)
-                    Text("123")
+                    Text("428")
                         .fontWeight(.heavy)
                         .font(.system(size:60))
                         .minimumScaleFactor(0.01)

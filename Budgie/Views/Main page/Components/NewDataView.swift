@@ -89,7 +89,7 @@ struct NewDataView: View {
             HStack {
                 Image(systemName: "equal.circle")
                     .frame(minWidth: 30)
-                Text("Total calories today")
+                Text("Total burned today")
                 Spacer()
                 Text(dataLump.totalProjCalories.formatted())
                     .contentTransition(.numericText())

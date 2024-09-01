@@ -22,6 +22,20 @@
 		D89461A72C73C3FC00138B60 /* BudgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A62C73C3FC00138B60 /* BudgetView.swift */; };
 		D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461A82C73C3FD00138B60 /* Assets.xcassets */; };
 		D89461AC2C73C3FD00138B60 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461AB2C73C3FD00138B60 /* Preview Assets.xcassets */; };
+		D89A95962C84BB53007796AB /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D878D13E2C80DB470075F770 /* WidgetKit.framework */; };
+		D89A95972C84BB53007796AB /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D837C6EB2C78B56F00A04A33 /* SwiftUI.framework */; };
+		D89A959A2C84BB53007796AB /* BudgieWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89A95992C84BB53007796AB /* BudgieWidgetBundle.swift */; };
+		D89A959C2C84BB53007796AB /* BudgieWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89A959B2C84BB53007796AB /* BudgieWidget.swift */; };
+		D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89A959D2C84BB55007796AB /* Assets.xcassets */; };
+		D89A95A22C84BB55007796AB /* BudgieWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D89A95952C84BB53007796AB /* BudgieWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D89A95B72C84C9FA007796AB /* CalorieModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */; };
+		D89A95B82C84CA2A007796AB /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE072C7934B800C4533A /* ChartData.swift */; };
+		D89A95B92C84CA2A007796AB /* DataClasses.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */; };
+		D89A95BA2C84CA2A007796AB /* HealthData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831612C73C7EE00AAF555 /* HealthData.swift */; };
+		D89A95BB2C84CA2A007796AB /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
+		D89A95BC2C84CA2F007796AB /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
+		D89A95BD2C84CA32007796AB /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
+		D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461A82C73C3FD00138B60 /* Assets.xcassets */; };
 		D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8B5AE022C78D93700C4533A /* FirstRunSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */; };
 		D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE072C7934B800C4533A /* ChartData.swift */; };
@@ -47,6 +61,16 @@
 		D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E8318A2C7797B200AAF555 /* BMRHelper.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		D89A95A02C84BB55007796AB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D89461992C73C3FC00138B60 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D89A95942C84BB53007796AB;
+			remoteInfo = BudgieWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		D837C6FF2C78B57000A04A33 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -64,6 +88,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				D89A95A22C84BB55007796AB /* BudgieWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -84,12 +109,17 @@
 		D838A6132C80828A0083F3B3 /* GaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaugeView.swift; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		D878D15D2C80E8EB0075F770 /* BudgieWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BudgieWidgetExtension.entitlements; sourceTree = "<group>"; };
 		D89461A12C73C3FC00138B60 /* Budgie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Budgie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D89461A42C73C3FC00138B60 /* BudgieApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgieApp.swift; sourceTree = "<group>"; };
 		D89461A62C73C3FC00138B60 /* BudgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetView.swift; sourceTree = "<group>"; };
 		D89461A82C73C3FD00138B60 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D89461AB2C73C3FD00138B60 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		D89A95952C84BB53007796AB /* BudgieWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BudgieWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D89A95992C84BB53007796AB /* BudgieWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgieWidgetBundle.swift; sourceTree = "<group>"; };
+		D89A959B2C84BB53007796AB /* BudgieWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgieWidget.swift; sourceTree = "<group>"; };
+		D89A959D2C84BB55007796AB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D89A959F2C84BB55007796AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D89A95B02C84BE3D007796AB /* BudgieWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BudgieWidgetExtension.entitlements; sourceTree = "<group>"; };
 		D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPredicates.swift; sourceTree = "<group>"; };
 		D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunSheet.swift; sourceTree = "<group>"; };
 		D8B5AE072C7934B800C4533A /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
@@ -122,6 +152,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89A95922C84BB53007796AB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D89A95972C84BB53007796AB /* SwiftUI.framework in Frameworks */,
+				D89A95962C84BB53007796AB /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +209,7 @@
 				D878D13E2C80DB470075F770 /* WidgetKit.framework */,
 			);
 			name = Frameworks;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		D868606E2C7BD68400730373 /* Food Logging */ = {
@@ -187,10 +227,10 @@
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
-				D878D15D2C80E8EB0075F770 /* BudgieWidgetExtension.entitlements */,
+				D89A95B02C84BE3D007796AB /* BudgieWidgetExtension.entitlements */,
 				D8BDE7372C7B9D3400E07471 /* Donation.storekit */,
 				D89461A32C73C3FC00138B60 /* Budgie */,
-				D837C6E82C78B56F00A04A33 /* Frameworks */,
+				D89A95982C84BB53007796AB /* BudgieWidget */,
 				D89461A22C73C3FC00138B60 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -199,6 +239,7 @@
 			isa = PBXGroup;
 			children = (
 				D89461A12C73C3FC00138B60 /* Budgie.app */,
+				D89A95952C84BB53007796AB /* BudgieWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -224,6 +265,18 @@
 				D89461AB2C73C3FD00138B60 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		D89A95982C84BB53007796AB /* BudgieWidget */ = {
+			isa = PBXGroup;
+			children = (
+				D89A95992C84BB53007796AB /* BudgieWidgetBundle.swift */,
+				D89A959B2C84BB53007796AB /* BudgieWidget.swift */,
+				D837C6E82C78B56F00A04A33 /* Frameworks */,
+				D89A959D2C84BB55007796AB /* Assets.xcassets */,
+				D89A959F2C84BB55007796AB /* Info.plist */,
+			);
+			path = BudgieWidget;
 			sourceTree = "<group>";
 		};
 		D8B5AE092C79B56100C4533A /* Chart */ = {
@@ -298,11 +351,29 @@
 			buildRules = (
 			);
 			dependencies = (
+				D89A95A12C84BB55007796AB /* PBXTargetDependency */,
 			);
 			name = Budgie;
 			productName = Budgie;
 			productReference = D89461A12C73C3FC00138B60 /* Budgie.app */;
 			productType = "com.apple.product-type.application";
+		};
+		D89A95942C84BB53007796AB /* BudgieWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D89A95A32C84BB55007796AB /* Build configuration list for PBXNativeTarget "BudgieWidgetExtension" */;
+			buildPhases = (
+				D89A95912C84BB53007796AB /* Sources */,
+				D89A95922C84BB53007796AB /* Frameworks */,
+				D89A95932C84BB53007796AB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BudgieWidgetExtension;
+			productName = BudgieWidgetExtension;
+			productReference = D89A95952C84BB53007796AB /* BudgieWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -315,6 +386,9 @@
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
 					D89461A02C73C3FC00138B60 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					D89A95942C84BB53007796AB = {
 						CreatedOnToolsVersion = 15.4;
 					};
 				};
@@ -333,6 +407,7 @@
 			projectRoot = "";
 			targets = (
 				D89461A02C73C3FC00138B60 /* Budgie */,
+				D89A95942C84BB53007796AB /* BudgieWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -346,6 +421,15 @@
 				D83398582C83A0CF00A09CDB /* LaunchScreen.storyboard in Resources */,
 				D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */,
 				D8BDE7382C7B9D3400E07471 /* Donation.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D89A95932C84BB53007796AB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */,
+				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,7 +477,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D89A95912C84BB53007796AB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D89A959A2C84BB53007796AB /* BudgieWidgetBundle.swift in Sources */,
+				D89A95B72C84C9FA007796AB /* CalorieModel.swift in Sources */,
+				D89A959C2C84BB53007796AB /* BudgieWidget.swift in Sources */,
+				D89A95BC2C84CA2F007796AB /* UserSettings.swift in Sources */,
+				D89A95B82C84CA2A007796AB /* ChartData.swift in Sources */,
+				D89A95B92C84CA2A007796AB /* DataClasses.swift in Sources */,
+				D89A95BA2C84CA2A007796AB /* HealthData.swift in Sources */,
+				D89A95BB2C84CA2A007796AB /* DateFuncs.swift in Sources */,
+				D89A95BD2C84CA32007796AB /* SearchPredicates.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D89A95A12C84BB55007796AB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D89A95942C84BB53007796AB /* BudgieWidgetExtension */;
+			targetProxy = D89A95A02C84BB55007796AB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		D89461AD2C73C3FD00138B60 /* Debug */ = {
@@ -589,6 +697,62 @@
 			};
 			name = Release;
 		};
+		D89A95A42C84BB55007796AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = BudgieWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QDNLA5J7JK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BudgieWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BudgieWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.BudgieWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D89A95A52C84BB55007796AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = BudgieWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QDNLA5J7JK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BudgieWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BudgieWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.BudgieWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -606,6 +770,15 @@
 			buildConfigurations = (
 				D89461B02C73C3FD00138B60 /* Debug */,
 				D89461B12C73C3FD00138B60 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D89A95A32C84BB55007796AB /* Build configuration list for PBXNativeTarget "BudgieWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D89A95A42C84BB55007796AB /* Debug */,
+				D89A95A52C84BB55007796AB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
