@@ -12,6 +12,7 @@ struct FoodList: View {
     @State var mealList: [Meal] = []
     @Binding var displayedData: [CalorieEntry]
     @Binding var healthKitData: [CalorieEntry]
+    @State var calorieData: CalorieData
     
     var body: some View {
         List {
@@ -41,7 +42,6 @@ struct FoodList: View {
         }.listStyle(.grouped)
         
         .onAppear {
-            let calorieData = CalorieData()
             mealList = calorieData.cleansedMealList(data: displayedData)
         }
     }

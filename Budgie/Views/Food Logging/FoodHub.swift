@@ -28,9 +28,9 @@ struct FoodHub: View {
     var body: some View {
         VStack {
             FoodDatePicker(curDate: $curDate, dateChanged: $dateChanged)
-            SummaryRow(dataLump: dataLump)
+            SummaryRow(dataLump: dataLump, curDate: curDate)
                 .frame(maxHeight: 60)
-            FoodList(dataObject: $dataObject, displayedData: $displayedData, healthKitData: $healthKitData)
+            FoodList(dataObject: $dataObject, displayedData: $displayedData, healthKitData: $healthKitData, calorieData: CalorieData())
         }
         .padding()
         .navigationTitle("Food")
@@ -46,6 +46,7 @@ struct FoodHub: View {
         
         .onAppear() {
             curDate = getStartOfDay(date: curDate)
+            dataLump.date = curDate
             timeToAddOn = getCurrentTimeonDate(date: curDate)
             let hkCalorieObj = CalorieEntry(date:curDate, calories: 0, narrative: "Calories from Health", mealUUID: UUID(), isInHK: true, healthKitUUID: nil)
             hkCalorieObj.realEntry = false
@@ -64,10 +65,12 @@ struct FoodHub: View {
                 let hkEaten = await dataObject.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
                 let newActive = await dataObject.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
                 let newBasal = await dataObject.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
+                print("Basal: " + newBasal.formatted())
+                print("Active: " + newActive.formatted())
                 let newLump = ChartDataLump()
                 newLump.eatenCals = hkEaten + budgieCalsOnDate
                 newLump.activeCals = newActive
-                newLump.basalCals = newBasal
+                newLump.basalCals = newBasal - 1 
                 newLump.date = curDate
                 
                 displayedData = newData
@@ -94,6 +97,8 @@ struct FoodHub: View {
                         let hkEaten = await dataObject.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
                         let newActive = await dataObject.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
                         let newBasal = await dataObject.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
+                        print("Basal: " + newBasal.formatted())
+                        print("Active: " + newBasal.formatted())
                         let newLump = ChartDataLump()
                         newLump.eatenCals = hkEaten + budgieCalsOnDate
                         newLump.activeCals = newActive

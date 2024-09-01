@@ -84,7 +84,7 @@ class ChartDataLump: Identifiable {
     {
         let actCalsType = HKQuantityType(.activeEnergyBurned)
         let everyDay = DateComponents(day:1)
-        let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictStartDate)
+        let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
         let actCalsQuery = HKStatisticsCollectionQuery(quantityType: actCalsType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
         
         // query active calories, digest into packets
@@ -113,7 +113,7 @@ class ChartDataLump: Identifiable {
             { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let date = statistics.startDate
-                    let value = Int(quantity.doubleValue(for: .kilocalorie()))
+                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded(.up))
                     
                     self.activePackets.append(CalsPacket(date:date, cals:value))
                 }
@@ -127,7 +127,7 @@ class ChartDataLump: Identifiable {
     {
         let basalCalsType = HKQuantityType(.basalEnergyBurned)
         let everyDay = DateComponents(day:1)
-        let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictStartDate)
+        let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
         let actCalsQuery = HKStatisticsCollectionQuery(quantityType: basalCalsType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
         
         // query active calories, digest into packets
@@ -154,7 +154,7 @@ class ChartDataLump: Identifiable {
             { statistics, _ in
                 if let quantity = statistics.sumQuantity(){
                     let date = statistics.startDate
-                    let value = Int(quantity.doubleValue(for: .kilocalorie()))
+                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded(.up))
                     self.basalPackets.append(CalsPacket(date:date, cals:value))
                 }
             }
@@ -170,7 +170,7 @@ class ChartDataLump: Identifiable {
         if settingsObj.manualMode == false {
             let eatenCalsType = HKQuantityType(.dietaryEnergyConsumed)
             let everyDay = DateComponents(day:1)
-            let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictStartDate)
+            let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
             let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,queryPeriod])
             let actCalsQuery = HKStatisticsCollectionQuery(quantityType: eatenCalsType, quantitySamplePredicate: queryPredicate, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
             

@@ -77,7 +77,6 @@ class CalorieData: ObservableObject {
     }
     
     func fetchCalsBetween(from: Date,to: Date) -> [CalorieEntry]{
-//    @MainActor func fetchCalsBetween(from: Date,to: Date) -> [CalorieEntry]{
         
         let searchPredicate = #Predicate<CalorieEntry> { entry in
             (entry.date > from) && (entry.date < to)
@@ -93,14 +92,11 @@ class CalorieData: ObservableObject {
         return returns
     }
     
-    
-    //@MainActor func insertNewCals(object: CalorieEntry)
     func insertNewCals(object: CalorieEntry)
     {
         self.context.insert(object)
     }
     
-    //@MainActor func deleteEntries(objects: [CalorieEntry])
     func deleteEntries(objects: [CalorieEntry])
     {
         for object in objects {

@@ -10,6 +10,7 @@ import SwiftUI
 struct SummaryRow: View {
     let dateFormatter = DateFormatter()
     var dataLump: ChartDataLump
+    var curDate: Date
     @State var formDate: String = ""
 
     var body: some View {
@@ -87,7 +88,7 @@ struct SummaryRow: View {
             
             .onAppear() {
                 dateFormatter.dateFormat = "dd/MM"
-                formDate = dataLump.date.formatted(date: .numeric, time: .omitted)
+                formDate = curDate.formatted(date: .numeric, time: .omitted)
                 formDate = String(formDate.dropLast(5))
             }
         }

@@ -138,9 +138,18 @@ class TodayLump: ObservableObject {
             case false: returnColor = .green
             }
         }
-        
-        
         return returnColor
+    }
+    
+    var normalisedLTE: String {
+        var valueReturned: Int = 0
+        if self.leftToEat < 0
+        {
+            valueReturned = -self.leftToEat
+        } else {
+            valueReturned = self.leftToEat
+        }
+        return valueReturned.formatted()
     }
 }
 

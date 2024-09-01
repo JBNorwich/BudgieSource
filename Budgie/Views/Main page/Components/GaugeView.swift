@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GaugeView: View {
     @Binding var dataLump: TodayLump
-    let gradient = Gradient(colors: [.teal, .green, .yellow, .red])
+    let gradient = Gradient(colors: [.blue, .green, .yellow, .red])
     
     var body: some View {
         HStack {
@@ -42,12 +42,12 @@ struct GaugeView: View {
                         } else if dataLump.totalBudgetRem < 500 {
                             Text("Be careful - you've only got **\( dataLump.totalBudgetRem)kcal** left in your budget for the rest of the day.")
                         } else {
-                            Text("It looks like you're over target for this time of day by \(dataLump.budgetDiffByTime) calories, but you have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
+                            Text("It looks like you're over target for this time of day by \(dataLump.normalisedLTE) calories, but you have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
                         }
                     } else if dataLump.budgetDiffByTime < -500 {
                         Text("You're way below your target for this time of day! You can eat **\(dataLump.leftToEat)kcal** right now, and have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
                     } else if dataLump.budgetDiffByTime < -50 {
-                        Text("It looks like you're below your target for this time of day by \(-dataLump.budgetDiffByTime) calories; you can eat **\(dataLump.leftToEat)kcal** right now, and have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
+                        Text("It looks like you're below your target for this time of day; you can eat **\(dataLump.normalisedLTE)kcal** right now, and have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
                     } else {
                         Text("It looks like you're about on target right now! You have **\(dataLump.leftToEat)kcal** left to eat right now and **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
                     }

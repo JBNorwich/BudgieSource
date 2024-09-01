@@ -25,7 +25,7 @@ class HealthData: ObservableObject {
         do {
             let kcals = try await sumActCalsQuery.result(for: healthStore)?
                 .sumQuantity()
-            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded(.up) ?? 0
         }
         catch {
             calories = 0
@@ -58,7 +58,7 @@ class HealthData: ObservableObject {
             do {
                 let kcals = try await sumActCalsQuery.result(for: healthStore)?
                     .sumQuantity()
-                calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+                calories += kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded(.up) ?? 0
             }
             catch {
                 calories += 0
@@ -91,7 +91,7 @@ class HealthData: ObservableObject {
         do {
             let kcals = try await sumActCalsQuery.result(for: healthStore)?
                 .sumQuantity()
-            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded(.up) ?? 0
         }
         catch {
             calories = 0
