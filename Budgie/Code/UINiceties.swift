@@ -78,3 +78,9 @@ func calcBMR(height: Int, weight: Int, age: Int, sex: Int)-> Int {
     
     return Int(calculated)
 }
+
+func getBudgieGreeting() -> String {
+    let greetingArray = ["Hi.", "Hello.", "Cheep.", "Tweet.", "Chirp.", "Aah! You found me!", "...moo?"]
+    
+    return greetingArray.randomElement()!
+}

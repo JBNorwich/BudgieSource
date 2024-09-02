@@ -68,7 +68,7 @@ struct BudgetView: View {
                             Image("Budgie")
                                 .resizable()
                                 .frame(maxWidth: 116,maxHeight: 100)
-                            Text("Hi.")
+                            Text(getBudgieGreeting())
                             Spacer()
                         }.offset(x: 0, y: 50)
                     }
