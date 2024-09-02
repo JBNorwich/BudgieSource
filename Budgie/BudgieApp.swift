@@ -11,8 +11,6 @@ import HealthKitUI
 let healthStore: HKHealthStore = HKHealthStore()
 let settingsObj: UserSettings = UserSettings()
 
-
-
 @main
 struct BudgieApp: App {
     

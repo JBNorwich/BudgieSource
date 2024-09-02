@@ -11,18 +11,14 @@ import SwiftData
 class ListObject: ObservableObject {
     var curDate: Date
     var budgieData: [CalorieEntry]
-    var healthKitData: [CalorieEntry]
+    var hkCalories: Int
     var mealList: [Meal]
     
     init() {
         budgieData = []
-        healthKitData = []
         mealList = []
         curDate = Date()
-        
-        let hkCalorieObj = CalorieEntry(date:getStartOfDay(date: Date()), calories: 0, narrative: "Calories from Health", mealUUID: UUID(), isInHK: true, healthKitUUID: nil)
-        hkCalorieObj.realEntry = false
-        healthKitData.append(hkCalorieObj)
+        hkCalories = 0
     }
 }
 
@@ -69,8 +65,7 @@ struct FoodHub: View {
             
             listObject.mealList = calorieData.cleansedMealList(data: newData)
             listObject.budgieData = newData
-            listObject.healthKitData[0].calories = hkEaten
-            listObject.healthKitData[0].date = curDate
+            listObject.hkCalories = hkEaten
             dataLump = newLump
             
             timeToAddOn = getCurrentTimeonDate(date: curDate)

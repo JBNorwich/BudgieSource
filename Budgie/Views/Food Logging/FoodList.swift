@@ -27,13 +27,10 @@ struct FoodList: View {
                 Text("You have no calories logged in Budgie Diet on this day.")
             }
             
-            if list.healthKitData.count != 0  {
-                if list.healthKitData[0].calories != 0 {
-                    Section(header: Text("Calories from other apps"), footer: Text("These are calories logged in Health by other apps. You'll need to go to the app that logged them to change or delete them.")) {
-                        ForEach(list.healthKitData) {
-                            CalorieEntryView(calories: $0.calories, narrative: $0.narrative ?? "Quick calories", realEntry: $0.realEntry, date: $0.date)
-                        }
-                    }.deleteDisabled(true)
+            if list.hkCalories != 0  {
+                Section(header: Text("Calories from other apps"), footer: Text("These are calories logged in Health by other apps. You'll need to go to the app that logged them to change or delete them.")) {
+                    CalorieEntryView(calories: list.hkCalories, narrative: "Calories from other apps", realEntry: false, date: list.curDate)
+                        .deleteDisabled(true)
                 }
             }
         }.listStyle(.grouped)
