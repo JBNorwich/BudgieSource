@@ -37,6 +37,8 @@ class ChartDataLump: Identifiable {
     var basalDone: Bool = false
     var eatenDone: Bool = false
     @Published var dataUpdated: Bool = false
+    var actAsIfManual: Bool = false
+    var updateInProgress: Bool = false
     
     init() {
         endDate = getMidnightOnDayAfter(date: Date())
@@ -60,24 +62,27 @@ class ChartDataLump: Identifiable {
         self.activePackets.removeAll()
         self.eatenPackets.removeAll()
         self.budgieEatenPackets.removeAll()
+        self.actAsIfManual = false
     }
     
     @MainActor func pokeForUpdate() async
     {
-        self.cleanDataObject()
-        if settingsObj.manualMode == false {
-            await fetchChartActive()
-            await fetchChartBasal()
-        } else {
-            self.activeDone = true
-            self.basalDone = true
+        if self.updateInProgress == false {
+            self.updateInProgress = true
+            if settingsObj.manualMode == false {
+                await fetchChartActive()
+                await fetchChartBasal()
+            } else {
+                self.activeDone = true
+                self.basalDone = true
+            }
+            await fetchChartEaten()
+            var notified: Bool = false
+            while allDoneCheck() != true {
+                if notified == false { notified = true }
+            }
+            self.dataUpdated = true
         }
-        await fetchChartEaten()
-        var notified: Bool = false
-        while allDoneCheck() != true {
-            if notified == false { notified = true }
-        }
-        self.dataUpdated = true
     }
     
     @MainActor func fetchChartActive() async
@@ -112,9 +117,7 @@ class ChartDataLump: Identifiable {
             { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let date = statistics.startDate
-                    print(quantity.doubleValue(for: .kilocalorie()).formatted())
                     let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
-                    
                     self.activePackets.append(CalsPacket(date:date, cals:value))
                 }
             }
@@ -149,14 +152,20 @@ class ChartDataLump: Identifiable {
                 return
             }
             
+            var cumValue: Int = 0
+            
             actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
             { statistics, _ in
-                if let quantity = statistics.sumQuantity(){
+                if let quantity = statistics.sumQuantity() {
                     let date = statistics.startDate
-                    print(quantity.doubleValue(for: .kilocalorie()).formatted())
                     let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
+                    cumValue += value
                     self.basalPackets.append(CalsPacket(date:date, cals:value))
                 }
+            }
+            
+            if cumValue == 0 {
+                self.actAsIfManual = true
             }
             
             self.basalDone = true
@@ -220,9 +229,9 @@ class ChartDataLump: Identifiable {
     {
         var returnValue: [ChartDataLump] = []
         
-        if settingsObj.manualMode == true {
+        if settingsObj.manualMode == true || self.actAsIfManual == true {
             var iterateDate = self.startDate
-            while iterateDate < getMidnightOnDayAfter(date: self.endDate) {
+            while iterateDate < self.endDate {
                 let newLump = ChartDataLump()
                 newLump.date = iterateDate
                 newLump.basalCals = settingsObj.manualBMR
@@ -275,5 +284,7 @@ class ChartDataLump: Identifiable {
         self.dataUpdated = false
         
         self.returnedChartData = returnValue
+        self.cleanDataObject()
+        self.updateInProgress = false
     }
 }

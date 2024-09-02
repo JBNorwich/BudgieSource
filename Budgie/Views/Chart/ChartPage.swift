@@ -54,13 +54,15 @@ struct ChartPage: View {
         }
         .onChange(of: chartDataStore.dataUpdated)
         {
-            loadingDone = false
-            chartDataStore.assembleChartData()
-            loadingDone = true
-            dateChanged = false
+            if chartDataStore.dataUpdated == true {
+                loadingDone = false
+                chartDataStore.assembleChartData()
+                loadingDone = true
+                dateChanged = false
+            }
         }
     
-        .onChange(of: dateChanged) {
+        .onChange(of: dateChanged, initial: false) {
             if dateChanged == true {
                 chartDataStore.startDate = getStartOfDay(date: startDate)
                 chartDataStore.endDate = getStartOfDay(date: endDate)
@@ -74,6 +76,9 @@ struct ChartPage: View {
         .onAppear() {
             startDate = chartDataStore.startDate
             endDate = chartDataStore.endDate
+            Task {
+                await chartDataStore.pokeForUpdate()
+            }
         }
     }
 }
