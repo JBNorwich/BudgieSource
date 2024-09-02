@@ -18,7 +18,7 @@
                BlueprintIdentifier = "D89461A02C73C3FC00138B60"
                BuildableName = "Budgie.app"
                BlueprintName = "Budgie"
-               ReferencedContainer = "container:Budgie.xcodeproj">
+               ReferencedContainer = "container:Diet Budgie.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "D89461A02C73C3FC00138B60"
             BuildableName = "Budgie.app"
             BlueprintName = "Budgie"
-            ReferencedContainer = "container:Budgie.xcodeproj">
+            ReferencedContainer = "container:Diet Budgie.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
@@ -67,7 +67,7 @@
             BlueprintIdentifier = "D89461A02C73C3FC00138B60"
             BuildableName = "Budgie.app"
             BlueprintName = "Budgie"
-            ReferencedContainer = "container:Budgie.xcodeproj">
+            ReferencedContainer = "container:Diet Budgie.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
