@@ -78,11 +78,13 @@ class TodayLump: ObservableObject {
     }
     
     var progressAgainstTime: Double {
+        //0.74 / 0.666
         let value = self.progressToday / getPercentOfDayDone()
         return value
     }
     
     var budgetDiffByTime: Int {
+        // 0.11 * (0.666 * 2454)
         let result = (self.progressAgainstTime - 1) * (getPercentOfDayDone() * Double(self.totalBudget))
         return Int(result)
     }

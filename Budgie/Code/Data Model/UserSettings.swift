@@ -102,5 +102,9 @@ class UserSettings {
         get { return defaults?.value(forKey: "shownExplainer") as? Bool ?? false }
         set { defaults?.set(newValue, forKey: "shownExplainer")}
     }
+    var donated: Bool {
+        get { return defaults?.value(forKey: "donated") as? Bool ?? true }
+        set { defaults?.set(newValue, forKey: "donated")}
+    }
 }
 

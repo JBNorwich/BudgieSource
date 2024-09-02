@@ -82,7 +82,7 @@ struct SettingsView: View {
                         .focusable()
                         .focused($focusResting)
                 } label: { Text("Resting calories") }
-                    
+                
                 LabeledContent {
                     TextField(manualActive.formatted(), value: $manualActive, format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
                         .multilineTextAlignment(.trailing)
@@ -104,7 +104,7 @@ struct SettingsView: View {
                 Button("Calculate this for me") {
                     showingBMRHelper = true
                 }.sheet(isPresented: $showingBMRHelper, onDismiss: { pingManual() }) {
-                        BMRHelper(isPresented: $showingBMRHelper, manualBMR: $manualBMR, manualActive: $manualActive, settingsObj: settingsObj)
+                    BMRHelper(isPresented: $showingBMRHelper, manualBMR: $manualBMR, manualActive: $manualActive, settingsObj: settingsObj)
                 }.presentationDragIndicator(.visible)
             }
             
@@ -132,51 +132,58 @@ struct SettingsView: View {
             
             Section(header: Text("About")) {
                 VStack {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            HStack{
-                                Image(.icon)
-                                    .resizable()
-                                    .frame(maxWidth: 100,maxHeight: 100)
-                                VStack {
-                                    Text("Budgie Diet")
-                                        .font(.largeTitle)
-                                        .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-                                    Text("The calorie budget app")
-                                        .font(.headline)
-                                }
-                                .padding()
+                    HStack {
+                        Spacer()
+                        HStack{
+                            Image(.icon)
+                                .resizable()
+                                .frame(maxWidth: 100,maxHeight: 100)
+                            VStack {
+                                Text("Budgie Diet")
+                                    .font(.largeTitle)
+                                    .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
+                                Text("The calorie budget app")
+                                    .font(.headline)
                             }
-                            Spacer()
-                        }
-                        Text("Copyright 2024 Joe Baldwin")
-                        
-                        Link("Send me feedback/bug reports", destination: URL(string: "mailto:budgieapp@icloud.com")!)
                             .padding()
-                        
+                        }
+                    }
+                    Text("Copyright 2024 Joe Baldwin")
+                }
+            }
+            
+            Section {
+                HStack {
+                    Spacer()
+                    VStack {
+                        Link(destination: URL(string: "mailto:budgieapp@icloud.com")!){
+                            Text("Send me feedback/bug reports!")
+                        }
+                        Spacer()
                         Link(destination: URL(string: "https://github.com/JBNorwich/Budgie/wiki/Privacy-policy")!) {
                             Text("Privacy policy")
                         }
-                        .padding()
-                        
-                        NavigationLink {
-                            Donate()
-                        } label: {
-                            Text("Tip me a protein bar!")
-                        }
-                        .padding()
-                        
-                        NavigationLink {
-                            Disclaimer(displayed: $disclaimerDisplayed)
-                        } label: {
-                            Text("Health disclaimer")
-                        }
-                        .padding()
                     }.padding()
+                    Spacer()
                 }
             }
-        }
+            Section {
+                VStack {
+                    NavigationLink {
+                        Donate()
+                    } label: {
+                        Text("Tip me a protein bar!")
+                    }
+                }
+            }
+            Section {
+                    NavigationLink {
+                        Disclaimer(displayed: $disclaimerDisplayed)
+                    } label: {
+                        Text("Health disclaimer")
+                    }
+                }
+            }
         
 
     

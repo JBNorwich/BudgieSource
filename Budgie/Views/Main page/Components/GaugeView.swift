@@ -42,7 +42,7 @@ struct GaugeView: View {
                         } else if dataLump.totalBudgetRem < 500 {
                             Text("Be careful - you've only got **\( dataLump.totalBudgetRem)kcal** left in your budget for the rest of the day.")
                         } else {
-                            Text("It looks like you're over target for this time of day by \(dataLump.normalisedLTE) calories, but you have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
+                            Text("You have **\(dataLump.totalBudgetRem)kcal** left in your budget overall today.")
                         }
                     } else if dataLump.budgetDiffByTime < -500 {
                         Text("You're way below your target for this time of day! You can eat **\(dataLump.leftToEat)kcal** right now, and have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
