@@ -1,6 +1,6 @@
 //
 //  FoodHub.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 25/08/2024.
 //

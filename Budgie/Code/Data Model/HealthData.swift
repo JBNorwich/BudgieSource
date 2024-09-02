@@ -1,6 +1,6 @@
 //
 //  HealthData.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 19/08/2024.
 //
@@ -33,7 +33,7 @@ class HealthData: ObservableObject {
         return Int(calories)
     }
     
-    ///Grabs the calorie total for a given date range and type from HealthKit and (for eaten) Budgie. If manual mode is on, will return either the manual BMR/active amounts or, for eaten calories, just the amount of Budgie calories. You must normalise the date to 00:00 before passing the date. Set hkOnly to true if you only care about HealthKit calories.
+    ///Grabs the calorie total for a given date range and type from HealthKit and (for eaten) Budgie Diet. If manual mode is on, will return either the manual BMR/active amounts or, for eaten calories, just the amount of Budgie Diet calories. You must normalise the date to 00:00 before passing the date. Set hkOnly to true if you only care about HealthKit calories.
     func pullCalorieTotalForDate(date: Date, type: HKQuantityType, hkOnly: Bool) async -> Int {
         var calories: Double = 0
         let startDate = getStartOfDay(date: date)

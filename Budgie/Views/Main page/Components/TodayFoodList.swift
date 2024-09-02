@@ -1,6 +1,6 @@
 //
 //  TodayFoodList.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 28/08/2024.
 //

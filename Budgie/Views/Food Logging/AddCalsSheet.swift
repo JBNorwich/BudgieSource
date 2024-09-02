@@ -1,6 +1,6 @@
 //
 //  AddCalsSheet.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 22/08/2024.
 //

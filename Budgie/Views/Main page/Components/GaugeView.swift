@@ -1,6 +1,6 @@
 //
 //  GaugeView.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 29/08/2024.
 //

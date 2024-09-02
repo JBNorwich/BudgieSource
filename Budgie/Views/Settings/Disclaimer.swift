@@ -1,6 +1,6 @@
 //
 //  Disclaimer.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 25/08/2024.
 //
@@ -14,7 +14,7 @@ struct Disclaimer: View {
         NavigationStack {
             List {
                 Section (header: Text("This app isn't medical advice")) {
-                Text("Budgie is for information purposes only, and its suggestions are not a substitute for professional medical advice. It's best to consult your doctor before starting any new diet plan.")
+                Text("Budgie Diet is for information purposes only, and its suggestions are not a substitute for professional medical advice. It's best to consult your doctor before starting any new diet plan.")
                 }
                 
                 
@@ -27,7 +27,7 @@ struct Disclaimer: View {
                 }
                 
                 Section(header: Text("You are responsible for your choices")) {
-                    Text("Budgie will let you choose a target calorie deficit to aim for. It is for you, in discussion with your doctor, to work out what calorie deficit is right for you, and whether to use Budgie at all. Its suggestions are purely advisory, and are not specific to you or your needs.\n\nThe maker of this app is not responsible for any harm caused by choosing a diet that is too restrictive for you.")
+                    Text("Budgie Diet will let you choose a target calorie deficit to aim for. It is for you, in discussion with your doctor, to work out what calorie deficit is right for you, and whether to use Budgie at all. Its suggestions are purely advisory, and are not specific to you or your needs.\n\nThe maker of this app is not responsible for any harm caused by choosing a diet that is too restrictive for you.")
                 }
             }
             .navigationTitle("Disclaimer")

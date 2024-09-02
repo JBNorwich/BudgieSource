@@ -1,6 +1,6 @@
 //
 //  FirstRunSheet.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 23/08/2024.
 //
@@ -33,7 +33,7 @@ struct FirstRunSheet: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Text("Let's get you set up!\n\nBudgie doesn't send your information anywhere, has no ads and doesn't track you.")
+                Text("Let's get you set up!\n\nBudgie Diet doesn't send your information anywhere, has no ads and doesn't track you.")
                     .multilineTextAlignment(.center)
                     .padding()
                 
@@ -41,7 +41,7 @@ struct FirstRunSheet: View {
                     Text("Privacy policy")
                 }
                 
-                    .navigationTitle("Welcome to Budgie!")
+                    .navigationTitle("Welcome to Budgie Diet!")
                     .navigationBarTitleDisplayMode(.inline)
             }
             Form {
@@ -58,7 +58,7 @@ struct FirstRunSheet: View {
                 }
                 
                 if hkBitDone != true {
-                    Text("You need to do this to get the best out of Budgie. Please do grant permissions after hitting the button - if you don't, Budgie won't work properly!")
+                    Text("You need to do this to get the best out of Budgie Diet, as it lets me assess your recent activity to decide your budgets and bring in your food data from other apps. Please do grant permissions after hitting the button!")
                 }
                 
                 // fallback/BMR data request
@@ -169,7 +169,7 @@ struct FirstRunSheet: View {
             
             
             if allComplete == true {
-                Button("Start using Budgie") {
+                Button("Start using Budgie Diet") {
                     isPresented = false
                     settingsObj.isFirstRun = false
                 }.buttonStyle(.bordered)

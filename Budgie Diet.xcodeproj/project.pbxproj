@@ -472,7 +472,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D894619C2C73C3FC00138B60 /* Build configuration list for PBXProject "Diet Budgie" */;
+			buildConfigurationList = D894619C2C73C3FC00138B60 /* Build configuration list for PBXProject "Budgie Diet" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -742,7 +742,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Budgie/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Budgie;
+				INFOPLIST_KEY_CFBundleDisplayName = DietBudgie;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie needs to read your health data to calculate your remaining calories.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie needs to read your health data to calculate your remaining calories.";
@@ -779,7 +779,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Budgie/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Budgie;
+				INFOPLIST_KEY_CFBundleDisplayName = DietBudgie;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie needs to read your health data to calculate your remaining calories.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie needs to read your health data to calculate your remaining calories.";
@@ -921,7 +921,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D894619C2C73C3FC00138B60 /* Build configuration list for PBXProject "Diet Budgie" */ = {
+		D894619C2C73C3FC00138B60 /* Build configuration list for PBXProject "Budgie Diet" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D89461AD2C73C3FD00138B60 /* Debug */,

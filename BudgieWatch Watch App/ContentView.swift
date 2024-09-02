@@ -42,7 +42,7 @@ struct ContentView: View {
                         }
                     }
                     Divider()
-                    Text("To see more, open Budgie on your iPhone.")
+                    Text("To see more, open Budgie Diet on your iPhone.")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
                         .font(.footnote)

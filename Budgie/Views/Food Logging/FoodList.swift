@@ -1,6 +1,6 @@
 //
 //  FoodList.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 26/08/2024.
 //
@@ -24,7 +24,7 @@ struct FoodList: View {
                     }
                 }
             } else {
-                Text("You have no calories logged in Budgie on this day.")
+                Text("You have no calories logged in Budgie Diet on this day.")
             }
             
             if list.healthKitData.count != 0  {

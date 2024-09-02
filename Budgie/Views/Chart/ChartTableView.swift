@@ -1,6 +1,6 @@
 //
 //  ChartTableView.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 24/08/2024.
 //

@@ -1,6 +1,6 @@
 //
 //  WhaleFacts.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 24/08/2024.
 //
@@ -33,7 +33,7 @@ let whaleFactsArray: [String] =
     "Whales would generally prefer people stop saying that they're having \"a whale of a time\". They feel it belittles their lived experiences.",
     "Whales can fly, they just prefer not to.",
     "If you're interested in seeing whales, a great idea is to look in the ocean. There's loads of them there.",
-    "Whales have little use for an app such as Budgie, but I don't hold that against them.",
+    "Whales have little use for an app such as Budgie Diet, but I don't hold that against them.",
     "In England, whales are called \"splishy-splashy flippy-flappington lumperdink-Joneses\".",
     "Whales are surprisingly low in calories for their size.",
     "Whales are ineligible to become Prime Minister of the United Kingdom.",

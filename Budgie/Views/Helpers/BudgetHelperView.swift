@@ -1,6 +1,6 @@
 //
 //  BudgetHelperView.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 20/08/2024.
 //

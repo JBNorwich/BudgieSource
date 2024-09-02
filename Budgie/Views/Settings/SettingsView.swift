@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 20/08/2024.
 //
@@ -36,7 +36,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             if surplusMode == false {
-                Section(header: Text("Desired calorie deficit"), footer: Text("This is the net calorie deficit you'd like Budgie to help you land at.")) {
+                Section(header: Text("Desired calorie deficit"), footer: Text("This is the net calorie deficit you'd like Budgie Diet to help you land at.")) {
                     Slider(value: $doubleDeficit,
                            in: 0...1000,
                            step: 50,
@@ -52,7 +52,7 @@ struct SettingsView: View {
                     }
                 }
             } else {
-                Section(header: Text("Desired calorie surplus"), footer: Text("This is the net calorie surplus you'd like Budgie to help you land at.")) {
+                Section(header: Text("Desired calorie surplus"), footer: Text("This is the net calorie surplus you'd like Budgie Diet to help you land at.")) {
                     Slider(value: $desiredSurplus,
                            in: 0...1000,
                            step: 50,
@@ -140,7 +140,7 @@ struct SettingsView: View {
                                     .resizable()
                                     .frame(maxWidth: 100,maxHeight: 100)
                                 VStack {
-                                    Text("Budgie")
+                                    Text("Budgie Diet")
                                         .font(.largeTitle)
                                         .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
                                     Text("The calorie budget app")

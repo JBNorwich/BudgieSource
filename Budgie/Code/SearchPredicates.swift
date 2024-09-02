@@ -1,6 +1,6 @@
 //
 //  SearchPredicates.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 26/08/2024.
 //
@@ -9,7 +9,7 @@ import Foundation
 import HealthKitUI
 
 //PREDICATES FOR REUSE
-/// Predicate that returns only data not logged by Budgie.
+/// Predicate that returns only data not logged by Budgie Diet.
 
 let notBudgiePredicate = NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(from: HKSource.default()))
 
@@ -27,7 +27,7 @@ func getPrevWeekPredicate() -> NSPredicate {
 /// Predicate that returns everything from 00:00 today until forever. Used for continuous fetching of calorie data.
 let observerPredicate = HKQuery.predicateForSamples(withStart: getStartOfDay(date: Date()), end:.none)
 
-/// Predicate that returns samples from today that were not logged by Budgie.
+/// Predicate that returns samples from today that were not logged by Budgie Diet.
 func getNotBudgieTodayPredicate() -> NSCompoundPredicate
 {
     let todayPredicate = getTodayPredicate()

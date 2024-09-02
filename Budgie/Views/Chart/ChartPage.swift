@@ -1,6 +1,6 @@
 //
 //  ChartView.swift
-//  Budgie
+//  Budgie Diet
 //
 //  Created by Joe Baldwin on 22/08/2024.
 //
@@ -28,7 +28,7 @@ struct ChartPage: View {
                         ChartView(chartData: $chartDataStore.returnedChartData)
                         ChartTableView(dataStore: $dataStore, todayLump: $todayLump, chartData: $chartDataStore.returnedChartData)
                     } else {
-                        Label("No data was returned. Either you have no data in Health, or you didn't give Budgie permissions to see your data.", systemImage: "exclamationmark.octagon")
+                        Label("No data was returned. Either you have no data in Health, or you didn't give Budgie Diet permissions to see your data.", systemImage: "exclamationmark.octagon")
                         Spacer()
                     }
                     
