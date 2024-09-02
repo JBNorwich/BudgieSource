@@ -20,7 +20,7 @@ func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
     
     switch styleToUse {
         case -1: startTime = 240
-        case 0: startTime = 240
+        case 0: startTime = 0
         case 1: startTime = 0
         default: startTime = 0
     }
