@@ -80,6 +80,11 @@ class ChartDataLump: Identifiable {
             var notified: Bool = false
             while allDoneCheck() != true {
                 if notified == false { notified = true }
+                do {
+                    try await Task.sleep(nanoseconds: 100_000_000)
+                } catch {
+                    //nothing
+                }
             }
             self.dataUpdated = true
         }
