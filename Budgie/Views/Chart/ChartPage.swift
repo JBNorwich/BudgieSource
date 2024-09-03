@@ -74,6 +74,7 @@ struct ChartPage: View {
         }
         
         .onAppear() {
+            loadingDone = false
             startDate = chartDataStore.startDate
             endDate = chartDataStore.endDate
             Task {
