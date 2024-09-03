@@ -44,7 +44,7 @@ func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
     
     switch styleToUse {
         case -1: finalWeightFactor = 1 - pow(weightFactor, 5)
-        case 0: finalWeightFactor = 1 - pow(weightFactor, 3)
+        case 0: finalWeightFactor = 1 - pow(weightFactor, 2)
         case 1: finalWeightFactor = 1 - weightFactor
         default: finalWeightFactor = 0
     }
