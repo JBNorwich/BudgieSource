@@ -59,6 +59,7 @@ func weightForCertainty(input: Int) -> Int {
 }
 
 func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
+    var doubleInput = Double(input)
     var styleToUse: Int
     var time: Double
     if style != nil {
@@ -78,6 +79,13 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
     var weightTime: Double
     var weightFactor: Double
     var finalWeightFactor: Double
+    
+    switch styleToUse {
+        case -1: doubleInput = 1 * doubleInput
+        case 0: doubleInput = 0.875 * doubleInput
+        case 1: doubleInput = 0.75 * doubleInput
+        default: print("Doing nothing")
+    }
     
     switch styleToUse {
         case -1: startTime = 240
@@ -110,7 +118,7 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
         default: finalWeightFactor = 0
     }
     
-    let result = Int(finalWeightFactor * Double(input))
+    let result = Int(finalWeightFactor * doubleInput)
     
     if result > 0 {
         return result

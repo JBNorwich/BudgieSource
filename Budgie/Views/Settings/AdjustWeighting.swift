@@ -9,6 +9,7 @@ import SwiftUI
 import Charts
 
 func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
+    var doubleInput = Double(input)
     let styleToUse = style
     let time = Double(timeInput)
     
@@ -17,6 +18,13 @@ func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
     var weightTime: Double
     var weightFactor: Double
     var finalWeightFactor: Double
+    
+    switch styleToUse {
+        case -1: doubleInput = 1 * doubleInput
+        case 0: doubleInput = 0.875 * doubleInput
+        case 1: doubleInput = 0.75 * doubleInput
+        default: print("Doing nothing")
+    }
     
     switch styleToUse {
         case -1: startTime = 240
@@ -49,7 +57,7 @@ func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
         default: finalWeightFactor = 0
     }
     
-    let result = finalWeightFactor * Double(input)
+    let result = finalWeightFactor * doubleInput
     
     if result > 0 {
         return result
@@ -85,7 +93,7 @@ class WeightingChartObject {
     }
 }
 
-let weightingText = "This adjusts how predicted active calories are weighted. Most people should stick with the default, but you can change it if you feel your budgets are often too high or low.\n\nThis setting doesn't affect predicted resting calories or calories not predicted from Apple Health data, which are always predicted linearly.\n\n**Forgiving:** Budgie Diet more strongly adjusts its predictions in the late evening and continues predicting until midnight. This works well if you usually exercise in the evening, but it might make your budget less accurate.\n\n**Default:** This balanced setting gradually adjusts predictions from morning to 10pm, when it stops predicting new calories. It’s great for most people, or if your exercise schedule varies.\n\n**Harsh:** This setting starts adjusting your predictions down right away, and continues throughout the day until 10pm. It’s ideal for early morning exercisers, but may significantly reduce your budget otherwise.\n\n**No predictions at all:** Budgie Diet won’t estimate active calories for you. Your budget will only include resting calories and any exercise you’ve done. It’ll be very accurate, but might feel a bit restrictive, especially in the mornings."
+let weightingText = "This adjusts how predicted active calories are weighted. Most people should stick with the default, but you can change it if you feel your budgets are often too high or low.\n\nThis setting doesn't affect predicted resting calories or calories not predicted from Apple Health data, which are always predicted linearly.\n\n**Forgiving:** Budgie Diet more strongly adjusts its predictions in the late evening and continues predicting until midnight, while making no adjustments to your average. This works well if you usually exercise in the evening, but it might make your budget less accurate.\n\n**Default:** This balanced setting gradually adjusts predictions from morning to 10pm, when it stops predicting new calories, and only downweights your average by about 10% when making predictions. It’s great for most people, or if your exercise schedule varies.\n\n**Harsh:** This setting starts adjusting your predictions down right away very harshly, and continues linearly throughout the day until 10pm. This is ideal for people who either exercise in the early morning or not at all, but will significantly reduce your budget otherwise.\n\n**No predictions at all:** Budgie Diet won’t estimate active calories for you. Your budget will only include resting calories and any exercise you’ve done. It’ll be very accurate, but might feel a bit restrictive, especially in the mornings."
 
 let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": Color.yellow, "Harsh": Color.red])
 
