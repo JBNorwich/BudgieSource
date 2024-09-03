@@ -212,7 +212,7 @@ struct BudgetView: View {
         }
         
         .onChange(of: dataStore.dataUpdated) {
-            if dataStore.dataUpdated == true {
+            if dataStore.dataUpdated == true && dataStore.updateInProgress == false {
                 if scenePhase != .background {
                     Task {
                         await todayLump = dataStore.produceTodayObject()
@@ -240,7 +240,6 @@ struct BudgetView: View {
             firstRun = settingsObj.isFirstRun
             dataStore.lastUpdateRequestSource = "Initial start"
             dataStore.dataUpdated = true
-            
             
             switch colorScheme {
             case .dark: backgroundGradient.backgroundGradient = LinearGradient(

@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 
 class UserSettings {
-    private let defaults = UserDefaults(suiteName: "group.com.joebaldwin.budgie")
+    private let defaults = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
     
     init()
     {

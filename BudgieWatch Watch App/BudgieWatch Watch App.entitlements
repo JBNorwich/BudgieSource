@@ -10,7 +10,7 @@
 	<array/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.joebaldwin.budgie</string>
+		<string>group.JoeBaldwin.Budgie</string>
 	</array>
 </dict>
 </plist>

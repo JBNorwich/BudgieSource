@@ -16,6 +16,7 @@ class HealthData: ObservableObject {
     var forceRefresh: Bool = false
     var isBackgroundPing: Bool = false
     var lastUpdateRequestSource: String = String()
+    var updateInProgress = false
     
     func pullCalorieTotalTodayFromHK(type: HKQuantityType) async -> Int {
         var calories = Double()
@@ -218,12 +219,13 @@ class HealthData: ObservableObject {
             // error handling
         }
         
-        if daysInSample != 0 { daysInSample = daysInSample - 1 }
+        if daysInSample != 0 && type == basalQuantityType { daysInSample = daysInSample - 1 }
         
         if daysInSample == 0 {
             estimated = true
         }
         
+
         if daysInSample < 7 {
             let daysToAdd = 7 - daysInSample
             var manualToAdd: Double
@@ -352,7 +354,7 @@ class HealthData: ObservableObject {
     
     func produceTodayObject() async -> TodayLump {
         print("Update requested by: " + self.lastUpdateRequestSource)
-        
+        self.updateInProgress = true
         let calorieData = await CalorieData()
         let todayStart = getStartOfDay(date: Date())
         let todayEnd = getMidnightOnDayAfter(date: todayStart)
@@ -392,7 +394,9 @@ class HealthData: ObservableObject {
         }
         self.isBackgroundPing = false
         self.dataUpdated = false
+        self.updateInProgress = false
         return newLump
+        
     }
 }
 
