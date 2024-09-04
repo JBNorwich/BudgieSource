@@ -21,8 +21,8 @@ func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
     
     switch styleToUse {
         case -1: doubleInput = 1 * doubleInput
-        case 0: doubleInput = 0.875 * doubleInput
-        case 1: doubleInput = 0.75 * doubleInput
+        case 0: doubleInput = 0.75 * doubleInput
+        case 1: doubleInput = 0.5 * doubleInput
         default: print("Doing nothing")
     }
     
