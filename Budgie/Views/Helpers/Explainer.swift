@@ -35,7 +35,7 @@ struct Explainer: View {
                     }
                         .buttonStyle(.borderedProminent)
                 }
-                .navigationTitle("How Budgie Diet works")
+                .navigationTitle("How this works")
             }
         }
     }
