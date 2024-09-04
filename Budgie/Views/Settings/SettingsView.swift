@@ -115,8 +115,7 @@ struct SettingsView: View {
                 }
             }
             
-            Section(header: Text("Apple Health")) {
-                Toggle("Log new calories added to Health", isOn: $healthLogging)
+            Section(header: Text("Apple Health"), footer: Text("Turning this on will stop Budgie Diet using data from Apple Health to set your budgets. It will also stop Budgie Diet adding new food eaten to Apple Health, but won't delete any old entries.")) {
                 Toggle("Ignore all Apple Health data", isOn: $manualMode)
             }
             

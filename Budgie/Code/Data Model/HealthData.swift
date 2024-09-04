@@ -274,7 +274,7 @@ class HealthData: ObservableObject {
         
         var didHK = Bool()
         var hkUUID: UUID = UUID()
-        if settingsObj.healthLogging == true {
+        if settingsObj.manualMode != true {
             let authStatus = healthStore.authorizationStatus(for: eatenQuantityType)
             if authStatus == HKAuthorizationStatus.sharingAuthorized {
                 let quantityUnit = HKUnit(from:.kilocalorie)
