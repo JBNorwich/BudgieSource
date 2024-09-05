@@ -29,6 +29,7 @@ struct FirstRunSheet: View {
     @State var allComplete = false
     @State var stage = 0
     @State var disclaimerOn = false
+    @State var goalNotChosen = true
     
     var body: some View {
         NavigationStack {
@@ -97,7 +98,7 @@ struct FirstRunSheet: View {
                 if (goalDone != true && hkBitDone == true && BMRdone == true) {
                     VStack {
                         Text("I want to...")
-                        Picker("Sex at birth", selection: $chosenGoal) {
+                        Picker("Goal", selection: $chosenGoal) {
                             Text("Lose weight").tag(1)
                             Text("Stay the same").tag(2)
                             Text("Gain weight").tag(3)
@@ -105,7 +106,7 @@ struct FirstRunSheet: View {
                         .pickerStyle(.segmented)
                         Button("Continue") {
                             goalDone = true
-                        }
+                        }.disabled(goalNotChosen)
                     }
                 }
                 
@@ -230,6 +231,10 @@ struct FirstRunSheet: View {
                     dataStore.dataUpdated = true
                 }
             }
+        }
+        
+        .onChange(of: chosenGoal, initial: false) {
+            goalNotChosen = false
         }
     }
 }
