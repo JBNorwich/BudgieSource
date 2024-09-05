@@ -20,7 +20,7 @@ struct Donate: View {
                     Text("Thank you for using Budgie Diet! This app is and always will be free of charge for everyone, with no ads, no tracking, no logins, no hassle.\n\nIf you like the app, please do help me in _my_ fitness goals by donating me a protein bar (or rather, the price of one) using the button below!")
                         .padding()
                     
-                    ProductView(id: "ProteinBar") {
+                    ProductView(id: "Donation") {
                         Image("Bar Emoji")
                             .resizable()
                             .scaledToFit()
