@@ -92,7 +92,7 @@ struct Provider: TimelineProvider {
     var lump = TodayLump()
     
     func placeholder(in context: Context) -> BudgieEntry {
-        BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
+        BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (BudgieEntry) -> ()) {
