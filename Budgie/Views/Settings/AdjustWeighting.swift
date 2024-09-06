@@ -148,6 +148,7 @@ struct AdjustWeighting: View {
         
         .onChange(of: selectedOption) {
             settingsObj.weightingStyle = selectedOption
+            pingSettingsToWatch()
             dataStore.lastUpdateRequestSource = "Change of weighting option"
             dataStore.isBackgroundPing = false
             dataStore.dataUpdated = true

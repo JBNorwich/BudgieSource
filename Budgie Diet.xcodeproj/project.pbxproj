@@ -71,6 +71,9 @@
 		D8E831852C77549200AAF555 /* ChartPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831842C77549200AAF555 /* ChartPage.swift */; };
 		D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E8318A2C7797B200AAF555 /* BMRHelper.swift */; };
+		D8F117DC2C8B63830054F2A2 /* Connectivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F117DB2C8B63830054F2A2 /* Connectivity.swift */; };
+		D8F117DD2C8B65050054F2A2 /* Connectivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F117DB2C8B63830054F2A2 /* Connectivity.swift */; };
+		D8F117DE2C8B6D1E0054F2A2 /* Budgie Diet.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D89A95C32C84F752007796AB /* Budgie Diet.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +83,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = D89A95942C84BB53007796AB;
 			remoteInfo = BudgieWidgetExtension;
+		};
+		D8F117DF2C8B6D1E0054F2A2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D89461992C73C3FC00138B60 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D89A95C22C84F752007796AB;
+			remoteInfo = "Budgie DietWatch Watch App";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -111,6 +121,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
+				D8F117DE2C8B6D1E0054F2A2 /* Budgie Diet.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -131,9 +142,6 @@
 		D838A6112C8075710083F3B3 /* NewDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewDataView.swift; sourceTree = "<group>"; };
 		D838A6132C80828A0083F3B3 /* GaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaugeView.swift; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
-		D86A5BB12C88C5DD0076BE41 /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
-		D86A5BB82C88C5E40076BE41 /* Budgie_DietUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Budgie_DietUITests.swift; sourceTree = "<group>"; };
-		D86A5BBA2C88C5E40076BE41 /* Budgie_DietUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Budgie_DietUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		D89461A12C73C3FC00138B60 /* Budgie Diet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Budgie Diet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -178,6 +186,7 @@
 		D8E831842C77549200AAF555 /* ChartPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPage.swift; sourceTree = "<group>"; };
 		D8E831882C776FCE00AAF555 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
 		D8E8318A2C7797B200AAF555 /* BMRHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMRHelper.swift; sourceTree = "<group>"; };
+		D8F117DB2C8B63830054F2A2 /* Connectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connectivity.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -275,24 +284,13 @@
 			path = "Food Logging";
 			sourceTree = "<group>";
 		};
-		D86A5BB72C88C5E40076BE41 /* Budgie DietUITests */ = {
-			isa = PBXGroup;
-			children = (
-				D86A5BB82C88C5E40076BE41 /* Budgie_DietUITests.swift */,
-				D86A5BBA2C88C5E40076BE41 /* Budgie_DietUITestsLaunchTests.swift */,
-			);
-			path = "Budgie DietUITests";
-			sourceTree = "<group>";
-		};
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
-				D86A5BB12C88C5DD0076BE41 /* TestPlan.xctestplan */,
 				D89A95B02C84BE3D007796AB /* BudgieWidgetExtension.entitlements */,
 				D89461A32C73C3FC00138B60 /* Budgie */,
 				D89A95982C84BB53007796AB /* BudgieWidget */,
 				D89A95C42C84F752007796AB /* BudgieWatch Watch App */,
-				D86A5BB72C88C5E40076BE41 /* Budgie DietUITests */,
 				D89461A22C73C3FC00138B60 /* Products */,
 				D837D0812C8601BF00587504 /* Frameworks */,
 			);
@@ -352,6 +350,7 @@
 				D89A95C92C84F753007796AB /* Assets.xcassets */,
 				D89A95CB2C84F753007796AB /* Preview Content */,
 				D89A95DB2C84F7DA007796AB /* WatchMeter.swift */,
+				D8F117DB2C8B63830054F2A2 /* Connectivity.swift */,
 			);
 			path = "BudgieWatch Watch App";
 			sourceTree = "<group>";
@@ -438,6 +437,7 @@
 			);
 			dependencies = (
 				D89A95A12C84BB55007796AB /* PBXTargetDependency */,
+				D8F117E02C8B6D1E0054F2A2 /* PBXTargetDependency */,
 			);
 			name = "Budgie Diet";
 			productName = Budgie;
@@ -582,6 +582,7 @@
 				D829B08B2C7A6BC00027841B /* WhaleFacts.swift in Sources */,
 				D8E831742C74CDC700AAF555 /* BudgetHelperView.swift in Sources */,
 				D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */,
+				D8F117DD2C8B65050054F2A2 /* Connectivity.swift in Sources */,
 				D829B0892C7A0F880027841B /* ChartDatePicker.swift in Sources */,
 				D838A6122C8075710083F3B3 /* NewDataView.swift in Sources */,
 				D83398542C833F4D00A09CDB /* AdjustWeighting.swift in Sources */,
@@ -620,6 +621,7 @@
 				D89A95C82C84F752007796AB /* ContentView.swift in Sources */,
 				D89A95C62C84F752007796AB /* BudgieWatchApp.swift in Sources */,
 				D89A95DC2C84F7DA007796AB /* WatchMeter.swift in Sources */,
+				D8F117DC2C8B63830054F2A2 /* Connectivity.swift in Sources */,
 				D89A95DE2C84FAC0007796AB /* SearchPredicates.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -631,6 +633,11 @@
 			isa = PBXTargetDependency;
 			target = D89A95942C84BB53007796AB /* Budgie DietWidgetExtension */;
 			targetProxy = D89A95A02C84BB55007796AB /* PBXContainerItemProxy */;
+		};
+		D8F117E02C8B6D1E0054F2A2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D89A95C22C84F752007796AB /* Budgie DietWatch Watch App */;
+			targetProxy = D8F117DF2C8B6D1E0054F2A2 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -763,7 +770,7 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 240905.1;
+				CURRENT_PROJECT_VERSION = 240906.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_PREVIEWS = YES;
@@ -783,7 +790,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -806,7 +813,7 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 240905.1;
+				CURRENT_PROJECT_VERSION = 240906.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_PREVIEWS = YES;
@@ -826,7 +833,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -917,12 +924,12 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "JoeBaldwin.Budgie-Diet";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = JoeBaldwin.Budgie;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;
@@ -947,12 +954,12 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "JoeBaldwin.Budgie-Diet";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = JoeBaldwin.Budgie;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;

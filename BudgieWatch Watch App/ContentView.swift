@@ -11,6 +11,19 @@ struct ContentView: View {
     @State var dataStore: HealthData = HealthData()
     @State var todayLump: TodayLump = TodayLump()
     @State var dataUpdated: Bool = false
+    @ObservedObject var connectivity = Connectivity()
+    
+//    init() {
+////        Connectivity.shared.$settings
+////            .dropFirst()
+////            .receive(on: DispatchQueue.main)
+////            .map { dict in
+////                let uds = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
+////                for (key, value) in dict {
+////                    uds?.setValue(value, forKey: key)
+////                }
+////            }
+//    }
     
     var body: some View {
         NavigationStack {
@@ -56,6 +69,10 @@ struct ContentView: View {
                 Task {
                     todayLump = await dataStore.produceTodayObject()
                 }
+            }
+            
+            .onChange(of: connectivity.updated) {
+                dataUpdated = true
             }
         }
     }

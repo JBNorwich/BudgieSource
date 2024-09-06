@@ -19,6 +19,7 @@ struct BudgieApp: App {
         if mealStore.getListOfMeals() == [] {
             mealStore.setUpMeals()
         }
+        pingSettingsToWatch()
     }
     var body: some Scene {
         WindowGroup {

@@ -396,7 +396,52 @@ class HealthData: ObservableObject {
         self.dataUpdated = false
         self.updateInProgress = false
         return newLump
+    }
+    
+    func produceLumpForWatch(deficit: Int, manBMR: Int, manAct: Int) async -> TodayLump {
+        print("Update requested by: " + self.lastUpdateRequestSource)
+        self.updateInProgress = true
+        let calorieData = await CalorieData()
+        let todayStart = getStartOfDay(date: Date())
+        let todayEnd = getMidnightOnDayAfter(date: todayStart)
         
+        let newLump = TodayLump()
+        let eatenCalories = await self.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+        newLump.eatenCalories = eatenCalories.total
+        newLump.foodList = await self.getCalorieEntries(date: todayStart)
+        newLump.healthKitCalories = eatenCalories.hk
+        newLump.mealList = calorieData.cleansedMealList(data: newLump.foodList)
+    
+        newLump.desiredDeficit = settingsObj.desiredDeficit
+        newLump.projectedBasal = await self.getProjBasalCalories()
+        newLump.projectedActive = await self.getProjActiveCalories()
+        
+        if settingsObj.manualMode == true {
+            newLump.basalEstimated = true
+            newLump.activeEstimated = true
+            newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
+            newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
+
+        } else {
+            let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
+            let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
+            if recBasalCalories != 0 {
+                newLump.basalCalories = recBasalCalories
+            } else {
+                newLump.basalEstimated = true
+                newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
+            }
+            if recActiveCalories != 0 {
+                newLump.activeCalories = recActiveCalories
+            } else {
+                newLump.activeEstimated = true
+                newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
+            }
+        }
+        self.isBackgroundPing = false
+        self.dataUpdated = false
+        self.updateInProgress = false
+        return newLump
     }
 }
 

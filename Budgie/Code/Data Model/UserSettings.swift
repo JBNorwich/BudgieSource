@@ -106,5 +106,16 @@ class UserSettings {
         get { return defaults?.value(forKey: "donated") as? Bool ?? true }
         set { defaults?.set(newValue, forKey: "donated")}
     }
+    
+    func dumpToDict() -> [String:Any] {
+        var dict: [String:Any] = [:]
+        dict["surplusMode"] = self.surplusMode
+        dict["desiredDeficit"] = self.desiredDeficit
+        dict["manualBMR"] = self.manualBMR
+        dict["manualActive"] = self.manualActive
+        dict["weightingStyle"] = self.weightingStyle
+        dict["manualMode"] = self.manualMode
+        return dict
+    }
 }
 

@@ -201,6 +201,7 @@ struct SettingsView: View {
             desiredSurplus = doubleDeficit
             healthLogging = settingsObj.healthLogging
             hideTodayInDetail = settingsObj.hideTodayInDetail
+            pingSettingsToWatch()
         }
     
         .onChange(of: manualMode, initial: false) {
