@@ -147,7 +147,7 @@ struct SettingsView: View {
                             .padding()
                         }
                     }
-                    Text("Version 1.0.1 (240905.1)")
+                    Text("Version 1.1 (240906.1)")
                     Text("Copyright 2024 Joe Baldwin")
                 }
             }
@@ -205,6 +205,7 @@ struct SettingsView: View {
     
         .onChange(of: manualMode, initial: false) {
             settingsObj.manualMode = manualMode
+            pingSettingsToWatch()
             dataStore.lastUpdateRequestSource = "Change of manual mode on settings page"
             dataStore.dataUpdated = true
         }
@@ -237,6 +238,7 @@ struct SettingsView: View {
                 settingsObj.desiredDeficit = Int(doubleDeficit)
                 todayLump.desiredDeficit = Int(doubleDeficit)
             }
+            pingSettingsToWatch()
             dataStore.lastUpdateRequestSource = "Change of deficit on settings page"
             dataStore.dataUpdated = true
         }
@@ -283,6 +285,7 @@ struct SettingsView: View {
         settingsObj.manualBMR = manualBMR
         settingsObj.manualActive = manualActive
         dataStore.lastUpdateRequestSource = "pingManual function on settings page"
+        pingSettingsToWatch()
         dataStore.dataUpdated = true
     }
     
@@ -294,8 +297,14 @@ struct SettingsView: View {
             settingsObj.desiredDeficit = Int(-desiredSurplus)
         }
         dataStore.lastUpdateRequestSource = "pingDeficit function on settings page"
+        pingSettingsToWatch()
         dataStore.dataUpdated = true
     }
+}
+
+func pingSettingsToWatch() {
+    let dict = settingsObj.dumpToDict()
+    Connectivity.shared.send(settings: dict)
 }
 
 #Preview {
