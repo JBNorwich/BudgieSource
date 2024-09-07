@@ -267,6 +267,17 @@ struct BMRHelper: View {
                     weightLb = kgToLb(kgs: weightKg)
                 }
             }
+            
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+
+                    Button("Done") {
+                        if weightFocused == true { weightFocused.toggle() }
+                        if heightFocused == true { heightFocused.toggle() }
+                    }
+                 }
+            }
         }
     }
 }
