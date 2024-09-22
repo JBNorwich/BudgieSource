@@ -12,6 +12,7 @@ struct ContentView: View {
     @State var todayLump: TodayLump = TodayLump()
     @State var dataUpdated: Bool = false
     @ObservedObject var connectivity = Connectivity()
+    @Environment(\.scenePhase) private var scenePhase
     
 //    init() {
 ////        Connectivity.shared.$settings
@@ -72,6 +73,14 @@ struct ContentView: View {
             }
             
             .onChange(of: connectivity.updated) {
+                dataUpdated = true
+            }
+            
+            .onChange(of: scenePhase) {
+                guard scenePhase == .active else {
+                   return
+                }
+                
                 dataUpdated = true
             }
         }
