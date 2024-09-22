@@ -257,7 +257,7 @@ struct AdjustWeighting: View {
         }
         
         .onChange(of: friWeight) {
-            settingsObj.thursWeight = friWeight
+            settingsObj.friWeight = friWeight
             pingSettingsToWatch()
             dataStore.lastUpdateRequestSource = "Change of weighting option"
             dataStore.isBackgroundPing = false
@@ -265,7 +265,7 @@ struct AdjustWeighting: View {
         }
         
         .onChange(of: satWeight) {
-            settingsObj.thursWeight = satWeight
+            settingsObj.satWeight = satWeight
             pingSettingsToWatch()
             dataStore.lastUpdateRequestSource = "Change of weighting option"
             dataStore.isBackgroundPing = false
@@ -273,7 +273,7 @@ struct AdjustWeighting: View {
         }
         
         .onChange(of: sunWeight) {
-            settingsObj.thursWeight = sunWeight
+            settingsObj.sunWeight = sunWeight
             pingSettingsToWatch()
             dataStore.lastUpdateRequestSource = "Change of weighting option"
             dataStore.isBackgroundPing = false

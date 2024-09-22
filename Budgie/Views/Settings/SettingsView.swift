@@ -149,7 +149,7 @@ struct SettingsView: View {
                             .padding()
                         }
                     }
-                    Text("Version 1.1 (240906.1)")
+                    Text("Version 1.1 (240922.2)")
                     Text("Copyright 2024 Joe Baldwin")
                 }
             }
