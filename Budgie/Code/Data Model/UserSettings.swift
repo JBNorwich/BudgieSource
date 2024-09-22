@@ -102,9 +102,50 @@ class UserSettings {
         get { return defaults?.value(forKey: "shownExplainer") as? Bool ?? false }
         set { defaults?.set(newValue, forKey: "shownExplainer")}
     }
+    
     var donated: Bool {
         get { return defaults?.value(forKey: "donated") as? Bool ?? true }
         set { defaults?.set(newValue, forKey: "donated")}
+    }
+    
+    var differentWeights: Bool {
+        get { return defaults?.value(forKey: "differentWeights") as? Bool ?? true }
+        set { defaults?.set(newValue, forKey: "differentWeights")}
+    }
+    
+    var monWeight: Int {
+        get { return defaults?.value(forKey: "monWeight") as? Int ?? self.weightingStyle }
+        set { defaults?.set(newValue, forKey: "monWeight")}
+    }
+    
+    var tuesWeight: Int {
+        get { return defaults?.value(forKey: "tuesWeight") as? Int ?? self.weightingStyle }
+        set { defaults?.set(newValue, forKey: "tuesWeight")}
+    }
+    
+    var wedsWeight: Int {
+        get { return defaults?.value(forKey: "wedsWeight") as? Int ?? self.weightingStyle }
+        set { defaults?.set(newValue, forKey: "wedsWeight")}
+    }
+    
+    var thursWeight: Int {
+        get { return defaults?.value(forKey: "thursWeight") as? Int ?? self.weightingStyle }
+        set { defaults?.set(newValue, forKey: "thursWeight")}
+    }
+    
+    var friWeight: Int {
+        get { return defaults?.value(forKey: "friWeight") as? Int ?? self.weightingStyle }
+        set { defaults?.set(newValue, forKey: "friWeight")}
+    }
+    
+    var satWeight: Int {
+        get { return defaults?.value(forKey: "satWeight") as? Int ?? self.weightingStyle }
+        set { defaults?.set(newValue, forKey: "satWeight")}
+    }
+    
+    var sunWeight: Int {
+        get { return defaults?.value(forKey: "sunWeight") as? Int ?? self.weightingStyle }
+        set { defaults?.set(newValue, forKey: "sunWeight")}
     }
     
     func dumpToDict() -> [String:Any] {
@@ -115,6 +156,14 @@ class UserSettings {
         dict["manualActive"] = self.manualActive
         dict["weightingStyle"] = self.weightingStyle
         dict["manualMode"] = self.manualMode
+        dict["differentWeights"] = self.differentWeights
+        dict["monWeight"] = self.monWeight
+        dict["tuesWeight"] = self.tuesWeight
+        dict["wedsWeight"] = self.wedsWeight
+        dict["thursWeight"] = self.thursWeight
+        dict["friWeight"] = self.friWeight
+        dict["satWeight"] = self.satWeight
+        dict["sunWeight"] = self.sunWeight
         return dict
     }
 }

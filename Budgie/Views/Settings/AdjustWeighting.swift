@@ -100,6 +100,14 @@ let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": C
 struct AdjustWeighting: View {
     @Binding var dataStore: HealthData
     @State var selectedOption: Int = 0
+    @State var differentWeights: Bool = false
+    @State var monWeight: Int = 0
+    @State var tuesWeight: Int = 0
+    @State var wedsWeight: Int = 0
+    @State var thursWeight: Int = 0
+    @State var friWeight: Int = 0
+    @State var satWeight: Int = 0
+    @State var sunWeight: Int = 0
     
     var body: some View {
         let object = WeightingChartObject()
@@ -130,24 +138,143 @@ struct AdjustWeighting: View {
                             .chartLegend(position: .bottom, alignment: .center)
                             .padding()
                             .frame(minHeight: 200)
-        
-                        Picker("Weighting style", selection: $selectedOption) {
-                                        Text("Forgiving").tag(-1)
-                                        Text("Default").tag(0)
-                                        Text("Harsh").tag(1)
-                                        Text("No predictions at all").tag(2)
-                        }.pickerStyle(.inline)
-                            .labelsHidden()
+                        
+                        Toggle("Weight differently each day", isOn: $differentWeights)
+                            .toggleStyle(SwitchToggleStyle())
+                        if differentWeights == false {
+                            Picker("Weighting style", selection: $selectedOption) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions at all").tag(2)
+                            }.pickerStyle(.menu)
+                                .labelsHidden()
+                        } else {
+                            Picker("Monday", selection: $monWeight) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions").tag(2)
+                            }.pickerStyle(.menu)
+                            Picker("Tuesday", selection: $tuesWeight) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions").tag(2)
+                            }.pickerStyle(.menu)
+                            Picker("Wednesday", selection: $wedsWeight) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions").tag(2)
+                            }.pickerStyle(.menu)
+                            Picker("Thursday", selection: $thursWeight) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions").tag(2)
+                            }.pickerStyle(.menu)
+                            Picker("Friday", selection: $friWeight) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions").tag(2)
+                            }.pickerStyle(.menu)
+                            Picker("Saturday", selection: $satWeight) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions").tag(2)
+                            }.pickerStyle(.menu)
+                            Picker("Sunday", selection: $sunWeight) {
+                                Text("Forgiving").tag(-1)
+                                Text("Default").tag(0)
+                                Text("Harsh").tag(1)
+                                Text("No predictions").tag(2)
+                            }.pickerStyle(.menu)
+                        }
                     }
                 }.frame(maxHeight: .infinity)
         .navigationTitle("Active calorie weighting")
         
         .onAppear {
             selectedOption = settingsObj.weightingStyle
+            differentWeights = settingsObj.differentWeights
+            monWeight = settingsObj.monWeight
+            tuesWeight = settingsObj.tuesWeight
+            wedsWeight = settingsObj.wedsWeight
+            thursWeight = settingsObj.thursWeight
+            friWeight = settingsObj.friWeight
+            satWeight = settingsObj.satWeight
+            sunWeight = settingsObj.sunWeight
         }
         
         .onChange(of: selectedOption) {
             settingsObj.weightingStyle = selectedOption
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: differentWeights) {
+            settingsObj.differentWeights = differentWeights
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: monWeight) {
+            settingsObj.monWeight = monWeight
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: tuesWeight) {
+            settingsObj.tuesWeight = tuesWeight
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: wedsWeight) {
+            settingsObj.wedsWeight = wedsWeight
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: thursWeight) {
+            settingsObj.thursWeight = thursWeight
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: friWeight) {
+            settingsObj.thursWeight = friWeight
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: satWeight) {
+            settingsObj.thursWeight = satWeight
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of weighting option"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
+        }
+        
+        .onChange(of: sunWeight) {
+            settingsObj.thursWeight = sunWeight
             pingSettingsToWatch()
             dataStore.lastUpdateRequestSource = "Change of weighting option"
             dataStore.isBackgroundPing = false

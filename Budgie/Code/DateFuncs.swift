@@ -43,6 +43,11 @@ func minutesIntoDay() -> Int {
     return (60 * calendar.component(.hour, from: date)) + calendar.component(.minute, from: date)
 }
 
+func getDayOfWeek() -> Int {
+    let calendar = NSCalendar.current
+    return calendar.dateComponents([.weekday], from: Date()).weekday!
+}
+
 func getHoursOfTime(date: Date) -> Int {
     let calendar = Calendar.current
     return calendar.component(.hour, from: date)
@@ -65,7 +70,21 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
     if style != nil {
         styleToUse = style!
     } else {
-        styleToUse = settingsObj.weightingStyle
+        if settingsObj.differentWeights != true {
+            styleToUse = settingsObj.weightingStyle
+        } else {
+            let weekday = getDayOfWeek()
+            switch weekday {
+                case 1: styleToUse = settingsObj.sunWeight
+                case 2: styleToUse = settingsObj.monWeight
+                case 3: styleToUse = settingsObj.tuesWeight
+                case 4: styleToUse = settingsObj.wedsWeight
+                case 5: styleToUse = settingsObj.thursWeight
+                case 6: styleToUse = settingsObj.friWeight
+                case 7: styleToUse = settingsObj.satWeight
+                default: styleToUse = settingsObj.weightingStyle
+            }
+        }
     }
     
     if timeInput != nil {
