@@ -109,7 +109,7 @@ class UserSettings {
     }
     
     var differentWeights: Bool {
-        get { return defaults?.value(forKey: "differentWeights") as? Bool ?? true }
+        get { return defaults?.value(forKey: "differentWeights") as? Bool ?? false }
         set { defaults?.set(newValue, forKey: "differentWeights")}
     }
     
