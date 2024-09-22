@@ -33,6 +33,9 @@ struct ContentView: View {
                     WatchMeter(todayLump: $todayLump)
                         .frame(maxHeight: 150)
                         .padding()
+                        .onTapGesture {
+                            dataUpdated = true
+                        }
                     VStack {
                         HStack {
                             Text("Your budget")
