@@ -46,7 +46,7 @@ struct FoodHub: View {
     func doUpdates() async{
         timeToAddOn = getCurrentTimeonDate(date: curDate)
         Task {
-            let calorieData = await CalorieData()
+            let calorieData = CalorieData()
             loadingDone = false
             
             let newData = await dataObject.getCalorieEntries(date: curDate)
