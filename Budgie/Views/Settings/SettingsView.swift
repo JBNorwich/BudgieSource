@@ -120,10 +120,12 @@ struct SettingsView: View {
             }
             
             Section(header: Text("Other settings")) {
-                NavigationLink {
-                    AdjustWeighting(dataStore: $dataStore)
-                } label: {
-                    Text("Change active calorie weighting")
+                if manualMode == false {
+                    NavigationLink {
+                        AdjustWeighting(dataStore: $dataStore)
+                    } label: {
+                        Text("Change active calorie weighting")
+                    }
                 }
                 Toggle("Hide \"Today in detail\"", isOn: $hideTodayInDetail)
                 Toggle("Put whales in various places", isOn: $whalesEverywhere)
