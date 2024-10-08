@@ -22,6 +22,7 @@ struct AddCalsSheet: View {
     var curEaten: Int = 0
     var remBudg: Int = 0
     
+    @State var calorieData: CalorieData = CalorieData()
     @State var fieldString: String = "0"
     @State var calories: Int?
     @State var newCalsIn: Int = 0
@@ -83,7 +84,8 @@ struct AddCalsSheet: View {
                 } else {
                     if calories ?? 0 > 0 {
                         Task {
-                            await HealthData().addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+                            await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+                            print("Adding calories")
                             isDisplayed = false
                         }
                     } else {
@@ -97,7 +99,6 @@ struct AddCalsSheet: View {
         }
         
         .onAppear() {
-            let calorieData = CalorieData()
             mealList = calorieData.getListOfMeals()
             mealList = mealList.sorted(by: { $0.order < $1.order })
             selectedMeal = mealList.first!.mealUUID

@@ -8,29 +8,17 @@
 import SwiftUI
 import SwiftData
 
-class ListObject: ObservableObject {
-    var curDate: Date
-    var budgieData: [CalorieEntry]
-    var hkCalories: Int
-    var mealList: [Meal]
-    
-    init() {
-        budgieData = []
-        mealList = []
-        curDate = Date()
-        hkCalories = 0
-    }
-}
-
 struct FoodHub: View {
+    @State private var searchTerm = ""
+    
     @Binding var dataObject: HealthData
     @Binding var todayLump: TodayLump
     
-    @State var displayedData: [CalorieEntry] = []
+    @State var budgieData: [CalorieEntry] = []
     @State var healthKitData: [CalorieEntry] = []
     @State var mealList: [Meal] = []
     
-    @State var listObject = ListObject()
+    //@StateObject var listObject = ListObject()
     
     @State var curDate: Date
     @State var dateChanged: Bool = false
@@ -39,6 +27,8 @@ struct FoodHub: View {
     @State var dataLump: ChartDataLump = ChartDataLump()
     @State var timeToAddOn: Date = Date()
     
+    @State var hkCalories = 0
+    
     @State var addSheetDisplayed: Bool = false
     
     @State var loadingDone: Bool = false
@@ -46,7 +36,6 @@ struct FoodHub: View {
     func doUpdates() async{
         timeToAddOn = getCurrentTimeonDate(date: curDate)
         Task {
-            let calorieData = CalorieData()
             loadingDone = false
             
             let newData = await dataObject.getCalorieEntries(date: curDate)
@@ -63,9 +52,9 @@ struct FoodHub: View {
             newLump.basalCals = newBasal
             newLump.date = curDate
             
-            listObject.mealList = calorieData.cleansedMealList(data: newData)
-            listObject.budgieData = newData
-            listObject.hkCalories = hkEaten
+            mealList = dataObject.calorieModel.cleansedMealList(data: newData)
+            budgieData = newData
+            hkCalories = hkEaten
             dataLump = newLump
             
             timeToAddOn = getCurrentTimeonDate(date: curDate)
@@ -76,12 +65,36 @@ struct FoodHub: View {
     
     var body: some View {
         VStack {
-            FoodDatePicker(curDate: $curDate, dateChanged: $dateChanged)
-            SummaryRow(dataLump: dataLump, curDate: $curDate)
-                .frame(maxHeight: 60)
-            FoodList(dataObject: $dataObject, list: listObject)
+            VStack {
+                FoodDatePicker(curDate: $curDate, dateChanged: $dateChanged)
+                SummaryRow(dataLump: dataLump, curDate: $curDate)
+                    .frame(maxHeight: 60)
+            }
+            .padding()
+//            FoodList(dataObject: $dataObject, list: listObject)
+            List {
+                if budgieData.count != 0 {
+                    ForEach(mealList, id: \.self) { meal in
+                        Section(header: Text(meal.name)) {
+                            ForEach(budgieData, id: \.self) { entry in
+                                if entry.meal == meal.mealUUID {
+                                    CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
+                                }
+                            }.onDelete(perform: delete)
+                        }
+                    }
+                } else {
+                    Text("You have no calories logged in Budgie Diet on this day.")
+                }
+                
+                if hkCalories != 0  {
+                    Section(header: Text("Calories from other apps"), footer: Text("These are calories logged in Health by other apps. You'll need to go to the app that logged them to change or delete them.")) {
+                        CalorieEntryView(calories: hkCalories, narrative: "Calories from other apps", realEntry: false, date: curDate)
+                            .deleteDisabled(true)
+                    }
+                }
+            }.listStyle(.grouped)
         }
-        .padding()
         .navigationTitle("Food")
         
         .toolbar {
@@ -103,6 +116,12 @@ struct FoodHub: View {
             }
         }
         
+        .onChange(of: sumCals, initial: false) {
+            Task {
+                await doUpdates()
+            }
+        }
+        
         .sheet(isPresented: $addSheetDisplayed) {
             AddCalsSheet(dataStore: $dataObject, isDisplayed: $addSheetDisplayed, curEaten: todayLump.eatenCalories, remBudg: todayLump.totalBudgetRem, selectedDate: timeToAddOn)
                 .onDisappear() {
@@ -110,6 +129,18 @@ struct FoodHub: View {
                         await doUpdates()
                     }
             }
+        }
+    }
+    
+    func delete(at offsets: IndexSet) {
+        var toBin: [CalorieEntry] = []
+        for itemId in offsets {
+            toBin.append(budgieData[itemId])
+        }
+        budgieData.remove(atOffsets: offsets)
+        Task {
+            await dataObject.deleteCalorieEntries(calorieObjects: toBin)
+            await doUpdates()
         }
     }
 }

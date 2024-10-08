@@ -63,7 +63,12 @@ class CalorieEntry {
                 await HealthData().deleteCalorieEntries(calorieObjects:[self])
             }
         }
-        context.delete(self)
+        do {
+            context.delete(self)
+            try context.save()
+        } catch {
+            print("Error deleting calories: \(error)")
+        }
     }
 }
 
@@ -77,7 +82,6 @@ class CalorieData: ObservableObject {
     }
     
     func fetchCalsBetween(from: Date,to: Date) -> [CalorieEntry]{
-        
         let searchPredicate = #Predicate<CalorieEntry> { entry in
             (entry.date > from) && (entry.date < to)
         }
@@ -95,6 +99,11 @@ class CalorieData: ObservableObject {
     func insertNewCals(object: CalorieEntry)
     {
         self.context.insert(object)
+        do {
+            try self.context.save()
+        } catch {
+            print("Calorie insertion error: \(error)")
+        }
     }
     
     func deleteEntries(objects: [CalorieEntry])
@@ -104,7 +113,7 @@ class CalorieData: ObservableObject {
                 let uuidToDelete = object.id
                 try context.delete(model: CalorieEntry.self, where: #Predicate<CalorieEntry> { ($0.id == uuidToDelete) }, includeSubclasses: true)
             } catch {
-                // nothing
+                print("Calorie deletion error: \(error)")
             }
         }
         do {
@@ -114,7 +123,7 @@ class CalorieData: ObservableObject {
         }
     }
     
-    func getListOfMeals() -> [Meal] {
+    @MainActor func getListOfMeals() -> [Meal] {
         do {
             let returns = try context.fetch(FetchDescriptor<Meal>())
             return returns
@@ -135,11 +144,11 @@ class CalorieData: ObservableObject {
         do {
             try context.save()
         } catch {
-            // nothing
+            print("Error setting up meals: \(error)")
         }
     }
     
-    func cleansedMealList(data: [CalorieEntry]) -> [Meal] {
+    @MainActor func cleansedMealList(data: [CalorieEntry]) -> [Meal] {
         var returnedMealUUIDs: [UUID] = []
         var returnedMeals: [Meal] = []
         let fullMealList = getListOfMeals()

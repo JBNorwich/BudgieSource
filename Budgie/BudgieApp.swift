@@ -13,7 +13,6 @@ let settingsObj: UserSettings = UserSettings()
 
 @main
 struct BudgieApp: App {
-    
     init() {
         let mealStore = CalorieData()
         if mealStore.getListOfMeals() == [] {

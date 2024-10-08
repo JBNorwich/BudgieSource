@@ -102,7 +102,7 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         Task {
-            let dataStore = HealthData()
+            let dataStore = await HealthData()
             let lump = await dataStore.produceTodayObject()
             let date = Date()
             let entry = BudgieEntry(date: date, leftToEat: lump.leftToEat, progressDbl: lump.progressToday, totalBudgRem: lump.totalBudgetRem, totalBudg: lump.totalBudget, projBasal: lump.projectedBasal)
