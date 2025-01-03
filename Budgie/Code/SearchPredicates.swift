@@ -46,6 +46,10 @@ let activeQuantityType = HKQuantityType(.activeEnergyBurned)
 ///HKQuantityType that represents calories eaten.
 let eatenQuantityType = HKQuantityType(.dietaryEnergyConsumed)
 
+let fitnessGoalType = HKSampleType.activitySummaryType()
+
+let fitnessGoalSet: Set = [fitnessGoalType]
+
 let writeTypes: Set = [
     eatenQuantityType
 ]
@@ -55,3 +59,5 @@ let readTypes: Set = [
     basalQuantityType,
     activeQuantityType
 ]
+
+

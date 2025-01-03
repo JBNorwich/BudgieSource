@@ -17,6 +17,9 @@ class TodayLump: ObservableObject {
     var projectedActive: Int = 0
     var projectedBasal: Int = 0
     
+    var budgetAtCap: Bool = false
+    var budgetAtMin: Bool = false
+    
     // food data
     var mealList: [Meal] = []
     var foodList: [CalorieEntry] = []
@@ -32,11 +35,48 @@ class TodayLump: ObservableObject {
     
     // Calculating functions
     var totalBudget: Int {
+        var budget: Int = 0
         if self.totalProjCalories - self.desiredDeficit > -1 {
-            return self.totalProjCalories - self.desiredDeficit
+            budget = self.totalProjCalories - self.desiredDeficit
         } else {
-            return 0
+            budget = 0
         }
+        
+        if settingsObj.capBudget == true && budget > settingsObj.capBudgetCals {
+            budget = settingsObj.capBudgetCals
+            self.budgetAtCap = true
+        } else {
+            self.budgetAtCap = false
+        }
+        
+        if budget < 1200 {
+            budget = 1200
+            self.budgetAtMin = true
+        } else {
+            self.budgetAtMin = false
+        }
+        
+        return budget
+    }
+    
+    var realBudget: Int {
+        var budget: Int = 0
+        
+        if self.totalProjCalories - self.desiredDeficit > -1 {
+            budget = self.totalProjCalories - self.desiredDeficit
+        } else {
+            budget = 0
+        }
+        
+        if budget < 1200 {
+            budget = 1200
+        }
+        
+        return budget
+    }
+    
+    var budgetOverCap: Int {
+        return settingsObj.capBudgetCals - self.realBudget
     }
     
     var progressTodayInt: Int {

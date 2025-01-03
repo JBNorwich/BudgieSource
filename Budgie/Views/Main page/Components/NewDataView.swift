@@ -117,6 +117,16 @@ struct NewDataView: View {
                     .frame(maxWidth: 100)
             }
         }
+        if settingsObj.capBudget == true && dataLump.budgetAtCap == true {
+            HStack {
+                Image(systemName: "hat.cap")
+                    .frame(minWidth: 30)
+                Text("Budget at cap")
+                Spacer()
+                Text(dataLump.budgetOverCap.formatted())
+                    .contentTransition(.numericText())
+            }
+        }
         HStack {
             Image(systemName: "equal.circle")
                 .frame(minWidth: 30)
@@ -167,6 +177,14 @@ struct NewDataView: View {
         if dataLump.activeEstimated == true || dataLump.basalEstimated == true {
             Divider()
             Label("Your calorie burn figures are estimated, and don't reflect your real activity today.", systemImage: "info.circle")
+        }
+        if dataLump.budgetAtCap == true {
+            Divider()
+            Label("Your budget for today has been capped at the amount chosen in Settings.", systemImage: "info.circle")
+        }
+        if dataLump.budgetAtMin == true {
+            Divider()
+            Label("Your budget was calculated as lower than the minimum of 1,200 calories, so it has been set at that amount.", systemImage: "exclamationmark.octagon")
         }
     }
 }

@@ -18,6 +18,7 @@
 		D837D0832C8601BF00587504 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D837D0822C8601BF00587504 /* StoreKit.framework */; };
 		D838A6122C8075710083F3B3 /* NewDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6112C8075710083F3B3 /* NewDataView.swift */; };
 		D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6132C80828A0083F3B3 /* GaugeView.swift */; };
+		D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D840B0282D27F03100AFE471 /* BudgetCap.swift */; };
 		D868606D2C7BD0E900730373 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868606C2C7BD0E900730373 /* Tests.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
 		D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A42C73C3FC00138B60 /* BudgieApp.swift */; };
@@ -142,6 +143,7 @@
 		D837D0822C8601BF00587504 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS10.5.sdk/System/Library/Frameworks/StoreKit.framework; sourceTree = DEVELOPER_DIR; };
 		D838A6112C8075710083F3B3 /* NewDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewDataView.swift; sourceTree = "<group>"; };
 		D838A6132C80828A0083F3B3 /* GaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaugeView.swift; sourceTree = "<group>"; };
+		D840B0282D27F03100AFE471 /* BudgetCap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetCap.swift; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -227,6 +229,7 @@
 				D8E831712C74CAED00AAF555 /* SettingsView.swift */,
 				D868606C2C7BD0E900730373 /* Tests.swift */,
 				D83398532C833F4D00A09CDB /* AdjustWeighting.swift */,
+				D840B0282D27F03100AFE471 /* BudgetCap.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -562,6 +565,7 @@
 				D8E8316E2C74976300AAF555 /* MeterView.swift in Sources */,
 				D8E831852C77549200AAF555 /* ChartPage.swift in Sources */,
 				D829B0872C79BAA80027841B /* ChartTableView.swift in Sources */,
+				D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */,
 				D8D4BF7A2C7CD4560061A9A4 /* FoodList.swift in Sources */,
 				D8E831622C73C7EE00AAF555 /* HealthData.swift in Sources */,
 				D8E831722C74CAED00AAF555 /* SettingsView.swift in Sources */,

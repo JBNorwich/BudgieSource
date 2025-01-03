@@ -29,9 +29,12 @@ struct SettingsView: View {
     @State var healthLogging = true
     @State var disclaimerDisplayed = false
     @State var hideTodayInDetail = false
+    @State var useFitnessGoal = false
     
     @FocusState private var focusResting: Bool
     @FocusState private var focusActive: Bool
+    
+    @Environment(\.openURL) var openURL
     
     var body: some View {
         Form {
@@ -119,14 +122,30 @@ struct SettingsView: View {
                 Toggle("Ignore Apple Health data", isOn: $manualMode)
             }
             
-            Section(header: Text("Other settings")) {
-                if manualMode == false {
+            if manualMode != true {
+                Section(header: Text("Move goal"), footer: Text("If this is turned on, Budgie Diet will use your Apple Fitness Move goal as the starting point for your budget, rather than your average calorie burn figures."))
+                {
+                    Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
+                }
+            }
+                       
+            if manualMode != true {
+                Section(header: Text("Advanced")) {
+                    NavigationLink {
+                        BudgetCap(dataStore: $dataStore)
+                    } label: {
+                        Text("Budget capping")
+                    }
+                    
                     NavigationLink {
                         AdjustWeighting(dataStore: $dataStore)
                     } label: {
-                        Text("Change active calorie weighting")
+                        Text("Budget weighting options")
                     }
                 }
+            }
+            
+            Section(header: Text("Other settings")) {
                 Toggle("Hide \"Today in detail\"", isOn: $hideTodayInDetail)
                 Toggle("Put whales in various places", isOn: $whalesEverywhere)
             }
@@ -141,51 +160,40 @@ struct SettingsView: View {
                                 .frame(maxWidth: 100,maxHeight: 100)
                             VStack {
                                 Text("Budgie Diet")
-                                    .font(.largeTitle)
+                                    .font(.title)
                                     .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
                                 Text("The calorie budget app")
                                     .font(.headline)
                             }
                             .padding()
                         }
-                    }
-                    Text("Version 1.2.1 (241008.1)")
-                    Text("Copyright 2024 Joe Baldwin")
-                }
-            }
-            
-            Section {
-                HStack {
-                    Spacer()
-                    VStack {
-                        Link(destination: URL(string: "mailto:budgieapp@icloud.com")!){
-                            Text("Send me feedback/bug reports!")
-                        }
                         Spacer()
-                        Link(destination: URL(string: "https://github.com/JBNorwich/Budgie/wiki/Privacy-policy")!) {
-                            Text("Privacy policy")
-                        }
-                    }.padding()
-                    Spacer()
-                }
-            }
-            Section {
-                VStack {
-                    NavigationLink {
-                        Donate()
-                    } label: {
-                        Text("Tip me a protein bar!")
                     }
+                    Text("Version 1.3 (250103.1)")
+                    Text("Copyright 2024-5 Joe Baldwin")
                 }
             }
-            Section {
-                    NavigationLink {
-                        Disclaimer(displayed: $disclaimerDisplayed)
-                    } label: {
-                        Text("Health disclaimer")
-                    }
-                }
+
+            NavigationLink {
+                Donate()
+            } label: {
+                Text("Tip me a protein bar!")
             }
+            NavigationLink {
+                Disclaimer(displayed: $disclaimerDisplayed)
+            } label: {
+                Text("Health disclaimer")
+            }
+            Button("Send feedback/bug reports") {
+                openURL(URL(string: "mailto:budgieapp@icloud.com")!)
+            }
+            Button("Privacy policy") {
+                openURL(URL(string: "https://joebaldwin.me.uk/apps/budgiediet/privacy/")!)
+            }
+            Button("Frequently asked questions") {
+                openURL(URL(string: "https://joebaldwin.me.uk/apps/budgiediet/faq/")!)
+            }
+        }
         
 
     
@@ -203,6 +211,7 @@ struct SettingsView: View {
             desiredSurplus = doubleDeficit
             healthLogging = settingsObj.healthLogging
             hideTodayInDetail = settingsObj.hideTodayInDetail
+            useFitnessGoal = settingsObj.useFitnessGoal
             pingSettingsToWatch()
         }
     
@@ -246,6 +255,10 @@ struct SettingsView: View {
             dataStore.dataUpdated = true
         }
         
+        .onChange(of: useFitnessGoal, initial: false) {
+            settingsObj.useFitnessGoal = useFitnessGoal
+        }
+        
         .navigationTitle("Settings")
         .navigationBarBackButtonHidden(false)
     
@@ -280,6 +293,15 @@ struct SettingsView: View {
         }
         .navigationDestination(isPresented: $debugOpened) {
             Tests()
+        }
+        
+        .healthDataAccessRequest(store: healthStore, shareTypes: [], readTypes: fitnessGoalSet, trigger: useFitnessGoal) { result in
+            switch result {
+            case .success(_):
+                print("Success!")
+            case .failure(_):
+                print("Failed for some reason")
+            }
         }
     }
     

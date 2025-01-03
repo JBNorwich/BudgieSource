@@ -114,38 +114,53 @@ class UserSettings {
     }
     
     var monWeight: Int {
-        get { return defaults?.value(forKey: "monWeight") as? Int ?? self.weightingStyle }
+        get { return defaults?.value(forKey: "monWeight") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "monWeight")}
     }
     
     var tuesWeight: Int {
-        get { return defaults?.value(forKey: "tuesWeight") as? Int ?? self.weightingStyle }
+        get { return defaults?.value(forKey: "tuesWeight") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "tuesWeight")}
     }
     
     var wedsWeight: Int {
-        get { return defaults?.value(forKey: "wedsWeight") as? Int ?? self.weightingStyle }
+        get { return defaults?.value(forKey: "wedsWeight") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "wedsWeight")}
     }
     
     var thursWeight: Int {
-        get { return defaults?.value(forKey: "thursWeight") as? Int ?? self.weightingStyle }
+        get { return defaults?.value(forKey: "thursWeight") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "thursWeight")}
     }
     
     var friWeight: Int {
-        get { return defaults?.value(forKey: "friWeight") as? Int ?? self.weightingStyle }
+        get { return defaults?.value(forKey: "friWeight") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "friWeight")}
     }
     
     var satWeight: Int {
-        get { return defaults?.value(forKey: "satWeight") as? Int ?? self.weightingStyle }
+        get { return defaults?.value(forKey: "satWeight") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "satWeight")}
     }
     
     var sunWeight: Int {
-        get { return defaults?.value(forKey: "sunWeight") as? Int ?? self.weightingStyle }
+        get { return defaults?.value(forKey: "sunWeight") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "sunWeight")}
+    }
+    
+    var useFitnessGoal: Bool {
+        get { return defaults?.value(forKey: "useFitnessGoal") as? Bool ?? false }
+        set { defaults?.set(newValue, forKey: "useFitnessGoal")}
+    }
+    
+    var capBudget: Bool {
+        get { return defaults?.value(forKey: "capBudget") as? Bool ?? false }
+        set { defaults?.set(newValue, forKey: "capBudget")}
+    }
+    
+    var capBudgetCals: Int {
+        get { return defaults?.value(forKey: "capBudgetCals") as? Int ?? 2000 }
+        set { defaults?.set(newValue, forKey: "capBudgetCals")}
     }
     
     func dumpToDict() -> [String:Any] {
@@ -164,6 +179,9 @@ class UserSettings {
         dict["friWeight"] = self.friWeight
         dict["satWeight"] = self.satWeight
         dict["sunWeight"] = self.sunWeight
+        dict["useFitnessGoal"] = self.useFitnessGoal
+        dict["capBudget"] = self.capBudget
+        dict["capBudgetCals"] = self.capBudgetCals
         return dict
     }
 }

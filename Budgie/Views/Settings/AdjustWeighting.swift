@@ -93,8 +93,6 @@ class WeightingChartObject {
     }
 }
 
-let weightingText = "This adjusts how predicted active calories are weighted. Most people should stick with the default, but you can change it if you feel your budgets are often too high or low.\n\n**Forgiving:** Budgie Diet more strongly adjusts its predictions in the late evening and continues predicting until midnight, while making no adjustments to your average. This works well if you usually exercise in the evening, but it might make your budget higher than it should be otherwise.\n\n**Default:** This balanced setting gradually adjusts predictions from morning to 10pm, when it stops predicting new calories, and downweights your average by 25%. Most people will find this setting ideal.\n\n**Harsh:** This setting adjusts your budget down very harshly, and continues linearly throughout the day until 10pm. This is ideal for people who either exercise in the early morning or not at all, but will significantly reduce your budget otherwise.\n\n**No predictions at all:** Budgie Diet won’t estimate active calories for you. Your budget will only include resting calories and any exercise you’ve done. It’ll be very accurate, but might feel a bit restrictive, especially in the morning."
-
 let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": Color.yellow, "Harsh": Color.red])
 
 struct AdjustWeighting: View {

@@ -23,7 +23,7 @@ class ChartDataLump: Identifiable {
     }
 }
 
-@MainActor class ChartData: ObservableObject {
+class ChartData: ObservableObject {
     static let shared = ChartData()
     
     @Published var returnedChartData: [ChartDataLump] = []

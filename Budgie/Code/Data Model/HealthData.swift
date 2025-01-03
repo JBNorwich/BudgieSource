@@ -24,6 +24,7 @@ class HealthData: ObservableObject {
     }
     
     func pullCalorieTotalTodayFromHK(type: HKQuantityType) async -> Int {
+        let semaphore = DispatchSemaphore(value: 0)
         var calories = Double()
         let todayPredicate = getTodayPredicate()
         let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: todayPredicate)
@@ -32,15 +33,19 @@ class HealthData: ObservableObject {
             let kcals = try await sumActCalsQuery.result(for: healthStore)?
                 .sumQuantity()
             calories = kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded() ?? 0
+            semaphore.signal()
         }
         catch {
             calories = 0
+            semaphore.signal()
         }
+        semaphore.wait()
         return Int(calories)
     }
     
     ///Grabs the calorie total for a given date range and type from HealthKit and (for eaten) Budgie Diet. If manual mode is on, will return either the manual BMR/active amounts or, for eaten calories, just the amount of Budgie Diet calories. You must normalise the date to 00:00 before passing the date. Set hkOnly to true if you only care about HealthKit calories.
     func pullCalorieTotalForDate(date: Date, type: HKQuantityType, hkOnly: Bool) async -> Int {
+        let semaphore = DispatchSemaphore(value: 0)
         var calories: Double = 0
         let startDate = getStartOfDay(date: date)
         let endDate = getMidnightOnDayAfter(date: startDate)
@@ -65,6 +70,7 @@ class HealthData: ObservableObject {
                 let kcals = try await sumActCalsQuery.result(for: healthStore)?
                     .sumQuantity()
                 calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+                semaphore.signal()
             }
             catch {
                 calories += 0
@@ -85,11 +91,14 @@ class HealthData: ObservableObject {
             } else {
                 calories += 0
             }
+            semaphore.signal()
         }
+        semaphore.wait()
         return Int(calories)
     }
     
     func pullCalorieTotalBetweenFromHK(start: Date, end: Date, type: HKQuantityType) async -> Int {
+        let semaphore = DispatchSemaphore(value: 0)
         var calories = Double()
         let timePredicate = HKQuery.predicateForSamples(withStart: start, end: end, options: HKQueryOptions.strictEndDate)
         let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
@@ -99,10 +108,12 @@ class HealthData: ObservableObject {
             let kcals = try await sumActCalsQuery.result(for: healthStore)?
                 .sumQuantity()
             calories = kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+            semaphore.signal()
         }
         catch {
             calories = 0
         }
+        semaphore.wait()
         calories = calories.rounded()
         return Int(calories)
     }
@@ -110,6 +121,7 @@ class HealthData: ObservableObject {
     func pullEatenCalories(startDate: Date, endDate: Date) async -> (hk: Int, budgie: Int, total: Int) {
         var budgieCalories: Int = 0
         var healthKitcalories: Double = 0
+        let semaphore = DispatchSemaphore(value: 0)
         
         if settingsObj.manualMode == false {
             let notBudgieTodayPredicate = getNotBudgieTodayPredicate()
@@ -122,10 +134,13 @@ class HealthData: ObservableObject {
                         healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
                     }
                 }
+                semaphore.signal()
             }
             catch {
                 healthKitcalories = 0
             }
+        } else {
+            semaphore.signal()
         }
         
         let budgieResults = self.calorieModel.fetchCalsBetween(from: startDate, to: endDate)
@@ -206,6 +221,9 @@ class HealthData: ObservableObject {
         var earliestSample = Date()
         var latestSample = Date()
         var daysInSample = Int()
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        
         do {
             let results = try await descriptor.result(for: healthStore)
             for result in results {
@@ -216,6 +234,7 @@ class HealthData: ObservableObject {
                 { earliestSample = result.startDate }
             }
             daysInSample = calendar.numberOfDaysBetween(earliestSample, and: latestSample)
+            semaphore.signal()
         } catch {
             // error handling
         }
@@ -241,6 +260,8 @@ class HealthData: ObservableObject {
         
         calories = (calsToAdd + calories) / Double(daysInSample)
         
+        semaphore.wait()
+        
         return (val: Int(calories), estimate: estimated)
     }
     
@@ -249,21 +270,59 @@ class HealthData: ObservableObject {
             let projectedCals = Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440)
             return Int(projectedCals)
         } else {
+            var averageBurn: Int = 0
+            var wasEstimate: Bool = false
             let endDate = getStartOfDay(date: Date())
             let startDate = getWeekBeforeDate(date: endDate)
-            let averageBurn = await self.getAverageCalories(from: startDate, to: endDate, type: activeQuantityType)
             let curActive = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
-            let remainingFromAvg = averageBurn.val - curActive
+            
+            if settingsObj.useFitnessGoal != true {
+                let result = await self.getAverageCalories(from: startDate, to: endDate, type: activeQuantityType)
+                if result.estimate == false {
+                    averageBurn = result.val
+                } else {
+                    averageBurn = settingsObj.manualActive
+                    wasEstimate = true
+                }
+            } else {
+                averageBurn = getMoveGoal()
+            }
+
+            let remainingFromAvg = averageBurn - curActive
             if remainingFromAvg < 0 {
                 return 0
             } else {
-                if averageBurn.estimate == false {
+                if wasEstimate == false {
                     return weightActiveProjection(input: remainingFromAvg, style: nil, timeInput: nil)
                 } else {
                     return Int(Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
                 }
             }
         }
+    }
+    
+    func getMoveGoal() -> Int {
+        let semaphore = DispatchSemaphore(value: 0)
+        var goal: Int = 0
+        let calendar = NSCalendar.current
+        var startDateComponents = calendar.dateComponents([.year, .month, .day], from: Date())
+        startDateComponents.calendar = calendar
+        
+        let predicate = HKQuery.predicateForActivitySummary(with: startDateComponents)
+
+        let query = HKActivitySummaryQuery(predicate: predicate) { (query, summariesOrNil, errorOrNil) -> Void in
+            if let summariesOrNil = summariesOrNil {
+                for summary in summariesOrNil {
+                    goal = Int(summary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
+                    print(goal.formatted())
+                    semaphore.signal()
+                }
+            }
+        }
+        
+        healthStore.execute(query)
+        semaphore.wait()
+        return goal
     }
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
@@ -361,6 +420,7 @@ class HealthData: ObservableObject {
         let todayEnd = getMidnightOnDayAfter(date: todayStart)
         
         let newLump = TodayLump()
+        
         let eatenCalories = await self.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
         newLump.eatenCalories = eatenCalories.total
         newLump.foodList = await self.getCalorieEntries(date: todayStart)
@@ -376,7 +436,6 @@ class HealthData: ObservableObject {
             newLump.activeEstimated = true
             newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
             newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
-
         } else {
             let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
             let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
