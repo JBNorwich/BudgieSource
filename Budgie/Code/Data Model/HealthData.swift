@@ -45,7 +45,6 @@ class HealthData: ObservableObject {
     
     ///Grabs the calorie total for a given date range and type from HealthKit and (for eaten) Budgie Diet. If manual mode is on, will return either the manual BMR/active amounts or, for eaten calories, just the amount of Budgie Diet calories. You must normalise the date to 00:00 before passing the date. Set hkOnly to true if you only care about HealthKit calories.
     func pullCalorieTotalForDate(date: Date, type: HKQuantityType, hkOnly: Bool) async -> Int {
-        let semaphore = DispatchSemaphore(value: 0)
         var calories: Double = 0
         let startDate = getStartOfDay(date: date)
         let endDate = getMidnightOnDayAfter(date: startDate)
@@ -62,17 +61,21 @@ class HealthData: ObservableObject {
         }
         
         if settingsObj.manualMode == false {
-            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-            let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
-            let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
             do {
-                let kcals = try await sumActCalsQuery.result(for: healthStore)?
-                    .sumQuantity()
-                calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
-                semaphore.signal()
-            }
-            catch {
+                let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
+                let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+                let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
+                let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
+                    let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
+                    continuation.resume(returning: sumActCalsQuery)
+                }
+                do {
+                    let kcals = try await query.result(for: healthStore)?.sumQuantity()
+                    calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+                } catch {
+                    calories += 0
+                }
+            } catch {
                 calories += 0
             }
             calories = calories.rounded()
@@ -91,32 +94,30 @@ class HealthData: ObservableObject {
             } else {
                 calories += 0
             }
-            semaphore.signal()
         }
-        semaphore.wait()
         return Int(calories)
     }
     
-    func pullCalorieTotalBetweenFromHK(start: Date, end: Date, type: HKQuantityType) async -> Int {
-        let semaphore = DispatchSemaphore(value: 0)
-        var calories = Double()
-        let timePredicate = HKQuery.predicateForSamples(withStart: start, end: end, options: HKQueryOptions.strictEndDate)
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-        let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
-        let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
-        do {
-            let kcals = try await sumActCalsQuery.result(for: healthStore)?
-                .sumQuantity()
-            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
-            semaphore.signal()
-        }
-        catch {
-            calories = 0
-        }
-        semaphore.wait()
-        calories = calories.rounded()
-        return Int(calories)
-    }
+//    func pullCalorieTotalBetweenFromHK(start: Date, end: Date, type: HKQuantityType) async -> Int {
+//        do {
+//            let timePredicate = HKQuery.predicateForSamples(withStart: start, end: end, options: HKQueryOptions.strictEndDate)
+//            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+//            let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
+//            let query :HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
+//                let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
+//                continuation.resume(returning: sumActCalsQuery)
+//            }
+//            do {
+//                let kcals = try await query.result(for: healthStore)?.sumQuantity()
+//                let calories = kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+//                return Int(calories)
+//            } catch {
+//                return 0
+//            }
+//        } catch {
+//            return 0
+//        }
+//    }
     
     func pullEatenCalories(startDate: Date, endDate: Date) async -> (hk: Int, budgie: Int, total: Int) {
         var budgieCalories: Int = 0
