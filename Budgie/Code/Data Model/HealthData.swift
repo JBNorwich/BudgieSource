@@ -287,7 +287,8 @@ class HealthData: ObservableObject {
                 }
                 remainingFromAvg = averageBurn - curActive
             } else {
-                averageBurn = getMoveGoal()
+                averageBurn = await getMoveGoal()
+                print("Averageburn = \(averageBurn)")
                 if curActive != 0 {
                     remainingFromAvg = averageBurn - curActive
                 } else {
@@ -307,27 +308,32 @@ class HealthData: ObservableObject {
         }
     }
     
-    func getMoveGoal() -> Int {
-        let semaphore = DispatchSemaphore(value: 0)
-        var goal: Int = 0
+    func getMoveGoal() async -> Int {
         let calendar = NSCalendar.current
         var startDateComponents = calendar.dateComponents([.year, .month, .day], from: Date())
         startDateComponents.calendar = calendar
         
-        let predicate = HKQuery.predicateForActivitySummary(with: startDateComponents)
-
-        let query = HKActivitySummaryQuery(predicate: predicate) { (query, summariesOrNil, errorOrNil) -> Void in
-            if let summariesOrNil = summariesOrNil {
-                for summary in summariesOrNil {
-                    goal = Int(summary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
-                    semaphore.signal()
+        do {
+            let activitySummaries: [HKActivitySummary] = try await withCheckedThrowingContinuation { continuation in
+                let predicate = HKQuery.predicateForActivitySummary(with: startDateComponents)
+                let query = HKActivitySummaryQuery(predicate: predicate) { (query, summariesOrNil, errorOrNil) -> Void in
+                    if let errorOrNil {
+                        continuation.resume(throwing: errorOrNil)
+                        return
+                    }
+                    continuation.resume(returning: summariesOrNil!)
                 }
+                healthStore.execute(query)
             }
+            guard let firstSummary = activitySummaries.first else {
+                // Use a fallback value or throw an error.
+                return 0
+            }
+            
+            return Int(firstSummary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
+        } catch {
+            return 0
         }
-        
-        healthStore.execute(query)
-        semaphore.wait()
-        return goal
     }
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
