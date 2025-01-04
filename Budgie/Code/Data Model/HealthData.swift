@@ -217,56 +217,55 @@ class HealthData: ObservableObject {
     func getAverageCalories(from: Date, to: Date, type: HKQuantityType) async -> (val: Int, estimate: Bool) {
         let calendar = Calendar.current
         var estimated = false
-        
-        let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
-        let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-        let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: type, predicate: searchPredicate)], sortDescriptors: [])
-        
         var calories: Double = 0
         var calsToAdd: Double = 0
         var earliestSample = Date()
         var latestSample = Date()
         var daysInSample = Int()
         
-        let semaphore = DispatchSemaphore(value: 0)
-        
         do {
-            let results = try await descriptor.result(for: healthStore)
-            for result in results {
-                calories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
-                if result.endDate > latestSample
-                { latestSample = result.startDate }
-                if result.startDate < earliestSample
-                { earliestSample = result.startDate }
+            let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
+            let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+            let query: HKSampleQueryDescriptor<HKQuantitySample> = try await withCheckedThrowingContinuation { continuation in
+                let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: type, predicate: searchPredicate)], sortDescriptors: [])
+                continuation.resume(returning: descriptor)
             }
-            daysInSample = calendar.numberOfDaysBetween(earliestSample, and: latestSample)
-            semaphore.signal()
+            do {
+                let results = try await query.result(for: healthStore)
+                for result in results {
+                    calories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
+                    if result.endDate > latestSample
+                    { latestSample = result.startDate }
+                    if result.startDate < earliestSample
+                    { earliestSample = result.startDate }
+                }
+                daysInSample = calendar.numberOfDaysBetween(earliestSample, and: latestSample)
+                
+                if daysInSample != 0 && type == basalQuantityType { daysInSample = daysInSample - 1 }
+                
+                if daysInSample == 0 {
+                    estimated = true
+                }
+                
+                if daysInSample < 7 {
+                    let daysToAdd = 7 - daysInSample
+                    var manualToAdd: Double
+                    switch type {
+                        case activeQuantityType: manualToAdd = Double(settingsObj.manualActive)
+                        case basalQuantityType: manualToAdd = Double(settingsObj.manualBMR)
+                        default: manualToAdd = 0
+                    }
+                    calsToAdd = Double(daysToAdd) * manualToAdd
+                    daysInSample = 7
+                }
+                
+                calories = (calsToAdd + calories) / Double(daysInSample)
+            } catch {
+                estimated = true
+            }
         } catch {
-            // error handling
-        }
-        
-        if daysInSample != 0 && type == basalQuantityType { daysInSample = daysInSample - 1 }
-        
-        if daysInSample == 0 {
             estimated = true
         }
-        
-
-        if daysInSample < 7 {
-            let daysToAdd = 7 - daysInSample
-            var manualToAdd: Double
-            switch type {
-                case activeQuantityType: manualToAdd = Double(settingsObj.manualActive)
-                case basalQuantityType: manualToAdd = Double(settingsObj.manualBMR)
-                default: manualToAdd = 0
-            }
-            calsToAdd = Double(daysToAdd) * manualToAdd
-            daysInSample = 7
-        }
-        
-        calories = (calsToAdd + calories) / Double(daysInSample)
-        
-        semaphore.wait()
         
         return (val: Int(calories), estimate: estimated)
     }
