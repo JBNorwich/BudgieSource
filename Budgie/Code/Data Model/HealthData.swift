@@ -272,6 +272,7 @@ class HealthData: ObservableObject {
         } else {
             var averageBurn: Int = 0
             var wasEstimate: Bool = false
+            var remainingFromAvg: Int = 0
             let endDate = getStartOfDay(date: Date())
             let startDate = getWeekBeforeDate(date: endDate)
             let curActive = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
@@ -284,11 +285,16 @@ class HealthData: ObservableObject {
                     averageBurn = settingsObj.manualActive
                     wasEstimate = true
                 }
+                remainingFromAvg = averageBurn - curActive
             } else {
                 averageBurn = getMoveGoal()
+                if curActive != 0 {
+                    remainingFromAvg = averageBurn - curActive
+                } else {
+                    remainingFromAvg = averageBurn - Int(Double(minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
+                }
             }
-
-            let remainingFromAvg = averageBurn - curActive
+            
             if remainingFromAvg < 0 {
                 return 0
             } else {
@@ -314,7 +320,6 @@ class HealthData: ObservableObject {
             if let summariesOrNil = summariesOrNil {
                 for summary in summariesOrNil {
                     goal = Int(summary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
-                    print(goal.formatted())
                     semaphore.signal()
                 }
             }
@@ -326,7 +331,6 @@ class HealthData: ObservableObject {
     }
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
-        print("Adding calories")
         var dateOfEntry: Date
         var narrativeToLog: String
         
@@ -359,10 +363,8 @@ class HealthData: ObservableObject {
         
         if didHK == true {
             let newCalorieObj: CalorieEntry = CalorieEntry(date: dateOfEntry, calories: calories, narrative: narrativeToLog, mealUUID: meal, isInHK: true, healthKitUUID: hkUUID)
-            print("Adding calories to Budgie store after doing HealthKit")
             self.calorieModel.insertNewCals(object: newCalorieObj)
         } else {
-            print("Adding calories to Budgie store")
             let newCalorieObj: CalorieEntry = CalorieEntry(date: dateOfEntry, calories: calories, narrative: narrativeToLog, mealUUID: meal, isInHK: false, healthKitUUID: nil)
             //await... removed
             self.calorieModel.insertNewCals(object: newCalorieObj)
@@ -480,7 +482,6 @@ class HealthData: ObservableObject {
             newLump.activeEstimated = true
             newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
             newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
-
         } else {
             let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
             let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
@@ -494,7 +495,11 @@ class HealthData: ObservableObject {
                 newLump.activeCalories = recActiveCalories
             } else {
                 newLump.activeEstimated = true
-                newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
+                if settingsObj.useFitnessGoal != true {
+                    newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
+                } else {
+                    newLump.activeCalories = 0
+                }
             }
         }
         self.isBackgroundPing = false

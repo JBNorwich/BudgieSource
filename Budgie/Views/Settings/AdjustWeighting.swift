@@ -95,6 +95,16 @@ class WeightingChartObject {
 
 let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": Color.yellow, "Harsh": Color.red])
 
+struct WeightOptions: View {
+    var body: some View {
+        Text("Don't weight down").tag(-2)
+        Text("Forgiving").tag(-1)
+        Text("Default").tag(0)
+        Text("Harsh").tag(1)
+        Text("Don't predict").tag(2)
+    }
+}
+
 struct AdjustWeighting: View {
     @Binding var dataStore: HealthData
     @State var selectedOption: Int = 0
@@ -141,53 +151,29 @@ struct AdjustWeighting: View {
                             .toggleStyle(SwitchToggleStyle())
                         if differentWeights == false {
                             Picker("Weighting style", selection: $selectedOption) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions at all").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                         } else {
                             Picker("Monday", selection: $monWeight) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                             Picker("Tuesday", selection: $tuesWeight) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                             Picker("Wednesday", selection: $wedsWeight) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                             Picker("Thursday", selection: $thursWeight) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                             Picker("Friday", selection: $friWeight) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                             Picker("Saturday", selection: $satWeight) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                             Picker("Sunday", selection: $sunWeight) {
-                                Text("Forgiving").tag(-1)
-                                Text("Default").tag(0)
-                                Text("Harsh").tag(1)
-                                Text("No predictions").tag(2)
+                                WeightOptions()
                             }.pickerStyle(.menu)
                         }
                     }
