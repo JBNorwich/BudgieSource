@@ -297,7 +297,7 @@ struct BudgetView: View {
             
         .task() {
             if settingsObj.manualMode != true {
-                await dataStore.setUpObserverQueries(settingsObj: settingsObj)
+                dataStore.setUpObserverQueries(settingsObj: settingsObj)
             }
             todayLump = await dataStore.produceTodayObject()
         }

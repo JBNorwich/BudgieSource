@@ -11,7 +11,7 @@ import Observation
 import SwiftUI
 
 @Observable
-class HealthData: ObservableObject {
+class HealthData: ObservableObject  {
     var dataUpdated: Bool = false // updater in func
     var forceRefresh: Bool = false
     var isBackgroundPing: Bool = false
@@ -386,7 +386,7 @@ class HealthData: ObservableObject {
         self.dataUpdated = true
     }
     
-    func setUpObserverQueries(settingsObj: UserSettings) async {
+    func setUpObserverQueries(settingsObj: UserSettings) {
         let activeQuery = HKObserverQuery(sampleType: activeQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
             if errorOrNil != nil {
                 // Properly handle the error.
