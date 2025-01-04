@@ -320,7 +320,6 @@ class HealthData: ObservableObject {
             if let summariesOrNil = summariesOrNil {
                 for summary in summariesOrNil {
                     goal = Int(summary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
-                    print(goal.formatted())
                     semaphore.signal()
                 }
             }
@@ -332,7 +331,6 @@ class HealthData: ObservableObject {
     }
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
-        print("Adding calories")
         var dateOfEntry: Date
         var narrativeToLog: String
         
@@ -365,10 +363,8 @@ class HealthData: ObservableObject {
         
         if didHK == true {
             let newCalorieObj: CalorieEntry = CalorieEntry(date: dateOfEntry, calories: calories, narrative: narrativeToLog, mealUUID: meal, isInHK: true, healthKitUUID: hkUUID)
-            print("Adding calories to Budgie store after doing HealthKit")
             self.calorieModel.insertNewCals(object: newCalorieObj)
         } else {
-            print("Adding calories to Budgie store")
             let newCalorieObj: CalorieEntry = CalorieEntry(date: dateOfEntry, calories: calories, narrative: narrativeToLog, mealUUID: meal, isInHK: false, healthKitUUID: nil)
             //await... removed
             self.calorieModel.insertNewCals(object: newCalorieObj)
