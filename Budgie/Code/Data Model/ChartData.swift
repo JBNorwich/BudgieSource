@@ -118,14 +118,17 @@ class ChartData: ObservableObject {
                 return
             }
             
+            var packetsToAdd: [CalsPacket] = []
+            
             actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
             { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let date = statistics.startDate
                     let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
-                    self.activePackets.append(CalsPacket(date:date, cals:value))
+                    packetsToAdd.append(CalsPacket(date:date, cals:value))
                 }
             }
+            self.activePackets.append(contentsOf: packetsToAdd)
             self.activeDone = true
         }
         healthStore.execute(actCalsQuery)
@@ -159,13 +162,15 @@ class ChartData: ObservableObject {
             
             var cumValue: Int = 0
             
+            var packetsToAdd: [CalsPacket] = []
+            
             actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
             { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let date = statistics.startDate
                     let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
                     cumValue += value
-                    self.basalPackets.append(CalsPacket(date:date, cals:value))
+                    packetsToAdd.append(CalsPacket(date:date, cals:value))
                 }
             }
             
@@ -173,6 +178,7 @@ class ChartData: ObservableObject {
                 self.actAsIfManual = true
             }
             
+            self.basalPackets.append(contentsOf: packetsToAdd)
             self.basalDone = true
         }
         
@@ -207,6 +213,8 @@ class ChartData: ObservableObject {
                     return
                 }
                 
+                var packetsToAdd: [CalsPacket] = []
+                
                 actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
                 { statistics, _ in
                     if let quantity = statistics.sumQuantity(){
@@ -214,9 +222,11 @@ class ChartData: ObservableObject {
                         
                         let value = Int(quantity.doubleValue(for: .kilocalorie()))
                         
-                        self.eatenPackets.append(CalsPacket(date:date, cals:value))
+                        packetsToAdd.append(CalsPacket(date:date, cals:value))
                     }
                 }
+                
+                self.eatenPackets.append(contentsOf: packetsToAdd)
             }
             
             healthStore.execute(actCalsQuery)
