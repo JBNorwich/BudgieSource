@@ -122,28 +122,33 @@ class HealthData: ObservableObject {
     func pullEatenCalories(startDate: Date, endDate: Date) async -> (hk: Int, budgie: Int, total: Int) {
         var budgieCalories: Int = 0
         var healthKitcalories: Double = 0
-        let semaphore = DispatchSemaphore(value: 0)
         
+        // get HealthKit calories
         if settingsObj.manualMode == false {
-            let notBudgieTodayPredicate = getNotBudgieTodayPredicate()
-            let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: notBudgieTodayPredicate)], sortDescriptors: [])
             do {
-                let results = try await descriptor.result(for: healthStore)
-                for result in results {
-                    let source = result.sourceRevision.source
-                    if source != HKSource.default() {
-                        healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
-                    }
+                let notBudgieTodayPredicate = getNotBudgieTodayPredicate()
+                let query: HKSampleQueryDescriptor<HKQuantitySample> = try await withCheckedThrowingContinuation { continuation in
+                    let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: notBudgieTodayPredicate)], sortDescriptors: [])
+                    continuation.resume(returning: descriptor)
                 }
-                semaphore.signal()
-            }
-            catch {
+                do {
+                    let results = try await query.result(for: healthStore)
+                    for result in results {
+                        let source = result.sourceRevision.source
+                        if source != HKSource.default() {
+                            //Note to self: You need to total the doubleValues and *then* convert to Int as otherwise it gives very annoying rounding errors
+                            healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
+                        }
+                    }
+                } catch {
+                    healthKitcalories = 0
+                }
+            } catch {
                 healthKitcalories = 0
             }
-        } else {
-            semaphore.signal()
         }
         
+        // get Budgie Diet calories
         let budgieResults = self.calorieModel.fetchCalsBetween(from: startDate, to: endDate)
         if budgieResults.count == 0 {
             budgieCalories = 0
