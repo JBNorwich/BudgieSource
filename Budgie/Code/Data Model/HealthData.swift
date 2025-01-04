@@ -24,23 +24,23 @@ class HealthData: ObservableObject {
     }
     
     func pullCalorieTotalTodayFromHK(type: HKQuantityType) async -> Int {
-        let semaphore = DispatchSemaphore(value: 0)
-        var calories = Double()
-        let todayPredicate = getTodayPredicate()
-        let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: todayPredicate)
-        let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
         do {
-            let kcals = try await sumActCalsQuery.result(for: healthStore)?
-                .sumQuantity()
-            calories = kcals?.doubleValue(for: HKUnit.kilocalorie()).rounded() ?? 0
-            semaphore.signal()
+            let todayPredicate = getTodayPredicate()
+            let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: todayPredicate)
+            let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
+                let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
+                continuation.resume(returning: sumActCalsQuery)
+            }
+            do {
+                let queryResult = try await query.result(for: healthStore)?.sumQuantity()
+                let kcals = queryResult?.doubleValue(for: HKUnit.kilocalorie()).rounded() ?? 0
+                return Int(kcals)
+            } catch {
+                return 0
+            }
+        } catch {
+            return 0
         }
-        catch {
-            calories = 0
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return Int(calories)
     }
     
     ///Grabs the calorie total for a given date range and type from HealthKit and (for eaten) Budgie Diet. If manual mode is on, will return either the manual BMR/active amounts or, for eaten calories, just the amount of Budgie Diet calories. You must normalise the date to 00:00 before passing the date. Set hkOnly to true if you only care about HealthKit calories.
