@@ -30,6 +30,7 @@ struct SettingsView: View {
     @State var disclaimerDisplayed = false
     @State var hideTodayInDetail = false
     @State var useFitnessGoal = false
+    @State private var weightTime = Date()
     
     @FocusState private var focusResting: Bool
     @FocusState private var focusActive: Bool
@@ -130,7 +131,7 @@ struct SettingsView: View {
             }
                        
             if manualMode != true {
-                Section(header: Text("Advanced")) {
+                Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
                     NavigationLink {
                         BudgetCap(dataStore: $dataStore)
                     } label: {
@@ -142,6 +143,8 @@ struct SettingsView: View {
                     } label: {
                         Text("Budget weighting options")
                     }
+                    
+                    DatePicker("Typical evening meal time", selection: $weightTime, displayedComponents: .hourAndMinute)
                 }
             }
             
@@ -203,6 +206,7 @@ struct SettingsView: View {
             manualActive = settingsObj.manualActive
             surplusMode = settingsObj.surplusMode
             whalesEverywhere = settingsObj.whalesEverywhere
+            weightTime = minsIntoDayIntoTime(mins: settingsObj.finalMealTime)
             if surplusMode == true {
                 doubleDeficit = Double(-settingsObj.desiredDeficit)
             } else {
@@ -257,6 +261,15 @@ struct SettingsView: View {
         
         .onChange(of: useFitnessGoal, initial: false) {
             settingsObj.useFitnessGoal = useFitnessGoal
+        }
+        
+        .onChange(of: weightTime) {
+            settingsObj.finalMealTime = timeToMinsIntoDay(time: weightTime)
+            print(timeToMinsIntoDay(time: weightTime).formatted())
+            pingSettingsToWatch()
+            dataStore.lastUpdateRequestSource = "Change of final meal time"
+            dataStore.isBackgroundPing = false
+            dataStore.dataUpdated = true
         }
         
         .navigationTitle("Settings")

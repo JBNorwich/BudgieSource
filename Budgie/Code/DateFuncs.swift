@@ -63,6 +63,12 @@ func weightForCertainty(input: Int) -> Int {
     return Int(Double(input) * factor)
 }
 
+func weightLeftToEat(input: Int) -> Int {
+    var factor: Double = (Double(minutesIntoDay()) + 1) / Double(settingsObj.finalMealTime)
+    if factor > 1 {  factor = 1 }
+    return Int(Double(input) * factor)
+}
+
 func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
     var doubleInput = Double(input)
     var styleToUse: Int
@@ -185,4 +191,20 @@ extension Calendar {
 
 func negate(value: Int) -> Int {
     return -value
+}
+
+func timeToMinsIntoDay(time: Date) -> Int {
+    let calendar = Calendar.current
+    let hour = calendar.component(.hour, from: time)
+    let minute = calendar.component(.minute, from: time)
+    return (hour * 60) + minute
+}
+
+func minsIntoDayIntoTime(mins: Int) -> Date {
+    let hours = mins / 60
+    let minutes = mins % 60
+    var dateComponents = DateComponents()
+    dateComponents.hour = hours
+    dateComponents.minute = minutes
+    return Calendar.current.date(from: dateComponents)!
 }

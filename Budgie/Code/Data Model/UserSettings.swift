@@ -163,6 +163,11 @@ class UserSettings {
         set { defaults?.set(newValue, forKey: "capBudgetCals")}
     }
     
+    var finalMealTime: Int {
+        get { return defaults?.value(forKey: "finalMealTime") as? Int ?? 1200 }
+        set { defaults?.set(newValue, forKey: "finalMealTime")}
+    }
+    
     func dumpToDict() -> [String:Any] {
         var dict: [String:Any] = [:]
         dict["surplusMode"] = self.surplusMode
@@ -182,6 +187,7 @@ class UserSettings {
         dict["useFitnessGoal"] = self.useFitnessGoal
         dict["capBudget"] = self.capBudget
         dict["capBudgetCals"] = self.capBudgetCals
+        dict["finalMealTime"] = self.finalMealTime
         return dict
     }
 }

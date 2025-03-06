@@ -105,6 +105,8 @@ struct WeightOptions: View {
     }
 }
 
+
+
 struct AdjustWeighting: View {
     @Binding var dataStore: HealthData
     @State var selectedOption: Int = 0
@@ -178,7 +180,7 @@ struct AdjustWeighting: View {
                         }
                     }
                 }.frame(maxHeight: .infinity)
-        .navigationTitle("Active calorie weighting")
+        .navigationTitle("Calorie weighting options")
         
         .onAppear {
             selectedOption = settingsObj.weightingStyle

@@ -95,7 +95,7 @@ class TodayLump: ObservableObject {
     
     var leftToEat: Int {
         if self.totalBudget != 0 {
-            return weightForCertainty(input: self.totalBudget) - self.eatenCalories
+            return weightLeftToEat(input: self.totalBudget) - self.eatenCalories
         } else {
             return 0
         }
