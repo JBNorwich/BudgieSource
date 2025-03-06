@@ -50,7 +50,7 @@ struct GaugeView: View {
                         } else if dataLump.gaugeNumber < -25 {
                             Text("It looks like you're below your target for this time of day; you can eat **\(dataLump.normalisedLTE)kcal** right now, and have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
                         } else {
-                            Text("You're below your target right now for the time of day, and you can eat **\(dataLump.normalisedLTE)kcal** right now.")
+                            Text("You're below your target right now for the time of day, and you can eat **\(dataLump.normalisedLTE)kcal** right now. Your budget has **\(dataLump.totalBudgetRem)kcal** left.")
                         }
                     } else {
                         if dataLump.leftToEat > 0 {

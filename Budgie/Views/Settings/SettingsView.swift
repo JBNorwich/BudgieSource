@@ -169,7 +169,7 @@ struct SettingsView: View {
                         }
                         Spacer()
                     }
-                    Text("Version 1.3.1 (250104.1)")
+                    Text("Version 1.3.2 (250306.1)")
                     Text("Copyright 2024-5 Joe Baldwin")
                 }
             }
