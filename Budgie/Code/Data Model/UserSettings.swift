@@ -164,7 +164,7 @@ class UserSettings {
     }
     
     var finalMealTime: Int {
-        get { return defaults?.value(forKey: "finalMealTime") as? Int ?? 1200 }
+        get { return defaults?.value(forKey: "finalMealTime") as? Int ?? 1080 }
         set { defaults?.set(newValue, forKey: "finalMealTime")}
     }
     

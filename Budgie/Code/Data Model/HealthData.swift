@@ -208,6 +208,7 @@ class HealthData: ObservableObject  {
             let startDate = getWeekBeforeDate(date: endDate)
             avgBasalCals = await self.getAverageCalories(from: startDate, to: endDate, type: basalQuantityType).val
         }
+        print (avgBasalCals.formatted())
         let remainingMinsInDay = 1440 - minutesIntoDay()
         let calsPerMinute: Double = Double(avgBasalCals) / 1440
         let projectedCals = Double(remainingMinsInDay) * calsPerMinute
