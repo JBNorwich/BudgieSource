@@ -242,8 +242,6 @@ class HealthData: ObservableObject  {
                 }
                 daysInSample = calendar.numberOfDaysBetween(earliestSample, and: latestSample)
                 
-                if daysInSample != 0 && type == basalQuantityType { daysInSample = daysInSample - 1 }
-                
                 if daysInSample == 0 {
                     estimated = true
                 }
