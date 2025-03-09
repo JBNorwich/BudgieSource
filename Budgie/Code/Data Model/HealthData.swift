@@ -216,57 +216,55 @@ class HealthData: ObservableObject  {
     }
     
     func getAverageCalories(from: Date, to: Date, type: HKQuantityType) async -> (val: Int, estimate: Bool) {
-        let calendar = Calendar.current
-        var estimated = false
-        var calories: Double = 0
-        var calsToAdd: Double = 0
-        var earliestSample = Date()
-        var latestSample = Date()
-        var daysInSample = Int()
+        let everyDay = DateComponents(day:1)
         
         do {
             let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
             let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-            let query: HKSampleQueryDescriptor<HKQuantitySample> = try await withCheckedThrowingContinuation { continuation in
-                let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: type, predicate: searchPredicate)], sortDescriptors: [])
-                continuation.resume(returning: descriptor)
-            }
-            do {
-                let results = try await query.result(for: healthStore)
-                for result in results {
-                    calories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
-                    if result.endDate > latestSample
-                    { latestSample = result.startDate }
-                    if result.startDate < earliestSample
-                    { earliestSample = result.startDate }
-                }
-                daysInSample = calendar.numberOfDaysBetween(earliestSample, and: latestSample)
+            return await withCheckedContinuation { continuation in
                 
-                if daysInSample == 0 {
-                    estimated = true
-                }
+                let statQuery = HKStatisticsCollectionQuery(quantityType: type, quantitySamplePredicate: searchPredicate, options: .cumulativeSum, anchorDate: from, intervalComponents: everyDay)
                 
-                if daysInSample < 7 {
-                    let daysToAdd = 7 - daysInSample
-                    var manualToAdd: Double
-                    switch type {
-                        case activeQuantityType: manualToAdd = Double(settingsObj.manualActive)
-                        case basalQuantityType: manualToAdd = Double(settingsObj.manualBMR)
-                        default: manualToAdd = 0
+                statQuery.initialResultsHandler = { query, results, error in
+                    guard let actCollection = results else {
+                        assertionFailure("")
+                        return
                     }
-                    calsToAdd = Double(daysToAdd) * manualToAdd
-                    daysInSample = 7
+                    
+                    var daysInSample: Int = 0
+                    var totalCals: Int = 0
+                    var estimated = false
+                    
+                    actCollection.enumerateStatistics(from: from, to: to) { statistics, _ in
+                        if let quantity = statistics.sumQuantity() {
+                            totalCals = totalCals + Int(quantity.doubleValue(for: .kilocalorie()))
+                            daysInSample = daysInSample + 1
+                            print("Sample days: " + daysInSample.formatted())
+                        }
+                    }
+                    
+                    if daysInSample < 7 {
+                        let diff = 7 - daysInSample
+                        var toAdd: Int = 0
+                        
+                        if type == .quantityType(forIdentifier: .activeEnergyBurned) {
+                            toAdd = settingsObj.manualActive
+                        } else if type == .quantityType(forIdentifier: .basalEnergyBurned) {
+                            toAdd = settingsObj.manualBMR
+                        }
+                        
+                        totalCals = totalCals + (diff * toAdd)
+                        estimated = true
+                    }
+                    
+                    let average = totalCals/7
+                    
+                    continuation.resume(returning: (val: average, estimate: estimated))
                 }
                 
-                calories = (calsToAdd + calories) / Double(daysInSample)
-            } catch {
-                estimated = true
+                healthStore.execute(statQuery)
             }
-        } catch {
-            estimated = true
         }
-        
-        return (val: Int(calories), estimate: estimated)
     }
     
     func getProjActiveCalories() async -> Int {
@@ -292,7 +290,6 @@ class HealthData: ObservableObject  {
                 remainingFromAvg = averageBurn - curActive
             } else {
                 averageBurn = await getMoveGoal()
-                print("Averageburn = \(averageBurn)")
                 if curActive != 0 {
                     remainingFromAvg = averageBurn - curActive
                 } else {
