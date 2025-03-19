@@ -229,7 +229,7 @@ struct BudgetView: View {
                         }
                     } else {
                         Task {
-                            await todayLump = dataStore.produceTodayObject()
+                          await todayLump = dataStore.produceTodayObject()
                         }
                     }
                 }

@@ -10,28 +10,28 @@ import SwiftUI
 
 class TodayLump: ObservableObject {
     // Variables that need to be updated upon creation
-    var activeCalories: Int = 0
-    var basalCalories: Int = 0
-    var eatenCalories: Int = 0
-    var desiredDeficit: Int = 0
-    var projectedActive: Int = 0
-    var projectedBasal: Int = 0
+    @Published var activeCalories: Int = 0
+    @Published var basalCalories: Int = 0
+    @Published var eatenCalories: Int = 0
+    @Published var desiredDeficit: Int = 0
+    @Published var projectedActive: Int = 0
+    @Published var projectedBasal: Int = 0
     
-    var budgetAtCap: Bool = false
-    var budgetAtMin: Bool = false
+    @Published var budgetAtCap: Bool = false
+    @Published var budgetAtMin: Bool = false
     
     // food data
-    var mealList: [Meal] = []
-    var foodList: [CalorieEntry] = []
-    var healthKitCalories: Int = 0
+    @Published var mealList: [Meal] = []
+    @Published var foodList: [CalorieEntry] = []
+    @Published var healthKitCalories: Int = 0
 
     // flags for estimation of data
-    var basalEstimated: Bool = false
-    var activeEstimated: Bool = false
-    var estimatedAverageActive: Bool = false
+    @Published var basalEstimated: Bool = false
+    @Published var activeEstimated: Bool = false
+    @Published var estimatedAverageActive: Bool = false
     
     // signals re. data updates
-    var lastUpdate = Date()
+    @Published var lastUpdate = Date()
     
     // Calculating functions
     var totalBudget: Int {

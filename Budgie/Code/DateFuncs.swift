@@ -64,11 +64,18 @@ func weightForCertainty(input: Int) -> Int {
 }
 
 func weightLeftToEat(input: Int) -> Int {
-    var minsToWeight: Double = Double(minutesIntoDay() + 1) - 240
+    var factor = Double()
+    
+    let minsToWeightTo = Double(settingsObj.finalMealTime)
+    let minsToWeightFrom: Double = 240
+    let minsToWeight: Double = Double(minutesIntoDay() + 1) - minsToWeightFrom
+    let diff = minsToWeightTo - minsToWeightFrom
+    
     if minsToWeight < 0 {
-        minsToWeight = 0
+        factor = 0
+    } else {
+        factor = minsToWeight/diff
     }
-    var factor: Double = minsToWeight / Double(settingsObj.finalMealTime)
     if factor > 1 {  factor = 1 }
     return Int(Double(input) * factor)
 }

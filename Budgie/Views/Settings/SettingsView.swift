@@ -144,7 +144,7 @@ struct SettingsView: View {
                         Text("Budget weighting options")
                     }
                     
-//                    DatePicker("Typical evening meal time", selection: $weightTime, displayedComponents: .hourAndMinute)
+                    DatePicker("Typical evening meal time", selection: $weightTime, displayedComponents: .hourAndMinute)
                 }
             }
             
