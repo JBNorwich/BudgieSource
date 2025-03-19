@@ -422,6 +422,51 @@ class HealthData: ObservableObject  {
         healthStore.execute(eatenQuery)
     }
     
+    func updateTodayObject(lump: TodayLump) async {
+        print("Update requested by: " + self.lastUpdateRequestSource)
+        self.updateInProgress = true
+        let todayStart = getStartOfDay(date: Date())
+        let todayEnd = getMidnightOnDayAfter(date: todayStart)
+        
+        
+        let eatenCalories = await self.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+        lump.eatenCalories = eatenCalories.total
+        lump.foodList = await self.getCalorieEntries(date: todayStart)
+        lump.healthKitCalories = eatenCalories.hk
+        lump.mealList = await self.calorieModel.cleansedMealList(data: lump.foodList)
+        
+        lump.desiredDeficit = settingsObj.desiredDeficit
+        lump.projectedBasal = await self.getProjBasalCalories()
+        lump.projectedActive = await self.getProjActiveCalories()
+        
+        if settingsObj.manualMode == true {
+            lump.basalEstimated = true
+            lump.activeEstimated = true
+            lump.basalCalories = settingsObj.manualBMR - lump.projectedBasal
+            lump.activeCalories = settingsObj.manualActive - lump.projectedActive
+        } else {
+            let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
+            let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
+            if recBasalCalories != 0 {
+                lump.basalCalories = recBasalCalories
+            } else {
+                lump.basalEstimated = true
+                lump.basalCalories = settingsObj.manualBMR - lump.projectedBasal
+            }
+            if recActiveCalories != 0 {
+                lump.activeCalories = recActiveCalories
+            } else {
+                lump.activeEstimated = true
+                lump.activeCalories = settingsObj.manualActive - lump.projectedActive
+            }
+        }
+        print(lump.projectedBasal.formatted())
+        lump.lastUpdate = Date()
+        self.isBackgroundPing = false
+        self.dataUpdated = false
+        self.updateInProgress = false
+    }
+    
     func produceTodayObject() async -> TodayLump {
         print("Update requested by: " + self.lastUpdateRequestSource)
         self.updateInProgress = true

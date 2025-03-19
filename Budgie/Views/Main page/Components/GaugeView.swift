@@ -34,7 +34,7 @@ struct GaugeView: View {
             Divider()
             VStack {
                 if minutesIntoDay() < 540 && dataLump.leftToEat > 0 {
-                    Text("Good morning! You have **\(dataLump.totalBudgetRem)kcal** left in your overall budget today, and can eat \(dataLump.leftToEat) right now.")
+                    Text("Good morning! You have **\(dataLump.totalBudgetRem)kcal** left in your overall budget today, and can eat \(dataLump.leftToEat)kcal right now.")
                 } else {
                     if dataLump.gaugeNumber > 10 {
                         if dataLump.totalBudgetRem < 0 {

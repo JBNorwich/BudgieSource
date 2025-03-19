@@ -64,7 +64,11 @@ func weightForCertainty(input: Int) -> Int {
 }
 
 func weightLeftToEat(input: Int) -> Int {
-    var factor: Double = (Double(minutesIntoDay()) + 1) / Double(settingsObj.finalMealTime)
+    var minsToWeight: Double = Double(minutesIntoDay() + 1) - 240
+    if minsToWeight < 0 {
+        minsToWeight = 0
+    }
+    var factor: Double = minsToWeight / Double(settingsObj.finalMealTime)
     if factor > 1 {  factor = 1 }
     return Int(Double(input) * factor)
 }
@@ -79,8 +83,7 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
         if settingsObj.differentWeights != true {
             styleToUse = settingsObj.weightingStyle
         } else {
-            let weekday = getDayOfWeek()
-            switch weekday {
+            switch getDayOfWeek() {
                 case 1: styleToUse = settingsObj.sunWeight
                 case 2: styleToUse = settingsObj.monWeight
                 case 3: styleToUse = settingsObj.tuesWeight
