@@ -239,7 +239,6 @@ class HealthData: ObservableObject  {
                         if let quantity = statistics.sumQuantity() {
                             totalCals = totalCals + Int(quantity.doubleValue(for: .kilocalorie()))
                             daysInSample = daysInSample + 1
-                            print("Sample days: " + daysInSample.formatted())
                         }
                     }
                     
@@ -460,7 +459,6 @@ class HealthData: ObservableObject  {
                 lump.activeCalories = settingsObj.manualActive - lump.projectedActive
             }
         }
-        print(lump.projectedBasal.formatted())
         lump.lastUpdate = Date()
         self.isBackgroundPing = false
         self.dataUpdated = false
