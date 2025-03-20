@@ -117,6 +117,14 @@ class TodayLump: ObservableObject {
         return progressToday * 100
     }
     
+    var currentTarget: Int {
+        return weightLeftToEat(input: self.totalBudget)
+    }
+    
+    var progressAgainstTarget: Double {
+        return Double(self.eatenCalories) / Double(self.currentTarget)
+    }
+    
     var progressAgainstTime: Double {
         //0.74 / 0.666
         let value = self.progressToday / getPercentOfDayDone()
@@ -130,7 +138,7 @@ class TodayLump: ObservableObject {
     }
     
     var gaugeNumber: Int {
-        return Int(self.progressAgainstTime * 100) - 100
+        return Int(self.progressAgainstTarget * 100) - 100
     }
     
     var meterNumber: Double {
@@ -148,7 +156,7 @@ class TodayLump: ObservableObject {
         let okColour = Color(.yellow)
         let badColour = Color(.red)
         
-        let diff = self.progressAgainstTime
+        let diff = self.progressAgainstTarget
         
         if diff < 0.25 {
             return reallyGoodColor
@@ -192,6 +200,10 @@ class TodayLump: ObservableObject {
             valueReturned = self.leftToEat
         }
         return valueReturned.formatted()
+    }
+    
+    var calsOutNow: Int {
+        return self.activeCalories + self.basalCalories
     }
 }
 

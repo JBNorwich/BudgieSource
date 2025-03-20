@@ -14,7 +14,7 @@ struct GaugeView: View {
     var body: some View {
         HStack {
             VStack {
-                Gauge(value: dataLump.progressAgainstTime, in: 0...2) {
+                Gauge(value: dataLump.progressAgainstTarget, in: 0...2) {
                 } currentValueLabel: {
                     if dataLump.gaugeNumber > 0 {
                         Text("+" + dataLump.gaugeNumber.formatted() + "%")
@@ -62,6 +62,15 @@ struct GaugeView: View {
                         } else {
                             Text("It looks like you're more or less on target, but you don't have anything left to eat right now. **\(dataLump.totalBudgetRem)kcal** is left in your budget overall.")
                         }
+                    }
+                }
+                
+                if settingsObj.hideTodayInDetail == true {
+                    Divider()
+                    HStack {
+                        Text("**Cals in**: \(dataLump.eatenCalories)")
+                        Spacer()
+                        Text("**Cals out**: \(dataLump.calsOutNow)")
                     }
                 }
             }
