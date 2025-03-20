@@ -158,7 +158,8 @@ struct AddCalsSheet: View {
             mealList = calorieData.getListOfMeals()
             mealList = mealList.sorted(by: { $0.order < $1.order })
             selectedMeal = mealList.first!.mealUUID
-            
+            newCalsIn = curEaten
+            newRemBudg = remBudg
         }
         
         .onChange(of: calories)
