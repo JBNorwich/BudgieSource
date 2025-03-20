@@ -81,19 +81,44 @@ class CalorieData: ObservableObject {
         context = calorieContainer.mainContext
     }
     
-    func fetchCalsBetween(from: Date,to: Date) -> [CalorieEntry]{
+    func fetchCalsBetween(from: Date,to: Date) async -> [CalorieEntry]{
         let searchPredicate = #Predicate<CalorieEntry> { entry in
             (entry.date > from) && (entry.date < to)
         }
-        var returns: [CalorieEntry] = []
         let descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate)
-        do {
-            returns = try context.fetch(descriptor)
-        } catch {
-            ///error handling
+        return await withCheckedContinuation { continuation in
+            do {
+                let returns = try context.fetch(descriptor)
+                continuation.resume(returning: returns)
+            } catch {
+                ///error handling
+            }
         }
+    }
+    
+    func fetchCalsForMeal(_ meal: Meal?) async -> [CalorieEntry] {
+        var searchPredicate: Predicate<CalorieEntry>
+        if meal != nil {
+            let mealUUID = meal!.mealUUID
+            searchPredicate = #Predicate<CalorieEntry> { entry in
+                entry.meal == mealUUID
+            }
+        } else {
+            searchPredicate = #Predicate<CalorieEntry> { entry in
+                entry.calories != 0
+            }
+        }
+        var descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate, sortBy: [SortDescriptor(\CalorieEntry.date, order: .reverse)])
+        descriptor.fetchLimit = 30
         
-        return returns
+        return await withCheckedContinuation { continuation in
+            do {
+                let returns: [CalorieEntry] = try context.fetch(descriptor)
+                continuation.resume(returning: returns)
+            } catch {
+                
+            }
+        }
     }
     
     func insertNewCals(object: CalorieEntry)

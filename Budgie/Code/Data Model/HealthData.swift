@@ -51,7 +51,7 @@ class HealthData: ObservableObject  {
         
         if type == eatenQuantityType && hkOnly == false {
             var budgieCalories: Int = 0
-            let budgieResults = self.calorieModel.fetchCalsBetween(from: date, to: endDate)
+            let budgieResults = await self.calorieModel.fetchCalsBetween(from: date, to: endDate)
             if budgieResults.count != 0 {
                 for result in budgieResults {
                     budgieCalories += result.calories
@@ -149,7 +149,7 @@ class HealthData: ObservableObject  {
         }
         
         // get Budgie Diet calories
-        let budgieResults = self.calorieModel.fetchCalsBetween(from: startDate, to: endDate)
+        let budgieResults = await self.calorieModel.fetchCalsBetween(from: startDate, to: endDate)
         if budgieResults.count == 0 {
             budgieCalories = 0
         } else {
@@ -190,7 +190,7 @@ class HealthData: ObservableObject  {
         let endDate = getMidnightOnDayAfter(date: date)
         var returnArray: [CalorieEntry] = []
         
-        let budgieResults = self.calorieModel.fetchCalsBetween(from: date, to: endDate)
+        let budgieResults = await self.calorieModel.fetchCalsBetween(from: date, to: endDate)
         
         if budgieResults.count != 0 {
             returnArray = budgieResults

@@ -233,7 +233,7 @@ class ChartData: ObservableObject {
         }
         
         let model = CalorieData()
-        let objArray = model.fetchCalsBetween(from: self.startDate, to: self.endDate)
+        let objArray = await model.fetchCalsBetween(from: self.startDate, to: self.endDate)
         for object in objArray {
             self.budgieEatenPackets.append(CalsPacket(date:getStartOfDay(date: object.date), cals:object.calories))
         }
