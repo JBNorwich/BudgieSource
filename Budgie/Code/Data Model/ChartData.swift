@@ -48,16 +48,7 @@ class ChartData: ObservableObject {
         }
     }
     
-    func allDoneCheck() -> Bool {
-        if activeDone == true && basalDone == true && eatenDone == true
-        {
-            return true
-        } else {
-            return false
-        }
-    }
-    
-    @MainActor func cleanDataObject() {
+    func cleanDataObject() {
         self.basalPackets.removeAll()
         self.activePackets.removeAll()
         self.eatenPackets.removeAll()
@@ -65,137 +56,39 @@ class ChartData: ObservableObject {
         self.actAsIfManual = false
     }
     
-    @MainActor func pokeForUpdate() async
+    func pokeForUpdate() async
     {
         if self.updateInProgress == false {
             self.updateInProgress = true
             if settingsObj.manualMode == false {
-                await fetchChartActive()
-                await fetchChartBasal()
+                self.activePackets = await fetchChartActive()
+                self.basalPackets = await fetchChartBasal()
+                self.activeDone = true
+                self.basalDone = true
             } else {
                 self.activeDone = true
                 self.basalDone = true
             }
-            await fetchChartEaten()
-            var notified: Bool = false
-            while allDoneCheck() != true {
-                if notified == false { notified = true }
-                do {
-                    try await Task.sleep(nanoseconds: 100_000_000)
-                } catch {
-                    //nothing
-                }
-            }
+            let eatenPacketsReturn = await fetchChartEaten()
+            self.eatenPackets = eatenPacketsReturn.hk
+            self.budgieEatenPackets = eatenPacketsReturn.budgie
             self.dataUpdated = true
         }
     }
     
-    @MainActor func fetchChartActive() async
+    func fetchChartActive() async -> [CalsPacket]
     {
         let everyDay = DateComponents(day:1)
         let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
-        let actCalsQuery = HKStatisticsCollectionQuery(quantityType: activeQuantityType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
         
-        // query active calories, digest into packets
-        actCalsQuery.initialResultsHandler = {
-            query, results, error in
-            
-            self.activePackets.removeAll()
-            
-            if let error = error as? HKError {
-                switch (error.code) {
-                case .errorDatabaseInaccessible:
-                    // HealthKit couldn't access the database because the device is locked.
-                    return
-                default:
-                    // Handle other HealthKit errors here.
-                    return
-                }
-            }
-            
-            guard let actCollection = results else {
-                assertionFailure("")
-                return
-            }
-            
-            var packetsToAdd: [CalsPacket] = []
-            
-            actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
-            { statistics, _ in
-                if let quantity = statistics.sumQuantity() {
-                    let date = statistics.startDate
-                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
-                    packetsToAdd.append(CalsPacket(date:date, cals:value))
-                }
-            }
-            self.activePackets.append(contentsOf: packetsToAdd)
-            self.activeDone = true
-        }
-        healthStore.execute(actCalsQuery)
-    }
-    
-    @MainActor func fetchChartBasal() async
-    {
-        let everyDay = DateComponents(day:1)
-        let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
-        let actCalsQuery = HKStatisticsCollectionQuery(quantityType: basalQuantityType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
-        
-        // query active calories, digest into packets
-        actCalsQuery.initialResultsHandler = {
-            query, results, error in
-            
-            if let error = error as? HKError {
-                switch (error.code) {
-                case .errorDatabaseInaccessible:
-                    // HealthKit couldn't access the database because the device is locked.
-                    return
-                default:
-                    // Handle other HealthKit errors here.
-                    return
-                }
-            }
-            
-            guard let actCollection = results else {
-                assertionFailure("")
-                return
-            }
-            
-            var cumValue: Int = 0
-            
-            var packetsToAdd: [CalsPacket] = []
-            
-            actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
-            { statistics, _ in
-                if let quantity = statistics.sumQuantity() {
-                    let date = statistics.startDate
-                    let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
-                    cumValue += value
-                    packetsToAdd.append(CalsPacket(date:date, cals:value))
-                }
-            }
-            
-            if cumValue == 0 {
-                self.actAsIfManual = true
-            }
-            
-            self.basalPackets.append(contentsOf: packetsToAdd)
-            self.basalDone = true
-        }
-        
-        healthStore.execute(actCalsQuery)
-    }
-    
-    @MainActor func fetchChartEaten() async
-    {
-        if settingsObj.manualMode == false {
-            let everyDay = DateComponents(day:1)
-            let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
-            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,queryPeriod])
-            let actCalsQuery = HKStatisticsCollectionQuery(quantityType: eatenQuantityType, quantitySamplePredicate: queryPredicate, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
+        return await withCheckedContinuation { continuation in
+            let actCalsQuery = HKStatisticsCollectionQuery(quantityType: activeQuantityType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
             
             // query active calories, digest into packets
             actCalsQuery.initialResultsHandler = {
                 query, results, error in
+                
+                self.activePackets.removeAll()
                 
                 if let error = error as? HKError {
                     switch (error.code) {
@@ -217,27 +110,128 @@ class ChartData: ObservableObject {
                 
                 actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
                 { statistics, _ in
-                    if let quantity = statistics.sumQuantity(){
+                    if let quantity = statistics.sumQuantity() {
                         let date = statistics.startDate
-                        
-                        let value = Int(quantity.doubleValue(for: .kilocalorie()))
-                        
+                        let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
+                        packetsToAdd.append(CalsPacket(date:date, cals:value))
+                    }
+                }
+                self.activePackets.append(contentsOf: packetsToAdd)
+                continuation.resume(returning: packetsToAdd)
+            }
+            healthStore.execute(actCalsQuery)
+        }
+    }
+    
+    func fetchChartBasal() async -> [CalsPacket]
+    {
+        let everyDay = DateComponents(day:1)
+        let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
+        
+        return await withCheckedContinuation { continuation in
+            let actCalsQuery = HKStatisticsCollectionQuery(quantityType: basalQuantityType, quantitySamplePredicate: queryPeriod, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
+            // query active calories, digest into packets
+            actCalsQuery.initialResultsHandler = { query, results, error in
+                
+                if let error = error as? HKError {
+                    switch (error.code) {
+                    case .errorDatabaseInaccessible:
+                        // HealthKit couldn't access the database because the device is locked.
+                        return
+                    default:
+                        // Handle other HealthKit errors here.
+                        return
+                    }
+                }
+                
+                guard let actCollection = results else {
+                    assertionFailure("")
+                    return
+                }
+                
+                var cumValue: Int = 0
+                
+                var packetsToAdd: [CalsPacket] = []
+                
+                actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
+                { statistics, _ in
+                    if let quantity = statistics.sumQuantity() {
+                        let date = statistics.startDate
+                        let value = Int(quantity.doubleValue(for: .kilocalorie()).rounded())
+                        cumValue += value
                         packetsToAdd.append(CalsPacket(date:date, cals:value))
                     }
                 }
                 
-                self.eatenPackets.append(contentsOf: packetsToAdd)
+                if cumValue == 0 {
+                    self.actAsIfManual = true
+                }
+                
+                continuation.resume(returning: packetsToAdd)
             }
-            
             healthStore.execute(actCalsQuery)
         }
-        
-        let model = CalorieData()
+    }
+    
+    func fetchChartEaten() async -> (budgie: [CalsPacket], hk: [CalsPacket])
+    {
+        let model = await CalorieData()
         let objArray = await model.fetchCalsBetween(from: self.startDate, to: self.endDate)
+        var budgiePackets: [CalsPacket] = []
+        var hkPackets: [CalsPacket] = []
         for object in objArray {
-            self.budgieEatenPackets.append(CalsPacket(date:getStartOfDay(date: object.date), cals:object.calories))
+            budgiePackets.append(CalsPacket(date:getStartOfDay(date: object.date), cals:object.calories))
         }
-        self.eatenDone = true
+        
+        if settingsObj.manualMode == false {
+            let everyDay = DateComponents(day:1)
+            let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
+            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,queryPeriod])
+            
+            hkPackets = await withCheckedContinuation { continuation in
+                let actCalsQuery = HKStatisticsCollectionQuery(quantityType: eatenQuantityType, quantitySamplePredicate: queryPredicate, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
+                
+                // query active calories, digest into packets
+                actCalsQuery.initialResultsHandler = {
+                    query, results, error in
+                    
+                    if let error = error as? HKError {
+                        switch (error.code) {
+                        case .errorDatabaseInaccessible:
+                            // HealthKit couldn't access the database because the device is locked.
+                            return
+                        default:
+                            // Handle other HealthKit errors here.
+                            return
+                        }
+                    }
+                    
+                    guard let actCollection = results else {
+                        assertionFailure("")
+                        return
+                    }
+                    
+                    var packetsToAdd: [CalsPacket] = []
+                    
+                    actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
+                    { statistics, _ in
+                        if let quantity = statistics.sumQuantity(){
+                            let date = statistics.startDate
+                            
+                            let value = Int(quantity.doubleValue(for: .kilocalorie()))
+                            
+                            packetsToAdd.append(CalsPacket(date:date, cals:value))
+                        }
+                    }
+                    
+                    continuation.resume(returning: packetsToAdd)
+                }
+                
+                healthStore.execute(actCalsQuery)
+            }
+        }
+        
+        return (budgie: budgiePackets, hk: hkPackets)
     }
         
     @MainActor func assembleChartData()
