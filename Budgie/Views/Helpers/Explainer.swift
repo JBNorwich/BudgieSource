@@ -24,7 +24,7 @@ struct Explainer: View {
                         .multilineTextAlignment(.leading)
                     
                     VStack {
-                        MeterView(todayLump: $dummyLump, dummy: true)
+                        MeterView(dummy: true).environmentObject(dummyLump)
                     }.frame(maxWidth: 200)
                         .padding()
                     

@@ -11,6 +11,7 @@ import HealthKit
 
 let settingsObj = UserSettings()
 let healthStore = HKHealthStore()
+let dataStore = HealthData()
 
 struct TinyMeter: View {
     var leftToEat: Int
@@ -102,8 +103,8 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         Task {
-            let dataStore = await HealthData()
-            let lump = await dataStore.produceTodayObject()
+            let lump = TodayLump()
+            await dataStore.updateLump(todayLump: lump)
             let date = Date()
             let entry = BudgieEntry(date: date, leftToEat: lump.leftToEat, progressDbl: lump.progressToday, totalBudgRem: lump.totalBudgetRem, totalBudg: lump.totalBudget, projBasal: lump.projectedBasal)
             

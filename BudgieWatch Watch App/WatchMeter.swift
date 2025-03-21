@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct WatchMeter: View {
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     
     func getNiceBudgetDisplay(leftToEat: Int) -> String {
         var outputString = String()

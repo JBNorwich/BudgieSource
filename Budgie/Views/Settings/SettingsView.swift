@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Binding var dataStore: HealthData
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     @Binding var whale: Bool
     
     @State private var showingSheet: Bool = false
@@ -52,7 +51,7 @@ struct SettingsView: View {
                     Button("Help me choose a goal") {
                         showingSheet = true
                     }.sheet(isPresented: $showingSheet, onDismiss: {doubleDeficit = Double(settingsObj.desiredDeficit); pingDeficit()}) {
-                        BudgetHelperView(isPresented: $showingSheet, doubleDeficit: $doubleDeficit, settingsObj: settingsObj)
+                        BudgetHelperView(isPresented: $showingSheet, doubleDeficit: $doubleDeficit)
                     }
                 }
             } else {
@@ -108,7 +107,7 @@ struct SettingsView: View {
                 Button("Calculate this for me") {
                     showingBMRHelper = true
                 }.sheet(isPresented: $showingBMRHelper, onDismiss: { pingManual() }) {
-                    BMRHelper(isPresented: $showingBMRHelper, manualBMR: $manualBMR, manualActive: $manualActive, settingsObj: settingsObj)
+                    BMRHelper(isPresented: $showingBMRHelper, manualBMR: $manualBMR, manualActive: $manualActive)
                 }.presentationDragIndicator(.visible)
             }
             
@@ -133,13 +132,13 @@ struct SettingsView: View {
             if manualMode != true {
                 Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
                     NavigationLink {
-                        BudgetCap(dataStore: $dataStore)
+                        BudgetCap()
                     } label: {
                         Text("Budget capping")
                     }
                     
                     NavigationLink {
-                        AdjustWeighting(dataStore: $dataStore)
+                        AdjustWeighting()
                     } label: {
                         Text("Budget weighting options")
                     }
@@ -222,8 +221,6 @@ struct SettingsView: View {
         .onChange(of: manualMode, initial: false) {
             settingsObj.manualMode = manualMode
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of manual mode on settings page"
-            dataStore.dataUpdated = true
         }
     
         .onChange(of: healthLogging, initial: false) {
@@ -255,8 +252,6 @@ struct SettingsView: View {
                 todayLump.desiredDeficit = Int(doubleDeficit)
             }
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of deficit on settings page"
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: useFitnessGoal, initial: false) {
@@ -265,11 +260,7 @@ struct SettingsView: View {
         
         .onChange(of: weightTime) {
             settingsObj.finalMealTime = timeToMinsIntoDay(time: weightTime)
-            print(timeToMinsIntoDay(time: weightTime).formatted())
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of final meal time"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .navigationTitle("Settings")
@@ -322,9 +313,7 @@ struct SettingsView: View {
         settingsObj.manualMode = manualMode
         settingsObj.manualBMR = manualBMR
         settingsObj.manualActive = manualActive
-        dataStore.lastUpdateRequestSource = "pingManual function on settings page"
         pingSettingsToWatch()
-        dataStore.dataUpdated = true
     }
     
     func pingDeficit() {
@@ -334,9 +323,7 @@ struct SettingsView: View {
         } else {
             settingsObj.desiredDeficit = Int(-desiredSurplus)
         }
-        dataStore.lastUpdateRequestSource = "pingDeficit function on settings page"
         pingSettingsToWatch()
-        dataStore.dataUpdated = true
     }
 }
 
@@ -349,10 +336,9 @@ func pingSettingsToWatch() {
     struct Preview: View {
         @State var whale: Bool = false
         @State var lump: TodayLump = TodayLump()
-        @State var data: HealthData = HealthData()
 
         var body: some View {
-            SettingsView(dataStore: $data, todayLump: $lump, whale: $whale)
+            SettingsView(whale: $whale).environmentObject(lump)
         }
     }
     

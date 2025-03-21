@@ -20,14 +20,14 @@ class TodayLump: ObservableObject {
     @Published var waterToday: Int = 0
     @Published var activitySummary: HKActivitySummary = HKActivitySummary()
     
-    @Published var budgetAtCap: Bool = false
-    @Published var budgetAtMin: Bool = false
+    var budgetAtCap: Bool = false
+    var budgetAtMin: Bool = false
     
     // food data
     @Published var mealList: [Meal] = []
     @Published var foodList: [CalorieEntry] = []
     @Published var healthKitCalories: Int = 0
-
+    
     // flags for estimation of data
     @Published var basalEstimated: Bool = false
     @Published var activeEstimated: Bool = false
@@ -125,7 +125,13 @@ class TodayLump: ObservableObject {
     }
     
     var progressAgainstTarget: Double {
-        return Double(self.eatenCalories) / Double(self.currentTarget)
+        var returnVal = Double(self.eatenCalories) / Double(self.currentTarget)
+        if returnVal > 2 {
+            returnVal = 2
+        } else if returnVal < 0 {
+            returnVal = 0
+        }
+        return returnVal
     }
     
     var progressAgainstTime: Double {
@@ -219,6 +225,46 @@ class TodayLump: ObservableObject {
             return done
         }
     }
+    
+//    func update() async {
+//        let todayStart = getStartOfDay(date: Date())
+//        let todayEnd = getMidnightOnDayAfter(date: todayStart)
+//        
+//        let eatenCalories = await dataStore.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+//        self.eatenCalories = eatenCalories.total
+//        self.foodList = await dataStore.getCalorieEntries(date: todayStart)
+//        self.healthKitCalories = eatenCalories.hk
+//        self.mealList = await dataStore.calorieActor.cleansedMealList(data: self.foodList)
+//        
+//        self.desiredDeficit = settingsObj.desiredDeficit
+//        self.projectedBasal = await dataStore.getProjBasalCalories()
+//        self.projectedActive = await dataStore.getProjActiveCalories()
+//        
+//        if settingsObj.manualMode == true {
+//            self.basalEstimated = true
+//            self.activeEstimated = true
+//            self.basalCalories = settingsObj.manualBMR - self.projectedBasal
+//            self.activeCalories = settingsObj.manualActive - self.projectedActive
+//        } else {
+//            let recBasalCalories = await dataStore.pullCalorieTotalTodayFromHK(type: basalQuantityType)
+//            let recActiveCalories = await dataStore.pullCalorieTotalTodayFromHK(type: activeQuantityType)
+//            if recBasalCalories != 0 {
+//                self.basalCalories = recBasalCalories
+//            } else {
+//                self.basalEstimated = true
+//                self.basalCalories = settingsObj.manualBMR - self.projectedBasal
+//            }
+//            if recActiveCalories != 0 {
+//                self.activeCalories = recActiveCalories
+//            } else {
+//                self.activeEstimated = true
+//                self.activeCalories = settingsObj.manualActive - self.projectedActive
+//            }
+//            self.waterToday = await dataStore.getWaterToday()
+//            self.activitySummary = await dataStore.getActivitySummary()
+//        }
+//        self.lastUpdate = Date()
+//    }
 }
 
 struct calorieChartData: Identifiable {

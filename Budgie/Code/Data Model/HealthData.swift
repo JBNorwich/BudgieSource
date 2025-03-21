@@ -9,18 +9,14 @@ import Foundation
 import HealthKitUI
 import Observation
 import SwiftUI
+import SwiftData
 
-@Observable
-class HealthData: ObservableObject  {
-    var dataUpdated: Bool = false // updater in func
-    var forceRefresh: Bool = false
-    var isBackgroundPing: Bool = false
-    var lastUpdateRequestSource: String = String()
-    var updateInProgress = false
-    var calorieModel: CalorieData
+class HealthData {
+    let modelContainer: ModelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self)
+    let calorieActor: CalorieActor
     
-    @MainActor init() {
-        calorieModel = CalorieData()
+    init() {
+        calorieActor = CalorieActor(modelContainer: modelContainer)
     }
     
     func pullCalorieTotalTodayFromHK(type: HKQuantityType) async -> Int {
@@ -51,7 +47,7 @@ class HealthData: ObservableObject  {
         
         if type == eatenQuantityType && hkOnly == false {
             var budgieCalories: Int = 0
-            let budgieResults = await self.calorieModel.fetchCalsBetween(from: date, to: endDate)
+            let budgieResults = await calorieActor.fetchCalsBetween(from: date, to: endDate)
             if budgieResults.count != 0 {
                 for result in budgieResults {
                     budgieCalories += result.calories
@@ -98,27 +94,6 @@ class HealthData: ObservableObject  {
         return Int(calories)
     }
     
-//    func pullCalorieTotalBetweenFromHK(start: Date, end: Date, type: HKQuantityType) async -> Int {
-//        do {
-//            let timePredicate = HKQuery.predicateForSamples(withStart: start, end: end, options: HKQueryOptions.strictEndDate)
-//            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-//            let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
-//            let query :HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
-//                let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
-//                continuation.resume(returning: sumActCalsQuery)
-//            }
-//            do {
-//                let kcals = try await query.result(for: healthStore)?.sumQuantity()
-//                let calories = kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
-//                return Int(calories)
-//            } catch {
-//                return 0
-//            }
-//        } catch {
-//            return 0
-//        }
-//    }
-    
     func pullEatenCalories(startDate: Date, endDate: Date) async -> (hk: Int, budgie: Int, total: Int) {
         var budgieCalories: Int = 0
         var healthKitcalories: Double = 0
@@ -149,7 +124,7 @@ class HealthData: ObservableObject  {
         }
         
         // get Budgie Diet calories
-        let budgieResults = await self.calorieModel.fetchCalsBetween(from: startDate, to: endDate)
+        let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
         if budgieResults.count == 0 {
             budgieCalories = 0
         } else {
@@ -161,36 +136,12 @@ class HealthData: ObservableObject  {
         return (hk: Int(healthKitcalories), budgie: budgieCalories, total: Int(healthKitcalories) + budgieCalories)
     }
     
-    func deleteCalorieEntries(calorieObjects: [CalorieEntry]) async
-    {
-        for object in calorieObjects {
-            let hkUUID = object.healthKitUUID
-            
-            if hkUUID != nil {
-                if healthStore.authorizationStatus(for: eatenQuantityType) == HKAuthorizationStatus.sharingAuthorized
-                {
-                    let hkUUIDPredicate = HKQuery.predicateForObjects(with: [hkUUID!])
-                    
-                    do {
-                        try await healthStore.deleteObjects(of: eatenQuantityType, predicate: hkUUIDPredicate)
-                    } catch {
-                        //balls!
-                    }
-                }
-            }
-        }
-        self.calorieModel.deleteEntries(objects: calorieObjects)
-        self.lastUpdateRequestSource = "Deletion of calories"
-        self.isBackgroundPing = false
-        self.dataUpdated = true
-    }
-    
     func getCalorieEntries(date: Date) async -> [CalorieEntry]
     {
         let endDate = getMidnightOnDayAfter(date: date)
         var returnArray: [CalorieEntry] = []
         
-        let budgieResults = await self.calorieModel.fetchCalsBetween(from: date, to: endDate)
+        let budgieResults = await calorieActor.fetchCalsBetween(from: date, to: endDate)
         
         if budgieResults.count != 0 {
             returnArray = budgieResults
@@ -208,7 +159,6 @@ class HealthData: ObservableObject  {
             let startDate = getWeekBeforeDate(date: endDate)
             avgBasalCals = await self.getAverageCalories(from: startDate, to: endDate, type: basalQuantityType).val
         }
-        print (avgBasalCals.formatted())
         let remainingMinsInDay = 1440 - minutesIntoDay()
         let calsPerMinute: Double = Double(avgBasalCals) / 1440
         let projectedCals = Double(remainingMinsInDay) * calsPerMinute
@@ -228,6 +178,7 @@ class HealthData: ObservableObject  {
                 statQuery.initialResultsHandler = { query, results, error in
                     guard let actCollection = results else {
                         assertionFailure("")
+                        continuation.resume(returning:(val: 0, estimate: true))
                         return
                     }
                     
@@ -365,16 +316,12 @@ class HealthData: ObservableObject  {
         
         if didHK == true {
             let newCalorieObj: CalorieEntry = CalorieEntry(date: dateOfEntry, calories: calories, narrative: narrativeToLog, mealUUID: meal, isInHK: true, healthKitUUID: hkUUID)
-            self.calorieModel.insertNewCals(object: newCalorieObj)
+            await calorieActor.insertNewCals(object: newCalorieObj)
         } else {
             let newCalorieObj: CalorieEntry = CalorieEntry(date: dateOfEntry, calories: calories, narrative: narrativeToLog, mealUUID: meal, isInHK: false, healthKitUUID: nil)
             //await... removed
-            self.calorieModel.insertNewCals(object: newCalorieObj)
+            await calorieActor.insertNewCals(object: newCalorieObj)
         }
-        
-        self.lastUpdateRequestSource = "Addition of new calories"
-        self.isBackgroundPing = false
-        self.dataUpdated = true
     }
     
     func addWater(amount: Int) async {
@@ -410,17 +357,14 @@ class HealthData: ObservableObject  {
         }
     }
     
-//    func setUpObserverQueries(settingsObj: UserSettings) {
-    func setUpObserverQueries() {
+    func setUpObserverQueries(todayLump: TodayLump) {
         let activeQuery = HKObserverQuery(sampleType: activeQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
             if errorOrNil != nil {
                 // Properly handle the error.
                 return
             }
             Task {
-                self.lastUpdateRequestSource = "Active observer query"
-                self.isBackgroundPing = true
-                self.dataUpdated = true
+                await self.updateLump(todayLump: todayLump)
             }
         }
         let basalQuery = HKObserverQuery(sampleType: basalQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
@@ -429,9 +373,7 @@ class HealthData: ObservableObject  {
                 return
             }
             Task {
-                self.isBackgroundPing = true
-                self.lastUpdateRequestSource = "Basal observer query"
-                self.dataUpdated = true
+                await self.updateLump(todayLump: todayLump)
             }
         }
         
@@ -440,9 +382,7 @@ class HealthData: ObservableObject  {
                 return
             }
             Task {
-                self.isBackgroundPing = true
-                self.lastUpdateRequestSource = "Eaten observer query"
-                self.dataUpdated = true
+                await self.updateLump(todayLump: todayLump)
             }
         }
         let waterQuery = HKObserverQuery(sampleType: waterQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
@@ -451,9 +391,7 @@ class HealthData: ObservableObject  {
                 return
             }
             Task {
-                self.lastUpdateRequestSource = "Water observer query"
-                self.isBackgroundPing = true
-                self.dataUpdated = true
+                await self.updateLump(todayLump: todayLump)
             }
         }
        
@@ -463,102 +401,47 @@ class HealthData: ObservableObject  {
         healthStore.execute(waterQuery)
     }
     
-    func updateTodayObject(lump: TodayLump) async {
-        print("Update requested by: " + self.lastUpdateRequestSource)
-        self.updateInProgress = true
+    @MainActor func updateLump(todayLump: TodayLump) async {
         let todayStart = getStartOfDay(date: Date())
         let todayEnd = getMidnightOnDayAfter(date: todayStart)
         
+        let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+        todayLump.eatenCalories = eatenCalories.total
+        todayLump.foodList = await getCalorieEntries(date: todayStart)
+        todayLump.healthKitCalories = eatenCalories.hk
+        todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
         
-        let eatenCalories = await self.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
-        lump.eatenCalories = eatenCalories.total
-        lump.foodList = await self.getCalorieEntries(date: todayStart)
-        lump.healthKitCalories = eatenCalories.hk
-        lump.mealList = await self.calorieModel.cleansedMealList(data: lump.foodList)
-        
-        lump.desiredDeficit = settingsObj.desiredDeficit
-        lump.projectedBasal = await self.getProjBasalCalories()
-        lump.projectedActive = await self.getProjActiveCalories()
-        
-        if settingsObj.manualMode == true {
-            lump.basalEstimated = true
-            lump.activeEstimated = true
-            lump.basalCalories = settingsObj.manualBMR - lump.projectedBasal
-            lump.activeCalories = settingsObj.manualActive - lump.projectedActive
-        } else {
-            let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
-            let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
-            if recBasalCalories != 0 {
-                lump.basalCalories = recBasalCalories
-            } else {
-                lump.basalEstimated = true
-                lump.basalCalories = settingsObj.manualBMR - lump.projectedBasal
-            }
-            if recActiveCalories != 0 {
-                lump.activeCalories = recActiveCalories
-            } else {
-                lump.activeEstimated = true
-                lump.activeCalories = settingsObj.manualActive - lump.projectedActive
-            }
-            lump.waterToday = await self.getWaterToday()
-            lump.activitySummary = await self.getActivitySummary()
-        }
-        lump.lastUpdate = Date()
-        self.isBackgroundPing = false
-        self.dataUpdated = false
-        self.updateInProgress = false
-    }
-    
-    func produceTodayObject() async -> TodayLump {
-        print("Update requested by: " + self.lastUpdateRequestSource)
-        self.updateInProgress = true
-        let todayStart = getStartOfDay(date: Date())
-        let todayEnd = getMidnightOnDayAfter(date: todayStart)
-        
-        let newLump = TodayLump()
-        
-        let eatenCalories = await self.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
-        newLump.eatenCalories = eatenCalories.total
-        newLump.foodList = await self.getCalorieEntries(date: todayStart)
-        newLump.healthKitCalories = eatenCalories.hk
-        newLump.mealList = await self.calorieModel.cleansedMealList(data: newLump.foodList)
-    
-        newLump.desiredDeficit = settingsObj.desiredDeficit
-        newLump.projectedBasal = await self.getProjBasalCalories()
-        newLump.projectedActive = await self.getProjActiveCalories()
+        todayLump.desiredDeficit = settingsObj.desiredDeficit
+        todayLump.projectedBasal = await getProjBasalCalories()
+        todayLump.projectedActive = await getProjActiveCalories()
         
         if settingsObj.manualMode == true {
-            newLump.basalEstimated = true
-            newLump.activeEstimated = true
-            newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
-            newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
+            todayLump.basalEstimated = true
+            todayLump.activeEstimated = true
+            todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
+            todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
         } else {
-            let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
-            let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
+            let recBasalCalories = await pullCalorieTotalTodayFromHK(type: basalQuantityType)
+            let recActiveCalories = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
             if recBasalCalories != 0 {
-                newLump.basalCalories = recBasalCalories
+                todayLump.basalCalories = recBasalCalories
             } else {
-                newLump.basalEstimated = true
-                newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
+                todayLump.basalEstimated = true
+                todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
             }
             if recActiveCalories != 0 {
-                newLump.activeCalories = recActiveCalories
+                todayLump.activeCalories = recActiveCalories
             } else {
-                newLump.activeEstimated = true
-                newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
+                todayLump.activeEstimated = true
+                todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
             }
-            newLump.waterToday = await self.getWaterToday()
-            newLump.activitySummary = await self.getActivitySummary()
+            todayLump.waterToday = await getWaterToday()
+            todayLump.activitySummary = await getActivitySummary()
         }
-        self.isBackgroundPing = false
-        self.dataUpdated = false
-        self.updateInProgress = false
-        return newLump
+        todayLump.lastUpdate = Date()
     }
     
     func produceLumpForWatch(deficit: Int, manBMR: Int, manAct: Int) async -> TodayLump {
-        print("Update requested by: " + self.lastUpdateRequestSource)
-        self.updateInProgress = true
         let todayStart = getStartOfDay(date: Date())
         let todayEnd = getMidnightOnDayAfter(date: todayStart)
         
@@ -567,7 +450,7 @@ class HealthData: ObservableObject  {
         newLump.eatenCalories = eatenCalories.total
         newLump.foodList = await self.getCalorieEntries(date: todayStart)
         newLump.healthKitCalories = eatenCalories.hk
-        newLump.mealList = await self.calorieModel.cleansedMealList(data: newLump.foodList)
+        newLump.mealList = await calorieActor.cleansedMealList(data: newLump.foodList)
     
         newLump.desiredDeficit = settingsObj.desiredDeficit
         newLump.projectedBasal = await self.getProjBasalCalories()
@@ -599,9 +482,6 @@ class HealthData: ObservableObject  {
                 }
             }
         }
-        self.isBackgroundPing = false
-        self.dataUpdated = false
-        self.updateInProgress = false
         return newLump
     }
 }

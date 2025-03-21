@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct WaterView: View {
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     
     let gradient = Gradient(colors: [.white, .blue])
     

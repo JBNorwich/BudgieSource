@@ -11,14 +11,11 @@ import SwiftData
 struct FoodHub: View {
     @State private var searchTerm = ""
     
-    @Binding var dataObject: HealthData
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     
     @State var budgieData: [CalorieEntry] = []
     @State var healthKitData: [CalorieEntry] = []
     @State var mealList: [Meal] = []
-    
-    //@StateObject var listObject = ListObject()
     
     @State var curDate: Date
     @State var dateChanged: Bool = false
@@ -38,21 +35,21 @@ struct FoodHub: View {
         Task {
             loadingDone = false
             
-            let newData = await dataObject.getCalorieEntries(date: curDate)
+            let newData = await dataStore.getCalorieEntries(date: curDate)
             var budgieCalsOnDate: Int = 0
             for entry in newData {
                 budgieCalsOnDate += entry.calories
             }
-            let hkEaten = await dataObject.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
-            let newActive = await dataObject.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
-            let newBasal = await dataObject.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
+            let hkEaten = await dataStore.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
+            let newActive = await dataStore.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
+            let newBasal = await dataStore.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
             let newLump = ChartDataLump()
             newLump.eatenCals = hkEaten + budgieCalsOnDate
             newLump.activeCals = newActive
             newLump.basalCals = newBasal
             newLump.date = curDate
             
-            mealList = dataObject.calorieModel.cleansedMealList(data: newData)
+            mealList = await dataStore.calorieActor.cleansedMealList(data: newData)
             budgieData = newData
             hkCalories = hkEaten
             dataLump = newLump
@@ -71,7 +68,6 @@ struct FoodHub: View {
                     .frame(maxHeight: 60)
             }
             .padding()
-//            FoodList(dataObject: $dataObject, list: listObject)
             List {
                 if budgieData.count != 0 {
                     ForEach(mealList, id: \.self) { meal in
@@ -123,7 +119,7 @@ struct FoodHub: View {
         }
         
         .sheet(isPresented: $addSheetDisplayed) {
-            AddCalsSheet(dataStore: $dataObject, isDisplayed: $addSheetDisplayed, curEaten: todayLump.eatenCalories, remBudg: todayLump.totalBudgetRem, selectedDate: timeToAddOn)
+            AddCalsSheet(isDisplayed: $addSheetDisplayed, selectedDate: timeToAddOn).environmentObject(todayLump)
                 .onDisappear() {
                     Task {
                         await doUpdates()
@@ -139,7 +135,7 @@ struct FoodHub: View {
         }
         budgieData.remove(atOffsets: offsets)
         Task {
-            await dataObject.deleteCalorieEntries(calorieObjects: toBin)
+            await dataStore.calorieActor.deleteEntries(objects: toBin)
             await doUpdates()
         }
     }
@@ -170,10 +166,9 @@ struct CalorieEntryView: View {
 #Preview {
     struct Preview: View {
         @State var dummyData = TodayLump()
-        @State var object = HealthData()
         
         var body: some View {
-            FoodHub(dataObject: $object, todayLump: $dummyData, curDate: Date())
+            FoodHub(curDate: Date()).environmentObject(dummyData)
         }
     }
     

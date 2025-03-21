@@ -105,10 +105,7 @@ struct WeightOptions: View {
     }
 }
 
-
-
 struct AdjustWeighting: View {
-    @Binding var dataStore: HealthData
     @State var selectedOption: Int = 0
     @State var differentWeights: Bool = false
     @State var monWeight: Int = 0
@@ -197,73 +194,46 @@ struct AdjustWeighting: View {
         .onChange(of: selectedOption) {
             settingsObj.weightingStyle = selectedOption
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: differentWeights) {
             settingsObj.differentWeights = differentWeights
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: monWeight) {
             settingsObj.monWeight = monWeight
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: tuesWeight) {
             settingsObj.tuesWeight = tuesWeight
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: wedsWeight) {
             settingsObj.wedsWeight = wedsWeight
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: thursWeight) {
             settingsObj.thursWeight = thursWeight
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: friWeight) {
             settingsObj.friWeight = friWeight
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: satWeight) {
             settingsObj.satWeight = satWeight
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         
         .onChange(of: sunWeight) {
             settingsObj.sunWeight = sunWeight
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of weighting option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
     }
 }

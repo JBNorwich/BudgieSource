@@ -16,13 +16,8 @@ extension String {
 }
 
 struct AddCalsSheet: View {
-    @Binding var dataStore: HealthData
     @Binding var isDisplayed: Bool
-    
-    var curEaten: Int = 0
-    var remBudg: Int = 0
-    
-    @State var calorieData: CalorieData = CalorieData()
+    @EnvironmentObject var todayLump: TodayLump
     @State var fieldString: String = "0"
     @State var calories: Int?
     @State var newCalsIn: Int = 0
@@ -99,12 +94,12 @@ struct AddCalsSheet: View {
                                         print("Adding calories")
                                         if showAllFoods == true {
                                             Task {
-                                                prevFoods = await calorieData.fetchCalsForMeal(nil)
+                                                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(nil)
                                             }
                                         } else {
                                             let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
                                             Task {
-                                                prevFoods = await calorieData.fetchCalsForMeal(mealWithUUID)
+                                                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
                                             }
                                         }
                                         calories = nil
@@ -155,17 +150,14 @@ struct AddCalsSheet: View {
         }
         
         .onAppear() {
-            mealList = calorieData.getListOfMeals()
-            mealList = mealList.sorted(by: { $0.order < $1.order })
-            selectedMeal = mealList.first!.mealUUID
-            newCalsIn = curEaten
-            newRemBudg = remBudg
+            newCalsIn = todayLump.eatenCalories
+            newRemBudg = todayLump.totalBudgetRem
         }
         
         .onChange(of: calories)
         {
-            newCalsIn = (calories ?? 0) + curEaten
-            newRemBudg = remBudg - (calories ?? 0)
+            newCalsIn = (calories ?? 0) + todayLump.eatenCalories
+            newRemBudg = todayLump.totalBudgetRem - (calories ?? 0)
         }
         
         .onChange(of: whatItIs) {
@@ -176,7 +168,7 @@ struct AddCalsSheet: View {
             if showAllFoods != true {
                 let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
                 Task {
-                    prevFoods = await calorieData.fetchCalsForMeal(mealWithUUID)
+                    prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
                 }
             }
         }
@@ -184,12 +176,12 @@ struct AddCalsSheet: View {
         .onChange(of: showAllFoods) {
             if showAllFoods == true {
                 Task {
-                    prevFoods = await calorieData.fetchCalsForMeal(nil)
+                    prevFoods = await dataStore.calorieActor.fetchCalsForMeal(nil)
                 }
             } else {
                 let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
                 Task {
-                    prevFoods = await calorieData.fetchCalsForMeal(mealWithUUID)
+                    prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
                 }
             }
         }
@@ -200,7 +192,10 @@ struct AddCalsSheet: View {
         }
         
         .task {
-            prevFoods = await calorieData.fetchCalsForMeal(mealList.first!)
+            mealList = await dataStore.calorieActor.getListOfMeals()
+            mealList = mealList.sorted(by: { $0.order < $1.order })
+            selectedMeal = mealList.first!.mealUUID
+            prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealList.first!)
         }
     }
 }
@@ -211,7 +206,7 @@ struct AddCalsSheet: View {
         @State var data = HealthData()
         
         var body: some View {
-            AddCalsSheet(dataStore: $data, isDisplayed:$presented, selectedDate: Date())
+            AddCalsSheet(isDisplayed:$presented, selectedDate: Date()).environmentObject(TodayLump())
         }
     }
     return Preview()

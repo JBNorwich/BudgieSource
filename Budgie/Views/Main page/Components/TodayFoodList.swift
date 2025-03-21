@@ -10,7 +10,7 @@ import SwiftUI
 struct TodayFoodList: View {
     @Environment(\.defaultMinListRowHeight) var minRowHeight
     
-    @Binding var dataLump: TodayLump
+    @EnvironmentObject var dataLump: TodayLump
     @State var firstRow = true
     
     var body: some View {

@@ -10,6 +10,7 @@ import HealthKitUI
 
 let settingsObj = UserSettings()
 let healthStore = HKHealthStore()
+let dataStore = HealthData()
 
 @main
 struct BudgieWatch_Watch_AppApp: App {

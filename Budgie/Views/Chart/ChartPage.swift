@@ -11,8 +11,7 @@ import Charts
 struct ChartPage: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject var chartDataStore = ChartData()
-    @Binding var dataStore: HealthData
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     @State var startDate: Date = Date()
     @State var endDate: Date = Date()
     @State var loadingDone: Bool = false
@@ -26,7 +25,7 @@ struct ChartPage: View {
                     
                     if chartDataStore.returnedChartData.count != 0 {
                         ChartView(chartData: $chartDataStore.returnedChartData)
-                        ChartTableView(dataStore: $dataStore, todayLump: $todayLump, chartData: $chartDataStore.returnedChartData)
+                        ChartTableView(chartData: $chartDataStore.returnedChartData).environmentObject(todayLump)
                     } else {
                         Label("No data was returned. Either you have no data in Health, or you didn't give Budgie Diet permissions to see your data.", systemImage: "exclamationmark.octagon")
                         Spacer()
@@ -86,11 +85,10 @@ struct ChartPage: View {
 
 #Preview {
     struct Preview: View {
-        @State var object = HealthData()
         @State var lump = TodayLump()
         
         var body: some View {
-            ChartPage(dataStore: $object, todayLump: $lump)
+            ChartPage().environmentObject(lump)
         }
     }
     

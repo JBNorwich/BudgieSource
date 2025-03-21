@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct BudgetCap: View {
-    @Binding var dataStore: HealthData
     @State var capBudget: Bool = false
     @State var capBudgetCals: Int = 0
     @FocusState private var focusCap: Bool
@@ -46,9 +45,6 @@ struct BudgetCap: View {
         .onChange(of: capBudget) {
             settingsObj.capBudget = capBudget
             pingSettingsToWatch()
-            dataStore.lastUpdateRequestSource = "Change of budget capping option"
-            dataStore.isBackgroundPing = false
-            dataStore.dataUpdated = true
         }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -73,10 +69,7 @@ struct BudgetCap: View {
     
     func pingCap() {
         settingsObj.capBudgetCals = capBudgetCals
-        dataStore.lastUpdateRequestSource = "Change of budget cap"
-        dataStore.isBackgroundPing = false
         pingSettingsToWatch()
-        dataStore.dataUpdated = true
     }
 }
 

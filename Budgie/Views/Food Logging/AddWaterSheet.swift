@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct AddWaterSheet: View {
-    @Binding var dataStore: HealthData
     @Binding var isDisplayed: Bool
     
     @State var fieldString: String = "0"
@@ -120,7 +119,7 @@ struct AddWaterSheet: View {
         @State var data = HealthData()
         
         var body: some View {
-            AddWaterSheet(dataStore: $data, isDisplayed:$presented)
+            AddWaterSheet(isDisplayed:$presented)
         }
     }
     return Preview()

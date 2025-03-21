@@ -24,7 +24,7 @@ struct ActivityRingView: UIViewRepresentable {
 }
 
 struct FitnessView: View {
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     
     var body: some View {
         ActivityRingView(activitySummary: todayLump.activitySummary)

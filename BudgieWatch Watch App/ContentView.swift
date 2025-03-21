@@ -8,29 +8,17 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var dataStore: HealthData = HealthData()
-    @State var todayLump: TodayLump = TodayLump()
+    @StateObject var todayLump: TodayLump = TodayLump()
     @State var dataUpdated: Bool = false
     @ObservedObject var connectivity = Connectivity()
     @Environment(\.scenePhase) private var scenePhase
-    
-//    init() {
-////        Connectivity.shared.$settings
-////            .dropFirst()
-////            .receive(on: DispatchQueue.main)
-////            .map { dict in
-////                let uds = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
-////                for (key, value) in dict {
-////                    uds?.setValue(value, forKey: key)
-////                }
-////            }
-//    }
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack {
-                    WatchMeter(todayLump: $todayLump)
+                    WatchMeter()
+                        .environmentObject(todayLump)
                         .frame(maxHeight: 150)
                         .padding()
                         .onTapGesture {
@@ -46,6 +34,11 @@ struct ContentView: View {
                             Text("Total budget")
                             Spacer()
                             Text(todayLump.totalBudget.formatted())
+                        }
+                        HStack {
+                            Text("Eaten today")
+                            Spacer()
+                            Text(todayLump.eatenCalories.formatted())
                         }
                         HStack {
                             Text("Left today")
@@ -71,7 +64,7 @@ struct ContentView: View {
             
             .onChange(of: dataUpdated, initial: true) {
                 Task {
-                    todayLump = await dataStore.produceTodayObject()
+                    await dataStore.updateLump(todayLump: todayLump)
                 }
             }
             

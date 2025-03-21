@@ -39,8 +39,7 @@ struct BudgetView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) var colorScheme
     
-    @State var todayLump: TodayLump = TodayLump()
-    @State var dataStore: HealthData = HealthData()
+    @StateObject var todayLump: TodayLump = TodayLump()
     
     @State var hkAuthenticated: Bool = false
     @State var hkAuthenticationTrigger: Bool = false
@@ -78,13 +77,12 @@ struct BudgetView: View {
                         ZStack{
                             Circle()
                                 .foregroundStyle(.thinMaterial)
-                            MeterView(todayLump: $todayLump, dummy: false)
+                            MeterView(dummy: false)
+                                .environmentObject(todayLump)
                                 .padding()
-                            
                                 .onTapGesture {
                                     Task {
-                                        dataStore.lastUpdateRequestSource = "Tap on blob"
-                                        dataStore.dataUpdated = true
+                                        await dataStore.updateLump(todayLump: todayLump)
                                     }
                                 }
                             
@@ -103,28 +101,28 @@ struct BudgetView: View {
                             }.padding()
                         Spacer()
                         GroupBox(label: Label("Your target", systemImage: "gauge.with.needle")) {
-                            GaugeView(dataLump: $todayLump)
+                            GaugeView().environmentObject(todayLump)
                         }.backgroundStyle(.regularMaterial)
                         if settingsObj.manualMode != true {
                             HStack {
                                 GroupBox(label: Label("Fitness", systemImage:"figure.run")) {
-                                    FitnessView(todayLump: $todayLump)
+                                    FitnessView().environmentObject(todayLump)
                                 }.backgroundStyle(.regularMaterial)
                                     .frame(minHeight: 100)
                                 GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
-                                    WaterView(todayLump: $todayLump)
+                                    WaterView().environmentObject(todayLump)
                                 }.backgroundStyle(.regularMaterial)
                                     .frame(minHeight: 100)
                             }
                         }
                         if settingsObj.hideTodayInDetail != true {
                             GroupBox(label: Label("Today in detail", systemImage:"sun.max")) {
-                                NewDataView(dataLump: $todayLump)
+                                NewDataView().environmentObject(todayLump)
                             }.backgroundStyle(.regularMaterial)
                         }
                         GroupBox(label: FoodListLabelView(showingAddCalsSheet: $showAddCalsSheet))
                         {
-                            TodayFoodList(dataLump: $todayLump)
+                            TodayFoodList().environmentObject(todayLump)
                         }.onTapGesture {
                             openingFoodHub = true
                         }.backgroundStyle(.regularMaterial)
@@ -144,7 +142,7 @@ struct BudgetView: View {
                     
                     .toolbar {
                         ToolbarItemGroup(placement: .topBarLeading) {
-                            NavigationLink(destination: SettingsView(dataStore: $dataStore, todayLump: $todayLump, whale: $whaleButtonVisible)) {
+                            NavigationLink(destination: SettingsView(whale: $whaleButtonVisible).environmentObject(todayLump)) {
                                 Image(systemName: "gear")
                             }.foregroundColor(backgroundGradient.buttonColour)
                             if settingsObj.whalesEverywhere == true {
@@ -155,11 +153,10 @@ struct BudgetView: View {
                         }
                         
                         ToolbarItemGroup(placement: .topBarTrailing) {
-
-                            NavigationLink(destination: FoodHub(dataObject: $dataStore, todayLump: $todayLump, curDate: Date())) {
+                            NavigationLink(destination: FoodHub(curDate: Date()).environmentObject(todayLump)) {
                                 Image(systemName: "fork.knife")
                             }.foregroundColor(backgroundGradient.buttonColour)
-                            NavigationLink(destination: ChartPage(dataStore: $dataStore, todayLump: $todayLump)) {
+                            NavigationLink(destination: ChartPage().environmentObject(todayLump)) {
                                 Image(systemName: "chart.xyaxis.line")
                             }.foregroundColor(backgroundGradient.buttonColour)
                             
@@ -179,9 +176,9 @@ struct BudgetView: View {
                 .padding(.horizontal)
                 .toolbarBackground(.clear, for: .automatic)
                 .refreshable {
-                    dataStore.lastUpdateRequestSource = "Pull to refresh"
-                    dataStore.isBackgroundPing = false
-                    dataStore.dataUpdated = true
+                    Task {
+                        await dataStore.updateLump(todayLump: todayLump)
+                    }
                 }
 
             }
@@ -189,7 +186,7 @@ struct BudgetView: View {
         
         .navigationDestination(isPresented: $openingFoodHub)
         {
-            FoodHub(dataObject: $dataStore, todayLump: $todayLump, curDate: getStartOfDay(date: Date()))
+            FoodHub(curDate: Date()).environmentObject(todayLump)
         }
         
         .onChange(of: scenePhase) {
@@ -208,8 +205,9 @@ struct BudgetView: View {
                 backgroundGradient.buttonColour = .black
             }
             
-            dataStore.lastUpdateRequestSource = "Return of app to foreground"
-            dataStore.dataUpdated = true
+            Task {
+                await dataStore.updateLump(todayLump: todayLump)
+            }
         }
         
         .onChange(of: colorScheme) {
@@ -225,35 +223,8 @@ struct BudgetView: View {
             }
         }
         
-        .onChange(of: dataStore.dataUpdated) {
-            if dataStore.dataUpdated == true && dataStore.updateInProgress == false {
-                if scenePhase != .background {
-                    Task {
-                        await todayLump = dataStore.produceTodayObject()
-                    }
-                } else {
-                    if dataStore.isBackgroundPing == true {
-                        if todayLump.lastUpdate < getHalfHourBefore(date: Date())
-                        {
-                            Task {
-                                await todayLump = dataStore.produceTodayObject()
-                            }
-                        } else {
-                            dataStore.isBackgroundPing = false
-                        }
-                    } else {
-                        Task {
-                          await todayLump = dataStore.produceTodayObject()
-                        }
-                    }
-                }
-            }
-        }
-        
         .onAppear() {
             firstRun = settingsObj.isFirstRun
-            dataStore.lastUpdateRequestSource = "Initial start"
-            dataStore.dataUpdated = true
             
             switch colorScheme {
             case .dark: backgroundGradient.backgroundGradient = LinearGradient(
@@ -286,7 +257,7 @@ struct BudgetView: View {
         
         .sheet(isPresented: $showAddCalsSheet) {
             NavigationStack {
-                AddCalsSheet(dataStore: $dataStore, isDisplayed: $showAddCalsSheet, curEaten: todayLump.eatenCalories, remBudg: todayLump.totalBudgetRem, selectedDate: Date())
+                AddCalsSheet(isDisplayed: $showAddCalsSheet, selectedDate: Date()).environmentObject(todayLump)
             }
             .presentationDetents([.medium,.large])
         }
@@ -299,28 +270,28 @@ struct BudgetView: View {
         }
         
         .sheet(isPresented: $firstRun) {
-            FirstRunSheet(isPresented: $firstRun, settingsObj: settingsObj, dataStore: dataStore)
+            FirstRunSheet(isPresented: $firstRun)
                 .onDisappear {
                     showingHelp = true
                 }
         }
         
         .sheet(isPresented: $showingHelp) {
-            Explainer(showing: $showingHelp)
+            Explainer(showing: $showingHelp).environmentObject(todayLump)
         }
         
         .sheet(isPresented: $showWaterSheet) {
             NavigationStack {
-                AddWaterSheet(dataStore: $dataStore, isDisplayed: $showWaterSheet)
+                AddWaterSheet(isDisplayed: $showWaterSheet)
             }
             .presentationDetents([.medium])
         }
             
         .task() {
             if settingsObj.manualMode != true {
-                dataStore.setUpObserverQueries()
+                dataStore.setUpObserverQueries(todayLump: todayLump)
             }
-            todayLump = await dataStore.produceTodayObject()
+            await dataStore.updateLump(todayLump: todayLump)
         }
     }
 }

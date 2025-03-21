@@ -73,8 +73,6 @@ struct BMRHelper: View {
     @FocusState var weightFocused: Bool
     @FocusState var heightFocused: Bool
     
-    var settingsObj: UserSettings
-    
     var body: some View {
         VStack {
 
@@ -289,7 +287,7 @@ struct BMRHelper: View {
         @State var manact = 500
         @State var presented = true
         var body: some View {
-            BMRHelper(isPresented: $presented, manualBMR: $bmr, manualActive: $manact, settingsObj: UserSettings())
+            BMRHelper(isPresented: $presented, manualBMR: $bmr, manualActive: $manact)
         }
     }
     

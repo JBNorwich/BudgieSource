@@ -8,18 +8,18 @@
 import SwiftUI
 
 struct GaugeView: View {
-    @Binding var dataLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     let gradient = Gradient(colors: [.blue, .green, .yellow, .red])
     
     var body: some View {
         HStack {
             VStack {
-                Gauge(value: dataLump.progressAgainstTarget, in: 0...2) {
+                Gauge(value: todayLump.progressAgainstTarget, in: 0...2) {
                 } currentValueLabel: {
-                    if dataLump.gaugeNumber > 0 {
-                        Text("+" + dataLump.gaugeNumber.formatted() + "%")
+                    if todayLump.gaugeNumber > 0 {
+                        Text("+" + todayLump.gaugeNumber.formatted() + "%")
                     } else {
-                        Text("-" + negate(number: dataLump.gaugeNumber).formatted() + "%")
+                        Text("-" + negate(number: todayLump.gaugeNumber).formatted() + "%")
                     }
                 } minimumValueLabel: {
                     Text("")
@@ -33,34 +33,34 @@ struct GaugeView: View {
             }
             Divider()
             VStack {
-                if minutesIntoDay() < 540 && dataLump.leftToEat > 0 {
-                    Text("Good morning! You have **\(dataLump.totalBudgetRem)kcal** left in your overall budget today, and can eat \(dataLump.leftToEat)kcal right now.")
+                if minutesIntoDay() < 540 && todayLump.leftToEat > 0 {
+                    Text("Good morning! You have **\(todayLump.totalBudgetRem)kcal** left in your overall budget today, and can eat \(todayLump.leftToEat)kcal right now.")
                 } else {
-                    if dataLump.gaugeNumber > 10 {
-                        if dataLump.totalBudgetRem < 0 {
-                            Text("You've gone over your total daily budget by **\(negate(number: dataLump.totalBudgetRem))kcal** - that's OK, it happens sometimes.")
-                        } else if dataLump.totalBudgetRem < 500 {
-                            Text("Be careful - you've only got **\( dataLump.totalBudgetRem)kcal** left in your budget for the rest of the day.")
+                    if todayLump.gaugeNumber > 10 {
+                        if todayLump.totalBudgetRem < 0 {
+                            Text("You've gone over your total daily budget by **\(negate(number: todayLump.totalBudgetRem))kcal** - that's OK, it happens sometimes.")
+                        } else if todayLump.totalBudgetRem < 500 {
+                            Text("Be careful - you've only got **\( todayLump.totalBudgetRem)kcal** left in your budget for the rest of the day.")
                         } else {
-                            Text("You're a little bit ahead of where you should be right now, but no sweat - you have **\(dataLump.totalBudgetRem)kcal** left in your budget overall today.")
+                            Text("You're a little bit ahead of where you should be right now, but no sweat - you have **\(todayLump.totalBudgetRem)kcal** left in your budget overall today.")
                         }
-                    } else if dataLump.gaugeNumber < -5 {
-                        if dataLump.gaugeNumber < -50 {
-                            Text("You're way below your target for this time of day! You can eat **\(dataLump.leftToEat)kcal** right now, and have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
-                        } else if dataLump.gaugeNumber < -25 {
-                            Text("It looks like you're below your target for this time of day; you can eat **\(dataLump.normalisedLTE)kcal** right now, and have **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
+                    } else if todayLump.gaugeNumber < -5 {
+                        if todayLump.gaugeNumber < -50 {
+                            Text("You're way below your target for this time of day! You can eat **\(todayLump.leftToEat)kcal** right now, and have **\(todayLump.totalBudgetRem)kcal** left in your budget overall.")
+                        } else if todayLump.gaugeNumber < -25 {
+                            Text("It looks like you're below your target for this time of day; you can eat **\(todayLump.normalisedLTE)kcal** right now, and have **\(todayLump.totalBudgetRem)kcal** left in your budget overall.")
                         } else {
-                            Text("You're below your target right now for the time of day, and you can eat **\(dataLump.normalisedLTE)kcal** right now. Your budget has **\(dataLump.totalBudgetRem)kcal** left.")
+                            Text("You're below your target right now for the time of day, and you can eat **\(todayLump.normalisedLTE)kcal** right now. Your budget has **\(todayLump.totalBudgetRem)kcal** left.")
                         }
                     } else {
-                        if dataLump.leftToEat > 0 {
-                            if dataLump.totalBudgetRem - dataLump.leftToEat < 100 {
-                                Text("It looks like you're more or less on target! You have **\(dataLump.totalBudgetRem)kcal** left in your budget for the rest of the day.")
+                        if todayLump.leftToEat > 0 {
+                            if todayLump.totalBudgetRem - todayLump.leftToEat < 100 {
+                                Text("It looks like you're more or less on target! You have **\(todayLump.totalBudgetRem)kcal** left in your budget for the rest of the day.")
                             } else {
-                                Text("It looks like you're more or less on target! You have **\(dataLump.leftToEat)kcal** you can eat right now and **\(dataLump.totalBudgetRem)kcal** left in your budget overall.")
+                                Text("It looks like you're more or less on target! You have **\(todayLump.leftToEat)kcal** you can eat right now and **\(todayLump.totalBudgetRem)kcal** left in your budget overall.")
                             }
                         } else {
-                            Text("It looks like you're more or less on target, but you don't have anything left to eat right now. **\(dataLump.totalBudgetRem)kcal** is left in your budget overall.")
+                            Text("It looks like you're more or less on target, but you don't have anything left to eat right now. **\(todayLump.totalBudgetRem)kcal** is left in your budget overall.")
                         }
                     }
                 }
@@ -68,9 +68,9 @@ struct GaugeView: View {
                 if settingsObj.hideTodayInDetail == true {
                     Divider()
                     HStack {
-                        Text("**Cals in**: \(dataLump.eatenCalories)")
+                        Text("**Cals in**: \(todayLump.eatenCalories)")
                         Spacer()
-                        Text("**Cals out**: \(dataLump.calsOutNow)")
+                        Text("**Cals out**: \(todayLump.calsOutNow)")
                     }
                 }
             }
@@ -96,7 +96,7 @@ struct GaugeView: View {
         }
         
         var body: some View {
-            GaugeView(dataLump: $lump)
+            GaugeView().environmentObject(lump)
         }
     }
     

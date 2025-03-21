@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct FirstRunSheet: View {
+    @EnvironmentObject var todayLump: TodayLump
     @Binding var isPresented: Bool
-    var settingsObj: UserSettings
-    var dataStore: HealthData
     
     @State var hkBitDone: Bool = false
     @State var hkPermsToggle: Bool = false
@@ -173,6 +172,9 @@ struct FirstRunSheet: View {
                 Button("Start using Budgie Diet") {
                     isPresented = false
                     settingsObj.isFirstRun = false
+                    Task {
+                        await dataStore.updateLump(todayLump: todayLump)
+                    }
                 }.buttonStyle(.bordered)
                     .padding()
             }
@@ -189,7 +191,7 @@ struct FirstRunSheet: View {
         }
         
         .sheet(isPresented: $showingBMRcalc) {
-            BMRHelper(isPresented: $showingBMRcalc, manualBMR: $manualBMR, manualActive: $manualActive, settingsObj: settingsObj)
+            BMRHelper(isPresented: $showingBMRcalc, manualBMR: $manualBMR, manualActive: $manualActive)
         }.interactiveDismissDisabled(true)
         
             .onChange(of: showingBMRcalc) {
@@ -202,7 +204,7 @@ struct FirstRunSheet: View {
             }
         
             .sheet(isPresented: $showingDeficitChooser) {
-                BudgetHelperView(isPresented: $showingDeficitChooser, doubleDeficit: $doubleDeficit, hideZero: true, settingsObj: settingsObj)
+                BudgetHelperView(isPresented: $showingDeficitChooser, doubleDeficit: $doubleDeficit, hideZero: true)
             }.interactiveDismissDisabled(true)
         
             .onChange(of: showingDeficitChooser) {
@@ -224,32 +226,25 @@ struct FirstRunSheet: View {
             }
         }
         
-        .onChange(of: allComplete) {
-            if allComplete == true {
-                Task {
-                    dataStore.lastUpdateRequestSource = "Completion of setup"
-                    dataStore.dataUpdated = true
-                }
-            }
-        }
-        
         .onChange(of: chosenGoal, initial: false) {
             goalNotChosen = false
         }
     }
 }
 
-#Preview {
-    struct Preview: View {
-        @State var bmr = 2000
-        @State var manact = 500
-        @State var ispresent = true
-        var body: some View {
-            FirstRunSheet(isPresented: $ispresent, settingsObj: UserSettings(), dataStore: HealthData(), manualBMR:bmr, manualActive: manact)
-        }
-    }
-    
-    return Preview()
-    
-    
-}
+//#Preview {
+//    struct Preview: View {
+//        @State var bmr = 2000
+//        @State var manact = 500
+//        @State var ispresent = true
+//        @State var data = HealthData()
+//        
+//        var body: some View {
+//            FirstRunSheet(isPresented: $ispresent, dataStore: $data, manualBMR:bmr, manualActive: manact)
+//        }
+//    }
+//    
+//    return Preview()
+//    
+//    
+//}

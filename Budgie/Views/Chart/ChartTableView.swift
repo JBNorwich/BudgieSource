@@ -58,8 +58,7 @@ func assessDeficit(desired: Int, actual: Int) -> DeficitAssessment {
 }
 
 struct ChartTableView: View {
-    @Binding var dataStore: HealthData
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     @Binding var chartData: [ChartDataLump]
     @State var openedFood: Bool = false
     @State var lumpToOpen = ChartDataLump()
@@ -67,7 +66,7 @@ struct ChartTableView: View {
     var body: some View {
         ScrollView {
             ForEach(sortChartData(data: chartData)) { dataLump in
-                    ChartTableRow(dataLump: dataLump, dataStore: $dataStore, todayLump: $todayLump)
+                ChartTableRow(dataLump: dataLump).environmentObject(todayLump)
             }
             if settingsObj.whalesEverywhere == true {
                 VStack {
@@ -96,13 +95,12 @@ struct ChartTableRow: View {
     @State var openedFood: Bool = false
     var dataLump: ChartDataLump
     @State var formDate: String = ""
-    @Binding var dataStore: HealthData
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
 
     var body: some View {
         VStack {
             NavigationLink {
-                FoodHub(dataObject: $dataStore, todayLump: $todayLump, curDate: dataLump.date)
+                FoodHub(curDate: dataLump.date).environmentObject(todayLump)
             } label: {
                 HStack {
                     VStack {
@@ -202,7 +200,7 @@ struct ChartTableRow: View {
         @State var todayLump = TodayLump()
         
         var body: some View {
-            ChartTableView(dataStore: $healthData, todayLump: $todayLump, chartData: $dummyData)
+            ChartTableView(chartData: $dummyData).environmentObject(todayLump)
         }
     }
     

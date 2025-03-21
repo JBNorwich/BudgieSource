@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import HealthKit
 
 @Model class Meal {
     @Attribute(.unique) var id: UUID
@@ -58,11 +59,6 @@ class CalorieEntry {
     }
     
     func delete(context: ModelContext) {
-        if self.isInHK == true {
-            Task {
-                await HealthData().deleteCalorieEntries(calorieObjects:[self])
-            }
-        }
         do {
             context.delete(self)
             try context.save()
@@ -72,15 +68,8 @@ class CalorieEntry {
     }
 }
 
-class CalorieData: ObservableObject {
-    let calorieContainer = try! ModelContainer(for: CalorieEntry.self,Meal.self)
-    
-    private var context: ModelContext
-    
-    @MainActor init() {
-        context = calorieContainer.mainContext
-    }
-    
+@ModelActor
+actor CalorieActor {
     func fetchCalsBetween(from: Date,to: Date) async -> [CalorieEntry]{
         let searchPredicate = #Predicate<CalorieEntry> { entry in
             (entry.date > from) && (entry.date < to)
@@ -88,7 +77,7 @@ class CalorieData: ObservableObject {
         let descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate)
         return await withCheckedContinuation { continuation in
             do {
-                let returns = try context.fetch(descriptor)
+                let returns = try modelContext.fetch(descriptor)
                 continuation.resume(returning: returns)
             } catch {
                 ///error handling
@@ -113,7 +102,7 @@ class CalorieData: ObservableObject {
         
         return await withCheckedContinuation { continuation in
             do {
-                let returns: [CalorieEntry] = try context.fetch(descriptor)
+                let returns: [CalorieEntry] = try modelContext.fetch(descriptor)
                 continuation.resume(returning: returns)
             } catch {
                 
@@ -123,34 +112,17 @@ class CalorieData: ObservableObject {
     
     func insertNewCals(object: CalorieEntry)
     {
-        self.context.insert(object)
+        modelContext.insert(object)
         do {
-            try self.context.save()
+            try modelContext.save()
         } catch {
             print("Calorie insertion error: \(error)")
         }
     }
     
-    func deleteEntries(objects: [CalorieEntry])
-    {
-        for object in objects {
-            do {
-                let uuidToDelete = object.id
-                try context.delete(model: CalorieEntry.self, where: #Predicate<CalorieEntry> { ($0.id == uuidToDelete) }, includeSubclasses: true)
-            } catch {
-                print("Calorie deletion error: \(error)")
-            }
-        }
+    func getListOfMeals() -> [Meal] {
         do {
-            try context.save()
-        } catch {
-            // nothing
-        }
-    }
-    
-    @MainActor func getListOfMeals() -> [Meal] {
-        do {
-            let returns = try context.fetch(FetchDescriptor<Meal>())
+            let returns = try modelContext.fetch(FetchDescriptor<Meal>())
             return returns
         } catch {
             return []
@@ -162,18 +134,18 @@ class CalorieData: ObservableObject {
         let lunch = Meal(name: "Lunch", order: 1)
         let dinner = Meal(name: "Dinner", order: 2)
         let snacks = Meal(name: "Snacks/Other", order: 3)
-        self.context.insert(breakfast)
-        self.context.insert(lunch)
-        self.context.insert(dinner)
-        self.context.insert(snacks)
+        modelContext.insert(breakfast)
+        modelContext.insert(lunch)
+        modelContext.insert(dinner)
+        modelContext.insert(snacks)
         do {
-            try context.save()
+            try modelContext.save()
         } catch {
             print("Error setting up meals: \(error)")
         }
     }
     
-    @MainActor func cleansedMealList(data: [CalorieEntry]) -> [Meal] {
+    func cleansedMealList(data: [CalorieEntry]) -> [Meal] {
         var returnedMealUUIDs: [UUID] = []
         var returnedMeals: [Meal] = []
         let fullMealList = getListOfMeals()
@@ -194,5 +166,38 @@ class CalorieData: ObservableObject {
         
         returnedMeals.sort { $0.order < $1.order }
         return returnedMeals
+    }
+    
+    func deleteEntries(objects: [CalorieEntry])
+    {
+        for object in objects {
+            do {
+                if object.isInHK == true {
+                    Task {
+                        if object.healthKitUUID != nil {
+                            if healthStore.authorizationStatus(for: eatenQuantityType) == HKAuthorizationStatus.sharingAuthorized
+                            {
+                                let hkUUIDPredicate = HKQuery.predicateForObjects(with: [object.healthKitUUID!])
+                                
+                                do {
+                                    try await healthStore.deleteObjects(of: eatenQuantityType, predicate: hkUUIDPredicate)
+                                } catch {
+                                    //balls!
+                                }
+                            }
+                        }
+                    }
+                }
+                let uuidToDelete = object.id
+                try modelContext.delete(model: CalorieEntry.self, where: #Predicate<CalorieEntry> { ($0.id == uuidToDelete) }, includeSubclasses: true)
+            } catch {
+                print("Calorie deletion error: \(error)")
+            }
+        }
+        do {
+            try modelContext.save()
+        } catch {
+            // nothing
+        }
     }
 }

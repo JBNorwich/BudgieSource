@@ -175,8 +175,7 @@ class ChartData: ObservableObject {
     
     func fetchChartEaten() async -> (budgie: [CalsPacket], hk: [CalsPacket])
     {
-        let model = await CalorieData()
-        let objArray = await model.fetchCalsBetween(from: self.startDate, to: self.endDate)
+        let objArray = await dataStore.calorieActor.fetchCalsBetween(from: self.startDate, to: self.endDate)
         var budgiePackets: [CalsPacket] = []
         var hkPackets: [CalsPacket] = []
         for object in objArray {

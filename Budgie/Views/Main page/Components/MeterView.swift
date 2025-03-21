@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MeterView: View {
-    @Binding var todayLump: TodayLump
+    @EnvironmentObject var todayLump: TodayLump
     @State var blobColour: Color = .clear
     @State var pathColour: Color = .clear
 
@@ -134,7 +134,7 @@ struct MeterView: View {
         @State var dummyData = TodayLump()
         
         var body: some View {
-            MeterView(todayLump:$dummyData, dummy: false)
+            MeterView(dummy: false).environmentObject(dummyData)
         }
     }
     

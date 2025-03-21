@@ -12,7 +12,6 @@ struct BudgetHelperView: View {
     @Binding var doubleDeficit: Double
     
     var hideZero: Bool = false
-    var settingsObj: UserSettings
     
     @State var displaying1000kcalWarning: Bool = false
     @State var displaying750kcalWarning: Bool = false
@@ -213,7 +212,7 @@ struct BudgetHelperView: View {
         @State var isPresented = Bool()
         @State var doubleDeficit = Double()
         var body: some View {
-            BudgetHelperView(isPresented: $isPresented, doubleDeficit: $doubleDeficit, settingsObj: UserSettings())
+            BudgetHelperView(isPresented: $isPresented, doubleDeficit: $doubleDeficit)
         }
     }
 

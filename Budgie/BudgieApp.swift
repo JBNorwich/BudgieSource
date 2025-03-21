@@ -10,13 +10,15 @@ import HealthKitUI
 
 let healthStore: HKHealthStore = HKHealthStore()
 let settingsObj: UserSettings = UserSettings()
+let dataStore: HealthData = HealthData()
 
 @main
 struct BudgieApp: App {
     init() {
-        let mealStore = CalorieData()
-        if mealStore.getListOfMeals() == [] {
-            mealStore.setUpMeals()
+        Task {
+            if await dataStore.calorieActor.getListOfMeals() == [] {
+                await dataStore.calorieActor.setUpMeals()
+            }
         }
         pingSettingsToWatch()
     }

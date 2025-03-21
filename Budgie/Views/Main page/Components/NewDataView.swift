@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct NewDataView: View {
-    @Binding var dataLump: TodayLump
+    @EnvironmentObject var dataLump: TodayLump
     
     var body: some View {
         Spacer()
@@ -195,7 +195,7 @@ struct NewDataView: View {
         @State var dummyData = TodayLump()
         
         var body: some View {
-            NewDataView(dataLump:$dummyData)
+            NewDataView().environmentObject(dummyData)
         }
     }
     
