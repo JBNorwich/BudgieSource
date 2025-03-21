@@ -22,3 +22,7 @@ let weightingText = "This adjusts how predicted active calories are weighted. Mo
 let cappingText = "This lets you cap your budget, so even if you exercise more than expected, your budget will not exceed this amount (i.e. Budgie Diet will not prompt you to \"eat back\" all the calories you've burned over your averages).\n\n**WARNING:** **Diets based on extreme caloric restriction and/or extreme levels of exercise relative to your food intake are unsustainable, and carry serious health risks.** Budgie Diet is hard-coded to never allow your budget to dip below 1,200kcal per day under any circumstances.\n\nBudgie Diet is for information purposes only, and its suggestions are not a substitute for professional medical advice. Its developer strongly encourages you to discuss any diet plans with a reputable medical professional first, especially if these would involve you eating less than 1,200kcal per day."
 
 let mealTimeText = "Budgie Diet usually weights to ensure that you have your \"full\" remaining budget available to eat after 6pm. If you typically eat dinner at a different time from this, you can change this here."
+
+let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+let appBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
+let versionString = "Version \(appVersion) (Build \(appBuild))"
