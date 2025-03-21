@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import HealthKit
 
 class TodayLump: ObservableObject {
     // Variables that need to be updated upon creation
@@ -16,6 +17,8 @@ class TodayLump: ObservableObject {
     @Published var desiredDeficit: Int = 0
     @Published var projectedActive: Int = 0
     @Published var projectedBasal: Int = 0
+    @Published var waterToday: Int = 0
+    @Published var activitySummary: HKActivitySummary = HKActivitySummary()
     
     @Published var budgetAtCap: Bool = false
     @Published var budgetAtMin: Bool = false
@@ -31,7 +34,7 @@ class TodayLump: ObservableObject {
     @Published var estimatedAverageActive: Bool = false
     
     // signals re. data updates
-    @Published var lastUpdate = Date()
+    @Published var lastUpdate: Date = Date()
     
     // Calculating functions
     var totalBudget: Int {
@@ -204,6 +207,17 @@ class TodayLump: ObservableObject {
     
     var calsOutNow: Int {
         return self.activeCalories + self.basalCalories
+    }
+    
+    var waterGoalDone: Double {
+        let done = Double(self.waterToday) / Double(settingsObj.waterGoal)
+        if done > 1 {
+            return 1
+        } else if done < 0 {
+            return 0
+        } else {
+            return done
+        }
     }
 }
 

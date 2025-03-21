@@ -19,6 +19,9 @@
 		D838A6122C8075710083F3B3 /* NewDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6112C8075710083F3B3 /* NewDataView.swift */; };
 		D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6132C80828A0083F3B3 /* GaugeView.swift */; };
 		D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D840B0282D27F03100AFE471 /* BudgetCap.swift */; };
+		D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF18E2D8C48B900340EE1 /* FitnessView.swift */; };
+		D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1902D8C4F6B00340EE1 /* WaterView.swift */; };
+		D85CF1932D8C56FA00340EE1 /* AddWaterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1922D8C56F800340EE1 /* AddWaterSheet.swift */; };
 		D868606D2C7BD0E900730373 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868606C2C7BD0E900730373 /* Tests.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
 		D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A42C73C3FC00138B60 /* BudgieApp.swift */; };
@@ -144,6 +147,9 @@
 		D838A6112C8075710083F3B3 /* NewDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewDataView.swift; sourceTree = "<group>"; };
 		D838A6132C80828A0083F3B3 /* GaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaugeView.swift; sourceTree = "<group>"; };
 		D840B0282D27F03100AFE471 /* BudgetCap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetCap.swift; sourceTree = "<group>"; };
+		D85CF18E2D8C48B900340EE1 /* FitnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessView.swift; sourceTree = "<group>"; };
+		D85CF1902D8C4F6B00340EE1 /* WaterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterView.swift; sourceTree = "<group>"; };
+		D85CF1922D8C56F800340EE1 /* AddWaterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddWaterSheet.swift; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -248,11 +254,13 @@
 		D829B0832C79B5B30027841B /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				D85CF18E2D8C48B900340EE1 /* FitnessView.swift */,
 				D838A6112C8075710083F3B3 /* NewDataView.swift */,
 				D829B08A2C7A6BC00027841B /* WhaleFacts.swift */,
 				D8E8316D2C74976300AAF555 /* MeterView.swift */,
 				D8BCE50A2C7FBBC8001EA005 /* TodayFoodList.swift */,
 				D838A6132C80828A0083F3B3 /* GaugeView.swift */,
+				D85CF1902D8C4F6B00340EE1 /* WaterView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -279,6 +287,7 @@
 		D868606E2C7BD68400730373 /* Food Logging */ = {
 			isa = PBXGroup;
 			children = (
+				D85CF1922D8C56F800340EE1 /* AddWaterSheet.swift */,
 				D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */,
 				D8D4BF722C7CD04E0061A9A4 /* FoodHub.swift */,
 				D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */,
@@ -565,6 +574,7 @@
 				D8E8316E2C74976300AAF555 /* MeterView.swift in Sources */,
 				D8E831852C77549200AAF555 /* ChartPage.swift in Sources */,
 				D829B0872C79BAA80027841B /* ChartTableView.swift in Sources */,
+				D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */,
 				D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */,
 				D8D4BF7A2C7CD4560061A9A4 /* FoodList.swift in Sources */,
 				D8E831622C73C7EE00AAF555 /* HealthData.swift in Sources */,
@@ -582,8 +592,10 @@
 				D829B0852C79B5C50027841B /* ChartView.swift in Sources */,
 				D8BCE50B2C7FBBC9001EA005 /* TodayFoodList.swift in Sources */,
 				D8BDE7322C7B4CDA00E07471 /* Strings.swift in Sources */,
+				D85CF1932D8C56FA00340EE1 /* AddWaterSheet.swift in Sources */,
 				D8D4BF742C7CD04E0061A9A4 /* FoodHub.swift in Sources */,
 				D8D4BF762C7CD05B0061A9A4 /* AddCalsSheet.swift in Sources */,
+				D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */,
 				D89461A72C73C3FC00138B60 /* BudgetView.swift in Sources */,
 				D829B08B2C7A6BC00027841B /* WhaleFacts.swift in Sources */,
 				D8E831742C74CDC700AAF555 /* BudgetHelperView.swift in Sources */,

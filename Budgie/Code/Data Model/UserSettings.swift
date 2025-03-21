@@ -94,7 +94,7 @@ class UserSettings {
     }
     
     var hideTodayInDetail: Bool {
-        get { return defaults?.value(forKey: "hideTodayInDetail") as? Bool ?? false }
+        get { return defaults?.value(forKey: "hideTodayInDetail") as? Bool ?? true }
         set { defaults?.set(newValue, forKey: "hideTodayInDetail")}
     }
     
@@ -166,6 +166,11 @@ class UserSettings {
     var finalMealTime: Int {
         get { return defaults?.value(forKey: "finalMealTime") as? Int ?? 1080 }
         set { defaults?.set(newValue, forKey: "finalMealTime")}
+    }
+    
+    var waterGoal: Int {
+        get { return defaults?.value(forKey: "waterGoal") as? Int ?? 2000 }
+        set { defaults?.set(newValue, forKey: "waterGoal")}
     }
     
     func dumpToDict() -> [String:Any] {

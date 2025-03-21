@@ -308,32 +308,28 @@ class HealthData: ObservableObject  {
         }
     }
     
-    func getMoveGoal() async -> Int {
+    func getActivitySummary() async -> HKActivitySummary {
         let calendar = NSCalendar.current
         var startDateComponents = calendar.dateComponents([.year, .month, .day], from: Date())
         startDateComponents.calendar = calendar
-        
-        do {
-            let activitySummaries: [HKActivitySummary] = try await withCheckedThrowingContinuation { continuation in
-                let predicate = HKQuery.predicateForActivitySummary(with: startDateComponents)
-                let query = HKActivitySummaryQuery(predicate: predicate) { (query, summariesOrNil, errorOrNil) -> Void in
-                    if let errorOrNil {
-                        continuation.resume(throwing: errorOrNil)
-                        return
-                    }
-                    continuation.resume(returning: summariesOrNil!)
+
+        let activitySummaries: [HKActivitySummary] = await withCheckedContinuation { continuation in
+            let predicate = HKQuery.predicateForActivitySummary(with: startDateComponents)
+            let query = HKActivitySummaryQuery(predicate: predicate) { (query, summariesOrNil, errorOrNil) -> Void in
+                if errorOrNil != nil {
+                    continuation.resume(returning: [HKActivitySummary()])
+                    return
                 }
-                healthStore.execute(query)
+                continuation.resume(returning: summariesOrNil!)
             }
-            guard let firstSummary = activitySummaries.first else {
-                // Use a fallback value or throw an error.
-                return 0
-            }
-            
-            return Int(firstSummary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
-        } catch {
-            return 0
+            healthStore.execute(query)
         }
+        return activitySummaries.first ?? HKActivitySummary()
+    }
+    
+    func getMoveGoal() async -> Int {
+        let summary = await getActivitySummary()
+        return Int(summary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
     }
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
@@ -381,7 +377,41 @@ class HealthData: ObservableObject  {
         self.dataUpdated = true
     }
     
-    func setUpObserverQueries(settingsObj: UserSettings) {
+    func addWater(amount: Int) async {
+        let authStatus = healthStore.authorizationStatus(for: waterQuantityType)
+        if authStatus == HKAuthorizationStatus.sharingAuthorized {
+            let quantityAmount = HKQuantity(unit: HKUnit.literUnit(with: .milli), doubleValue: Double(amount))
+            let sample = HKQuantitySample(type: waterQuantityType, quantity: quantityAmount, start: Date(), end: Date())
+            do {
+                try await healthStore.save(sample)
+            } catch {
+                //errorhandling
+            }
+        }
+    }
+    
+    func getWaterToday() async -> Int {
+        do {
+            let todayPredicate = getTodayPredicate()
+            let waterToday = HKSamplePredicate.quantitySample(type: waterQuantityType, predicate: todayPredicate)
+            let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
+                let sumWaterQuery = HKStatisticsQueryDescriptor(predicate: waterToday, options: .cumulativeSum)
+                continuation.resume(returning: sumWaterQuery)
+            }
+            do {
+                let queryResult = try await query.result(for: healthStore)?.sumQuantity()
+                let ml = queryResult?.doubleValue(for: HKUnit.literUnit(with: .milli)) ?? 0
+                return Int(ml)
+            } catch {
+                return 0
+            }
+        } catch {
+            return 0
+        }
+    }
+    
+//    func setUpObserverQueries(settingsObj: UserSettings) {
+    func setUpObserverQueries() {
         let activeQuery = HKObserverQuery(sampleType: activeQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
             if errorOrNil != nil {
                 // Properly handle the error.
@@ -415,10 +445,22 @@ class HealthData: ObservableObject  {
                 self.dataUpdated = true
             }
         }
+        let waterQuery = HKObserverQuery(sampleType: waterQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
+            if errorOrNil != nil {
+                // Properly handle the error.
+                return
+            }
+            Task {
+                self.lastUpdateRequestSource = "Water observer query"
+                self.isBackgroundPing = true
+                self.dataUpdated = true
+            }
+        }
        
         healthStore.execute(activeQuery)
         healthStore.execute(basalQuery)
         healthStore.execute(eatenQuery)
+        healthStore.execute(waterQuery)
     }
     
     func updateTodayObject(lump: TodayLump) async {
@@ -458,6 +500,8 @@ class HealthData: ObservableObject  {
                 lump.activeEstimated = true
                 lump.activeCalories = settingsObj.manualActive - lump.projectedActive
             }
+            lump.waterToday = await self.getWaterToday()
+            lump.activitySummary = await self.getActivitySummary()
         }
         lump.lastUpdate = Date()
         self.isBackgroundPing = false
@@ -503,6 +547,8 @@ class HealthData: ObservableObject  {
                 newLump.activeEstimated = true
                 newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
             }
+            newLump.waterToday = await self.getWaterToday()
+            newLump.activitySummary = await self.getActivitySummary()
         }
         self.isBackgroundPing = false
         self.dataUpdated = false
@@ -535,6 +581,7 @@ class HealthData: ObservableObject  {
         } else {
             let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
             let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
+            newLump.waterToday = await self.getWaterToday()
             if recBasalCalories != 0 {
                 newLump.basalCalories = recBasalCalories
             } else {

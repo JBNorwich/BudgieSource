@@ -39,11 +39,11 @@ struct BudgetView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) var colorScheme
     
-    @State var dataStore = HealthData()
     @State var todayLump: TodayLump = TodayLump()
+    @State var dataStore: HealthData = HealthData()
     
-    @State var hkAuthenticated = false
-    @State var hkAuthenticationTrigger = false
+    @State var hkAuthenticated: Bool = false
+    @State var hkAuthenticationTrigger: Bool = false
 
     @State var firstRun = Bool()
 
@@ -51,7 +51,8 @@ struct BudgetView: View {
     @State var showingHelp: Bool = false
     @State var showingWhales: Bool = false
     @State var openingFoodHub: Bool = false
-    @State var showAddCalsSheet = false
+    @State var showAddCalsSheet: Bool = false
+    @State var showWaterSheet: Bool = false
     
     // this is needed because otherwise it won't update state when returning from settings
     @State var whaleButtonVisible: Bool = false
@@ -104,17 +105,30 @@ struct BudgetView: View {
                         GroupBox(label: Label("Your target", systemImage: "gauge.with.needle")) {
                             GaugeView(dataLump: $todayLump)
                         }.backgroundStyle(.regularMaterial)
+                        if settingsObj.manualMode != true {
+                            HStack {
+                                GroupBox(label: Label("Fitness", systemImage:"figure.run")) {
+                                    FitnessView(todayLump: $todayLump)
+                                }.backgroundStyle(.regularMaterial)
+                                    .frame(minHeight: 100)
+                                GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
+                                    WaterView(todayLump: $todayLump)
+                                }.backgroundStyle(.regularMaterial)
+                                    .frame(minHeight: 100)
+                            }
+                        }
                         if settingsObj.hideTodayInDetail != true {
                             GroupBox(label: Label("Today in detail", systemImage:"sun.max")) {
                                 NewDataView(dataLump: $todayLump)
                             }.backgroundStyle(.regularMaterial)
                         }
-                        GroupBox(label: FoodListLabelView(dataLump: $todayLump, showingAddCalsSheet: $showAddCalsSheet))
+                        GroupBox(label: FoodListLabelView(showingAddCalsSheet: $showAddCalsSheet))
                         {
                             TodayFoodList(dataLump: $todayLump)
                         }.onTapGesture {
                             openingFoodHub = true
                         }.backgroundStyle(.regularMaterial)
+                        
                         HStack {
                             Text("Last updated: " + todayLump.lastUpdate.formatted())
                                 .padding()
@@ -294,10 +308,17 @@ struct BudgetView: View {
         .sheet(isPresented: $showingHelp) {
             Explainer(showing: $showingHelp)
         }
+        
+        .sheet(isPresented: $showWaterSheet) {
+            NavigationStack {
+                AddWaterSheet(dataStore: $dataStore, isDisplayed: $showWaterSheet)
+            }
+            .presentationDetents([.medium])
+        }
             
         .task() {
             if settingsObj.manualMode != true {
-                dataStore.setUpObserverQueries(settingsObj: settingsObj)
+                dataStore.setUpObserverQueries()
             }
             todayLump = await dataStore.produceTodayObject()
         }
@@ -305,7 +326,6 @@ struct BudgetView: View {
 }
 
 struct FoodListLabelView: View {
-    @Binding var dataLump: TodayLump
     @Binding var showingAddCalsSheet: Bool
     
     var body: some View {
@@ -314,7 +334,30 @@ struct FoodListLabelView: View {
             Spacer()
             Button ("Add food", systemImage: "plus") {
                 showingAddCalsSheet = true
-            }.labelsHidden()
+            }.buttonStyle(.plain)
+        }
+    }
+}
+
+struct WaterLabelView: View {
+    @Binding var showingWaterSheet: Bool
+    
+    var body: some View {
+        HStack{
+            Label("Water", systemImage: "drop.fill")
+            Spacer()
+            Button ("Add", systemImage: "plus") {
+                showingWaterSheet = true
+            }.buttonStyle(.plain)
+        }
+    }
+}
+
+struct ActivityLabelView: View {
+    var body: some View {
+        HStack{
+            Label("Activity", systemImage: "figure.run")
+            Spacer()
         }
     }
 }
