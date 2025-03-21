@@ -26,6 +26,11 @@ struct WaterView: View {
                 .scaleEffect(1.5)
                 .padding(.top, 10)
             Spacer()
+            if todayLump.waterGoalRem != 0 {
+                Text("\(todayLump.waterGoalRem.formatted())ml to go")
+            } else {
+                Text("Goal met!")
+            }
         }
     }
 }

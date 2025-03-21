@@ -67,10 +67,14 @@ struct GaugeView: View {
                 
                 if settingsObj.hideTodayInDetail == true {
                     Divider()
-                    HStack {
-                        Text("**Cals in**: \(todayLump.eatenCalories)")
-                        Spacer()
-                        Text("**Cals out**: \(todayLump.calsOutNow)")
+                    if todayLump.activeEstimated == true || todayLump.basalEstimated == true {
+                        Text("Your budget is estimated, and doesn't reflect your real activity.")
+                    } else {
+                        HStack {
+                            Text("**Cals in**: \(todayLump.eatenCalories)")
+                            Spacer()
+                            Text("**Cals out**: \(todayLump.calsOutNow)")
+                        }
                     }
                 }
             }

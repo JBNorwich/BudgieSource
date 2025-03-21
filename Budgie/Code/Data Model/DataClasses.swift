@@ -226,6 +226,15 @@ class TodayLump: ObservableObject {
         }
     }
     
+    var waterGoalRem: Int {
+        let left = settingsObj.waterGoal - self.waterToday
+        if left < 0 {
+            return 0
+        } else {
+            return left
+        }
+    }
+    
 //    func update() async {
 //        let todayStart = getStartOfDay(date: Date())
 //        let todayEnd = getMidnightOnDayAfter(date: todayStart)

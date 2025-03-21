@@ -285,6 +285,10 @@ struct BudgetView: View {
                 AddWaterSheet(isDisplayed: $showWaterSheet)
             }
             .presentationDetents([.medium])
+        }.onDisappear() {
+            Task {
+                await dataStore.updateLump(todayLump: todayLump)
+            }
         }
             
         .task() {
@@ -334,5 +338,5 @@ struct ActivityLabelView: View {
 }
 
 #Preview {
-    BudgetView()
+//    BudgetView()
 }
