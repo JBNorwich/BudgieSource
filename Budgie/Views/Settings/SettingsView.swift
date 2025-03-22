@@ -30,9 +30,11 @@ struct SettingsView: View {
     @State var hideTodayInDetail = false
     @State var useFitnessGoal = false
     @State private var weightTime = Date()
+    @State var waterGoal: Int = 0
     
     @FocusState private var focusResting: Bool
     @FocusState private var focusActive: Bool
+    @FocusState private var focusWater: Bool
     
     @Environment(\.openURL) var openURL
     
@@ -109,6 +111,17 @@ struct SettingsView: View {
                 }.sheet(isPresented: $showingBMRHelper, onDismiss: { pingManual() }) {
                     BMRHelper(isPresented: $showingBMRHelper, manualBMR: $manualBMR, manualActive: $manualActive)
                 }.presentationDragIndicator(.visible)
+            }
+            
+            Section(header: Text("Water goal"))
+            {
+                LabeledContent {
+                    TextField(waterGoal.formatted(), value: $waterGoal, format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.numberPad)
+                        .focusable()
+                        .focused($focusWater)
+                } label: { Text("Daily water goal (ml)") }
             }
             
             Section(header: Text("Surplus mode"), footer: Text("Turn this on to aim for a caloric surplus, rather than a deficit.")) {
@@ -215,6 +228,7 @@ struct SettingsView: View {
             healthLogging = settingsObj.healthLogging
             hideTodayInDetail = settingsObj.hideTodayInDetail
             useFitnessGoal = settingsObj.useFitnessGoal
+            waterGoal = settingsObj.waterGoal
             pingSettingsToWatch()
         }
     
@@ -234,6 +248,10 @@ struct SettingsView: View {
         .onChange(of: whalesEverywhere, initial: false) {
             settingsObj.whalesEverywhere = whalesEverywhere
             whale = whalesEverywhere
+        }
+        
+        .onChange(of: waterGoal, initial: false) {
+            settingsObj.waterGoal = waterGoal
         }
     
         .onChange(of: surplusMode, initial: false) {
@@ -288,6 +306,7 @@ struct SettingsView: View {
                     
                     if focusResting == true { focusResting.toggle() }
                     if focusActive == true { focusResting.toggle() }
+                    if focusWater == true { focusWater.toggle() }
                 }
              }
         }

@@ -12,13 +12,16 @@ import SwiftUI
 import SwiftData
 
 class HealthData {
-    let calorieMealConfig = ModelConfiguration("caloriesDB", schema: Schema([CalorieEntry.self,Meal.self]))
+    let calorieMealConfig = ModelConfiguration(schema: Schema([CalorieEntry.self,Meal.self]))
+    let waterConfig = ModelConfiguration("waterDB", schema: Schema([WaterEntry.self]))
     let modelContainer: ModelContainer
     let calorieActor: CalorieActor
+    let waterActor: WaterActor
     
     init() {
-        modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, configurations: calorieMealConfig)
+        modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
         calorieActor = CalorieActor(modelContainer: modelContainer)
+        waterActor = WaterActor(modelContainer: modelContainer)
     }
     
     func pullCalorieTotalTodayFromHK(type: HKQuantityType) async -> Int {
@@ -326,17 +329,23 @@ class HealthData {
         }
     }
     
-    func addWater(amount: Int) async {
-        let authStatus = healthStore.authorizationStatus(for: waterQuantityType)
-        if authStatus == HKAuthorizationStatus.sharingAuthorized {
-            let quantityAmount = HKQuantity(unit: HKUnit.literUnit(with: .milli), doubleValue: Double(amount))
-            let sample = HKQuantitySample(type: waterQuantityType, quantity: quantityAmount, start: Date(), end: Date())
-            do {
-                try await healthStore.save(sample)
-            } catch {
-                //errorhandling
+    func addWater(amount: Int, datetime: Date) async {
+        var hkUUID: UUID?
+        if settingsObj.manualMode != true {
+            let authStatus = healthStore.authorizationStatus(for: waterQuantityType)
+            if authStatus == HKAuthorizationStatus.sharingAuthorized {
+                let quantityAmount = HKQuantity(unit: HKUnit.literUnit(with: .milli), doubleValue: Double(amount))
+                let sample = HKQuantitySample(type: waterQuantityType, quantity: quantityAmount, start: datetime, end: datetime)
+                hkUUID = sample.uuid
+                do {
+                    try await healthStore.save(sample)
+                } catch {
+                    //errorhandling
+                }
             }
         }
+        let newWaterObj = WaterEntry(date: datetime, quantity: amount, healthKitUUID: hkUUID ?? nil)
+        await waterActor.addWater(object: newWaterObj)
     }
     
     func getWaterToday() async -> Int {
@@ -357,6 +366,37 @@ class HealthData {
         } catch {
             return 0
         }
+    }
+    
+    func getWaterOnDate(date: Date) async -> (hk: Int, bd: Int) {
+        var hk: Int = 0
+        var bd: Int = 0
+        
+        let startDate = getStartOfDay(date: date)
+        let endDate = getMidnightOnDayAfter(date: startDate)
+    
+        do {
+            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
+            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+            let waterToday = HKSamplePredicate.quantitySample(type: waterQuantityType, predicate: queryPredicate)
+            let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
+                let sumWaterQuery = HKStatisticsQueryDescriptor(predicate: waterToday, options: .cumulativeSum)
+                continuation.resume(returning: sumWaterQuery)
+            }
+            do {
+                let queryResult = try await query.result(for: healthStore)?.sumQuantity()
+                let ml = queryResult?.doubleValue(for: HKUnit.literUnit(with: .milli)) ?? 0
+                hk = Int(ml)
+            } catch {
+                hk = 0
+            }
+        } catch {
+            hk = 0
+        }
+        
+        bd = await waterActor.getTotalOnDate(date: date)
+        
+        return (hk, bd)
     }
     
     func setUpObserverQueries(todayLump: TodayLump) {
@@ -437,7 +477,9 @@ class HealthData {
                 todayLump.activeEstimated = true
                 todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
             }
-            todayLump.waterToday = await getWaterToday()
+//            todayLump.waterToday = await getWaterToday()
+            let waterDetails = await getWaterOnDate(date: todayStart)
+            todayLump.waterToday = waterDetails.bd + waterDetails.hk
             todayLump.activitySummary = await getActivitySummary()
         }
         todayLump.lastUpdate = Date()

@@ -10,6 +10,7 @@ import SwiftUI
 struct AddWaterSheet: View {
     @Binding var isDisplayed: Bool
     
+    var dateToAddOn: Date
     @State var fieldString: String = "0"
     @State var millilitres: Int?
     @State var milsWereNil: Bool = false
@@ -34,7 +35,7 @@ struct AddWaterSheet: View {
                             } else {
                                 if millilitres ?? 0 > 0 {
                                     Task {
-                                        await dataStore.addWater(amount: millilitres!)
+                                        await dataStore.addWater(amount: millilitres!, datetime: dateToAddOn)
                                         isDisplayed = false
                                     }
                                 } else {
@@ -51,7 +52,7 @@ struct AddWaterSheet: View {
                         VStack {
                             Button("250ml", systemImage: "mug.fill") {
                                 Task {
-                                    await dataStore.addWater(amount: 250)
+                                    await dataStore.addWater(amount: 250, datetime: dateToAddOn)
                                     isDisplayed = false
                                 }
                             }.buttonStyle(.bordered)
@@ -64,7 +65,7 @@ struct AddWaterSheet: View {
                         VStack {
                             Button("500ml", systemImage: "waterbottle") {
                                 Task {
-                                    await dataStore.addWater(amount: 500)
+                                    await dataStore.addWater(amount: 500, datetime: dateToAddOn)
                                     isDisplayed = false
                                 }
                             }.buttonStyle(.bordered)
@@ -77,7 +78,7 @@ struct AddWaterSheet: View {
                         VStack {
                             Button("750ml", systemImage: "waterbottle.fill") {
                                 Task {
-                                    await dataStore.addWater(amount: 750)
+                                    await dataStore.addWater(amount: 750, datetime: dateToAddOn)
                                     isDisplayed = false
                                 }
                             }.buttonStyle(.bordered)
@@ -90,7 +91,7 @@ struct AddWaterSheet: View {
                         VStack {
                             Button("1l", systemImage: "waterbottle.fill") {
                                 Task {
-                                    await dataStore.addWater(amount: 1000)
+                                    await dataStore.addWater(amount: 1000, datetime: dateToAddOn)
                                     isDisplayed = false
                                 }
                             }.buttonStyle(.bordered)
@@ -119,7 +120,7 @@ struct AddWaterSheet: View {
         @State var data = HealthData()
         
         var body: some View {
-            AddWaterSheet(isDisplayed:$presented)
+            AddWaterSheet(isDisplayed:$presented, dateToAddOn: Date())
         }
     }
     return Preview()

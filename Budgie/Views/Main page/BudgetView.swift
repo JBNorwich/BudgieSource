@@ -50,6 +50,7 @@ struct BudgetView: View {
     @State var showingHelp: Bool = false
     @State var showingWhales: Bool = false
     @State var openingFoodHub: Bool = false
+    @State var openingWaterPage: Bool = false
     @State var showAddCalsSheet: Bool = false
     @State var showWaterSheet: Bool = false
     
@@ -103,17 +104,21 @@ struct BudgetView: View {
                         GroupBox(label: Label("Your target", systemImage: "gauge.with.needle")) {
                             GaugeView().environmentObject(todayLump)
                         }.backgroundStyle(.regularMaterial)
-                        if settingsObj.manualMode != true {
-                            HStack {
-                                GroupBox(label: Label("Fitness", systemImage:"figure.run")) {
+                        HStack {
+                            if settingsObj.manualMode != true {
+                                GroupBox(label: Label("Activity", systemImage:"figure.run")) {
                                     FitnessView().environmentObject(todayLump)
-                                }.backgroundStyle(.regularMaterial)
-                                    .frame(minHeight: 100)
-                                GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
-                                    WaterView().environmentObject(todayLump)
+                                }.onTapGesture {
+                                    UIApplication.shared.open(URL(string: "fitnessapp://")!)
                                 }.backgroundStyle(.regularMaterial)
                                     .frame(minHeight: 100)
                             }
+                            GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
+                                WaterView().environmentObject(todayLump)
+                            }.onTapGesture {
+                                openingWaterPage = true
+                            }.backgroundStyle(.regularMaterial)
+                                .frame(minHeight: 100)
                         }
                         if settingsObj.hideTodayInDetail != true {
                             GroupBox(label: Label("Today in detail", systemImage:"sun.max")) {
@@ -156,6 +161,9 @@ struct BudgetView: View {
                             NavigationLink(destination: FoodHub(curDate: Date()).environmentObject(todayLump)) {
                                 Image(systemName: "fork.knife")
                             }.foregroundColor(backgroundGradient.buttonColour)
+                            NavigationLink(destination: WaterPage(curDate: Date()).environmentObject(todayLump)) {
+                                Image(systemName: "drop.fill")
+                            }.foregroundColor(backgroundGradient.buttonColour)
                             NavigationLink(destination: ChartPage().environmentObject(todayLump)) {
                                 Image(systemName: "chart.xyaxis.line")
                             }.foregroundColor(backgroundGradient.buttonColour)
@@ -187,6 +195,11 @@ struct BudgetView: View {
         .navigationDestination(isPresented: $openingFoodHub)
         {
             FoodHub(curDate: Date()).environmentObject(todayLump)
+        }
+        
+        .navigationDestination(isPresented: $openingWaterPage)
+        {
+            WaterPage(curDate: Date()).environmentObject(todayLump)
         }
         
         .onChange(of: scenePhase) {
@@ -271,6 +284,7 @@ struct BudgetView: View {
         
         .sheet(isPresented: $firstRun) {
             FirstRunSheet(isPresented: $firstRun)
+                .environmentObject(todayLump)
                 .onDisappear {
                     showingHelp = true
                 }
@@ -282,7 +296,7 @@ struct BudgetView: View {
         
         .sheet(isPresented: $showWaterSheet) {
             NavigationStack {
-                AddWaterSheet(isDisplayed: $showWaterSheet)
+                AddWaterSheet(isDisplayed: $showWaterSheet, dateToAddOn: Date())
             }
             .presentationDetents([.medium])
         }.onDisappear() {

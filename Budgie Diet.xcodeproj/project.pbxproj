@@ -21,7 +21,6 @@
 		D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D840B0282D27F03100AFE471 /* BudgetCap.swift */; };
 		D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF18E2D8C48B900340EE1 /* FitnessView.swift */; };
 		D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1902D8C4F6B00340EE1 /* WaterView.swift */; };
-		D85CF1932D8C56FA00340EE1 /* AddWaterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1922D8C56F800340EE1 /* AddWaterSheet.swift */; };
 		D868606D2C7BD0E900730373 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868606C2C7BD0E900730373 /* Tests.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
 		D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A42C73C3FC00138B60 /* BudgieApp.swift */; };
@@ -54,6 +53,9 @@
 		D89A95DD2C84F82B007796AB /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D89A95DE2C84FAC0007796AB /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
+		D8B3F2FE2D8F0EED00DDA41D /* WaterModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */; };
+		D8B3F2FF2D8F0EED00DDA41D /* WaterModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */; };
+		D8B3F3002D8F0EED00DDA41D /* WaterModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */; };
 		D8B5AE022C78D93700C4533A /* FirstRunSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */; };
 		D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE072C7934B800C4533A /* ChartData.swift */; };
 		D8BCE5092C7F9F9A001EA005 /* DataClasses.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */; };
@@ -148,7 +150,6 @@
 		D840B0282D27F03100AFE471 /* BudgetCap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetCap.swift; sourceTree = "<group>"; };
 		D85CF18E2D8C48B900340EE1 /* FitnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessView.swift; sourceTree = "<group>"; };
 		D85CF1902D8C4F6B00340EE1 /* WaterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterView.swift; sourceTree = "<group>"; };
-		D85CF1922D8C56F800340EE1 /* AddWaterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddWaterSheet.swift; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -171,6 +172,7 @@
 		D89A95D52C84F75B007796AB /* BudgieWatch Watch App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "BudgieWatch Watch App.entitlements"; sourceTree = "<group>"; };
 		D89A95DB2C84F7DA007796AB /* WatchMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMeter.swift; sourceTree = "<group>"; };
 		D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPredicates.swift; sourceTree = "<group>"; };
+		D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterModel.swift; sourceTree = "<group>"; };
 		D8B5AE012C78D93700C4533A /* FirstRunSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunSheet.swift; sourceTree = "<group>"; };
 		D8B5AE072C7934B800C4533A /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
 		D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataClasses.swift; sourceTree = "<group>"; };
@@ -198,6 +200,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
+		D8B3F3012D8F11C500DDA41D /* Water Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Water Logging"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -289,7 +292,6 @@
 		D868606E2C7BD68400730373 /* Food Logging */ = {
 			isa = PBXGroup;
 			children = (
-				D85CF1922D8C56F800340EE1 /* AddWaterSheet.swift */,
 				D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */,
 				D8D4BF722C7CD04E0061A9A4 /* FoodHub.swift */,
 				D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */,
@@ -392,6 +394,7 @@
 		D8BCE50C2C805486001EA005 /* Data Model */ = {
 			isa = PBXGroup;
 			children = (
+				D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */,
 				D8E831612C73C7EE00AAF555 /* HealthData.swift */,
 				D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */,
 				D8B5AE072C7934B800C4533A /* ChartData.swift */,
@@ -405,6 +408,7 @@
 			isa = PBXGroup;
 			children = (
 				D8EB9F942C7E0FD100508D0A /* Main page */,
+				D8B3F3012D8F11C500DDA41D /* Water Logging */,
 				D868606E2C7BD68400730373 /* Food Logging */,
 				D829B0822C79B59D0027841B /* Helpers */,
 				D829B0812C79B5950027841B /* Settings */,
@@ -457,6 +461,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				D827ACB62D8E033D006413F1 /* Frameworks */,
+				D8B3F3012D8F11C500DDA41D /* Water Logging */,
 			);
 			name = "Budgie Diet";
 			productName = Budgie;
@@ -602,7 +607,7 @@
 				D829B0852C79B5C50027841B /* ChartView.swift in Sources */,
 				D8BCE50B2C7FBBC9001EA005 /* TodayFoodList.swift in Sources */,
 				D8BDE7322C7B4CDA00E07471 /* Strings.swift in Sources */,
-				D85CF1932D8C56FA00340EE1 /* AddWaterSheet.swift in Sources */,
+				D8B3F2FF2D8F0EED00DDA41D /* WaterModel.swift in Sources */,
 				D8D4BF742C7CD04E0061A9A4 /* FoodHub.swift in Sources */,
 				D8D4BF762C7CD05B0061A9A4 /* AddCalsSheet.swift in Sources */,
 				D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */,
@@ -625,6 +630,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8B3F3002D8F0EED00DDA41D /* WaterModel.swift in Sources */,
 				D89A959A2C84BB53007796AB /* BudgieWidgetBundle.swift in Sources */,
 				D89A95B72C84C9FA007796AB /* CalorieModel.swift in Sources */,
 				D89A959C2C84BB53007796AB /* BudgieWidget.swift in Sources */,
@@ -644,6 +650,7 @@
 				D89A95D62C84F782007796AB /* DataClasses.swift in Sources */,
 				D89A95D72C84F782007796AB /* HealthData.swift in Sources */,
 				D89A95D82C84F782007796AB /* DateFuncs.swift in Sources */,
+				D8B3F2FE2D8F0EED00DDA41D /* WaterModel.swift in Sources */,
 				D89A95D92C84F782007796AB /* CalorieModel.swift in Sources */,
 				D89A95DD2C84F82B007796AB /* UserSettings.swift in Sources */,
 				D89A95C82C84F752007796AB /* ContentView.swift in Sources */,
@@ -944,7 +951,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250321.1;
+				CURRENT_PROJECT_VERSION = 250322.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_PREVIEWS = YES;
@@ -978,7 +985,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250321.1;
+				CURRENT_PROJECT_VERSION = 250322.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_PREVIEWS = YES;
