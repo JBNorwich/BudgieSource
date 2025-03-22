@@ -813,8 +813,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie needs to read your health data to calculate your remaining calories.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs to write to your health data to log calories you input using it.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie needs this to save quick calories eaten.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs this access to calculate your budgets, show you your activity and account for food and water input with other apps.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs this to save calories and water you log using it.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
@@ -855,8 +855,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie needs to read your health data to calculate your remaining calories.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs to write to your health data to log calories you input using it.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie needs this to save quick calories eaten.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs this access to calculate your budgets, show you your activity and account for food and water input with other apps.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs this to save calories and water you log using it.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
@@ -957,9 +957,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Budgie-DietWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs to write to your health data to log calories you input using it.";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories, display your activity and show you water logged by other apps.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories, display your activity and show you water logged by other apps.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs to write to your health data to log calories and water that you input using it.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = JoeBaldwin.Budgie;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -991,9 +991,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Budgie-DietWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs to write to your health data to log calories you input using it.";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories, display your activity and show you water logged by other apps.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs to read your health data to calculate your remaining calories, display your activity and show you water logged by other apps.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs to write to your health data to log calories and water that you input using it.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = JoeBaldwin.Budgie;
 				LD_RUNPATH_SEARCH_PATHS = (

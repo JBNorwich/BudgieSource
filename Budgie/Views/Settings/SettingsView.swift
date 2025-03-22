@@ -131,7 +131,7 @@ struct SettingsView: View {
                 }
             }
             
-            Section(header: Text("Apple Health"), footer: Text("If Budgie Diet was granted access to your Apple Health data, turning this on will stop it from using or adding new data, but old food entries it's logged will stay. Your budgets will be based on the manual calorie burn figures set above, rather than real data.\n\nIf Budgie Diet doesn't have access to your Apple Health data, this setting won't change anything.")) {
+            Section(header: Text("Apple Health"), footer: Text("If Budgie Diet was granted access to your Apple Health data, turning this on will stop it from using or adding new data, but old food or water entries it's logged will stay. Your budgets will be based on the manual calorie burn figures set above, rather than real data.\n\nIf Budgie Diet doesn't have access to your Apple Health data, this setting won't change anything.")) {
                 Toggle("Ignore Apple Health data", isOn: $manualMode)
             }
             
