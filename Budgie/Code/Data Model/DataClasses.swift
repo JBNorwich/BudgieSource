@@ -234,46 +234,6 @@ class TodayLump: ObservableObject {
             return left
         }
     }
-    
-//    func update() async {
-//        let todayStart = getStartOfDay(date: Date())
-//        let todayEnd = getMidnightOnDayAfter(date: todayStart)
-//        
-//        let eatenCalories = await dataStore.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
-//        self.eatenCalories = eatenCalories.total
-//        self.foodList = await dataStore.getCalorieEntries(date: todayStart)
-//        self.healthKitCalories = eatenCalories.hk
-//        self.mealList = await dataStore.calorieActor.cleansedMealList(data: self.foodList)
-//        
-//        self.desiredDeficit = settingsObj.desiredDeficit
-//        self.projectedBasal = await dataStore.getProjBasalCalories()
-//        self.projectedActive = await dataStore.getProjActiveCalories()
-//        
-//        if settingsObj.manualMode == true {
-//            self.basalEstimated = true
-//            self.activeEstimated = true
-//            self.basalCalories = settingsObj.manualBMR - self.projectedBasal
-//            self.activeCalories = settingsObj.manualActive - self.projectedActive
-//        } else {
-//            let recBasalCalories = await dataStore.pullCalorieTotalTodayFromHK(type: basalQuantityType)
-//            let recActiveCalories = await dataStore.pullCalorieTotalTodayFromHK(type: activeQuantityType)
-//            if recBasalCalories != 0 {
-//                self.basalCalories = recBasalCalories
-//            } else {
-//                self.basalEstimated = true
-//                self.basalCalories = settingsObj.manualBMR - self.projectedBasal
-//            }
-//            if recActiveCalories != 0 {
-//                self.activeCalories = recActiveCalories
-//            } else {
-//                self.activeEstimated = true
-//                self.activeCalories = settingsObj.manualActive - self.projectedActive
-//            }
-//            self.waterToday = await dataStore.getWaterToday()
-//            self.activitySummary = await dataStore.getActivitySummary()
-//        }
-//        self.lastUpdate = Date()
-//    }
 }
 
 struct calorieChartData: Identifiable {

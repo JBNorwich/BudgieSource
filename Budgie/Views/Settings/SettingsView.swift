@@ -200,7 +200,10 @@ struct SettingsView: View {
 
     
         .onAppear() {
-            manualMode = settingsObj.manualMode
+//            manualMode = settingsObj.manualMode
+            Task {
+                manualMode = await dataStore.settingsActor.fetchSettingValue(name: "manualMode") as! Bool
+            }
             manualBMR = settingsObj.manualBMR
             manualActive = settingsObj.manualActive
             surplusMode = settingsObj.surplusMode
@@ -219,7 +222,10 @@ struct SettingsView: View {
         }
     
         .onChange(of: manualMode, initial: false) {
-            settingsObj.manualMode = manualMode
+            Task {
+                await dataStore.settingsActor.updateSetting(name: "manualMode", newValue: manualMode)
+            }
+//            settingsObj.manualMode = manualMode
             pingSettingsToWatch()
         }
     
@@ -310,7 +316,10 @@ struct SettingsView: View {
     }
     
     func pingManual() {
-        settingsObj.manualMode = manualMode
+        Task {
+            await dataStore.settingsActor.updateSetting(name: "manualMode", newValue: manualMode)
+        }
+//        settingsObj.manualMode = manualMode
         settingsObj.manualBMR = manualBMR
         settingsObj.manualActive = manualActive
         pingSettingsToWatch()

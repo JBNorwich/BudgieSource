@@ -9,6 +9,113 @@ import Foundation
 import SwiftUI
 import SwiftData
 
+@Model class Setting {
+    @Attribute(.unique) var id: UUID
+    var name: String
+    var intValue: Int?
+    var boolValue: Bool?
+    
+    init(name: String, boolValue: Bool? = nil, intValue: Int? = nil)
+    {
+        self.id = UUID()
+        self.name = name
+    }
+}
+
+@ModelActor actor UserSettingsActor {
+    func createSettings() {
+        let settingsDict = settingsObj.dumpToDict()
+        for setting in settingsDict {
+            let newSetting = Setting(name: setting.key)
+            if type(of: setting.value) == Bool.self {
+                newSetting.boolValue = setting.value as? Bool
+            } else if type(of: setting.value) == Int.self {
+                newSetting.intValue = setting.value as? Int
+            }
+            modelContext.insert(newSetting)
+            
+        }
+        let doneSetting = Setting(name: "settingsReady", boolValue: true)
+        modelContext.insert(doneSetting)
+        do {
+            try modelContext.save()
+        } catch {
+            ///nothing.
+        }
+    }
+    
+    func getSettingObject(name: String) async -> Setting? {
+        let searchPredicate = #Predicate<Setting> { setting in
+            setting.name == name
+        }
+        let descriptor = FetchDescriptor<Setting>(predicate: searchPredicate)
+        return await withCheckedContinuation { continuation in
+            do {
+                let returns = try modelContext.fetch(descriptor)
+                if returns.count > 0 {
+                    continuation.resume(returning: returns.first!)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            } catch {
+                continuation.resume(returning: nil)
+            }
+        }
+    }
+    
+    func fetchSettingValue(name: String) async -> Any? {
+        let searchPredicate = #Predicate<Setting> { setting in
+            setting.name == name
+        }
+        let descriptor = FetchDescriptor<Setting>(predicate: searchPredicate)
+        return await withCheckedContinuation { continuation in
+            do {
+                let returns = try modelContext.fetch(descriptor)
+                if returns.count > 0 {
+                    if returns[0].intValue != nil {
+                        continuation.resume(returning: returns[0].intValue)
+                    } else {
+                        continuation.resume(returning: returns[0].boolValue)
+                    }
+                    
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            } catch {
+                continuation.resume(returning: nil)
+            }
+        }
+    }
+    
+    func updateSetting(name: String, newValue: Any) {
+        let searchPredicate = #Predicate<Setting> { setting in
+            setting.name == name
+        }
+        var descriptor = FetchDescriptor(predicate: searchPredicate)
+        descriptor.fetchLimit = 1
+        do {
+            let object = try modelContext.fetch(descriptor)
+            
+            if object.count != 1 {
+                if type(of: newValue) == Int.self {
+                    modelContext.insert(Setting(name: name, intValue: (newValue as! Int)))
+                } else {
+                    modelContext.insert(Setting(name: name, boolValue: (newValue as! Bool)))
+                }
+            } else {
+                if type(of: newValue) == Int.self {
+                    object.first!.intValue = (newValue as! Int)
+                } else {
+                    object.first!.boolValue = (newValue as! Bool)
+                }
+                
+            }
+        } catch {
+            
+        }
+    }
+}
+
 class UserSettings {
     private let defaults = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
     

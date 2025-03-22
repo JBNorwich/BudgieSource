@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -195,6 +195,10 @@
 		D8E8318A2C7797B200AAF555 /* BMRHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMRHelper.swift; sourceTree = "<group>"; };
 		D8F117DB2C8B63830054F2A2 /* Connectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connectivity.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		D894619E2C73C3FC00138B60 /* Frameworks */ = {
@@ -412,6 +416,7 @@
 		D8E831752C74EBCD00AAF555 /* Code */ = {
 			isa = PBXGroup;
 			children = (
+				D827ACB62D8E033D006413F1 /* Frameworks */,
 				D8BCE50C2C805486001EA005 /* Data Model */,
 				D8E831642C73D0BA00AAF555 /* DateFuncs.swift */,
 				D8E831662C74835900AAF555 /* UINiceties.swift */,
@@ -450,6 +455,9 @@
 				D89A95A12C84BB55007796AB /* PBXTargetDependency */,
 				D8F117E02C8B6D1E0054F2A2 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				D827ACB62D8E033D006413F1 /* Frameworks */,
+			);
 			name = "Budgie Diet";
 			productName = Budgie;
 			productReference = D89461A12C73C3FC00138B60 /* Budgie Diet.app */;
@@ -467,6 +475,9 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				D827ACB62D8E033D006413F1 /* Frameworks */,
+			);
 			name = "Budgie DietWidgetExtension";
 			productName = BudgieWidgetExtension;
 			productReference = D89A95952C84BB53007796AB /* Budgie DietWidgetExtension.appex */;
@@ -483,6 +494,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D827ACB62D8E033D006413F1 /* Frameworks */,
 			);
 			name = "Budgie DietWatch Watch App";
 			productName = "BudgieWatch Watch App";

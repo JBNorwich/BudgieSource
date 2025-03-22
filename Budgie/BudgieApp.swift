@@ -19,6 +19,9 @@ struct BudgieApp: App {
             if await dataStore.calorieActor.getListOfMeals() == [] {
                 await dataStore.calorieActor.setUpMeals()
             }
+            if await dataStore.settingsActor.getSettingObject(name: "settingsReady") == nil {
+                await dataStore.settingsActor.createSettings()
+            }
         }
         pingSettingsToWatch()
     }

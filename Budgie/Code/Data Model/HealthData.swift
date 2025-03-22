@@ -12,11 +12,16 @@ import SwiftUI
 import SwiftData
 
 class HealthData {
-    let modelContainer: ModelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self)
+    let calorieMealConfig = ModelConfiguration("caloriesDB", schema: Schema([CalorieEntry.self,Meal.self]))
+    let settingsConfig = ModelConfiguration("settingsDB", schema: Schema([Setting.self]))
+    let modelContainer: ModelContainer
     let calorieActor: CalorieActor
+    let settingsActor: UserSettingsActor
     
     init() {
+        modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, Setting.self, configurations: calorieMealConfig, settingsConfig)
         calorieActor = CalorieActor(modelContainer: modelContainer)
+        settingsActor = UserSettingsActor(modelContainer: modelContainer)
     }
     
     func pullCalorieTotalTodayFromHK(type: HKQuantityType) async -> Int {

@@ -168,6 +168,22 @@ actor CalorieActor {
         return returnedMeals
     }
     
+    func getMealUUIDbyName(name: String) async -> UUID {
+        let searchPredicate = #Predicate<Meal> { meal in
+            meal.name == "\(name)"
+        }
+        let descriptor = FetchDescriptor<Meal>(predicate: searchPredicate)
+        let returnval = await withCheckedContinuation { continuation in
+            do {
+                let returns = try modelContext.fetch(descriptor)
+                continuation.resume(returning: returns)
+            } catch {
+                ///error handling
+            }
+        }
+        return returnval.first(where: { $0.name == name })!.mealUUID
+    }
+    
     func deleteEntries(objects: [CalorieEntry])
     {
         for object in objects {
