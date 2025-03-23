@@ -174,9 +174,9 @@ struct NewDataView: View {
                 }
             }
         }
-        if dataLump.activeEstimated == true || dataLump.basalEstimated == true {
+        if dataLump.activeEstimated == true {
             Divider()
-            Label("Your calorie burn figures are estimated, and don't reflect your real activity today.", systemImage: "info.circle")
+            Label("Your active calorie burn figures are estimated, so your budget doesn't reflect your real activity today.", systemImage: "info.circle")
         }
         if dataLump.budgetAtCap == true {
             Divider()

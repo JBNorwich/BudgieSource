@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var todayLump: TodayLump = TodayLump()
-    @State var dataUpdated: Bool = false
     @ObservedObject var connectivity = Connectivity()
     @Environment(\.scenePhase) private var scenePhase
     
@@ -22,7 +21,9 @@ struct ContentView: View {
                         .frame(maxHeight: 150)
                         .padding()
                         .onTapGesture {
-                            dataUpdated = true
+                            Task {
+                                await dataStore.updateLump(todayLump: todayLump)
+                            }
                         }
                     VStack {
                         HStack {
@@ -62,22 +63,24 @@ struct ContentView: View {
             .navigationTitle("Your target")
             .padding()
             
-            .onChange(of: dataUpdated, initial: true) {
+            .onChange(of: connectivity.updated) {
                 Task {
                     await dataStore.updateLump(todayLump: todayLump)
                 }
-            }
-            
-            .onChange(of: connectivity.updated) {
-                dataUpdated = true
             }
             
             .onChange(of: scenePhase) {
                 guard scenePhase == .active else {
                    return
                 }
-                
-                dataUpdated = true
+                Task {
+                    await dataStore.updateLump(todayLump: todayLump)
+                }
+            }
+            .task {
+                if settingsObj.manualMode != true {
+                    dataStore.setUpObserverQueries(todayLump: todayLump)
+                }
             }
         }
     }

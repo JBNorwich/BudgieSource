@@ -466,12 +466,14 @@ class HealthData {
             let recBasalCalories = await pullCalorieTotalTodayFromHK(type: basalQuantityType)
             let recActiveCalories = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
             if recBasalCalories != 0 {
+                todayLump.basalEstimated = false
                 todayLump.basalCalories = recBasalCalories
             } else {
                 todayLump.basalEstimated = true
                 todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
             }
             if recActiveCalories != 0 {
+                todayLump.activeEstimated = false
                 todayLump.activeCalories = recActiveCalories
             } else {
                 todayLump.activeEstimated = true
@@ -483,50 +485,6 @@ class HealthData {
             todayLump.activitySummary = await getActivitySummary()
         }
         todayLump.lastUpdate = Date()
-    }
-    
-    func produceLumpForWatch(deficit: Int, manBMR: Int, manAct: Int) async -> TodayLump {
-        let todayStart = getStartOfDay(date: Date())
-        let todayEnd = getMidnightOnDayAfter(date: todayStart)
-        
-        let newLump = TodayLump()
-        let eatenCalories = await self.pullEatenCalories(startDate: todayStart, endDate: todayEnd)
-        newLump.eatenCalories = eatenCalories.total
-        newLump.foodList = await self.getCalorieEntries(date: todayStart)
-        newLump.healthKitCalories = eatenCalories.hk
-        newLump.mealList = await calorieActor.cleansedMealList(data: newLump.foodList)
-    
-        newLump.desiredDeficit = settingsObj.desiredDeficit
-        newLump.projectedBasal = await self.getProjBasalCalories()
-        newLump.projectedActive = await self.getProjActiveCalories()
-        
-        if settingsObj.manualMode == true {
-            newLump.basalEstimated = true
-            newLump.activeEstimated = true
-            newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
-            newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
-        } else {
-            let recBasalCalories = await self.pullCalorieTotalTodayFromHK(type: basalQuantityType)
-            let recActiveCalories = await self.pullCalorieTotalTodayFromHK(type: activeQuantityType)
-            newLump.waterToday = await self.getWaterToday()
-            if recBasalCalories != 0 {
-                newLump.basalCalories = recBasalCalories
-            } else {
-                newLump.basalEstimated = true
-                newLump.basalCalories = settingsObj.manualBMR - newLump.projectedBasal
-            }
-            if recActiveCalories != 0 {
-                newLump.activeCalories = recActiveCalories
-            } else {
-                newLump.activeEstimated = true
-                if settingsObj.useFitnessGoal != true {
-                    newLump.activeCalories = settingsObj.manualActive - newLump.projectedActive
-                } else {
-                    newLump.activeCalories = 0
-                }
-            }
-        }
-        return newLump
     }
 }
 
