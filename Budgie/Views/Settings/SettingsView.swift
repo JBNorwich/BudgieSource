@@ -172,7 +172,7 @@ struct SettingsView: View {
                         HStack{
                             Image(.icon)
                                 .resizable()
-                                .frame(maxWidth: 100,maxHeight: 100)
+                                .frame(width: 100,height: 100)
                             VStack {
                                 Text("Budgie Diet")
                                     .font(.title)
