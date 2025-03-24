@@ -59,14 +59,20 @@ func assessDeficit(desired: Int, actual: Int) -> DeficitAssessment {
 
 struct ChartTableView: View {
     @EnvironmentObject var todayLump: TodayLump
-    @Binding var chartData: [ChartDataLump]
+    @State var chartData: [ChartDataLump]
     @State var openedFood: Bool = false
     @State var lumpToOpen = ChartDataLump()
+    @State var openingFoodHub: Bool = false
+    @State var selDate: Date = Date()
     
     var body: some View {
         ScrollView {
             ForEach(sortChartData(data: chartData)) { dataLump in
                 ChartTableRow(dataLump: dataLump).environmentObject(todayLump)
+                    .onTapGesture {
+                        selDate = dataLump.date
+                        openingFoodHub = true
+                    }
             }
             if settingsObj.whalesEverywhere == true {
                 VStack {
@@ -77,6 +83,11 @@ struct ChartTableView: View {
                     }
                 } .frame(minHeight: 100)
             }
+        }
+        
+        .navigationDestination(isPresented: $openingFoodHub)
+        {
+            FoodHub(curDate: selDate).environmentObject(todayLump)
         }
     }
 }
@@ -99,95 +110,91 @@ struct ChartTableRow: View {
 
     var body: some View {
         VStack {
-            NavigationLink {
-                FoodHub(curDate: dataLump.date).environmentObject(todayLump)
-            } label: {
-                HStack {
-                    VStack {
-                        Text(getFullDayOfWeek(date: dataLump.date))
-                        Text(formDate)
-                            .font(.title)
-                            .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-                    }.frame(minWidth: 70)
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 5)
-                            .foregroundStyle(.background)
-                            .overlay {
-                                VStack {
-                                    HStack {
-                                        Text("CALS IN")
+            HStack {
+                VStack {
+                    Text(getFullDayOfWeek(date: dataLump.date))
+                    Text(formDate)
+                        .font(.title)
+                        .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
+                }.frame(minWidth: 70)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 5)
+                        .foregroundStyle(.background)
+                        .overlay {
+                            VStack {
+                                HStack {
+                                    Text("CALS IN")
+                                        .font(.caption)
+                                    Spacer()
+                                    Text(dataLump.eatenCals.formatted())
+                                        .font(.caption)
+                                }
+                                HStack {
+                                    Text("CALS OUT")
+                                        .font(.caption)
+                                    Spacer()
+                                    Text(dataLump.totalCals.formatted())
+                                        .font(.caption)
+                                }
+                                Divider()
+                                HStack {
+                                    
+                                    if dataLump.deficit < 0 {
+                                        Text("SURPLUS")
                                             .font(.caption)
-                                        Spacer()
-                                        Text(dataLump.eatenCals.formatted())
-                                            .font(.caption)
-                                    }
-                                    HStack {
-                                        Text("CALS OUT")
-                                            .font(.caption)
-                                        Spacer()
-                                        Text(dataLump.totalCals.formatted())
-                                            .font(.caption)
-                                    }
-                                    Divider()
-                                    HStack {
-                                        
-                                        if dataLump.deficit < 0 {
-                                            Text("SURPLUS")
-                                                .font(.caption)
-                                                .fontWeight(.bold)
-                                        } else {
-                                            Text("DEFICIT")
-                                                .font(.caption)
-                                                .fontWeight(.bold)
-                                        }
-                                        
-                                        Spacer()
-                                        Text(negate(number: dataLump.deficit).formatted())
+                                            .fontWeight(.bold)
+                                    } else {
+                                        Text("DEFICIT")
                                             .font(.caption)
                                             .fontWeight(.bold)
                                     }
-                                }.minimumScaleFactor(0.1)
-                                    .scaledToFill()
-                                    .padding()
-                            }
-                    }
-                    VStack {
-                        Text(assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).narrative)
-                            .font(.caption)
-                            .minimumScaleFactor(0.1)
-                            .scaledToFit()
-                        Spacer()
-                        HStack {
-                            if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget == 0 {
-                                Image(systemName: "arrow.right")
-                            } else if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget < 0 {
-                                Image(systemName: "arrow.up")
-                            } else {
-                                Image(systemName: "arrow.down")
-                            }
-                            Spacer()
-                            if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget < 0 {
-                                Text(negate(number: assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget).formatted())
-                                    .font(.title)
-                                    .minimumScaleFactor(0.1)
-                                    .scaledToFit()
-                            } else {
-                                Text(assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget.formatted())
-                                    .font(.title)
-                                    .minimumScaleFactor(0.1)
-                                    .scaledToFit()
-                            }
+                                    
+                                    Spacer()
+                                    Text(negate(number: dataLump.deficit).formatted())
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                }
+                            }.minimumScaleFactor(0.1)
+                                .scaledToFill()
+                                .padding()
                         }
-                    }.frame(minWidth: 105, maxWidth: 105)
                 }
-                
-                .onAppear() {
-                    dateFormatter.dateFormat = "dd/MM"
-                    formDate = dataLump.date.formatted(date: .numeric, time: .omitted)
-                    formDate = String(formDate.dropLast(5))
-                }
-        }
-            .buttonStyle(PlainButtonStyle())
+                VStack {
+                    Text(assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).narrative)
+                        .font(.caption)
+                        .minimumScaleFactor(0.1)
+                        .scaledToFit()
+                    Spacer()
+                    HStack {
+                        if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget == 0 {
+                            Image(systemName: "arrow.right")
+                        } else if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget < 0 {
+                            Image(systemName: "arrow.up")
+                        } else {
+                            Image(systemName: "arrow.down")
+                        }
+                        Spacer()
+                        if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget < 0 {
+                            Text(negate(number: assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget).formatted())
+                                .font(.title)
+                                .minimumScaleFactor(0.1)
+                                .scaledToFit()
+                        } else {
+                            Text(assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget.formatted())
+                                .font(.title)
+                                .minimumScaleFactor(0.1)
+                                .scaledToFit()
+                        }
+                    }
+                }.frame(minWidth: 105, maxWidth: 105)
+            }
+            
+            .onAppear() {
+                dateFormatter.dateFormat = "dd/MM"
+                formDate = dataLump.date.formatted(date: .numeric, time: .omitted)
+                formDate = String(formDate.dropLast(5))
+            }
+        .buttonStyle(PlainButtonStyle())
     }
         Divider()
     }
@@ -200,7 +207,7 @@ struct ChartTableRow: View {
         @State var todayLump = TodayLump()
         
         var body: some View {
-            ChartTableView(chartData: $dummyData).environmentObject(todayLump)
+            ChartTableView(chartData: dummyData).environmentObject(todayLump)
         }
     }
     

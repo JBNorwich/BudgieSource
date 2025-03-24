@@ -8,8 +8,9 @@
 import Foundation
 import SwiftData
 import HealthKit
+import AppIntents
 
-@Model class Meal {
+@Model final class Meal {
     @Attribute(.unique) var id: UUID
     var mealUUID: UUID
     var name: String
@@ -24,6 +25,62 @@ import HealthKit
             self.name = "Unnamed meal"
         }
         self.order = order
+    }
+}
+
+extension Meal: AppEntity {
+    struct MealQuery: EntityQuery {
+        func entities(for identifiers: [Meal.ID]) async throws -> [Meal] {
+            return await dataStore.calorieActor.getListOfMeals()
+        }
+    }
+    
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(name)")
+    }
+    
+    static var defaultQuery = MealQuery()
+    
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Meal"
+}
+
+struct MealEntity: AppEntity, Identifiable {
+    var id: UUID
+    var mealUUID: UUID
+    
+    @Property(title: "Meal")
+    var name: String
+    
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(name)")
+    }
+    
+    static var defaultQuery = StructMealQuery()
+    
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Meal"
+    
+    init(mealUUID: UUID, name: String) {
+        self.id = UUID()
+        self.mealUUID = mealUUID
+        self.name = name
+    }
+    
+    init(meal: Meal) {
+        self.id = UUID()
+        self.mealUUID = meal.mealUUID
+        self.name = meal.name
+    }
+}
+
+struct StructMealQuery: EntityQuery {
+    func entities(for identifiers: [MealEntity.ID]) async throws -> [MealEntity] {
+        print("Calling for MealEntities!")
+        var returns: [MealEntity] = []
+        let mealObjects = await dataStore.calorieActor.getListOfMeals()
+        for object in mealObjects {
+            returns.append(MealEntity(meal: object))
+        }
+        return returns
     }
 }
 

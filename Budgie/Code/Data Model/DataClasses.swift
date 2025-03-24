@@ -25,6 +25,7 @@ class TodayLump: ObservableObject {
     
     // food data
     @Published var mealList: [Meal] = []
+    var mealsWithUUIDs: [String:UUID] = [:]
     @Published var foodList: [CalorieEntry] = []
     @Published var healthKitCalories: Int = 0
     
@@ -234,6 +235,8 @@ class TodayLump: ObservableObject {
             return left
         }
     }
+    
+    
 }
 
 struct calorieChartData: Identifiable {

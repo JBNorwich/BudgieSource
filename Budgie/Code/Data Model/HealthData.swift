@@ -182,7 +182,7 @@ class HealthData {
                 
                 statQuery.initialResultsHandler = { query, results, error in
                     guard let actCollection = results else {
-                        assertionFailure("")
+//                        assertionFailure("")
                         continuation.resume(returning:(val: 0, estimate: true))
                         return
                     }

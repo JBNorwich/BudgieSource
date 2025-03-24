@@ -1,12 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1600"
+   LastUpgradeVersion = "1620"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
       buildArchitectures = "Automatic">
       <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D89A95C22C84F752007796AB"
+               BuildableName = "Budgie Diet.app"
+               BlueprintName = "Budgie DietWatch Watch App"
+               ReferencedContainer = "container:Budgie Diet.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
          <BuildActionEntry
             buildForTesting = "YES"
             buildForRunning = "YES"
@@ -27,26 +41,8 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
-      <TestPlans>
-         <TestPlanReference
-            reference = "container:TestPlan.xctestplan"
-            default = "YES">
-         </TestPlanReference>
-      </TestPlans>
-      <Testables>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D86A5BB52C88C5E40076BE41"
-               BuildableName = "Budgie DietUITests.xctest"
-               BlueprintName = "Budgie DietUITests"
-               ReferencedContainer = "container:Budgie Diet.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-      </Testables>
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      shouldAutocreateTestPlan = "YES">
    </TestAction>
    <LaunchAction
       buildConfiguration = "Release"
@@ -62,9 +58,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D89461A02C73C3FC00138B60"
+            BlueprintIdentifier = "D89A95C22C84F752007796AB"
             BuildableName = "Budgie Diet.app"
-            BlueprintName = "Budgie Diet"
+            BlueprintName = "Budgie DietWatch Watch App"
             ReferencedContainer = "container:Budgie Diet.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -79,9 +75,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D89461A02C73C3FC00138B60"
+            BlueprintIdentifier = "D89A95C22C84F752007796AB"
             BuildableName = "Budgie Diet.app"
-            BlueprintName = "Budgie Diet"
+            BlueprintName = "Budgie DietWatch Watch App"
             ReferencedContainer = "container:Budgie Diet.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

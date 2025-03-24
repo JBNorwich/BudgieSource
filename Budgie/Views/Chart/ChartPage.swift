@@ -25,7 +25,7 @@ struct ChartPage: View {
                     
                     if chartDataStore.returnedChartData.count != 0 {
                         ChartView(chartData: $chartDataStore.returnedChartData)
-                        ChartTableView(chartData: $chartDataStore.returnedChartData).environmentObject(todayLump)
+                        ChartTableView(chartData: chartDataStore.returnedChartData).environmentObject(todayLump)
                     } else {
                         Label("No data was returned. Either you have no data in Health, or you didn't give Budgie Diet permissions to see your data.", systemImage: "exclamationmark.octagon")
                         Spacer()
