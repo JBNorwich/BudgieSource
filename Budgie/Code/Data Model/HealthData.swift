@@ -17,6 +17,7 @@ class HealthData {
     let modelContainer: ModelContainer
     let calorieActor: CalorieActor
     let waterActor: WaterActor
+    var updateInProgress: Bool = false
     
     init() {
         modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
@@ -444,47 +445,51 @@ class HealthData {
     }
     
     @MainActor func updateLump(todayLump: TodayLump) async {
-        let todayStart = getStartOfDay(date: Date())
-        let todayEnd = getMidnightOnDayAfter(date: todayStart)
-        
-        let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
-        todayLump.eatenCalories = eatenCalories.total
-        todayLump.foodList = await getCalorieEntries(date: todayStart)
-        todayLump.healthKitCalories = eatenCalories.hk
-        todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
-        
-        todayLump.desiredDeficit = settingsObj.desiredDeficit
-        todayLump.projectedBasal = await getProjBasalCalories()
-        todayLump.projectedActive = await getProjActiveCalories()
-        
-        if settingsObj.manualMode == true {
-            todayLump.basalEstimated = true
-            todayLump.activeEstimated = true
-            todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
-            todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
-        } else {
-            let recBasalCalories = await pullCalorieTotalTodayFromHK(type: basalQuantityType)
-            let recActiveCalories = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
-            if recBasalCalories != 0 {
-                todayLump.basalEstimated = false
-                todayLump.basalCalories = recBasalCalories
-            } else {
+        if updateInProgress == false {
+            updateInProgress = true
+            let todayStart = getStartOfDay(date: Date())
+            let todayEnd = getMidnightOnDayAfter(date: todayStart)
+            
+            let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+            todayLump.eatenCalories = eatenCalories.total
+            todayLump.foodList = await getCalorieEntries(date: todayStart)
+            todayLump.healthKitCalories = eatenCalories.hk
+            todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
+            
+            todayLump.desiredDeficit = settingsObj.desiredDeficit
+            todayLump.projectedBasal = await getProjBasalCalories()
+            todayLump.projectedActive = await getProjActiveCalories()
+            
+            if settingsObj.manualMode == true {
                 todayLump.basalEstimated = true
-                todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
-            }
-            if recActiveCalories != 0 {
-                todayLump.activeEstimated = false
-                todayLump.activeCalories = recActiveCalories
-            } else {
                 todayLump.activeEstimated = true
+                todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
                 todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
+            } else {
+                let recBasalCalories = await pullCalorieTotalTodayFromHK(type: basalQuantityType)
+                let recActiveCalories = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
+                if recBasalCalories != 0 {
+                    todayLump.basalEstimated = false
+                    todayLump.basalCalories = recBasalCalories
+                } else {
+                    todayLump.basalEstimated = true
+                    todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
+                }
+                if recActiveCalories != 0 {
+                    todayLump.activeEstimated = false
+                    todayLump.activeCalories = recActiveCalories
+                } else {
+                    todayLump.activeEstimated = true
+                    todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
+                }
+                //            todayLump.waterToday = await getWaterToday()
+                let waterDetails = await getWaterOnDate(date: todayStart)
+                todayLump.waterToday = waterDetails.bd + waterDetails.hk
+                todayLump.activitySummary = await getActivitySummary()
             }
-//            todayLump.waterToday = await getWaterToday()
-            let waterDetails = await getWaterOnDate(date: todayStart)
-            todayLump.waterToday = waterDetails.bd + waterDetails.hk
-            todayLump.activitySummary = await getActivitySummary()
+            todayLump.lastUpdate = Date()
+            updateInProgress = false
         }
-        todayLump.lastUpdate = Date()
     }
 }
 
