@@ -25,6 +25,7 @@ struct WaterView: View {
                 .tint(gradient)
                 .scaleEffect(1.5)
                 .padding(.top, 10)
+                .animation(.easeInOut, value: todayLump.waterGoalDone)
             Spacer()
             if todayLump.waterGoalRem != 0 {
                 Text("\(todayLump.waterGoalRem.formatted())ml to go")

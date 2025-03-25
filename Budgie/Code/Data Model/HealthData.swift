@@ -17,7 +17,6 @@ class HealthData {
     let modelContainer: ModelContainer
     let calorieActor: CalorieActor
     let waterActor: WaterActor
-    var updateInProgress: Bool = false
     
     init() {
         modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
@@ -445,8 +444,8 @@ class HealthData {
     }
     
     @MainActor func updateLump(todayLump: TodayLump) async {
-        if updateInProgress == false {
-            updateInProgress = true
+        if todayLump.updateInProgress == false {
+            todayLump.updateInProgress = true
             let todayStart = getStartOfDay(date: Date())
             let todayEnd = getMidnightOnDayAfter(date: todayStart)
             
@@ -488,7 +487,7 @@ class HealthData {
                 todayLump.activitySummary = await getActivitySummary()
             }
             todayLump.lastUpdate = Date()
-            updateInProgress = false
+            todayLump.updateInProgress = false
         }
     }
 }

@@ -30,6 +30,7 @@ struct GaugeView: View {
                 }.gaugeStyle(.accessoryCircular)
                     .tint(gradient)
                     .padding()
+                    .animation(.easeInOut, value: todayLump.progressToday)
             }
             Divider()
             VStack {

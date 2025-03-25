@@ -35,6 +35,7 @@ class TodayLump: ObservableObject {
     @Published var estimatedAverageActive: Bool = false
     
     // signals re. data updates
+    @Published var updateInProgress: Bool = false
     @Published var lastUpdate: Date = Date()
     
     // Calculating functions
