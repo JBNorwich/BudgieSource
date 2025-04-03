@@ -11,14 +11,13 @@ import HealthKit
 import AppIntents
 
 @Model final class Meal {
-    @Attribute(.unique) var id: UUID
-    var mealUUID: UUID
+    @Attribute(.unique) private(set) var id: UUID
+    var mealUUID: UUID = UUID()
     var name: String
     var order: Int
     
     init(name: String, order: Int) {
         self.id = UUID()
-        self.mealUUID = UUID()
         if name != "" {
             self.name = name
         } else {
@@ -137,7 +136,7 @@ actor CalorieActor {
                 let returns = try modelContext.fetch(descriptor)
                 continuation.resume(returning: returns)
             } catch {
-                ///error handling
+                continuation.resume(returning: [])
             }
         }
     }
@@ -162,7 +161,7 @@ actor CalorieActor {
                 let returns: [CalorieEntry] = try modelContext.fetch(descriptor)
                 continuation.resume(returning: returns)
             } catch {
-                
+                continuation.resume(returning: [])
             }
         }
     }

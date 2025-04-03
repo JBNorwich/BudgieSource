@@ -77,7 +77,7 @@ struct LogFoodIntent: AppIntent {
         }
         
         if let meal = meal {
-            // nothing
+            print("Doing nothing")
         } else {
             meal = try await $meal.requestValue(.init(stringLiteral: "What meal should this be logged to?"))
         }
