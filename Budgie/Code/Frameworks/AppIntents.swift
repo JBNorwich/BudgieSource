@@ -123,25 +123,25 @@ struct LogFoodShortcuts: AppShortcutsProvider {
             AppShortcut(
                 intent: LogQuickCaloriesIntent(),
                 phrases: [
-                    "Log quick calories"
+                    "Log quick calories with ${applicationName}"
                 ],
-                shortTitle: "Log quick calories",
+                shortTitle: "Log quick calories with ${applicationName}",
                 systemImageName: "fork.knife"
             )
             AppShortcut(
                 intent: LogWaterIntent(),
                 phrases: [
-                    "Log water"
+                    "Log water with ${applicationName}"
                 ],
-                shortTitle: "Log water",
+                shortTitle: "Log water with ${applicationName}",
                 systemImageName: "drop.fill"
             )
             AppShortcut(
                 intent: LogFoodIntent(),
                 phrases: [
-                    "Log food"
+                    "Log food with ${applicationName}"
                 ],
-                shortTitle: "Log food",
+                shortTitle: "Log food with ${applicationName}",
                 systemImageName: "fork.knife"
             )
         }
