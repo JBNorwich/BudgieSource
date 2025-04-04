@@ -76,7 +76,7 @@ struct LogFoodIntent: AppIntent {
             narrativeToLog = try await $narrative.requestValue(.init(stringLiteral: "What did you eat?"))
         }
         
-        if let meal = meal {
+        if meal != nil {
             print("Doing nothing")
         } else {
             meal = try await $meal.requestValue(.init(stringLiteral: "What meal should this be logged to?"))
@@ -123,25 +123,25 @@ struct LogFoodShortcuts: AppShortcutsProvider {
             AppShortcut(
                 intent: LogQuickCaloriesIntent(),
                 phrases: [
-                    "Log quick calories with ${applicationName}"
+                    "Log quick calories with \(.applicationName)"
                 ],
-                shortTitle: "Log quick calories with ${applicationName}",
+                shortTitle: "Log quick calories with Budgie Diet",
                 systemImageName: "fork.knife"
             )
             AppShortcut(
                 intent: LogWaterIntent(),
                 phrases: [
-                    "Log water with ${applicationName}"
+                    "Log water with \(.applicationName)"
                 ],
-                shortTitle: "Log water with ${applicationName}",
+                shortTitle: "Log water with Budgie Diet",
                 systemImageName: "drop.fill"
             )
             AppShortcut(
                 intent: LogFoodIntent(),
                 phrases: [
-                    "Log food with ${applicationName}"
+                    "Log food with \(.applicationName)"
                 ],
-                shortTitle: "Log food with ${applicationName}",
+                shortTitle: "Log food with Budgie Diet",
                 systemImageName: "fork.knife"
             )
         }
