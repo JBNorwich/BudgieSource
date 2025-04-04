@@ -58,7 +58,7 @@ struct FitnessView: View {
                     Spacer()
                 }
                 
-                if todayLump.activitySummary.appleExerciseTime != nil && todayLump.activitySummary.exerciseTimeGoal != nil {
+                if todayLump.activitySummary.appleExerciseTime.doubleValue(for: .minute()) > 0 && todayLump.activitySummary.exerciseTimeGoal != nil {
                     Spacer()
                     HStack {
                         Text("Exercise")
@@ -77,7 +77,7 @@ struct FitnessView: View {
                         Spacer()
                     }
                 }
-                if todayLump.activitySummary.appleStandHours != nil && todayLump.activitySummary.standHoursGoal != nil {
+                if todayLump.activitySummary.appleStandHours.doubleValue(for: .count()) > 0 && todayLump.activitySummary.standHoursGoal != nil {
                     Spacer()
                     HStack {
                         Text("Stand")

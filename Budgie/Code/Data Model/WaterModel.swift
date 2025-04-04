@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 import HealthKit
 
-@Model final class WaterEntry: Sendable {
+@Model final class WaterEntry: @unchecked Sendable {
     @Attribute(.unique) var id: UUID
     var date: Date
     var quantity: Int

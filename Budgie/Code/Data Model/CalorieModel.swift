@@ -10,7 +10,7 @@ import SwiftData
 import HealthKit
 import AppIntents
 
-@Model final class Meal: Sendable {
+@Model final class Meal: @unchecked Sendable {
     @Attribute(.unique) private(set) var id: UUID
     var mealUUID: UUID = UUID()
     var name: String
@@ -84,7 +84,7 @@ struct StructMealQuery: EntityQuery {
 }
 
 @Model
-final class CalorieEntry: Sendable {
+final class CalorieEntry: @unchecked Sendable {
     @Attribute(.unique) private(set) var id: UUID
     var date: Date
     var calories: Int
