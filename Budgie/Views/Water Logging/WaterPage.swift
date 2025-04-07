@@ -66,6 +66,7 @@ struct WaterPage: View {
         
         .sheet(isPresented: $addSheetDisplayed) {
             AddWaterSheet(isDisplayed: $addSheetDisplayed, dateToAddOn: timeToAddOn)
+                .environmentObject(todayLump)
                 .onDisappear() {
                     Task {
                         await doUpdates()

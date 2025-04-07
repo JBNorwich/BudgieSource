@@ -33,7 +33,6 @@ class TodayLump: ObservableObject {
     // flags for estimation of data
     @Published var basalEstimated: Bool = false
     @Published var activeEstimated: Bool = false
-    @Published var estimatedAverageActive: Bool = false
     
     // signals re. data updates
     @Published var updateInProgress: Bool = false

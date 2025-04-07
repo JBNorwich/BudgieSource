@@ -75,6 +75,9 @@ struct AddCalsSheet: View {
                                         await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
                                         print("Adding calories")
                                         isDisplayed = false
+                                        Task {
+                                            await dataStore.updateLump(todayLump: todayLump)
+                                        }
                                     }
                                 } else {
                                     caloriesWereNil = true
@@ -101,6 +104,9 @@ struct AddCalsSheet: View {
                                             Task {
                                                 prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
                                             }
+                                        }
+                                        Task {
+                                            await dataStore.updateLump(todayLump: todayLump)
                                         }
                                         calories = nil
                                         whatItIs = ""
