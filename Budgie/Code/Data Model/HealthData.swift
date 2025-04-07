@@ -411,6 +411,14 @@ class HealthData {
             todayLump.healthKitCalories = eatenCalories.hk
             todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
             
+            for meal in todayLump.mealList {
+                var sum: Int = 0
+                for food in todayLump.foodList where food.meal == meal.mealUUID {
+                    sum = sum + food.calories
+                }
+                todayLump.mealTotalList[meal.mealUUID] = sum
+            }
+            
             todayLump.desiredDeficit = settingsObj.desiredDeficit
             todayLump.projectedBasal = await getProjBasalCalories()
             todayLump.projectedActive = await getProjActiveCalories()
@@ -437,7 +445,7 @@ class HealthData {
                     todayLump.activeEstimated = true
                     todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
                 }
-                //            todayLump.waterToday = await getWaterToday()
+                
                 let waterDetails = await getWaterOnDate(date: todayStart)
                 todayLump.waterToday = waterDetails.bd + waterDetails.hk
                 todayLump.activitySummary = await getActivitySummary()

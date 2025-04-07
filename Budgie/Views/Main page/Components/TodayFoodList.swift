@@ -34,6 +34,17 @@ struct TodayFoodList: View {
                             CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
                         }
                     }
+                    HStack {
+                        Spacer()
+                        VStack {
+                            Divider()
+                                .frame(maxWidth: 50)
+                        }
+                    }
+                    HStack {
+                        Spacer()
+                        Text("**\(dataLump.mealTotalList[meal.mealUUID]!.formatted())**")
+                    }
                     Spacer()
                 }
             }

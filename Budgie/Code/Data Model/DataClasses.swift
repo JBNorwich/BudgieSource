@@ -25,6 +25,7 @@ class TodayLump: ObservableObject {
     
     // food data
     @Published var mealList: [Meal] = []
+    @Published var mealTotalList: [UUID:Int] = [:]
     var mealsWithUUIDs: [String:UUID] = [:]
     @Published var foodList: [CalorieEntry] = []
     @Published var healthKitCalories: Int = 0

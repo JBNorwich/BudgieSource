@@ -19,7 +19,7 @@ struct GaugeView: View {
                     if todayLump.gaugeNumber > 0 {
                         Text("+" + todayLump.gaugeNumber.formatted() + "%")
                     } else {
-                        Text("-" + negate(number: todayLump.gaugeNumber).formatted() + "%")
+                        Text("-" + (-todayLump.gaugeNumber).formatted() + "%")
                     }
                 } minimumValueLabel: {
                     Text("")
@@ -34,20 +34,37 @@ struct GaugeView: View {
             }
             Divider()
             VStack {
-                Text("**\(todayLump.eatenCalories)** cals in - **\(todayLump.calsOutNow)** cals out")
-                    .multilineTextAlignment(.leading)
-                if todayLump.totalBudgetRem > -1 {
-                    Text("**\(todayLump.totalBudgetRem.formatted())** cals left in budget today")
-                        .multilineTextAlignment(.leading)
-                } else {
-                    Text("**\((-todayLump.totalBudgetRem).formatted())** cals over budget")
-                        .multilineTextAlignment(.leading)
+                HStack {
+                    if (todayLump.progressAgainstTarget < 0.95) {
+                        Text("**Below target**")
+                            .foregroundColor(.blue)
+                    } else if todayLump.progressAgainstTarget > 1.05 {
+                        Text("**Above target**")
+                            .foregroundColor(.red)
+                    } else {
+                        Text("**On target**")
+                            .foregroundColor(.teal)
+                    }
+                    Spacer()
                 }
-                
+                HStack {
+                    Text("**\(todayLump.eatenCalories)** cals in - **\(todayLump.calsOutNow)** cals out")
+                    Spacer()
+                }
+                HStack {
+                    if todayLump.totalBudgetRem > -1 {
+                        Text("**\(todayLump.totalBudgetRem.formatted())** cals left in budget today")
+                    } else {
+                        Text("**\((-todayLump.totalBudgetRem).formatted())** cals over budget")
+                    }
+                    Spacer()
+                }
                 if settingsObj.hideTodayInDetail == true && todayLump.activeEstimated == true {
                     Divider()
-                    Text("Your active calories are estimated, so your budget doesn't reflect your real activity.")
-                        .multilineTextAlignment(.leading)
+                    HStack {
+                        Text("Your active calories are estimated, so your budget doesn't reflect your real activity.")
+                        Spacer()
+                    }
                 }
             }
         }
