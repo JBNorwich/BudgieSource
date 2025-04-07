@@ -168,8 +168,10 @@ actor CalorieActor {
     
     func insertNewCals(object: CalorieEntry)
     {
-        modelContext.insert(object)
+
         do {
+            try modelContext.save()
+            modelContext.insert(object)
             try modelContext.save()
         } catch {
             print("Calorie insertion error: \(error)")
@@ -190,11 +192,13 @@ actor CalorieActor {
         let lunch = Meal(name: "Lunch", order: 1)
         let dinner = Meal(name: "Dinner", order: 2)
         let snacks = Meal(name: "Snacks/Other", order: 3)
-        modelContext.insert(breakfast)
-        modelContext.insert(lunch)
-        modelContext.insert(dinner)
-        modelContext.insert(snacks)
+
         do {
+            try modelContext.save()
+            modelContext.insert(breakfast)
+            modelContext.insert(lunch)
+            modelContext.insert(dinner)
+            modelContext.insert(snacks)
             try modelContext.save()
         } catch {
             print("Error setting up meals: \(error)")
