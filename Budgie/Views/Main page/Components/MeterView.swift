@@ -71,6 +71,7 @@ struct MeterView: View {
                         .shadow(radius: 5)
                         .foregroundColor(.white)
                         .sensoryFeedback(.increase, trigger: todayLump.leftToEat)
+                        .contentTransition(.numericText())
                 }
             } else {
                 Circle()

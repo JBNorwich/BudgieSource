@@ -32,7 +32,6 @@ import HealthKit
 @ModelActor actor WaterActor {
     func addWater(object: WaterEntry) {
         do {
-            try modelContext.save()
             modelContext.insert(object)
             try modelContext.save()
         } catch {

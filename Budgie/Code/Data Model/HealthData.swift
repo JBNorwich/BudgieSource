@@ -399,50 +399,6 @@ class HealthData {
         return (hk, bd)
     }
     
-    func setUpObserverQueries(todayLump: TodayLump) {
-        let activeQuery = HKObserverQuery(sampleType: activeQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                // Properly handle the error.
-                return
-            }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
-        }
-        let basalQuery = HKObserverQuery(sampleType: basalQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                // Properly handle the error.
-                return
-            }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
-        }
-        
-        let eatenQuery = HKObserverQuery(sampleType: eatenQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                return
-            }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
-        }
-        let waterQuery = HKObserverQuery(sampleType: waterQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                // Properly handle the error.
-                return
-            }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
-        }
-       
-        healthStore.execute(activeQuery)
-        healthStore.execute(basalQuery)
-        healthStore.execute(eatenQuery)
-        healthStore.execute(waterQuery)
-    }
-    
     @MainActor func updateLump(todayLump: TodayLump) async {
         if todayLump.updateInProgress == false {
             todayLump.updateInProgress = true

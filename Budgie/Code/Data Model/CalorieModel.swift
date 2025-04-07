@@ -170,7 +170,6 @@ actor CalorieActor {
     {
 
         do {
-            try modelContext.save()
             modelContext.insert(object)
             try modelContext.save()
         } catch {
@@ -194,7 +193,6 @@ actor CalorieActor {
         let snacks = Meal(name: "Snacks/Other", order: 3)
 
         do {
-            try modelContext.save()
             modelContext.insert(breakfast)
             modelContext.insert(lunch)
             modelContext.insert(dinner)
