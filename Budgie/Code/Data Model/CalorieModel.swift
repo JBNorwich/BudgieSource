@@ -10,7 +10,7 @@ import SwiftData
 import HealthKit
 import AppIntents
 
-@Model final class Meal: @unchecked Sendable {
+@Model final class Meal: Sendable {
     @Attribute(.unique) private(set) var id: UUID
     var mealUUID: UUID = UUID()
     var name: String
@@ -84,7 +84,7 @@ struct StructMealQuery: EntityQuery {
 }
 
 @Model
-final class CalorieEntry: @unchecked Sendable {
+final class CalorieEntry: Sendable {
     @Attribute(.unique) private(set) var id: UUID
     var date: Date
     var calories: Int
@@ -134,7 +134,11 @@ actor CalorieActor {
         return await withCheckedContinuation { continuation in
             do {
                 let returns = try modelContext.fetch(descriptor)
-                continuation.resume(returning: returns)
+                if returns.count != 0 {
+                    continuation.resume(returning: returns)
+                } else {
+                    continuation.resume(returning: [])
+                }
             } catch {
                 continuation.resume(returning: [])
             }

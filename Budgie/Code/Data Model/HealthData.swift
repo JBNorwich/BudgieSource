@@ -141,20 +141,6 @@ class HealthData {
         return (hk: Int(healthKitcalories), budgie: budgieCalories, total: Int(healthKitcalories) + budgieCalories)
     }
     
-    func getCalorieEntries(date: Date) async -> [CalorieEntry]
-    {
-        let endDate = getMidnightOnDayAfter(date: date)
-        var returnArray: [CalorieEntry] = []
-        
-        let budgieResults = await calorieActor.fetchCalsBetween(from: date, to: endDate)
-        
-        if budgieResults.count != 0 {
-            returnArray = budgieResults
-        }
-        
-        return returnArray
-    }
-    
     func getProjBasalCalories() async -> Int {
         var avgBasalCals = Int()
         if settingsObj.manualMode == true {
@@ -407,7 +393,7 @@ class HealthData {
             
             let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
             todayLump.eatenCalories = eatenCalories.total
-            todayLump.foodList = await getCalorieEntries(date: todayStart)
+            todayLump.foodList = await calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
             todayLump.healthKitCalories = eatenCalories.hk
             todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
             

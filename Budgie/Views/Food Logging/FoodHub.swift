@@ -35,7 +35,7 @@ struct FoodHub: View {
         Task {
             loadingDone = false
             
-            let newData = await dataStore.getCalorieEntries(date: curDate)
+            let newData = await dataStore.calorieActor.fetchCalsBetween(from: curDate, to: getMidnightOnDayAfter(date: curDate))
             var budgieCalsOnDate: Int = 0
             for entry in newData {
                 budgieCalsOnDate += entry.calories
