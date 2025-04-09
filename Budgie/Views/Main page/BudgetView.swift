@@ -273,10 +273,6 @@ struct BudgetView: View {
                 AddCalsSheet(isDisplayed: $showAddCalsSheet, selectedDate: Date()).environmentObject(todayLump)
             }
             .presentationDetents([.medium,.large])
-        }.onDisappear() {
-            Task {
-                await dataStore.updateLump(todayLump: todayLump)
-            }
         }
         
         .sheet(isPresented: $showingWhales) {
@@ -301,7 +297,6 @@ struct BudgetView: View {
         .sheet(isPresented: $showWaterSheet) {
             NavigationStack {
                 AddWaterSheet(isDisplayed: $showWaterSheet, dateToAddOn: Date())
-                    .environmentObject(todayLump)
             }
             .presentationDetents([.medium])
         }.onDisappear() {
@@ -311,6 +306,9 @@ struct BudgetView: View {
         }
             
         .task() {
+            if settingsObj.manualMode != true {
+                dataStore.setUpObserverQueries(todayLump: todayLump)
+            }
             await dataStore.updateLump(todayLump: todayLump)
         }
     }
