@@ -11,13 +11,12 @@ import HealthKit
 import AppIntents
 
 @Model final class Meal: Sendable {
-    @Attribute(.unique) private(set) var id: UUID
+    @Attribute(.unique) private(set) var id: UUID = UUID()
     var mealUUID: UUID = UUID()
     var name: String
     var order: Int
     
     init(name: String, order: Int) {
-        self.id = UUID()
         if name != "" {
             self.name = name
         } else {
@@ -85,7 +84,7 @@ struct StructMealQuery: EntityQuery {
 
 @Model
 final class CalorieEntry: Sendable {
-    @Attribute(.unique) private(set) var id: UUID
+    @Attribute(.unique) private(set) var id: UUID = UUID()
     var date: Date
     var calories: Int
     var narrative: String?
@@ -95,7 +94,6 @@ final class CalorieEntry: Sendable {
     var meal: UUID
     
     init(date: Date, calories: Int, narrative: String?, mealUUID: UUID, isInHK: Bool, healthKitUUID: UUID?) {
-        self.id = UUID()
         self.date = date
         self.calories = calories
         self.narrative = narrative ?? nil
