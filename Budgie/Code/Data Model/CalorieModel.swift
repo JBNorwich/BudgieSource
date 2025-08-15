@@ -11,7 +11,7 @@ import HealthKit
 import AppIntents
 
 @Model final class Meal: Sendable {
-    @Attribute(.unique) private(set) var id: UUID = UUID()
+    private(set) var id: UUID = UUID()
     var mealUUID: UUID = UUID()
     var name: String
     var order: Int
@@ -84,7 +84,7 @@ struct StructMealQuery: EntityQuery {
 
 @Model
 final class CalorieEntry: Sendable {
-    @Attribute(.unique) private(set) var id: UUID = UUID()
+    private(set) var id: UUID = UUID()
     var date: Date
     var calories: Int
     var narrative: String?
