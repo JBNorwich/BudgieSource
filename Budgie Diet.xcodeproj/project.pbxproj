@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D81987E72E4FA1F400ED81A4 /* BudgieIcon26.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* BudgieIcon26.icon */; };
-		D81987E82E4FA1F400ED81A4 /* BudgieIcon26.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* BudgieIcon26.icon */; };
-		D81987E92E4FA1F400ED81A4 /* BudgieIcon26.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* BudgieIcon26.icon */; };
+		D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
+		D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
+		D81987E92E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
 		D826E1B72C7D18DE00DF37E6 /* SummaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D826E1B62C7D18DE00DF37E6 /* SummaryRow.swift */; };
 		D829B0852C79B5C50027841B /* ChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0842C79B5C50027841B /* ChartView.swift */; };
 		D829B0872C79BAA80027841B /* ChartTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0862C79BAA80027841B /* ChartTableView.swift */; };
@@ -137,7 +137,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		D81987E62E4FA1F400ED81A4 /* BudgieIcon26.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = BudgieIcon26.icon; sourceTree = "<group>"; };
+		D81987E62E4FA1F400ED81A4 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		D81EAB0C2CA049C000A7F302 /* Budgie-DietWatch-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Budgie-DietWatch-Watch-App-Info.plist"; sourceTree = "<group>"; };
 		D826E1B62C7D18DE00DF37E6 /* SummaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryRow.swift; sourceTree = "<group>"; };
 		D829B0842C79B5C50027841B /* ChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartView.swift; sourceTree = "<group>"; };
@@ -307,7 +307,7 @@
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
-				D81987E62E4FA1F400ED81A4 /* BudgieIcon26.icon */,
+				D81987E62E4FA1F400ED81A4 /* AppIcon.icon */,
 				D81EAB0C2CA049C000A7F302 /* Budgie-DietWatch-Watch-App-Info.plist */,
 				D89A95B02C84BE3D007796AB /* BudgieWidgetExtension.entitlements */,
 				D89461A32C73C3FC00138B60 /* Budgie */,
@@ -560,7 +560,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D89461AC2C73C3FD00138B60 /* Preview Assets.xcassets in Resources */,
-				D81987E82E4FA1F400ED81A4 /* BudgieIcon26.icon in Resources */,
+				D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
 				D83398582C83A0CF00A09CDB /* LaunchScreen.storyboard in Resources */,
 				D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */,
 			);
@@ -570,7 +570,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D81987E92E4FA1F400ED81A4 /* BudgieIcon26.icon in Resources */,
+				D81987E92E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
 				D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */,
 				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
 			);
@@ -580,7 +580,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D81987E72E4FA1F400ED81A4 /* BudgieIcon26.icon in Resources */,
+				D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
 				D89A95CD2C84F753007796AB /* Preview Assets.xcassets in Resources */,
 				D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */,
 			);
@@ -811,7 +811,7 @@
 		D89461B02C73C3FD00138B60 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = BudgieIcon26;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
@@ -854,7 +854,7 @@
 		D89461B12C73C3FD00138B60 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = BudgieIcon26;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
@@ -961,7 +961,7 @@
 		D89A95D22C84F753007796AB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = BudgieIcon26;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
@@ -995,7 +995,7 @@
 		D89A95D32C84F753007796AB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = BudgieIcon26;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
