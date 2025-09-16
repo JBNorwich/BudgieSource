@@ -30,9 +30,8 @@ struct FoodDatePicker: View {
                         Spacer()
                         
                         DatePicker(selection: $curDate,
-                                   in: ...Date(),
-                                   displayedComponents: .date,
-                                   label: { Text("Date")}).labelsHidden()
+                            displayedComponents: .date,
+                            label: { Text("Date")}).labelsHidden()
                         Spacer()
                     }
                     Button("", systemImage: "arrow.right") {
@@ -46,23 +45,12 @@ struct FoodDatePicker: View {
             .onChange(of: curDate) {
                 nextDate = getMidnightOnDayAfter(date: curDate)
                 prevDate = getMidnightOnDayBefore(date: curDate)
-                if nextDate > getStartOfDay(date: Date()) {
-                    atMax = true
-                } else {
-                    atMax = false
-                }
                 dateChanged = true
             }
         
             .onAppear() {                
                 prevDate = getMidnightOnDayBefore(date: curDate)
                 nextDate = getMidnightOnDayAfter(date: curDate)
-                
-                if nextDate > getStartOfDay(date: Date()) {
-                    atMax = true
-                } else {
-                    atMax = false
-                }
             }
     }
 }

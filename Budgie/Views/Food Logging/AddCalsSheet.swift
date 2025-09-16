@@ -51,10 +51,9 @@ struct AddCalsSheet: View {
                     }.pickerStyle(.menu)
                     
                     DatePicker(selection: $selectedDate,
-                               in: ...getMidnightOnDayAfter(date: Date()),
-                               label: {
-                        Text("Date and time")
-                    }
+                        label: {
+                            Text("Date and time")
+                        }
                     )
                     
                     if (newRemBudg > 0)
