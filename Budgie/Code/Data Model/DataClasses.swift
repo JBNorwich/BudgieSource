@@ -127,7 +127,10 @@ class TodayLump: ObservableObject {
     }
     
     var progressAgainstTarget: Double {
-        var returnVal = Double(self.eatenCalories) / Double(self.currentTarget)
+        var returnVal: Double = 0
+        if self.currentTarget != 0 {
+            returnVal = Double(self.eatenCalories) / Double(self.currentTarget)
+        }
         if returnVal > 2 {
             returnVal = 2
         } else if returnVal < 0 {
@@ -149,7 +152,11 @@ class TodayLump: ObservableObject {
     }
     
     var gaugeNumber: Int {
-        return Int(self.progressAgainstTarget * 100) - 100
+        if self.progressAgainstTarget != 0 {
+            return Int(self.progressAgainstTarget * 100) - 100
+        } else {
+            return 0
+        }
     }
     
     var meterNumber: Double {

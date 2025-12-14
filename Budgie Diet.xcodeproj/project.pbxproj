@@ -817,7 +817,7 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250916.1;
+				CURRENT_PROJECT_VERSION = 251214.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -837,7 +837,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.7;
+				MARKETING_VERSION = 2.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -860,7 +860,7 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250916.1;
+				CURRENT_PROJECT_VERSION = 251214.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -880,7 +880,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.7;
+				MARKETING_VERSION = 2.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -901,7 +901,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = BudgieWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250916.1;
+				CURRENT_PROJECT_VERSION = 251214.1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BudgieWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
@@ -912,7 +912,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.7;
+				MARKETING_VERSION = 2.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.BudgieWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -933,7 +933,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = BudgieWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250916.1;
+				CURRENT_PROJECT_VERSION = 251214.1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BudgieWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
@@ -944,7 +944,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.7;
+				MARKETING_VERSION = 2.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.BudgieWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -965,7 +965,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250916.1;
+				CURRENT_PROJECT_VERSION = 251214.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -980,7 +980,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.7;
+				MARKETING_VERSION = 2.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;
@@ -999,7 +999,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 250916.1;
+				CURRENT_PROJECT_VERSION = 251214.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1014,7 +1014,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.7;
+				MARKETING_VERSION = 2.0.8;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;
