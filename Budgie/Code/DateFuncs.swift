@@ -80,8 +80,9 @@ func weightLeftToEat(input: Int) -> Int {
     return Int(Double(input) * factor)
 }
 
-func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
+func weightActiveProjection(input: Int, style: Int?, timeInput: Int?, actQuot: Double) -> Int {
     var doubleInput = Double(input)
+    var usedActQuot: Double = actQuot
     var styleToUse: Int
     var time: Double
     if style != nil {
@@ -116,22 +117,28 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
     var finalWeightFactor: Double
     
     switch styleToUse {
-        case -1: doubleInput = 1 * doubleInput
-        case 0: doubleInput = 0.75 * doubleInput
-        case 1: doubleInput = 0.5 * doubleInput
+        case -1: doubleInput = 1 * doubleInput //forgiving
+        case 0: doubleInput = 0.5 * doubleInput //default
+        case 1: doubleInput = 0.25 * doubleInput //harsh
+        case 3: doubleInput = 0.875 * doubleInput // old default
+        default: print("Doing nothing")
+    }
+    
+    switch styleToUse {
+        case -1: usedActQuot = 1 //forgiving
+        case 3: usedActQuot = 1
         default: print("Doing nothing")
     }
     
     switch styleToUse {
         case -1: startTime = 240
-        case 0: startTime = 0
-        case 1: startTime = 0
         default: startTime = 0
     }
     switch styleToUse {
         case -1: stopTime = 1440
         case 0: stopTime = 1320
         case 1: stopTime = 1320
+        case 3: stopTime = 1320
         default: stopTime = 1440
     }
 
@@ -151,10 +158,11 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?) -> Int {
         case -1: finalWeightFactor = 1 - pow(weightFactor, 5)
         case 0: finalWeightFactor = 1 - pow(weightFactor, 2)
         case 1: finalWeightFactor = 1 - weightFactor
+        case 3: finalWeightFactor = 1 - pow(weightFactor, 2)
         default: finalWeightFactor = 0
     }
     
-    let result = Int(finalWeightFactor * doubleInput)
+    let result = Int((finalWeightFactor * doubleInput) * usedActQuot)
     
     if result > 0 {
         return result

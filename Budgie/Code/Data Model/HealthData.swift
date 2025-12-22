@@ -216,6 +216,7 @@ class HealthData {
             var averageBurn: Int = 0
             var wasEstimate: Bool = false
             var remainingFromAvg: Int = 0
+            var actQuot: Double = 1
             let endDate = getStartOfDay(date: Date())
             let startDate = getWeekBeforeDate(date: endDate)
             let curActive = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
@@ -229,6 +230,7 @@ class HealthData {
                     wasEstimate = true
                 }
                 remainingFromAvg = averageBurn - curActive
+
             } else {
                 averageBurn = await getMoveGoal()
                 if curActive != 0 {
@@ -238,11 +240,19 @@ class HealthData {
                 }
             }
             
+            if curActive > averageBurn {
+                actQuot = 1
+            } else {
+                actQuot = Double(curActive) / Double(averageBurn)
+            }
+            
+            print(String(actQuot))
+            
             if remainingFromAvg < 0 {
                 return 0
             } else {
                 if wasEstimate == false {
-                    return weightActiveProjection(input: remainingFromAvg, style: nil, timeInput: nil)
+                    return weightActiveProjection(input: remainingFromAvg, style: nil, timeInput: nil, actQuot: actQuot)
                 } else {
                     return Int(Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
                 }

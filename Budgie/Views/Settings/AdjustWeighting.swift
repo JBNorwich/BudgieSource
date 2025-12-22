@@ -21,8 +21,8 @@ func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
     
     switch styleToUse {
         case -1: doubleInput = 1 * doubleInput
-        case 0: doubleInput = 0.75 * doubleInput
-        case 1: doubleInput = 0.5 * doubleInput
+        case 0: doubleInput = 0.5 * doubleInput
+        case 1: doubleInput = 0.25 * doubleInput
         default: print("Doing nothing")
     }
     
@@ -102,6 +102,7 @@ struct WeightOptions: View {
         Text("Default").tag(0)
         Text("Harsh").tag(1)
         Text("Don't predict").tag(2)
+        Text("Default (old)").tag(3)
     }
 }
 
