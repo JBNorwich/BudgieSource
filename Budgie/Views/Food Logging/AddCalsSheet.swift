@@ -56,11 +56,14 @@ struct AddCalsSheet: View {
                         }
                     )
                     
-                    if (newRemBudg > 0)
+                    if (getMidnightOnDayBefore(date: Date()) == getMidnightOnDayBefore(date: selectedDate))
                     {
-                        Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(newRemBudg.formatted())** in your overall budget for the rest of the day.")
-                    } else {
-                        Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\((-newRemBudg).formatted())** over your overall budget for the rest of the day.")
+                        if (newRemBudg > 0)
+                        {
+                            Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(newRemBudg.formatted())** in your overall budget for the rest of the day.")
+                        } else {
+                            Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\((-newRemBudg).formatted())** over your overall budget for the rest of the day.")
+                        }
                     }
                     
                     HStack {
