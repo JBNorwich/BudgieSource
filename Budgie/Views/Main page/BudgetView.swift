@@ -53,6 +53,7 @@ struct BudgetView: View {
     @State var openingWaterPage: Bool = false
     @State var showAddCalsSheet: Bool = false
     @State var showWaterSheet: Bool = false
+    @State var showingDetail: Bool = false
     
     // this is needed because otherwise it won't update state when returning from settings
     @State var whaleButtonVisible: Bool = false
@@ -104,6 +105,9 @@ struct BudgetView: View {
                         GroupBox(label: Label("Your target", systemImage: "gauge.with.needle")) {
                             GaugeView().environmentObject(todayLump)
                         }.backgroundStyle(.regularMaterial)
+                            .onTapGesture {
+                                showingDetail = true
+                            }
                         HStack {
                             if settingsObj.manualMode != true {
                                 GroupBox(label: Label("Activity", systemImage:"figure.run")) {
@@ -303,6 +307,22 @@ struct BudgetView: View {
             Task {
                 await dataStore.updateLump(todayLump: todayLump)
             }
+        }
+        
+        .sheet(isPresented: $showingDetail) {
+            NavigationStack {
+                VStack {
+                    NewDataView().environmentObject(todayLump)
+                    Button("Close") {
+                        showingDetail = false
+                    }.padding()
+                    .buttonStyle(.borderedProminent)
+                    Spacer()
+                }.padding()
+                .navigationTitle("Today in detail")
+            }
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
         }
             
         .task() {

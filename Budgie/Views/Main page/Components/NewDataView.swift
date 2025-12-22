@@ -46,7 +46,6 @@ struct NewDataView: View {
                 }
             }
         }
-        Spacer()
         VStack {
             HStack {
                 Image(systemName: "sofa")
@@ -110,13 +109,7 @@ struct NewDataView: View {
                 }
             }
         }
-        HStack {
-            Spacer()
-            VStack {
-                Divider()
-                    .frame(maxWidth: 100)
-            }
-        }
+        
         if settingsObj.capBudget == true && dataLump.budgetAtCap == true {
             HStack {
                 Image(systemName: "hat.cap")
@@ -127,6 +120,15 @@ struct NewDataView: View {
                     .contentTransition(.numericText())
             }
         }
+        
+        HStack {
+            Spacer()
+            VStack {
+                Divider()
+                    .frame(maxWidth: 100)
+            }
+        }
+
         HStack {
             Image(systemName: "equal.circle")
                 .frame(minWidth: 30)
