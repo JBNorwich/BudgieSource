@@ -243,10 +243,8 @@ class HealthData {
             if curActive > averageBurn {
                 actQuot = 1
             } else {
-                actQuot = Double(curActive) / Double(averageBurn)
+                actQuot = (Double(curActive) / Double(averageBurn)) + (1 - getPercentOfDayDone())
             }
-            
-            print(String(actQuot))
             
             if remainingFromAvg < 0 {
                 return 0
