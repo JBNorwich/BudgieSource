@@ -125,6 +125,7 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?, actQuot: D
     }
     
     switch styleToUse {
+        case -2: usedActQuot = 1
         case -1: usedActQuot = 1 //forgiving
         case 3: usedActQuot = 1
         default: print("Doing nothing")
