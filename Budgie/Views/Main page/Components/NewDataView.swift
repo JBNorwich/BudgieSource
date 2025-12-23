@@ -176,20 +176,23 @@ struct NewDataView: View {
                 }
             }
         }
-        if dataLump.activeEstimated == true {
+        if dataLump.activeEstimated == true || dataLump.budgetAtCap == true || dataLump.budgetAtMin == true {
             Divider()
+        }
+        if dataLump.activeEstimated == true {
             Label("Your active calorie burn figures are estimated, so your budget doesn't reflect your real activity today.", systemImage: "info.circle")
                 .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
         if dataLump.budgetAtCap == true {
-            Divider()
             Label("Your budget for today has been capped at the amount chosen in Settings.", systemImage: "info.circle")
                 .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
         if dataLump.budgetAtMin == true {
-            Divider()
             Label("Your budget was calculated as lower than the minimum of 1,200 calories, so it has been set at that amount.", systemImage: "exclamationmark.octagon")
                 .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
