@@ -821,7 +821,7 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 251223.3;
+				CURRENT_PROJECT_VERSION = 260322.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -841,7 +841,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -864,7 +864,7 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 251223.3;
+				CURRENT_PROJECT_VERSION = 260322.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -884,7 +884,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -969,7 +969,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 251223.3;
+				CURRENT_PROJECT_VERSION = 260322.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -984,7 +984,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;
@@ -1003,7 +1003,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 251223.3;
+				CURRENT_PROJECT_VERSION = 260322.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1018,7 +1018,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;
