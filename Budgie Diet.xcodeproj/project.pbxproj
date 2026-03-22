@@ -70,6 +70,7 @@
 		D8D4BF732C7CD04E0061A9A4 /* FoodDatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */; };
 		D8D4BF742C7CD04E0061A9A4 /* FoodHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BF722C7CD04E0061A9A4 /* FoodHub.swift */; };
 		D8D4BF762C7CD05B0061A9A4 /* AddCalsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */; };
+		D8E3B2452F6FE42100458DDD /* EditCalsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E3B2442F6FE41D00458DDD /* EditCalsSheet.swift */; };
 		D8E831622C73C7EE00AAF555 /* HealthData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831612C73C7EE00AAF555 /* HealthData.swift */; };
 		D8E831652C73D0BA00AAF555 /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
 		D8E831672C74835900AAF555 /* UINiceties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831662C74835900AAF555 /* UINiceties.swift */; };
@@ -188,6 +189,7 @@
 		D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FoodDatePicker.swift; sourceTree = "<group>"; };
 		D8D4BF722C7CD04E0061A9A4 /* FoodHub.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FoodHub.swift; sourceTree = "<group>"; };
 		D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddCalsSheet.swift; sourceTree = "<group>"; };
+		D8E3B2442F6FE41D00458DDD /* EditCalsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCalsSheet.swift; sourceTree = "<group>"; };
 		D8E831612C73C7EE00AAF555 /* HealthData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthData.swift; sourceTree = "<group>"; };
 		D8E831632C73C84900AAF555 /* Budgie.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Budgie.entitlements; sourceTree = "<group>"; };
 		D8E831642C73D0BA00AAF555 /* DateFuncs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFuncs.swift; sourceTree = "<group>"; };
@@ -296,10 +298,11 @@
 		D868606E2C7BD68400730373 /* Food Logging */ = {
 			isa = PBXGroup;
 			children = (
+				D8E3B2442F6FE41D00458DDD /* EditCalsSheet.swift */,
 				D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */,
 				D8D4BF722C7CD04E0061A9A4 /* FoodHub.swift */,
-				D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */,
 				D826E1B62C7D18DE00DF37E6 /* SummaryRow.swift */,
+				D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */,
 			);
 			path = "Food Logging";
 			sourceTree = "<group>";
@@ -622,6 +625,7 @@
 				D89461A72C73C3FC00138B60 /* BudgetView.swift in Sources */,
 				D829B08B2C7A6BC00027841B /* WhaleFacts.swift in Sources */,
 				D8E831742C74CDC700AAF555 /* BudgetHelperView.swift in Sources */,
+				D8E3B2452F6FE42100458DDD /* EditCalsSheet.swift in Sources */,
 				D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */,
 				D8F117DD2C8B65050054F2A2 /* Connectivity.swift in Sources */,
 				D829B0892C7A0F880027841B /* ChartDatePicker.swift in Sources */,

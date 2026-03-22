@@ -26,11 +26,13 @@ struct FoodHub: View {
     
     @State var hkCalories = 0
     
+    @State var editingDone: Bool = false
     @State var addSheetDisplayed: Bool = false
+    @State var toEdit: [CalorieEntry] = []
     
     @State var loadingDone: Bool = false
     
-    func doUpdates() async{
+    func doUpdates() async {
         timeToAddOn = getCurrentTimeonDate(date: curDate)
         Task {
             loadingDone = false
@@ -51,6 +53,7 @@ struct FoodHub: View {
             
             mealList = await dataStore.calorieActor.cleansedMealList(data: newData)
             budgieData = newData
+            budgieData.sort(by: {$0.date < $1.date})
             hkCalories = hkEaten
             dataLump = newLump
             
@@ -74,7 +77,17 @@ struct FoodHub: View {
                         Section(header: Text(meal.name)) {
                             ForEach(budgieData, id: \.self) { entry in
                                 if entry.meal == meal.mealUUID {
-                                    CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
+                                    NavigationLink(destination: EditCalsSheet(entryToEdit: entry)
+                                            .environmentObject(todayLump)
+                                            .onDisappear {
+                                                Task {
+                                                    await doUpdates()
+                                                }
+                                            }
+                                    ) {
+                                        CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
+                                            .contentShape(Rectangle())
+                                    }
                                 }
                             }.onDelete(perform: delete)
                         }
@@ -117,14 +130,14 @@ struct FoodHub: View {
                 await doUpdates()
             }
         }
-        
+              
         .sheet(isPresented: $addSheetDisplayed) {
             AddCalsSheet(isDisplayed: $addSheetDisplayed, selectedDate: timeToAddOn).environmentObject(todayLump)
                 .onDisappear() {
                     Task {
                         await doUpdates()
                     }
-            }
+                }
         }
     }
     
@@ -140,6 +153,7 @@ struct FoodHub: View {
         }
     }
 }
+
 
 struct CalorieEntryView: View {
     var calories: Int
