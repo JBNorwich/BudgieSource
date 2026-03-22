@@ -83,7 +83,7 @@ struct StructMealQuery: EntityQuery {
 }
 
 @Model
-final class CalorieEntry: Sendable {
+final class CalorieEntry {
     private(set) var id: UUID = UUID()
     var date: Date
     var calories: Int
