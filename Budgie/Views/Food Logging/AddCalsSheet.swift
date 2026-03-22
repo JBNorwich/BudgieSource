@@ -10,7 +10,7 @@ import SwiftUI
 extension String {
     var isNumber: Bool {
         return self.allSatisfy { character in
-            character.isNumber
+            character.isNumber || character.isMathSymbol
         }
     }
 }

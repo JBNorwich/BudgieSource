@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D80CB99A2F70290F0036EB8E /* WeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CB9992F70290C0036EB8E /* WeightView.swift */; };
 		D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
 		D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
 		D81987E92E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
@@ -138,6 +139,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D80CB9992F70290C0036EB8E /* WeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightView.swift; sourceTree = "<group>"; };
 		D81987E62E4FA1F400ED81A4 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		D81EAB0C2CA049C000A7F302 /* Budgie-DietWatch-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Budgie-DietWatch-Watch-App-Info.plist"; sourceTree = "<group>"; };
 		D826E1B62C7D18DE00DF37E6 /* SummaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryRow.swift; sourceTree = "<group>"; };
@@ -205,6 +207,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		D80CB99B2F702E730036EB8E /* Weight */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Weight; sourceTree = "<group>"; };
 		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
 		D8B3F3012D8F11C500DDA41D /* Water Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Water Logging"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -265,6 +268,7 @@
 		D829B0832C79B5B30027841B /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				D80CB9992F70290C0036EB8E /* WeightView.swift */,
 				D85CF18E2D8C48B900340EE1 /* FitnessView.swift */,
 				D838A6112C8075710083F3B3 /* NewDataView.swift */,
 				D829B08A2C7A6BC00027841B /* WhaleFacts.swift */,
@@ -441,6 +445,7 @@
 		D8EB9F942C7E0FD100508D0A /* Main page */ = {
 			isa = PBXGroup;
 			children = (
+				D80CB99B2F702E730036EB8E /* Weight */,
 				D89461A62C73C3FC00138B60 /* BudgetView.swift */,
 				D829B0832C79B5B30027841B /* Components */,
 			);
@@ -468,6 +473,7 @@
 				D8F117E02C8B6D1E0054F2A2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				D80CB99B2F702E730036EB8E /* Weight */,
 				D827ACB62D8E033D006413F1 /* Frameworks */,
 				D8B3F3012D8F11C500DDA41D /* Water Logging */,
 			);
@@ -631,6 +637,7 @@
 				D829B0892C7A0F880027841B /* ChartDatePicker.swift in Sources */,
 				D838A6122C8075710083F3B3 /* NewDataView.swift in Sources */,
 				D83398542C833F4D00A09CDB /* AdjustWeighting.swift in Sources */,
+				D80CB99A2F70290F0036EB8E /* WeightView.swift in Sources */,
 				D829B08D2C7A7E6E0027841B /* Explainer.swift in Sources */,
 				D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */,
 				D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */,

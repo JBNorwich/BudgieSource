@@ -13,8 +13,8 @@ import AppIntents
 @Model final class Meal: Sendable {
     private(set) var id: UUID = UUID()
     var mealUUID: UUID = UUID()
-    var name: String
-    var order: Int
+    var name: String = "Meal"
+    var order: Int = 0
     
     init(name: String, order: Int) {
         if name != "" {
@@ -85,13 +85,13 @@ struct StructMealQuery: EntityQuery {
 @Model
 final class CalorieEntry {
     private(set) var id: UUID = UUID()
-    var date: Date
-    var calories: Int
+    var date: Date = Date()
+    var calories: Int = 0
     var narrative: String?
-    var isInHK: Bool
+    var isInHK: Bool = false
     var healthKitUUID: UUID?
-    var realEntry: Bool
-    var meal: UUID
+    var realEntry: Bool = true
+    var meal: UUID = UUID()
     
     init(date: Date, calories: Int, narrative: String?, mealUUID: UUID, isInHK: Bool, healthKitUUID: UUID?) {
         self.date = date

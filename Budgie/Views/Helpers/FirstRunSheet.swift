@@ -25,6 +25,7 @@ struct FirstRunSheet: View {
     @State var doubleDeficit: Double = 0
     @State var desiredSurplus: Double = 50
     @State var deficitDone = false
+    @State var goalWeightDone = false
     @State var allComplete = false
     @State var stage = 0
     @State var disclaimerOn = false
@@ -107,6 +108,22 @@ struct FirstRunSheet: View {
                             goalDone = true
                         }.disabled(goalNotChosen)
                     }
+                }
+                
+                if (goalDone == true && hkBitDone == true && BMRdone == true && goalWeightDone == true) || chosenGoal != 1 {
+                    HStack {
+                        Button("Set your goal weight")
+                        { }
+                            .disabled(true)
+                        Spacer()
+                        if deficitDone == true {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+                
+                if (goalDone == true && goalWeightDone != true) {
+                    
                 }
                 
                 if (goalDone != true || hkBitDone != true || BMRdone != true) || (deficitDone == true) {

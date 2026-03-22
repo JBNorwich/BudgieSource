@@ -51,11 +51,14 @@ let waterQuantityType = HKQuantityType(.dietaryWater)
 
 let fitnessGoalType = HKSampleType.activitySummaryType()
 
+let weightSampleType = HKQuantityType(.bodyMass)
+
 let fitnessGoalSet: Set = [fitnessGoalType]
 
 let writeTypes: Set = [
     eatenQuantityType,
-    waterQuantityType
+    waterQuantityType,
+    weightSampleType
 ]
 
 let readTypes: Set = [
@@ -63,7 +66,8 @@ let readTypes: Set = [
     basalQuantityType,
     activeQuantityType,
     waterQuantityType,
-    fitnessGoalType
+    fitnessGoalType,
+    weightSampleType
 ]
 
 

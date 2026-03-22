@@ -19,6 +19,9 @@ class TodayLump: ObservableObject {
     @Published var projectedBasal: Int = 0
     @Published var waterToday: Int = 0
     @Published var activitySummary: HKActivitySummary = HKActivitySummary()
+    @Published var weightToday: Double = 0
+    @Published var averageDeficit: Int = 0
+    @Published var yesterdayDeficit: Int = 0
     
     var budgetAtCap: Bool = false
     var budgetAtMin: Bool = false
@@ -37,6 +40,44 @@ class TodayLump: ObservableObject {
     // signals re. data updates
     @Published var updateInProgress: Bool = false
     @Published var lastUpdate: Date = Date()
+    
+    var weightToGo: Double {
+        if settingsObj.weightGoal != 0 && self.weightToday != 0
+        {
+            if self.weightToday <= settingsObj.weightGoal {
+                return 0
+            } else {
+                return weightToday - settingsObj.weightGoal
+            }
+        } else {
+            return 0
+        }
+    }
+    
+    // return the percentage of the weight goal that is left to achieve
+    var weightGoalLeft: Double {
+        if settingsObj.weightGoal != 0 && settingsObj.startWeight != 0 && self.weightToday != 0 {
+            let totalToLose: Double = settingsObj.startWeight - settingsObj.weightGoal
+            let actLost: Double = settingsObj.startWeight - self.weightToday
+            let percentLost: Double = actLost/totalToLose
+            return 1 - percentLost
+        } else {
+            return 0
+        }
+    }
+    
+    // return the days as an int that it will take to get to next weight goal, based on a real average deficit
+    var daysToWeightGoal: Int {
+        return getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
+    }
+    
+    var daysToGoalAtPlanned: Int {
+        return getDaysToLose(weight: self.weightToGo, deficit: settingsObj.desiredDeficit)
+    }
+    
+    var diffDays: Int {
+        return daysToWeightGoal - daysToGoalAtPlanned
+    }
     
     // Calculating functions
     var totalBudget: Int {
@@ -259,4 +300,9 @@ struct CalsPacket {
     var cals: Int
 }
 
-
+struct WeightPacket: Identifiable {
+    var id: UUID
+    var date: Date
+    var weight: Double
+    var deficit: Int
+}

@@ -9,10 +9,10 @@ import SwiftUI
 import SwiftData
 import HealthKit
 
-@Model final class WaterEntry: @unchecked Sendable {
-    var id: UUID
-    var date: Date
-    var quantity: Int
+@Model final class WaterEntry {
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var quantity: Int = 0
     var healthKitUUID: UUID?
     
     init(date: Date?, quantity: Int, healthKitUUID: UUID?) {

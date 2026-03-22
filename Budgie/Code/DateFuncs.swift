@@ -227,3 +227,51 @@ func minsIntoDayIntoTime(mins: Int) -> Date {
     dateComponents.minute = minutes
     return Calendar.current.date(from: dateComponents)!
 }
+
+func formatDuration(days: Int) -> String {
+    if days < 7 {
+        if days > 0 {
+            return "about \(days) days"
+        } else {
+            return "not very long from now"
+        }
+    } else {
+        var weeks: Int = 0
+        let excess = days % 7
+        if excess == 0 {
+            weeks = days / 7
+        } else {
+            weeks = (days / 7) + 1
+        }
+        if weeks < 12 {
+            return "about \(weeks) weeks"
+        } else {
+            if weeks > 52 {
+                return "over a year"
+            } else {
+                if days % 30 != 0 {
+                    let months = (days/30) + 1
+                    return "about \(months) months"
+                } else {
+                    let months = (days/30)
+                    return "about \(months) months"
+                }
+                
+            }
+        }
+    }
+}
+
+func getDaysToLose(weight: Double, deficit: Int) -> Int {
+    if weight == 0 || deficit == 0 {
+        return 0
+    } else {
+        let calsPerKg = 7700
+        let calsToLose = Int(weight) * calsPerKg
+        return calsToLose / deficit
+    }
+}
+
+func roundDoubleWeight(input: Double) -> Double {
+    return round(input * 10) / 10
+}

@@ -173,6 +173,16 @@ class UserSettings {
         set { defaults?.set(newValue, forKey: "waterGoal")}
     }
     
+    var weightGoal: Double {
+        get { return defaults?.value(forKey: "weightGoal") as? Double ?? 0 }
+        set { defaults?.set(newValue, forKey: "weightGoal") }
+    }
+    
+    var startWeight: Double {
+        get { return defaults?.value(forKey: "startWeight") as? Double ?? 0 }
+        set { defaults?.set(newValue, forKey: "startWeight") }
+    }
+    
     func dumpToDict() -> [String:Any] {
         var dict: [String:Any] = [:]
         dict["surplusMode"] = self.surplusMode

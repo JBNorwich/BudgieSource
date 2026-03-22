@@ -342,6 +342,47 @@ class HealthData {
         await waterActor.addWater(object: newWaterObj)
     }
     
+    func getAverageDeficitForPastWeek() async -> Int {
+        let today = getStartOfDay(date: Date())
+        let startQuery = getWeekBeforeDate(date: today)
+        let eatenCals = await pullEatenCalories(startDate: startQuery, endDate: today)
+        let averageEaten = eatenCals.total / 7
+        let averageResting = await getAverageCalories(from: startQuery, to: today, type: basalQuantityType).val
+        let averageActive = await getAverageCalories(from: startQuery, to: today, type: activeQuantityType).val
+        
+        let totalDeficit = (averageResting + averageActive) - averageEaten
+        return totalDeficit
+    }
+    
+    func getDeficitForDate(date: Date) async -> Int {
+        let eatenCals = await pullEatenCalories(startDate: getStartOfDay(date: date), endDate: getMidnightOnDayAfter(date: date))
+        let basalCals = await pullCalorieTotalForDate(date: date, type: basalQuantityType, hkOnly: false)
+        let activeCals = await pullCalorieTotalForDate(date: date, type: activeQuantityType, hkOnly: false)
+        let deficit = basalCals + activeCals - eatenCals.total
+        return deficit
+    }
+    
+    func getLatestWeight() async -> Double {
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(sampleType: weightSampleType, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { _, samples, error in
+                if error != nil {
+                    continuation.resume(returning: 0)
+                } else {
+                    var doubleWeight: Double = 0
+                    let firstSample = samples?.first as? HKQuantitySample
+                    doubleWeight = firstSample?.quantity.doubleValue(for: .gram()) ?? 0
+                    if doubleWeight != 0 {
+                        doubleWeight = doubleWeight / 1000
+                    }
+                    continuation.resume(returning: roundDoubleWeight(input: doubleWeight))
+                }
+            }
+            healthStore.execute(query)
+        }
+    }
+    
     func getWaterToday() async -> Int {
         do {
             let todayPredicate = getTodayPredicate()
@@ -416,6 +457,9 @@ class HealthData {
             todayLump.desiredDeficit = settingsObj.desiredDeficit
             todayLump.projectedBasal = await getProjBasalCalories()
             todayLump.projectedActive = await getProjActiveCalories()
+            todayLump.weightToday = await getLatestWeight()
+            todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))
+            todayLump.averageDeficit = await getAverageDeficitForPastWeek()
             
             if settingsObj.manualMode == true {
                 todayLump.basalEstimated = true

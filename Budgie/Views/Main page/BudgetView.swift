@@ -54,6 +54,7 @@ struct BudgetView: View {
     @State var showAddCalsSheet: Bool = false
     @State var showWaterSheet: Bool = false
     @State var showingDetail: Bool = false
+    @State var showingWeightSheet: Bool = false
     
     // this is needed because otherwise it won't update state when returning from settings
     @State var whaleButtonVisible: Bool = false
@@ -124,6 +125,12 @@ struct BudgetView: View {
                             }.backgroundStyle(.regularMaterial)
                                 .frame(minHeight: 100)
                         }
+                        
+                        GroupBox(label: WeightLabelView(showingWeightGoalSheet: $showingWeightSheet)) {
+                            WeightView().environmentObject(todayLump)
+                        }.backgroundStyle(.regularMaterial)
+                            .frame(minHeight: 100)
+                        
                         if settingsObj.hideTodayInDetail != true {
                             GroupBox(label: Label("Today in detail", systemImage:"sun.max")) {
                                 NewDataView().environmentObject(todayLump)
@@ -324,12 +331,28 @@ struct BudgetView: View {
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
         }
+        
+        .sheet(isPresented: $showingWeightSheet) {
+            NavigationStack {
+                WeightGoalSheet(isDisplayed: $showingWeightSheet)
+                    .environmentObject(todayLump)
+            }.presentationDetents([.medium])
+        }.onDisappear() {
+            Task {
+                await dataStore.updateLump(todayLump: todayLump)
+            }
+        }
             
         .task() {
             if settingsObj.manualMode != true {
                 dataStore.setUpObserverQueries(todayLump: todayLump)
             }
             await dataStore.updateLump(todayLump: todayLump)
+            if settingsObj.isFirstRun != true {
+                if settingsObj.startWeight == 0 {
+                    settingsObj.startWeight = todayLump.weightToday
+                }
+            }
         }
     }
 }
@@ -367,6 +390,20 @@ struct ActivityLabelView: View {
         HStack{
             Label("Activity", systemImage: "figure.run")
             Spacer()
+        }
+    }
+}
+
+struct WeightLabelView: View {
+    @Binding var showingWeightGoalSheet: Bool
+    
+    var body: some View {
+        HStack {
+            Label("Weight", systemImage: "figure")
+            Spacer()
+            Button("Goal", systemImage: "target") {
+                showingWeightGoalSheet = true
+            }.buttonStyle(.plain)
         }
     }
 }

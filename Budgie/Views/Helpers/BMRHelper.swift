@@ -224,6 +224,9 @@ struct BMRHelper: View {
                         settingsObj.userSex = selectedSex
                         settingsObj.birthYear = yearOfBirth
                         settingsObj.bmrMultiplier = activityLevel
+                        if settingsObj.isFirstRun == true {
+                            settingsObj.startWeight = Double(weightKg)
+                        }
                         isPresented = false
                     }
                 }
