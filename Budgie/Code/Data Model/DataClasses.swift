@@ -20,8 +20,11 @@ class TodayLump: ObservableObject {
     @Published var waterToday: Int = 0
     @Published var activitySummary: HKActivitySummary = HKActivitySummary()
     @Published var weightToday: Double = 0
+    @Published var weightYesterday: Double = 0
     @Published var averageDeficit: Int = 0
     @Published var yesterdayDeficit: Int = 0
+    @Published var lastWeekAvgWeight: Double = 0
+    @Published var prevWeekAvgWeight: Double = 0
     
     var budgetAtCap: Bool = false
     var budgetAtMin: Bool = false
@@ -54,6 +57,10 @@ class TodayLump: ObservableObject {
         }
     }
     
+    var lostInDay: Double {
+        return self.weightYesterday - self.weightToday
+    }
+    
     // return the percentage of the weight goal that is left to achieve
     var weightGoalLeft: Double {
         if settingsObj.weightGoal != 0 && settingsObj.startWeight != 0 && self.weightToday != 0 {
@@ -66,17 +73,59 @@ class TodayLump: ObservableObject {
         }
     }
     
-    // return the days as an int that it will take to get to next weight goal, based on a real average deficit
-    var daysToWeightGoal: Int {
-        return getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
+    // returns weight lost as difference between last week's average weight, and the weight today
+    var weightTrend: Double {
+        return self.lastWeekAvgWeight - self.weightToday
     }
     
+    // return the days as an int that it will take to get to next weight goal, based on a real average deficit adjusted for real performance
+    var daysToWeightGoal: Int {
+        let days = getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
+        return days
+    }
+
     var daysToGoalAtPlanned: Int {
         return getDaysToLose(weight: self.weightToGo, deficit: settingsObj.desiredDeficit)
     }
     
+    // difference between days to weight goal at current trend and days as calculated from desired deficit.
+    // positive: taking longer than plannedß
+    // negative: taking less time than planned
     var diffDays: Int {
         return daysToWeightGoal - daysToGoalAtPlanned
+    }
+    
+    // negative = deficit not big enough
+    // positive = deficit bigger than desired
+    var diffBetweenAvgDeficitandDesired: Int {
+        return self.averageDeficit - settingsObj.desiredDeficit
+    }
+    
+    // how much weight would be expected to be lost at current deficit. Positive figure
+    var expectedWeightLossAtRealDeficit: Double {
+        let totalDeficit = self.averageDeficit * 7
+        let kilosExpected: Double = Double(totalDeficit) / 7700
+        return roundDoubleWeight(input: kilosExpected)
+    }
+    
+    // how expected weight loss measuresagainst the expected
+    var performanceAgainstWeightTrend: Double {
+        let expected = self.expectedWeightLossAtRealDeficit
+        let actual = self.weightTrend
+        // if result is > 1: weight loss above expectation
+        // if result is < 1: weight loss below expectation
+        let result = actual/expected
+        return result
+    }
+    
+    var realDeficit: Int {
+        if self.averageDeficit <= 0 {
+            return 0
+        } else {
+            let doubleCalc = Double(self.averageDeficit) * self.performanceAgainstWeightTrend
+            print ("Adjusted from \(self.averageDeficit) to \(Int(doubleCalc).formatted())")
+            return Int(doubleCalc)
+        }
     }
     
     // Calculating functions

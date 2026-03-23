@@ -266,12 +266,35 @@ func getDaysToLose(weight: Double, deficit: Int) -> Int {
     if weight == 0 || deficit == 0 {
         return 0
     } else {
-        let calsPerKg = 7700
-        let calsToLose = Int(weight) * calsPerKg
-        return calsToLose / deficit
+        print("Weight: \(weight.formatted())")
+        let calsPerKg: Double = 7700
+        let calsToLose = weight * calsPerKg
+        let result = Int(calsToLose) / deficit
+        print("Days: \(result)")
+        return result
     }
 }
 
 func roundDoubleWeight(input: Double) -> Double {
     return round(input * 10) / 10
+}
+
+func adjustDeficitPrediction(deficit: Int, factor: Double) -> Int {
+    if deficit <= 0 {
+        return 0
+    } else {
+        let doubleCalc = Double(deficit) * factor
+        print ("Adjusted from \(deficit) to \(Int(doubleCalc).formatted())")
+        return Int(doubleCalc)
+    }
+}
+
+extension String {
+    func capitalizingFirstLetter() -> String {
+      return prefix(1).uppercased() + self.lowercased().dropFirst()
+    }
+
+    mutating func capitalizeFirstLetter() {
+      self = self.capitalizingFirstLetter()
+    }
 }
