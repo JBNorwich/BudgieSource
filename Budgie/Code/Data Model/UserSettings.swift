@@ -38,7 +38,7 @@ class UserSettings {
     }
     
     var manualMode: Bool {
-        get { return defaults?.value(forKey: "manualMode") as? Bool ?? false}
+        get { return false }
         set { defaults?.set(newValue, forKey: "manualMode")}
     }
     

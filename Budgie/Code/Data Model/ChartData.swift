@@ -60,15 +60,10 @@ class ChartData: ObservableObject {
     {
         if self.updateInProgress == false {
             self.updateInProgress = true
-            if settingsObj.manualMode == false {
-                self.activePackets = await fetchChartActive()
-                self.basalPackets = await fetchChartBasal()
-                self.activeDone = true
-                self.basalDone = true
-            } else {
-                self.activeDone = true
-                self.basalDone = true
-            }
+            self.activePackets = await fetchChartActive()
+            self.basalPackets = await fetchChartBasal()
+            self.activeDone = true
+            self.basalDone = true
             let eatenPacketsReturn = await fetchChartEaten()
             self.eatenPackets = eatenPacketsReturn.hk
             self.budgieEatenPackets = eatenPacketsReturn.budgie
@@ -182,52 +177,50 @@ class ChartData: ObservableObject {
             budgiePackets.append(CalsPacket(date:getStartOfDay(date: object.date), cals:object.calories))
         }
         
-        if settingsObj.manualMode == false {
-            let everyDay = DateComponents(day:1)
-            let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
-            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,queryPeriod])
+        let everyDay = DateComponents(day:1)
+        let queryPeriod = HKQuery.predicateForSamples(withStart: self.startDate, end: self.endDate, options:.strictEndDate)
+        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,queryPeriod])
+        
+        hkPackets = await withCheckedContinuation { continuation in
+            let actCalsQuery = HKStatisticsCollectionQuery(quantityType: eatenQuantityType, quantitySamplePredicate: queryPredicate, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
             
-            hkPackets = await withCheckedContinuation { continuation in
-                let actCalsQuery = HKStatisticsCollectionQuery(quantityType: eatenQuantityType, quantitySamplePredicate: queryPredicate, options: .cumulativeSum, anchorDate: self.startDate, intervalComponents: everyDay)
+            // query active calories, digest into packets
+            actCalsQuery.initialResultsHandler = {
+                query, results, error in
                 
-                // query active calories, digest into packets
-                actCalsQuery.initialResultsHandler = {
-                    query, results, error in
-                    
-                    if let error = error as? HKError {
-                        switch (error.code) {
-                        case .errorDatabaseInaccessible:
-                            // HealthKit couldn't access the database because the device is locked.
-                            return
-                        default:
-                            // Handle other HealthKit errors here.
-                            return
-                        }
-                    }
-                    
-                    guard let actCollection = results else {
-                        assertionFailure("")
+                if let error = error as? HKError {
+                    switch (error.code) {
+                    case .errorDatabaseInaccessible:
+                        // HealthKit couldn't access the database because the device is locked.
+                        return
+                    default:
+                        // Handle other HealthKit errors here.
                         return
                     }
-                    
-                    var packetsToAdd: [CalsPacket] = []
-                    
-                    actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
-                    { statistics, _ in
-                        if let quantity = statistics.sumQuantity(){
-                            let date = statistics.startDate
-                            
-                            let value = Int(quantity.doubleValue(for: .kilocalorie()))
-                            
-                            packetsToAdd.append(CalsPacket(date:date, cals:value))
-                        }
-                    }
-                    
-                    continuation.resume(returning: packetsToAdd)
                 }
                 
-                healthStore.execute(actCalsQuery)
+                guard let actCollection = results else {
+                    assertionFailure("")
+                    return
+                }
+                
+                var packetsToAdd: [CalsPacket] = []
+                
+                actCollection.enumerateStatistics(from: self.startDate, to: self.endDate)
+                { statistics, _ in
+                    if let quantity = statistics.sumQuantity(){
+                        let date = statistics.startDate
+                        
+                        let value = Int(quantity.doubleValue(for: .kilocalorie()))
+                        
+                        packetsToAdd.append(CalsPacket(date:date, cals:value))
+                    }
+                }
+                
+                continuation.resume(returning: packetsToAdd)
             }
+            
+            healthStore.execute(actCalsQuery)
         }
         
         return (budgie: budgiePackets, hk: hkPackets)
@@ -237,7 +230,7 @@ class ChartData: ObservableObject {
     {
         var returnValue: [ChartDataLump] = []
         
-        if settingsObj.manualMode == true || self.actAsIfManual == true {
+        if self.actAsIfManual == true {
             var iterateDate = self.startDate
             while iterateDate < self.endDate {
                 let newLump = ChartDataLump()

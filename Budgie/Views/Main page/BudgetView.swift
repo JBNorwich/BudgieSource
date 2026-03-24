@@ -111,14 +111,12 @@ struct BudgetView: View {
                                 showingDetail = true
                             }
                         HStack {
-                            if settingsObj.manualMode != true {
-                                GroupBox(label: Label("Activity", systemImage:"figure.run")) {
-                                    FitnessView().environmentObject(todayLump)
-                                }.onTapGesture {
-                                    UIApplication.shared.open(URL(string: "fitnessapp://")!)
-                                }.backgroundStyle(.regularMaterial)
-                                    .frame(minHeight: 100)
-                            }
+                            GroupBox(label: Label("Activity", systemImage:"figure.run")) {
+                                FitnessView().environmentObject(todayLump)
+                            }.onTapGesture {
+                                UIApplication.shared.open(URL(string: "fitnessapp://")!)
+                            }.backgroundStyle(.regularMaterial)
+                                .frame(minHeight: 100)
                             GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
                                 WaterView().environmentObject(todayLump)
                             }.onTapGesture {
@@ -355,9 +353,7 @@ struct BudgetView: View {
         }
             
         .task() {
-            if settingsObj.manualMode != true {
-                dataStore.setUpObserverQueries(todayLump: todayLump)
-            }
+            dataStore.setUpObserverQueries(todayLump: todayLump)
             await dataStore.updateLump(todayLump: todayLump)
             if settingsObj.isFirstRun != true {
                 if settingsObj.startWeight == 0 {

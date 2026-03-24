@@ -61,41 +61,25 @@ class HealthData {
             calories = Double(budgieCalories)
         }
         
-        if settingsObj.manualMode == false {
+        do {
+            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
+            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+            let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
+            let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
+                let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
+                continuation.resume(returning: sumActCalsQuery)
+            }
             do {
-                let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-                let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-                let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
-                let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
-                    let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
-                    continuation.resume(returning: sumActCalsQuery)
-                }
-                do {
-                    let kcals = try await query.result(for: healthStore)?.sumQuantity()
-                    calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
-                } catch {
-                    calories += 0
-                }
+                let kcals = try await query.result(for: healthStore)?.sumQuantity()
+                calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
             } catch {
                 calories += 0
             }
-            calories = calories.rounded()
-        } else {
-            if hkOnly == false {
-                switch type {
-                case eatenQuantityType:
-                    calories += 0
-                case basalQuantityType:
-                    calories += Double(settingsObj.manualBMR)
-                case activeQuantityType:
-                    calories += Double(settingsObj.manualActive)
-                default:
-                    calories += 0
-                }
-            } else {
-                calories += 0
-            }
+        } catch {
+            calories += 0
         }
+        calories = calories.rounded()
+        
         return Int(calories)
     }
     
@@ -104,28 +88,26 @@ class HealthData {
         var healthKitcalories: Double = 0
         
         // get HealthKit calories
-        if settingsObj.manualMode == false {
+        do {
+            let notBudgieTodayPredicate = getNotBudgieTodayPredicate()
+            let query: HKSampleQueryDescriptor<HKQuantitySample> = try await withCheckedThrowingContinuation { continuation in
+                let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: notBudgieTodayPredicate)], sortDescriptors: [])
+                continuation.resume(returning: descriptor)
+            }
             do {
-                let notBudgieTodayPredicate = getNotBudgieTodayPredicate()
-                let query: HKSampleQueryDescriptor<HKQuantitySample> = try await withCheckedThrowingContinuation { continuation in
-                    let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: notBudgieTodayPredicate)], sortDescriptors: [])
-                    continuation.resume(returning: descriptor)
-                }
-                do {
-                    let results = try await query.result(for: healthStore)
-                    for result in results {
-                        let source = result.sourceRevision.source
-                        if source != HKSource.default() {
-                            //Note to self: You need to total the doubleValues and *then* convert to Int as otherwise it gives very annoying rounding errors
-                            healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
-                        }
+                let results = try await query.result(for: healthStore)
+                for result in results {
+                    let source = result.sourceRevision.source
+                    if source != HKSource.default() {
+                        //Note to self: You need to total the doubleValues and *then* convert to Int as otherwise it gives very annoying rounding errors
+                        healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
                     }
-                } catch {
-                    healthKitcalories = 0
                 }
             } catch {
                 healthKitcalories = 0
             }
+        } catch {
+            healthKitcalories = 0
         }
         
         // get Budgie Diet calories
@@ -143,13 +125,11 @@ class HealthData {
     
     func getProjBasalCalories() async -> Int {
         var avgBasalCals = Int()
-        if settingsObj.manualMode == true {
-            avgBasalCals = settingsObj.manualBMR
-        } else {
-            let endDate = getStartOfDay(date: Date())
-            let startDate = getWeekBeforeDate(date: endDate)
-            avgBasalCals = await self.getAverageCalories(from: startDate, to: endDate, type: basalQuantityType).val
-        }
+
+        let endDate = getStartOfDay(date: Date())
+        let startDate = getWeekBeforeDate(date: endDate)
+        avgBasalCals = await self.getAverageCalories(from: startDate, to: endDate, type: basalQuantityType).val
+        
         let remainingMinsInDay = 1440 - minutesIntoDay()
         let calsPerMinute: Double = Double(avgBasalCals) / 1440
         let projectedCals = Double(remainingMinsInDay) * calsPerMinute
@@ -247,51 +227,46 @@ class HealthData {
     }
     
     func getProjActiveCalories() async -> Int {
-        if settingsObj.manualMode == true {
-            let projectedCals = Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440)
-            return Int(projectedCals)
-        } else {
-            var averageBurn: Int = 0
-            var wasEstimate: Bool = false
-            var remainingFromAvg: Int = 0
-            var actQuot: Double = 1
-            let endDate = getStartOfDay(date: Date())
-            let startDate = getWeekBeforeDate(date: endDate)
-            let curActive = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
-            
-            if settingsObj.useFitnessGoal != true {
-                let result = await self.getAverageCalories(from: startDate, to: endDate, type: activeQuantityType)
-                if result.estimate == false {
-                    averageBurn = result.val
-                } else {
-                    averageBurn = settingsObj.manualActive
-                    wasEstimate = true
-                }
-                remainingFromAvg = averageBurn - curActive
+        var averageBurn: Int = 0
+        var wasEstimate: Bool = false
+        var remainingFromAvg: Int = 0
+        var actQuot: Double = 1
+        let endDate = getStartOfDay(date: Date())
+        let startDate = getWeekBeforeDate(date: endDate)
+        let curActive = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
+        
+        if settingsObj.useFitnessGoal != true {
+            let result = await self.getAverageCalories(from: startDate, to: endDate, type: activeQuantityType)
+            if result.estimate == false {
+                averageBurn = result.val
+            } else {
+                averageBurn = settingsObj.manualActive
+                wasEstimate = true
+            }
+            remainingFromAvg = averageBurn - curActive
 
+        } else {
+            averageBurn = await getMoveGoal()
+            if curActive != 0 {
+                remainingFromAvg = averageBurn - curActive
             } else {
-                averageBurn = await getMoveGoal()
-                if curActive != 0 {
-                    remainingFromAvg = averageBurn - curActive
-                } else {
-                    remainingFromAvg = averageBurn - Int(Double(minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
-                }
+                remainingFromAvg = averageBurn - Int(Double(minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
             }
-            
-            if curActive > averageBurn {
-                actQuot = 1
+        }
+        
+        if curActive > averageBurn {
+            actQuot = 1
+        } else {
+            actQuot = (Double(curActive) / Double(averageBurn)) + (1 - getPercentOfDayDone())
+        }
+        
+        if remainingFromAvg < 0 {
+            return 0
+        } else {
+            if wasEstimate == false {
+                return weightActiveProjection(input: remainingFromAvg, style: nil, timeInput: nil, actQuot: actQuot)
             } else {
-                actQuot = (Double(curActive) / Double(averageBurn)) + (1 - getPercentOfDayDone())
-            }
-            
-            if remainingFromAvg < 0 {
-                return 0
-            } else {
-                if wasEstimate == false {
-                    return weightActiveProjection(input: remainingFromAvg, style: nil, timeInput: nil, actQuot: actQuot)
-                } else {
-                    return Int(Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
-                }
+                return Int(Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
             }
         }
     }
@@ -328,22 +303,20 @@ class HealthData {
         
         var didHK = Bool()
         var hkUUID: UUID = UUID()
-        if settingsObj.manualMode != true {
-            let authStatus = healthStore.authorizationStatus(for: eatenQuantityType)
-            if authStatus == HKAuthorizationStatus.sharingAuthorized {
-                let quantityUnit = HKUnit(from:.kilocalorie)
-                let quantityAmount = HKQuantity(unit: quantityUnit, doubleValue:Double(calories))
-                let sample = HKQuantitySample(type: eatenQuantityType, quantity: quantityAmount, start: dateOfEntry, end: dateOfEntry)
-                hkUUID = sample.uuid
-                do {
-                    try await healthStore.save(sample)
-                } catch {
-                    // handle errors here
-                }
-                didHK = true
-            } else {
-                didHK = false
+        let authStatus = healthStore.authorizationStatus(for: eatenQuantityType)
+        if authStatus == HKAuthorizationStatus.sharingAuthorized {
+            let quantityUnit = HKUnit(from:.kilocalorie)
+            let quantityAmount = HKQuantity(unit: quantityUnit, doubleValue:Double(calories))
+            let sample = HKQuantitySample(type: eatenQuantityType, quantity: quantityAmount, start: dateOfEntry, end: dateOfEntry)
+            hkUUID = sample.uuid
+            do {
+                try await healthStore.save(sample)
+            } catch {
+                // handle errors here
             }
+            didHK = true
+        } else {
+            didHK = false
         }
         if (narrative != "") && (narrative != nil) {
             narrativeToLog = narrative!
@@ -363,17 +336,15 @@ class HealthData {
     
     func addWater(amount: Int, datetime: Date) async {
         var hkUUID: UUID?
-        if settingsObj.manualMode != true {
-            let authStatus = healthStore.authorizationStatus(for: waterQuantityType)
-            if authStatus == HKAuthorizationStatus.sharingAuthorized {
-                let quantityAmount = HKQuantity(unit: HKUnit.literUnit(with: .milli), doubleValue: Double(amount))
-                let sample = HKQuantitySample(type: waterQuantityType, quantity: quantityAmount, start: datetime, end: datetime)
-                hkUUID = sample.uuid
-                do {
-                    try await healthStore.save(sample)
-                } catch {
-                    //errorhandling
-                }
+        let authStatus = healthStore.authorizationStatus(for: waterQuantityType)
+        if authStatus == HKAuthorizationStatus.sharingAuthorized {
+            let quantityAmount = HKQuantity(unit: HKUnit.literUnit(with: .milli), doubleValue: Double(amount))
+            let sample = HKQuantitySample(type: waterQuantityType, quantity: quantityAmount, start: datetime, end: datetime)
+            hkUUID = sample.uuid
+            do {
+                try await healthStore.save(sample)
+            } catch {
+                //errorhandling
             }
         }
         let newWaterObj = WaterEntry(date: datetime, quantity: amount, healthKitUUID: hkUUID ?? nil)
@@ -518,33 +489,27 @@ class HealthData {
             todayLump.lastWeekAvgWeight = await getAverageWeight(from: weekBeforeYesterday, to: todayEnd)
             todayLump.prevWeekAvgWeight = await getAverageWeight(from: weekBeforeWeekBeforeYesterday, to: getWeekBeforeDate(date: todayEnd))
             
-            if settingsObj.manualMode == true {
-                todayLump.basalEstimated = true
-                todayLump.activeEstimated = true
-                todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
-                todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
+            let recBasalCalories = await pullCalorieTotalTodayFromHK(type: basalQuantityType)
+            let recActiveCalories = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
+            if recBasalCalories != 0 {
+                todayLump.basalEstimated = false
+                todayLump.basalCalories = recBasalCalories
             } else {
-                let recBasalCalories = await pullCalorieTotalTodayFromHK(type: basalQuantityType)
-                let recActiveCalories = await pullCalorieTotalTodayFromHK(type: activeQuantityType)
-                if recBasalCalories != 0 {
-                    todayLump.basalEstimated = false
-                    todayLump.basalCalories = recBasalCalories
-                } else {
-                    todayLump.basalEstimated = true
-                    todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
-                }
-                if recActiveCalories != 0 {
-                    todayLump.activeEstimated = false
-                    todayLump.activeCalories = recActiveCalories
-                } else {
-                    todayLump.activeEstimated = true
-                    todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
-                }
-                
-                let waterDetails = await getWaterOnDate(date: todayStart)
-                todayLump.waterToday = waterDetails.bd + waterDetails.hk
-                todayLump.activitySummary = await getActivitySummary()
+                todayLump.basalEstimated = true
+                todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
             }
+            if recActiveCalories != 0 {
+                todayLump.activeEstimated = false
+                todayLump.activeCalories = recActiveCalories
+            } else {
+                todayLump.activeEstimated = true
+                todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
+            }
+            
+            let waterDetails = await getWaterOnDate(date: todayStart)
+            todayLump.waterToday = waterDetails.bd + waterDetails.hk
+            todayLump.activitySummary = await getActivitySummary()
+
             todayLump.lastUpdate = Date()
             todayLump.updateInProgress = false
         }

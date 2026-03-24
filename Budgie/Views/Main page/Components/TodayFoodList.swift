@@ -49,7 +49,7 @@ struct TodayFoodList: View {
                 }
             }
             
-            if dataLump.healthKitCalories != 0 && settingsObj.manualMode == false {
+            if dataLump.healthKitCalories != 0 {
                 Spacer()
                 HStack {
                     Text("FROM OTHER APPS")

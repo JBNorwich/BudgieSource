@@ -17,7 +17,6 @@ struct SettingsView: View {
     @State var manualActive: Int = 0
     @State var doubleDeficit: Double = 0
     @State var desiredSurplus: Double = 0
-    @State var manualMode: Bool = false
     @State var surplusMode: Bool = false
     @State var whalesEverywhere: Bool = false
     @State var circleColour: Color = .blue
@@ -81,7 +80,7 @@ struct SettingsView: View {
                             {
                                 pingManual()
                             } else {
-                                manualBMR = prevManual
+                                manualBMR = prev
                             }
                         }
                         .focusable()
@@ -131,33 +130,26 @@ struct SettingsView: View {
                 }
             }
             
-            Section(header: Text("Apple Health"), footer: Text("If Budgie Diet was granted access to your Apple Health data, turning this on will stop it from using or adding new data, but old food or water entries it's logged will stay. Your budgets will be based on the manual calorie burn figures set above, rather than real data.\n\nIf Budgie Diet doesn't have access to your Apple Health data, this setting won't change anything.")) {
-                Toggle("Ignore Apple Health data", isOn: $manualMode)
-            }
-            
-            if manualMode != true {
-                Section(header: Text("Move goal"), footer: Text("If this is turned on, Budgie Diet will use your Apple Fitness Move goal as the starting point for your budget, rather than your average calorie burn figures."))
-                {
+            Section(header: Text("Move goal"), footer: Text("If this is turned on, Budgie Diet will use your Apple Fitness Move goal as the starting point for your budget, rather than your average calorie burn figures."))
+            {
                     Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
-                }
             }
                        
-            if manualMode != true {
-                Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
-                    NavigationLink {
-                        BudgetCap()
-                    } label: {
-                        Text("Budget capping")
-                    }
-                    
-                    NavigationLink {
-                        AdjustWeighting()
-                    } label: {
-                        Text("Budget weighting options")
-                    }
-                    
-                    DatePicker("Typical evening meal time", selection: $weightTime, displayedComponents: .hourAndMinute)
+
+            Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
+                NavigationLink {
+                    BudgetCap()
+                } label: {
+                    Text("Budget capping")
                 }
+                
+                NavigationLink {
+                    AdjustWeighting()
+                } label: {
+                    Text("Budget weighting options")
+                }
+                
+                DatePicker("Typical evening meal time", selection: $weightTime, displayedComponents: .hourAndMinute)
             }
             
             Section(header: Text("Other settings")) {
@@ -213,7 +205,6 @@ struct SettingsView: View {
 
     
         .onAppear() {
-            manualMode = settingsObj.manualMode
             manualBMR = settingsObj.manualBMR
             manualActive = settingsObj.manualActive
             surplusMode = settingsObj.surplusMode
@@ -229,11 +220,6 @@ struct SettingsView: View {
             hideTodayInDetail = settingsObj.hideTodayInDetail
             useFitnessGoal = settingsObj.useFitnessGoal
             waterGoal = settingsObj.waterGoal
-            pingSettingsToWatch()
-        }
-    
-        .onChange(of: manualMode, initial: false) {
-            settingsObj.manualMode = manualMode
             pingSettingsToWatch()
         }
     
@@ -329,7 +315,6 @@ struct SettingsView: View {
     }
     
     func pingManual() {
-        settingsObj.manualMode = manualMode
         settingsObj.manualBMR = manualBMR
         settingsObj.manualActive = manualActive
         pingSettingsToWatch()
