@@ -80,7 +80,7 @@ struct SettingsView: View {
                             {
                                 pingManual()
                             } else {
-                                manualBMR = prev
+                                manualBMR = prevManual
                             }
                         }
                         .focusable()
