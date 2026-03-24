@@ -400,27 +400,31 @@ class HealthData {
         return deficit
     }
     
-    func getLatestWeight() async -> (first: Double, second: Double) {
+    func getLatestWeight() async -> (first: Double, second: Double, firstDate: Date?, secondDate: Date?) {
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
         
         return await withCheckedContinuation { continuation in
             let query = HKSampleQuery(sampleType: weightSampleType, predicate: nil, limit: 2, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if error != nil {
-                    continuation.resume(returning: (first: 0, second: 0))
+                    continuation.resume(returning: (first: 0, second: 0, firstDate: nil, secondDate: nil))
                 } else {
                     var doubleFirstWeight: Double = 0
                     var doubleSecondWeight: Double = 0
+                    var firstDate: Date? = nil
+                    var secondDate: Date? = nil
                     let firstSample = samples?.first as? HKQuantitySample
                     let secondSample = samples?.last as? HKQuantitySample
-                    doubleFirstWeight = firstSample?.quantity.doubleValue(for: .gram()) ?? 0
-                    doubleSecondWeight = secondSample?.quantity.doubleValue(for: .gram()) ?? 0
-                    if doubleFirstWeight != 0 {
+                    if firstSample != nil {
+                        firstDate = firstSample?.startDate
+                        doubleFirstWeight = firstSample?.quantity.doubleValue(for: .gram()) ?? 0
                         doubleFirstWeight = roundDoubleWeight(input: doubleFirstWeight / 1000)
                     }
-                    if doubleSecondWeight != 0 {
+                    if secondSample != nil {
+                        secondDate = secondSample?.startDate
+                        doubleSecondWeight = secondSample?.quantity.doubleValue(for: .gram()) ?? 0
                         doubleSecondWeight = roundDoubleWeight(input: doubleSecondWeight / 1000)
                     }
-                    continuation.resume(returning: (first: doubleFirstWeight, second: doubleSecondWeight))
+                    continuation.resume(returning: (first: doubleFirstWeight, second: doubleSecondWeight, firstDate: firstDate, secondDate: secondDate))
                 }
             }
             healthStore.execute(query)
@@ -506,6 +510,7 @@ class HealthData {
             let weightsToday = await getLatestWeight()
             todayLump.weightToday = weightsToday.first
             todayLump.weightYesterday = weightsToday.second
+            todayLump.lastWeightDate = weightsToday.firstDate
             print("Today: \(todayLump.weightToday.formatted())")
             print("Yesterday: \(todayLump.weightYesterday.formatted())")
             todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))

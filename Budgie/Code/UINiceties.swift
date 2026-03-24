@@ -84,3 +84,59 @@ func getBudgieGreeting() -> String {
     
     return greetingArray.randomElement()!
 }
+
+enum weightUnits: Int {
+    case kilograms = 0
+    case pounds = 1
+    case stonepounds = 2
+}
+
+func kilosToLbs(kilos: Double) -> Double {
+    let result = roundDoubleWeight(input: kilos / 0.454)
+    return result
+}
+
+func kilosToStLbs(kilos: Double) -> (st: Int,lb:Int) {
+    let overallLbs: Int = Int(kilosToLbs(kilos: kilos))
+    let stones = overallLbs / 14
+    let excessLbs = overallLbs % 14
+    return (st: stones,lb: excessLbs)
+}
+
+func renderStLbsAsString(st: Int,lb: Int) -> String {
+    var returnString: String = ""
+    if st != 0 && lb != 0 {
+        if st != 0 {
+            returnString = st.formatted() + "st"
+        }
+        if st != 0 && lb != 0 {
+            returnString += " "
+        }
+        if lb != 0 {
+            returnString += lb.formatted() + "lb"
+        }
+    } else {
+        returnString = "Nil"
+    }
+    return returnString
+}
+
+func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: Bool? = true) -> String {
+    let usedOutputUnit: weightUnits = outputUnit ?? weightUnits(rawValue: settingsObj.weightDisplayUnit)!
+    var returnString: String = ""
+    
+    switch usedOutputUnit {
+        case .kilograms: returnString = roundDoubleWeight(input: kilos).formatted()
+        case .pounds: returnString = roundDoubleWeight(input: kilos / 0.454).formatted()
+        case .stonepounds: returnString = renderStLbsAsString(st: kilosToStLbs(kilos: kilos).st, lb: kilosToStLbs(kilos: kilos).lb)
+    }
+    if includeSuffix != nil && includeSuffix != false {
+        switch usedOutputUnit {
+            case .kilograms: returnString += "kg"
+            case .pounds: returnString += "lbs"
+            case .stonepounds: print("Doing nothing - StLbs can't work without suffix")
+        }
+    }
+    
+    return returnString
+}

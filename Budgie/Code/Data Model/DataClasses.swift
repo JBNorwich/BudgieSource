@@ -21,6 +21,7 @@ class TodayLump: ObservableObject {
     @Published var activitySummary: HKActivitySummary = HKActivitySummary()
     @Published var weightToday: Double = 0
     @Published var weightYesterday: Double = 0
+    @Published var lastWeightDate: Date? = nil
     @Published var averageDeficit: Int = 0
     @Published var yesterdayDeficit: Int = 0
     @Published var lastWeekAvgWeight: Double = 0

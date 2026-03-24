@@ -183,6 +183,11 @@ class UserSettings {
         set { defaults?.set(newValue, forKey: "startWeight") }
     }
     
+    var weightDisplayUnit: Int {
+        get { return defaults?.value(forKey: "weightDisplayUnit") as? Int ?? 0 }
+        set { defaults?.set(newValue, forKey: "weightDisplayUnit")}
+    }
+    
     func dumpToDict() -> [String:Any] {
         var dict: [String:Any] = [:]
         dict["surplusMode"] = self.surplusMode

@@ -17,9 +17,9 @@ struct WeightView: View {
             VStack {
                 Gauge(value: todayLump.weightGoalLeft, in: 0...1) {
                 } currentValueLabel: {
-                    Text(roundDoubleWeight(input: todayLump.weightToday).formatted())
+                    Text(renderWeight(kilos: todayLump.weightToday, includeSuffix: false))
                 } minimumValueLabel: {
-                    Text(settingsObj.weightGoal.formatted())
+                    Text(renderWeight(kilos: settingsObj.weightGoal, includeSuffix: false))
                 } maximumValueLabel: {
                     Text("")
                 }.gaugeStyle(.accessoryCircular)
@@ -32,12 +32,12 @@ struct WeightView: View {
                         if(todayLump.weightToday < todayLump.weightYesterday) {
                             Image(systemName: "arrow.down")
                                 .foregroundStyle(.secondary)
-                            Text(todayLump.lostInDay.formatted())
+                            Text(renderWeight(kilos: todayLump.lostInDay))
                                 .foregroundStyle(.secondary)
                         } else if todayLump.weightToday > todayLump.weightYesterday {
                             Image(systemName: "arrow.up")
                                 .foregroundStyle(.secondary)
-                            Text(todayLump.lostInDay.formatted())
+                            Text(renderWeight(kilos: -todayLump.lostInDay))
                                 .foregroundStyle(.secondary)
                         } else {
                             Image(systemName: "equal.circle")
@@ -65,11 +65,11 @@ struct WeightView: View {
                         HStack {
                             if todayLump.weightTrend > 0 {
                                 //lost weight
-                                Text("\(todayLump.weightTrend.formatted())kg down on last week's average")
+                                Text("\(renderWeight(kilos: todayLump.weightTrend)) down on last week's average")
                                     .foregroundColor(.secondary)
                             } else if todayLump.weightTrend < 0 {
                                 //gained weight
-                                Text("\(todayLump.weightTrend.formatted())kg up on last week's average")
+                                Text("\(renderWeight(kilos: todayLump.weightTrend)) up on last week's average")
                             } else {
                                 Text("No change from last week's average")
                             }
@@ -87,7 +87,7 @@ struct WeightView: View {
                             Text("**On target**")
                                 .foregroundColor(.green)
                         }
-                        Text("Expected \(roundDoubleWeight(input: todayLump.expectedWeightLossAtRealDeficit).formatted())kg")
+                        Text("Expected \(renderWeight(kilos: todayLump.expectedWeightLossAtRealDeficit))")
                             .foregroundColor(.secondary)
                         Text("Real deficit: \(todayLump.realDeficit.formatted())")
                             .foregroundColor(.secondary)

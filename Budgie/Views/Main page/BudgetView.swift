@@ -55,6 +55,7 @@ struct BudgetView: View {
     @State var showWaterSheet: Bool = false
     @State var showingDetail: Bool = false
     @State var showingWeightSheet: Bool = false
+    @State var showingWeightDetail: Bool = false
     
     // this is needed because otherwise it won't update state when returning from settings
     @State var whaleButtonVisible: Bool = false
@@ -130,6 +131,9 @@ struct BudgetView: View {
                             WeightView().environmentObject(todayLump)
                         }.backgroundStyle(.regularMaterial)
                             .frame(minHeight: 100)
+                            .onTapGesture {
+                                showingWeightDetail = true
+                            }
                         
                         if settingsObj.hideTodayInDetail != true {
                             GroupBox(label: Label("Today in detail", systemImage:"sun.max")) {
@@ -341,6 +345,13 @@ struct BudgetView: View {
             Task {
                 await dataStore.updateLump(todayLump: todayLump)
             }
+        }
+        
+        .sheet(isPresented: $showingWeightDetail) {
+            NavigationStack {
+                WeightDetailsSheet()
+                    .environmentObject(todayLump)
+            }.presentationDetents([.medium])
         }
             
         .task() {
