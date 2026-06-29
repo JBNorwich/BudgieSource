@@ -25,6 +25,10 @@
 		D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D840B0282D27F03100AFE471 /* BudgetCap.swift */; };
 		D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF18E2D8C48B900340EE1 /* FitnessView.swift */; };
 		D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1902D8C4F6B00340EE1 /* WaterView.swift */; };
+		D86806EB2FF2CC7F007D6231 /* LICENCE.md in Resources */ = {isa = PBXBuildFile; fileRef = D86806EA2FF2CC7A007D6231 /* LICENCE.md */; };
+		D86806EC2FF2CC7F007D6231 /* LICENCE.md in Resources */ = {isa = PBXBuildFile; fileRef = D86806EA2FF2CC7A007D6231 /* LICENCE.md */; };
+		D86806ED2FF2CC7F007D6231 /* LICENCE.md in Resources */ = {isa = PBXBuildFile; fileRef = D86806EA2FF2CC7A007D6231 /* LICENCE.md */; };
+		D86806EF2FF2D088007D6231 /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = D86806EE2FF2D083007D6231 /* CLAUDE.md */; };
 		D868606D2C7BD0E900730373 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868606C2C7BD0E900730373 /* Tests.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
 		D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A42C73C3FC00138B60 /* BudgieApp.swift */; };
@@ -157,6 +161,8 @@
 		D840B0282D27F03100AFE471 /* BudgetCap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetCap.swift; sourceTree = "<group>"; };
 		D85CF18E2D8C48B900340EE1 /* FitnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessView.swift; sourceTree = "<group>"; };
 		D85CF1902D8C4F6B00340EE1 /* WaterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterView.swift; sourceTree = "<group>"; };
+		D86806EA2FF2CC7A007D6231 /* LICENCE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENCE.md; sourceTree = "<group>"; };
+		D86806EE2FF2D083007D6231 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -314,6 +320,7 @@
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
+				D86806EA2FF2CC7A007D6231 /* LICENCE.md */,
 				D81987E62E4FA1F400ED81A4 /* AppIcon.icon */,
 				D81EAB0C2CA049C000A7F302 /* Budgie-DietWatch-Watch-App-Info.plist */,
 				D89A95B02C84BE3D007796AB /* BudgieWidgetExtension.entitlements */,
@@ -338,6 +345,7 @@
 		D89461A32C73C3FC00138B60 /* Budgie */ = {
 			isa = PBXGroup;
 			children = (
+				D86806EE2FF2D083007D6231 /* CLAUDE.md */,
 				D8E831812C76906900AAF555 /* Info.plist */,
 				D8E831752C74EBCD00AAF555 /* Code */,
 				D8E831682C748DE200AAF555 /* Views */,
@@ -569,6 +577,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				D89461AC2C73C3FD00138B60 /* Preview Assets.xcassets in Resources */,
+				D86806EC2FF2CC7F007D6231 /* LICENCE.md in Resources */,
+				D86806EF2FF2D088007D6231 /* CLAUDE.md in Resources */,
 				D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
 				D83398582C83A0CF00A09CDB /* LaunchScreen.storyboard in Resources */,
 				D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */,
@@ -581,6 +591,7 @@
 			files = (
 				D81987E92E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
 				D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */,
+				D86806ED2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -591,6 +602,7 @@
 			files = (
 				D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
 				D89A95CD2C84F753007796AB /* Preview Assets.xcassets in Resources */,
+				D86806EB2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
