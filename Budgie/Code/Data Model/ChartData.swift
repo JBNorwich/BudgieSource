@@ -263,7 +263,6 @@ class ChartData: ObservableObject {
                 for lump in returnValue {
                     if lump.date == packetDate {
                         lump.activeCals = activeStruct.cals
-                        //lump.totalCals = lump.activeCals + lump.basalCals
                     }
                 }
             }

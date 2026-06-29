@@ -83,7 +83,6 @@ struct TinyMeter: View {
                     .fill(.clear)
                     .stroke(getPathColour().gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
                     .shadow(radius: 10)
-                    .shadow(radius: 5)
                 Text(leftToEat.formatted())
                     .fontWeight(.heavy)
                     .font(.system(size:14))
@@ -114,7 +113,7 @@ struct Provider: TimelineProvider {
             let lump = TodayLump()
             await dataStore.updateLump(todayLump: lump)
             let date = Date()
-            let entry = BudgieEntry(date: date, leftToEat: lump.leftToEat, progressDbl: lump.progressToday, totalBudgRem: lump.totalBudgetRem, totalBudg: lump.totalBudget, projBasal: lump.projectedBasal)
+            let entry = BudgieEntry(date: date, leftToEat: lump.canEatNow, progressDbl: lump.progressToday, totalBudgRem: lump.totalBudgetRem, totalBudg: lump.totalBudget, projBasal: lump.projectedBasal)
             
             let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 30, to: date)!
             

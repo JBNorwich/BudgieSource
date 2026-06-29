@@ -63,7 +63,7 @@ struct MeterView: View {
                     .shadow(radius: 5)
                     .sensoryFeedback(.increase, trigger: todayLump.progressToday)
                 VStack {
-                    Text(getNiceBudgetDisplay(leftToEat: todayLump.leftToEat))
+                    Text(getNiceBudgetDisplay(leftToEat: todayLump.canEatNow))
                         .font(.headline)
                         .minimumScaleFactor(0.01)
                         .scaledToFill()
@@ -78,7 +78,7 @@ struct MeterView: View {
                         .contentTransition(.numericText())
                         .shadow(radius: 5)
                         .foregroundColor(.white)
-                        .sensoryFeedback(.increase, trigger: todayLump.leftToEat)
+                        .sensoryFeedback(.increase, trigger: todayLump.canEatNow)
                         .contentTransition(.numericText())
                 }
             } else {
@@ -121,7 +121,7 @@ struct MeterView: View {
                 }
             }
         
-            .onChange(of: todayLump.leftToEat) {
+            .onChange(of: todayLump.canEatNow) {
                 withAnimation {
                     displayedTime = getPercentOfDayDone()
                     pathColour = todayLump.getPathColour()

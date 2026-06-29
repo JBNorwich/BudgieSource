@@ -15,140 +15,141 @@
 
 import Foundation
 
+// This file contains various functions which are used to simplify date handling across Budgie Diet, rather than calling
+// the relevant built in Swift functions over and over again, and to make the intent clearer. it also contains functions
+// relating to the weighting of various bits of the user's budget.
+
+// For purposes relating to UI, where no time is shown, a date is treated as midnight on that date.
+
+/// Returns the start of the day for the date passed. Simple wrapper for calendar.startOfDay.
 func getStartOfDay(date: Date) -> Date {
     let calendar = NSCalendar.current
     return calendar.startOfDay(for: date)
 }
 
+/// Returns midnight on the day before the date passed. For example, if you passed this function 19:02 on the 29th June, this would return 00:00 on the 28th June.
 func getMidnightOnDayBefore(date: Date) -> Date {
     let calendar = NSCalendar.current
     return calendar.startOfDay(for: calendar.date(byAdding: .day, value: -1, to: date)!)
 }
 
+/// Returns half an hour before the Date() passed.
 func getHalfHourBefore(date: Date) -> Date {
     let calendar = NSCalendar.current
     return calendar.date(byAdding: .minute, value: -30, to: date)!
 }
 
+/// Returns midnight on the day after the date passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 30th June.
 func getMidnightOnDayAfter(date: Date) -> Date {
     let calendar = NSCalendar.current
     return calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: date)!)
 }
 
+/// Returns midnight on the date 7 days before the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 22nd June.
 func getWeekBeforeDate(date: Date) -> Date {
     let calendar = NSCalendar.current
     return calendar.startOfDay(for: calendar.date(byAdding: .day, value: -7, to: date)!)
 }
 
+/// Returns midnight on the date 7 days after the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 6th July.
 func getWeekAfterDate(date: Date) -> Date {
     let calendar = NSCalendar.current
     return calendar.startOfDay(for: calendar.date(byAdding: .day, value: 7, to: date)!)
 }
 
+/// Returns the number of minutes that have passed in the current day. Will return 0 at midnight.
 func minutesIntoDay() -> Int {
     let date = Date()
     let calendar = Calendar.current
     return (60 * calendar.component(.hour, from: date)) + calendar.component(.minute, from: date)
 }
 
+/// Returns the day of the week in Int format.
 func getDayOfWeek() -> Int {
     let calendar = NSCalendar.current
     return calendar.dateComponents([.weekday], from: Date()).weekday!
 }
 
+/// Returns the hour number of the current time. For example, if passed 19:02 on the 29th June, would return 19.
 func getHoursOfTime(date: Date) -> Int {
     let calendar = Calendar.current
     return calendar.component(.hour, from: date)
 }
 
+/// Returns a simple Double() percentage of the minutes out of the 1,440 that there are in a day.
 func getPercentOfDayDone() -> Double {
     return Double(minutesIntoDay()) / 1440
 }
 
+/// Used to weight a number which becomes more certain as a day progresses, with full certainty at 8pm.
 func weightForCertainty(input: Int) -> Int {
     var factor: Double = (Double(minutesIntoDay()) + 1) / 1200
     if factor > 1 {  factor = 1 }
     return Int(Double(input) * factor)
 }
 
-func weightLeftToEat(input: Int) -> Int {
-    var factor = Double()
+/// Used to weight the user's "left to eat" figure based on the time into the day and the closeness to the user's set "final meal time". Weights more generously the closer to final meal time it is.
+func weightCanEatNow(input: Int) -> Int {
+    var factor = Double(minutesIntoDay() + 1)/Double(settingsObj.finalMealTime)
     
-    let minsToWeightTo = Double(settingsObj.finalMealTime)
-    let minsToWeightFrom: Double = 240
-    let minsToWeight: Double = Double(minutesIntoDay() + 1) - minsToWeightFrom
-    let diff = minsToWeightTo - minsToWeightFrom
-    
-    if minsToWeight < 0 {
-        factor = 0
-    } else {
-        factor = minsToWeight/diff
-    }
-    if factor > 1 {  factor = 1 }
+    if factor > 1 { factor = 1 }
+    else { factor = factor * factor }
     return Int(Double(input) * factor)
 }
 
-func weightActiveProjection(input: Int, style: Int?, timeInput: Int?, actQuot: Double) -> Int {
-    var doubleInput = Double(input)
-    var usedActQuot: Double = actQuot
-    var styleToUse: Int
-    var time: Double
-    if style != nil {
-        styleToUse = style!
+/// Return the weighting style to use based on the user's settings.
+func getWeightingStyle() -> Int {
+    if settingsObj.differentWeights != true {
+        return settingsObj.weightingStyle
     } else {
-        if settingsObj.differentWeights != true {
-            styleToUse = settingsObj.weightingStyle
-        } else {
-            switch getDayOfWeek() {
-                case 1: styleToUse = settingsObj.sunWeight
-                case 2: styleToUse = settingsObj.monWeight
-                case 3: styleToUse = settingsObj.tuesWeight
-                case 4: styleToUse = settingsObj.wedsWeight
-                case 5: styleToUse = settingsObj.thursWeight
-                case 6: styleToUse = settingsObj.friWeight
-                case 7: styleToUse = settingsObj.satWeight
-                default: styleToUse = settingsObj.weightingStyle
-            }
+        switch getDayOfWeek() {
+            case 1: return settingsObj.sunWeight
+            case 2: return settingsObj.monWeight
+            case 3: return settingsObj.tuesWeight
+            case 4: return settingsObj.wedsWeight
+            case 5: return settingsObj.thursWeight
+            case 6: return settingsObj.friWeight
+            case 7: return settingsObj.satWeight
+            default: return settingsObj.weightingStyle
         }
     }
+}
+
+/// Project the user's active calories. Style and timeInput are optional, if not given then the user default's and the minutes into the day now will be used respectively.
+func weightActiveProjection(input: Int, style: Int = getWeightingStyle(), timeInput: Int = minutesIntoDay(), actQuot: Double) -> Int {
+    var doubleInput = Double(input)
+    var usedActQuot: Double = actQuot
+    let time: Double = Double(timeInput)
     
-    if timeInput != nil {
-        time = Double(timeInput!)
-    } else {
-        time = Double(minutesIntoDay())
-    }
-    
-    var startTime: Double
-    var stopTime: Double
+    var startTime: Double = 0
+    var stopTime: Double = 1440
     var weightTime: Double
     var weightFactor: Double
     var finalWeightFactor: Double
     
-    switch styleToUse {
-        case -1: doubleInput = 1 * doubleInput //forgiving
-        case 0: doubleInput = 0.5 * doubleInput //default
-        case 1: doubleInput = 0.25 * doubleInput //harsh
-        case 3: doubleInput = 0.875 * doubleInput // old default
-        default: print("Doing nothing")
-    }
-    
-    switch styleToUse {
-        case -2: usedActQuot = 1
-        case -1: usedActQuot = 1 //forgiving
-        case 3: usedActQuot = 1
-        default: print("Doing nothing")
-    }
-    
-    switch styleToUse {
-        case -1: startTime = 240
-        default: startTime = 0
-    }
-    switch styleToUse {
-        case -1: stopTime = 1440
-        case 0: stopTime = 1320
-        case 1: stopTime = 1320
-        case 3: stopTime = 1320
-        default: stopTime = 1440
+    if style == -2 {
+        // Don't weight down predictions at all
+        usedActQuot = 1
+    } else if style == -1 {
+        // Forgiving
+        doubleInput = 1 * doubleInput
+        usedActQuot = 1
+        startTime = 240
+    } else if style == 0 {
+        // Default
+        doubleInput = 0.5 * doubleInput
+        stopTime = 1320
+    } else if style == 1 {
+        // Harsh
+        doubleInput = 0.25 * doubleInput
+        stopTime = 1320
+    } else if style == 2 {
+        // Don't make any predictions of anything
+    } else if style == 3 {
+        // The old default
+        doubleInput = 0.875 * doubleInput
+        usedActQuot = 1
+        stopTime = 1320
     }
 
     if time < startTime {
@@ -157,12 +158,12 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?, actQuot: D
         weightTime = time
     }
     
-    switch styleToUse {
+    switch style {
         case 2: weightFactor = 0
         default: weightFactor = weightTime/stopTime
     }
     
-    switch styleToUse {
+    switch style {
         case -2: finalWeightFactor = 1
         case -1: finalWeightFactor = 1 - pow(weightFactor, 5)
         case 0: finalWeightFactor = 1 - pow(weightFactor, 2)
@@ -180,6 +181,7 @@ func weightActiveProjection(input: Int, style: Int?, timeInput: Int?, actQuot: D
     }
 }
 
+/// Returns true if the date received is on a day after today.
 func isAfterToday(date: Date) -> Bool
 {
     if date > getMidnightOnDayAfter(date: Date()) {
@@ -189,6 +191,7 @@ func isAfterToday(date: Date) -> Bool
     }
 }
 
+/// Returns the current time of day on the date passed. For instance, if passed 19:02 on the 29th June, but it is 16:45, it will return 16:45 on the 29th June.
 func getCurrentTimeonDate(date: Date) -> Date {
     let calendar = Calendar.current
     let currentTime = Date()
@@ -207,6 +210,7 @@ func getCurrentTimeonDate(date: Date) -> Date {
 }
 
 extension Calendar {
+    /// Returns the number of days between two dates.
     func numberOfDaysBetween(_ from: Date, and to: Date) -> Int {
         let fromDate = startOfDay(for: from) // <1>
         let toDate = startOfDay(for: to) // <2>
@@ -216,6 +220,7 @@ extension Calendar {
     }
 }
 
+/// Returns the negation of a number. Needed for extremely dumb SwiftUI related reasons.
 func negate(value: Int) -> Int {
     return -value
 }

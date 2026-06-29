@@ -37,6 +37,7 @@ class TodayLump: ObservableObject {
     
     var budgetAtCap: Bool = false
     var budgetAtMin: Bool = false
+    var budgetNil: Bool = false
     
     // food data
     @Published var mealList: [Meal] = []
@@ -53,102 +54,20 @@ class TodayLump: ObservableObject {
     @Published var updateInProgress: Bool = false
     @Published var lastUpdate: Date = Date()
     
-    var weightToGo: Double {
-        if settingsObj.weightGoal != 0 && self.weightToday != 0
-        {
-            if self.weightToday <= settingsObj.weightGoal {
-                return 0
-            } else {
-                return weightToday - settingsObj.weightGoal
-            }
-        } else {
-            return 0
-        }
-    }
-    
-    var lostInDay: Double {
-        return self.weightYesterday - self.weightToday
-    }
-    
-    // return the percentage of the weight goal that is left to achieve
-    var weightGoalLeft: Double {
-        if settingsObj.weightGoal != 0 && settingsObj.startWeight != 0 && self.weightToday != 0 {
-            let totalToLose: Double = settingsObj.startWeight - settingsObj.weightGoal
-            let actLost: Double = settingsObj.startWeight - self.weightToday
-            let percentLost: Double = actLost/totalToLose
-            return 1 - percentLost
-        } else {
-            return 0
-        }
-    }
-    
-    // returns weight lost as difference between last week's average weight, and the weight today
-    var weightTrend: Double {
-        return self.lastWeekAvgWeight - self.weightToday
-    }
-    
-    // return the days as an int that it will take to get to next weight goal, based on a real average deficit adjusted for real performance
-    var daysToWeightGoal: Int {
-        let days = getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
-        return days
-    }
-
-    var daysToGoalAtPlanned: Int {
-        return getDaysToLose(weight: self.weightToGo, deficit: settingsObj.desiredDeficit)
-    }
-    
-    // difference between days to weight goal at current trend and days as calculated from desired deficit.
-    // positive: taking longer than plannedß
-    // negative: taking less time than planned
-    var diffDays: Int {
-        return daysToWeightGoal - daysToGoalAtPlanned
-    }
-    
-    // negative = deficit not big enough
-    // positive = deficit bigger than desired
-    var diffBetweenAvgDeficitandDesired: Int {
-        return self.averageDeficit - settingsObj.desiredDeficit
-    }
-    
-    // how much weight would be expected to be lost at current deficit. Positive figure
-    var expectedWeightLossAtRealDeficit: Double {
-        let totalDeficit = self.averageDeficit * 7
-        let kilosExpected: Double = Double(totalDeficit) / 7700
-        return roundDoubleWeight(input: kilosExpected)
-    }
-    
-    // how expected weight loss measuresagainst the expected
-    var performanceAgainstWeightTrend: Double {
-        let expected = self.expectedWeightLossAtRealDeficit
-        let actual = self.weightTrend
-        // if result is > 1: weight loss above expectation
-        // if result is < 1: weight loss below expectation
-        let result = actual/expected
-        return result
-    }
-    
-    var realDeficit: Int {
-        if self.averageDeficit <= 0 {
-            return 0
-        } else {
-            let doubleCalc = Double(self.averageDeficit) * self.performanceAgainstWeightTrend
-            if doubleCalc.isFinite == true && doubleCalc.isNaN == false {
-                return Int(doubleCalc)
-            } else {
-                return 0
-            }
-        }
-    }
-    
-    // Calculating functions
+    // CALCULATED BUDGET VARIABLES
+    /// The user's calculated budget, taking into account their current and predicted caloric burn.
     var totalBudget: Int {
-        var budget: Int = 0
+        var budget: Int
+        
+        // If the user's total caloric burn less their desired deficit is more than -1, return it. Otherwise, set the budget to the lower bound and flag it. (We'll clean this up later when we implement the hard bottom.)
         if self.totalProjCalories - self.desiredDeficit > -1 {
             budget = self.totalProjCalories - self.desiredDeficit
         } else {
-            budget = 0
+            budgetNil = true
+            budget = 1200
         }
         
+        // Budget capping. If the user has turned on budget capping, and the calculated budget above is above the cap, set the budget to the cap and toggle the flag.
         if settingsObj.capBudget == true && budget > settingsObj.capBudgetCals {
             budget = settingsObj.capBudgetCals
             self.budgetAtCap = true
@@ -156,6 +75,7 @@ class TodayLump: ObservableObject {
             self.budgetAtCap = false
         }
         
+        // Budget minimum to prevent the user from being given a budget that is unsustainably low, either deliberately or through a failure of HealthKit.
         if budget < 1200 {
             budget = 1200
             self.budgetAtMin = true
@@ -166,8 +86,9 @@ class TodayLump: ObservableObject {
         return budget
     }
     
+    /// The "real" budget that would be calculated if the budget was not capped. Only relevant if the user has turned on capping; otherwise this will just return whatever the budget is.
     var realBudget: Int {
-        var budget: Int = 0
+        var budget: Int
         
         if self.totalProjCalories - self.desiredDeficit > -1 {
             budget = self.totalProjCalories - self.desiredDeficit
@@ -182,27 +103,32 @@ class TodayLump: ObservableObject {
         return budget
     }
     
+    /// The amount that has been knocked off the user's budget because of the cap.
     var budgetOverCap: Int {
         return settingsObj.capBudgetCals - self.realBudget
     }
     
-    var progressTodayInt: Int {
-        var progress = self.progressTodayAsWholePercent
-        if progress > 100 { progress = 100 }
-        return Int(progress)
-    }
+//    // Doesn't appear to be used by anything. Pointless. Why did I code this?
+//    var progressTodayInt: Int {
+//        var progress = self.progressTodayAsWholePercent
+//        if progress > 100 { progress = 100 }
+//        return Int(progress)
+//    }
     
+    /// The total amount remaining to eat from the user's budget.
     var totalBudgetRem: Int {
         return self.totalBudget - self.eatenCalories
     }
+
+//      // Another variable I made that isn't read by anything. Yay!
+//    var totalCaloriesOut: Int {
+//        return self.activeCalories + self.basalCalories
+//    }
     
-    var totalCaloriesOut: Int {
-        return self.activeCalories + self.basalCalories
-    }
-    
-    var leftToEat: Int {
+    /// The amount that the user can eat now, as weighted against their last meal time.
+    var canEatNow: Int {
         if self.totalBudget != 0 {
-            return weightLeftToEat(input: self.totalBudget) - self.eatenCalories
+            return weightCanEatNow(input: self.totalBudget) - self.eatenCalories
         } else {
             return 0
         }
@@ -212,6 +138,7 @@ class TodayLump: ObservableObject {
         return self.activeCalories + self.basalCalories + self.projectedActive + self.projectedBasal
     }
     
+    /// The percentage of the user's calorie budget that they have eaten.
     var progressToday: Double {
         if self.totalBudget != 0 {
             return (Double(self.eatenCalories) / Double(self.totalBudget))
@@ -225,7 +152,7 @@ class TodayLump: ObservableObject {
     }
     
     var currentTarget: Int {
-        return weightLeftToEat(input: self.totalBudget)
+        return weightCanEatNow(input: self.totalBudget)
     }
     
     var progressAgainstTarget: Double {
@@ -296,13 +223,13 @@ class TodayLump: ObservableObject {
     func getBlobColour() -> Color
     {
         var returnColor: Color = .teal
-        if self.leftToEat < -49
+        if self.canEatNow < -49
         {
             switch settingsObj.surplusMode {
             case true: returnColor = .green
             case false : returnColor = .red
             }
-        } else if self.leftToEat < 50 {
+        } else if self.canEatNow < 50 {
             switch settingsObj.surplusMode {
             case true: returnColor = .red
             case false: returnColor = .green
@@ -313,11 +240,11 @@ class TodayLump: ObservableObject {
     
     var normalisedLTE: String {
         var valueReturned: Int = 0
-        if self.leftToEat < 0
+        if self.canEatNow < 0
         {
-            valueReturned = -self.leftToEat
+            valueReturned = -self.canEatNow
         } else {
-            valueReturned = self.leftToEat
+            valueReturned = self.canEatNow
         }
         return valueReturned.formatted()
     }
@@ -346,7 +273,92 @@ class TodayLump: ObservableObject {
         }
     }
     
+    // WEIGHT RELATED CALCULATED VARIABLES
+    /// The amount of weight that the user has to go, as a Double reflecting kilograms, in order to meet their goal.
+    var weightToGo: Double {
+        if settingsObj.weightGoal != 0 && self.weightToday != 0
+        {
+            if self.weightToday <= settingsObj.weightGoal {
+                return 0
+            } else {
+                return weightToday - settingsObj.weightGoal
+            }
+        } else {
+            return 0
+        }
+    }
     
+    /// The amount of weight that the user has lost, in kilograms as a Double.
+    var lostInDay: Double {
+        return self.weightYesterday - self.weightToday
+    }
+    
+    /// The percentage of the user's weight goal to go, against their start weight.
+    var weightGoalLeft: Double {
+        if settingsObj.weightGoal != 0 && settingsObj.startWeight != 0 && self.weightToday != 0 {
+            let totalToLose: Double = settingsObj.startWeight - settingsObj.weightGoal
+            let actLost: Double = settingsObj.startWeight - self.weightToday
+            let percentLost: Double = actLost/totalToLose
+            return 1 - percentLost
+        } else {
+            return 0
+        }
+    }
+    
+    /// The user's weight lost as the difference between last week's average weight, and the weight today, in kilograms.
+    var weightTrend: Double {
+        return self.lastWeekAvgWeight - self.weightToday
+    }
+    
+    /// The number of days (as an Int) that it will take the user to get to their next weight goal, based on a real average deficit adjusted for real performance
+    var daysToWeightGoal: Int {
+        let days = getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
+        return days
+    }
+
+    /// The number of days (as an Int) that it would take the user to get to their next weight goal, as a rough calculation based on their expressed desired deficit.
+    var daysToGoalAtPlanned: Int {
+        return getDaysToLose(weight: self.weightToGo, deficit: settingsObj.desiredDeficit)
+    }
+    
+    /// The difference between the days to the user's weight goal at current trend, and days as calculated from their desired deficit. If positive, it is taking the user longer than planned (i.e. more days to goal); if negative, it is taking the user less time than planned (i.e. fewer days to goal.)
+    var diffDays: Int {
+        return daysToWeightGoal - daysToGoalAtPlanned
+    }
+    
+    /// The difference between the user's average caloric deficit, and the desired deficit they've set. If this is negative, their deficit is less than they planned; if positive, the opposite.
+    var diffBetweenAvgDeficitandDesired: Int {
+        return self.averageDeficit - settingsObj.desiredDeficit
+    }
+    
+    /// How much weight would be expected to be lost at the users's current real deficit. If this is positive, the user is expected to lose weight; if negative, gain.
+    var expectedWeightLossAtRealDeficit: Double {
+        let totalDeficit = self.averageDeficit * 7
+        let kilosExpected: Double = Double(totalDeficit) / 7700
+        return roundDoubleWeight(input: kilosExpected)
+    }
+    
+    /// How the user's weight loss (as recorded via HealthKit) is against what would be expected based on their deficits as recorded in Budgie Diet. If the result is above 1, the weight loss is above expectations; if the result is below 1, it's below what would be expected.
+    var performanceAgainstWeightTrend: Double {
+        let expected = self.expectedWeightLossAtRealDeficit
+        let actual = self.weightTrend
+        let result = actual/expected
+        return result
+    }
+    
+    /// What the user's "actual" caloric deficit is, based on their weight loss performance.
+    var realDeficit: Int {
+        if self.averageDeficit <= 0 {
+            return 0
+        } else {
+            let doubleCalc = Double(self.averageDeficit) * self.performanceAgainstWeightTrend
+            if doubleCalc.isFinite == true && doubleCalc.isNaN == false {
+                return Int(doubleCalc)
+            } else {
+                return 0
+            }
+        }
+    }
 }
 
 struct calorieChartData: Identifiable {
