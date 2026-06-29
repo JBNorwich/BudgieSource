@@ -16,10 +16,9 @@
 import AppIntents
 
 struct LogQuickCaloriesIntent: AppIntent {
+    // Logs calories to the "Snacks/Other" meal
     static var title: LocalizedStringResource = "Log quick calories"
-    
     static var description = IntentDescription("Logs calories to Budgie Diet as a snack.")
-    
     static var openAppWhenRun: Bool = false
     
     @Parameter(title: "Calories", requestValueDialog: "The number of calories to log.")
@@ -39,6 +38,8 @@ struct LogQuickCaloriesIntent: AppIntent {
             calsToLog = try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?"))
         }
         
+        // Right now there's no more graceful means of knowing what the UUID is for "Snacks/Other" other than this.
+        // I'm going to try and put something more elegant in for this in the future, but right now, this works.
         let snacksUUID = await dataStore.calorieActor.getMealUUIDbyName(name: "Snacks/Other")
         await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: snacksUUID)
         
@@ -47,10 +48,9 @@ struct LogQuickCaloriesIntent: AppIntent {
 }
 
 struct LogFoodIntent: AppIntent {
+    // Logs custom food with a proper narrative into a meal of the user's choice
     static var title: LocalizedStringResource = "Log food"
-    
     static var description = IntentDescription("Logs food to a meal in Budgie Diet.")
-    
     static var openAppWhenRun: Bool = false
     
     @Parameter(title: "Calories", requestValueDialog: "The number of calories to log.")
@@ -84,11 +84,10 @@ struct LogFoodIntent: AppIntent {
             narrativeToLog = try await $narrative.requestValue(.init(stringLiteral: "What did you eat?"))
         }
         
-        if meal != nil {
-            print("Doing nothing")
-        } else {
+        if meal == nil {
             meal = try await $meal.requestValue(.init(stringLiteral: "What meal should this be logged to?"))
         }
+        
         await dataStore.addCalories(calories: calsToLog, narrative: narrativeToLog, date: Date(), meal: meal.id)
         
         return .result()
