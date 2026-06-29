@@ -18,22 +18,18 @@ import SwiftData
 import HealthKit
 
 @Model final class WaterEntry {
+    // Class used by the model for a single entry of hydration into the app
+    
     var id: UUID = UUID()
     var date: Date = Date()
     var quantity: Int = 0
     var healthKitUUID: UUID?
     
-    init(date: Date?, quantity: Int, healthKitUUID: UUID?) {
+    init(quantity: Int, healthKitUUID: UUID? = nil, date: Date? = Date()) {
         self.id = UUID()
-        if date != nil {
-            self.date = date!
-        } else {
-            self.date = Date()
-        }
+        self.date = date!
         self.quantity = quantity
-        if healthKitUUID != nil {
-            self.healthKitUUID = healthKitUUID
-        }
+        self.healthKitUUID = healthKitUUID
     }
 }
 
@@ -43,6 +39,16 @@ import HealthKit
             modelContext.insert(object)
             try modelContext.save()
         } catch {
+            // check to see if the water object saved to HealthKit and if so, bin it so we don't have orphans floating around
+            if object.healthKitUUID != nil {
+                Task {
+                    if healthStore.authorizationStatus(for: waterQuantityType) == HKAuthorizationStatus.sharingAuthorized {
+                        let hkUUIDPredicate = HKQuery.predicateForObjects(with: [object.healthKitUUID!])
+                        
+                        try await healthStore.deleteObjects(of: waterQuantityType, predicate: hkUUIDPredicate)
+                    }
+                }
+            }
             print("Water insertion error: \(error)")
         }
     }
@@ -68,6 +74,8 @@ import HealthKit
     }
     
     func getTotalOnDate(date: Date) async -> Int {
+        // pull total water on date given from the Budgie Diet model
+        
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
         let searchPredicate = #Predicate<WaterEntry> { entry in
@@ -77,10 +85,11 @@ import HealthKit
         return await withCheckedContinuation { continuation in
             do {
                 let returns = try modelContext.fetch(descriptor)
-                var sum: Int = 0
+
                 if returns.count == 0 {
-                    continuation.resume(returning: sum)
+                    continuation.resume(returning: 0)
                 } else {
+                    var sum: Int = 0
                     for entry in returns {
                         sum = sum + entry.quantity
                     }
@@ -93,6 +102,8 @@ import HealthKit
     }
     
     func getEntriesOnDate(date: Date) async -> [WaterEntry] {
+        // retrieve the water entries on a date
+        
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
         let searchPredicate = #Predicate<WaterEntry> { entry in

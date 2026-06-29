@@ -355,7 +355,7 @@ class HealthData {
                 //errorhandling
             }
         }
-        let newWaterObj = WaterEntry(date: datetime, quantity: amount, healthKitUUID: hkUUID ?? nil)
+        let newWaterObj = WaterEntry(quantity: amount, healthKitUUID: hkUUID ?? nil, date: datetime)
         await waterActor.addWater(object: newWaterObj)
     }
     
@@ -431,8 +431,8 @@ class HealthData {
     }
     
     func getWaterOnDate(date: Date) async -> (hk: Int, bd: Int) {
-        var hk: Int = 0
-        var bd: Int = 0
+        var waterTotalInHealthKit: Int = 0
+        var waterTotalInBudgie: Int = 0
         
         let startDate = getStartOfDay(date: date)
         let endDate = getMidnightOnDayAfter(date: startDate)
@@ -448,17 +448,17 @@ class HealthData {
             do {
                 let queryResult = try await query.result(for: healthStore)?.sumQuantity()
                 let ml = queryResult?.doubleValue(for: HKUnit.literUnit(with: .milli)) ?? 0
-                hk = Int(ml)
+                waterTotalInHealthKit = Int(ml)
             } catch {
-                hk = 0
+                waterTotalInHealthKit = 0
             }
         } catch {
-            hk = 0
+            waterTotalInHealthKit = 0
         }
         
-        bd = await waterActor.getTotalOnDate(date: date)
+        waterTotalInBudgie = await waterActor.getTotalOnDate(date: date)
         
-        return (hk, bd)
+        return (waterTotalInHealthKit, waterTotalInBudgie)
     }
     
     @MainActor func updateLump(todayLump: TodayLump) async {

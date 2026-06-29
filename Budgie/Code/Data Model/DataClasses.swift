@@ -132,8 +132,11 @@ class TodayLump: ObservableObject {
             return 0
         } else {
             let doubleCalc = Double(self.averageDeficit) * self.performanceAgainstWeightTrend
-            print ("Adjusted from \(self.averageDeficit) to \(Int(doubleCalc).formatted())")
-            return Int(doubleCalc)
+            if doubleCalc.isFinite == true && doubleCalc.isNaN == false {
+                return Int(doubleCalc)
+            } else {
+                return 0
+            }
         }
     }
     
