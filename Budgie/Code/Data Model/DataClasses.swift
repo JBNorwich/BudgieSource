@@ -22,7 +22,6 @@ class TodayLump: ObservableObject {
     @Published var activeCalories: Int = 0
     @Published var basalCalories: Int = 0
     @Published var eatenCalories: Int = 0
-    @Published var desiredDeficit: Int = 0
     @Published var projectedActive: Int = 0
     @Published var projectedBasal: Int = 0
     @Published var waterToday: Int = 0
@@ -60,8 +59,8 @@ class TodayLump: ObservableObject {
         var budget: Int
         
         // If the user's total caloric burn less their desired deficit is more than -1, return it. Otherwise, set the budget to the lower bound and flag it. (We'll clean this up later when we implement the hard bottom.)
-        if self.totalProjCalories - self.desiredDeficit > -1 {
-            budget = self.totalProjCalories - self.desiredDeficit
+        if self.totalProjCalories - settingsObj.desiredDeficit > -1 {
+            budget = self.totalProjCalories - settingsObj.desiredDeficit
         } else {
             budgetNil = true
             budget = 1200
@@ -90,8 +89,8 @@ class TodayLump: ObservableObject {
     var realBudget: Int {
         var budget: Int
         
-        if self.totalProjCalories - self.desiredDeficit > -1 {
-            budget = self.totalProjCalories - self.desiredDeficit
+        if self.totalProjCalories - settingsObj.desiredDeficit > -1 {
+            budget = self.totalProjCalories - settingsObj.desiredDeficit
         } else {
             budget = 0
         }

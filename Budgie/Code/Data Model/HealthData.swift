@@ -379,26 +379,6 @@ class HealthData {
         }
     }
     
-//    func getWaterToday() async -> Int {
-//        do {
-//            let todayPredicate = getTodayPredicate()
-//            let waterToday = HKSamplePredicate.quantitySample(type: waterQuantityType, predicate: todayPredicate)
-//            let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
-//                let sumWaterQuery = HKStatisticsQueryDescriptor(predicate: waterToday, options: .cumulativeSum)
-//                continuation.resume(returning: sumWaterQuery)
-//            }
-//            do {
-//                let queryResult = try await query.result(for: healthStore)?.sumQuantity()
-//                let ml = queryResult?.doubleValue(for: HKUnit.literUnit(with: .milli)) ?? 0
-//                return Int(ml)
-//            } catch {
-//                return 0
-//            }
-//        } catch {
-//            return 0
-//        }
-//    }
-    
     func getWaterOnDate(date: Date) async -> (hk: Int, bd: Int) {
         var waterTotalInHealthKit: Int = 0
         var waterTotalInBudgie: Int = 0
@@ -430,9 +410,14 @@ class HealthData {
         return (waterTotalInHealthKit, waterTotalInBudgie)
     }
     
+    /// Main function that updates the "todayLump" that contains up to the minute data and underpins the main screen.
     @MainActor func updateLump(todayLump: TodayLump) async {
+        // Don't do anything if the lump is already being updated, to prevent conflicts.
         if todayLump.updateInProgress == false {
+            // Turn on the "updating" flag to prevent conflicts
             todayLump.updateInProgress = true
+            
+            // Set up date variables for ease
             let today = Date()
             let todayStart = getStartOfDay(date: today)
             let todayEnd = getMidnightOnDayAfter(date: todayStart)
@@ -445,6 +430,7 @@ class HealthData {
             todayLump.foodList = await calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
             todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
             
+            // Calculate meal totals for the food list on the main page
             for meal in todayLump.mealList {
                 var sum: Int = 0
                 for food in todayLump.foodList where food.meal == meal.mealUUID {
@@ -453,20 +439,11 @@ class HealthData {
                 todayLump.mealTotalList[meal.mealUUID] = sum
             }
             
-            todayLump.desiredDeficit = settingsObj.desiredDeficit
+            // Pull in projected basal and active calories
             todayLump.projectedBasal = await getProjBasalCalories()
             todayLump.projectedActive = await getProjActiveCalories()
-            let weightsToday = await getLatestWeight()
-            todayLump.weightToday = weightsToday.first
-            todayLump.weightYesterday = weightsToday.second
-            todayLump.lastWeightDate = weightsToday.firstDate
-            print("Today: \(todayLump.weightToday.formatted())")
-            print("Yesterday: \(todayLump.weightYesterday.formatted())")
-            todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))
-            todayLump.averageDeficit = await getAverageDeficitForPastWeek()
-            todayLump.lastWeekAvgWeight = await getAverageWeight(from: weekBeforeYesterday, to: todayEnd)
-            todayLump.prevWeekAvgWeight = await getAverageWeight(from: weekBeforeWeekBeforeYesterday, to: getWeekBeforeDate(date: todayEnd))
             
+            // Pull in actual basal and active calories
             let recBasalCalories = await pullCalorieTotalForDate(date: today, type: basalQuantityType, hkOnly: true)
             let recActiveCalories = await pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
 
@@ -485,8 +462,21 @@ class HealthData {
                 todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
             }
             
+            // Obtaining weight information
+            let weightsToday = await getLatestWeight()
+            todayLump.weightToday = weightsToday.first
+            todayLump.weightYesterday = weightsToday.second
+            todayLump.lastWeightDate = weightsToday.firstDate
+            todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))
+            todayLump.averageDeficit = await getAverageDeficitForPastWeek()
+            todayLump.lastWeekAvgWeight = await getAverageWeight(from: weekBeforeYesterday, to: todayEnd)
+            todayLump.prevWeekAvgWeight = await getAverageWeight(from: weekBeforeWeekBeforeYesterday, to: getWeekBeforeDate(date: todayEnd))
+            
+            // Pull in water
             let waterDetails = await getWaterOnDate(date: todayStart)
             todayLump.waterToday = waterDetails.bd + waterDetails.hk
+            
+            // Get user's Activity Rings
             todayLump.activitySummary = await getActivitySummary()
 
             todayLump.lastUpdate = Date()
@@ -494,6 +484,7 @@ class HealthData {
         }
     }
     
+    /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, or new water entries.
     func setUpObserverQueries(todayLump: TodayLump) {
         let activeQuery = HKObserverQuery(sampleType: activeQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
             if errorOrNil != nil {
