@@ -52,11 +52,11 @@ struct LogFoodIntent: AppIntent {
     var narrative: String!
     
     @Parameter(title: "Meal", requestValueDialog: "The meal to log to.", optionsProvider: MealOptionsProvider())
-    var meal: Meal!
+    var meal: MealEntity!
     
     private struct MealOptionsProvider: DynamicOptionsProvider {
-        func results() async throws -> [Meal] {
-            return await dataStore.calorieActor.getListOfMeals()
+        func results() async throws -> [MealEntity] {
+            return try await StructMealQuery().suggestedEntities()
         }
     }
     
@@ -81,7 +81,7 @@ struct LogFoodIntent: AppIntent {
         } else {
             meal = try await $meal.requestValue(.init(stringLiteral: "What meal should this be logged to?"))
         }
-        await dataStore.addCalories(calories: calsToLog, narrative: narrativeToLog, date: Date(), meal: meal.mealUUID)
+        await dataStore.addCalories(calories: calsToLog, narrative: narrativeToLog, date: Date(), meal: meal.id)
         
         return .result()
     }
@@ -125,7 +125,7 @@ struct LogFoodShortcuts: AppShortcutsProvider {
                 phrases: [
                     "Log quick calories with \(.applicationName)"
                 ],
-                shortTitle: "Log quick calories with Budgie Diet",
+                shortTitle: "Log quick calories",
                 systemImageName: "fork.knife"
             )
             AppShortcut(
@@ -133,7 +133,7 @@ struct LogFoodShortcuts: AppShortcutsProvider {
                 phrases: [
                     "Log water with \(.applicationName)"
                 ],
-                shortTitle: "Log water with Budgie Diet",
+                shortTitle: "Log water",
                 systemImageName: "drop.fill"
             )
             AppShortcut(
@@ -141,7 +141,7 @@ struct LogFoodShortcuts: AppShortcutsProvider {
                 phrases: [
                     "Log food with \(.applicationName)"
                 ],
-                shortTitle: "Log food with Budgie Diet",
+                shortTitle: "Log food",
                 systemImageName: "fork.knife"
             )
         }

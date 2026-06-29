@@ -66,36 +66,6 @@
             endingLineNumber = "152"
             landmarkName = "delete(at:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "29E5ECCA-3C61-4339-ABCE-2D11D97459DB - 6fa9897462847a2c"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(2) suspend resume partial function for function signature specialization &lt;Arg[2] = Value Promoted from Box&gt; of closure #1 () async -&gt; () in Budgie_Diet.FoodHub.delete(at: Foundation.IndexSet) -&gt; ()"
-                  moduleName = "Budgie Diet.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/joe/Library/Mobile%20Documents/com~apple~CloudDocs/Xcode%20Twids/Budgie/Budgie2/Budgie/Budgie/Views/Food%20Logging/FoodHub.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "152"
-                  endingLineNumber = "152">
-               </Location>
-               <Location
-                  uuid = "29E5ECCA-3C61-4339-ABCE-2D11D97459DB - 48ff45076ed4fc42"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(3) await resume partial function for function signature specialization &lt;Arg[2] = Value Promoted from Box&gt; of closure #1 () async -&gt; () in Budgie_Diet.FoodHub.delete(at: Foundation.IndexSet) -&gt; ()"
-                  moduleName = "Budgie Diet.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/joe/Library/Mobile%20Documents/com~apple~CloudDocs/Xcode%20Twids/Budgie/Budgie2/Budgie/Budgie/Views/Food%20Logging/FoodHub.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "152"
-                  endingLineNumber = "152">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -181,17 +151,33 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "A4BFDC5E-6094-4C7F-A50A-F69B721AA725"
+            uuid = "70118B57-EE7E-4929-9EF7-503822227597"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Budgie/Code/Data Model/DataClasses.swift"
+            filePath = "Budgie/Code/Frameworks/AppIntents.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "15"
-            endingLineNumber = "15"
-            landmarkName = "TodayLump"
-            landmarkType = "3">
+            startingLineNumber = "60"
+            endingLineNumber = "60"
+            landmarkName = "results()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "76EF87D6-36DD-4039-8591-D9172D19539E"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Budgie/Code/Frameworks/AppIntents.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "58"
+            endingLineNumber = "58"
+            landmarkName = "results()"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

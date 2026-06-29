@@ -10,7 +10,7 @@ import SwiftData
 import HealthKit
 import AppIntents
 
-@Model final class Meal: Sendable {
+@Model final class Meal {
     private(set) var id: UUID = UUID()
     var mealUUID: UUID = UUID()
     var name: String = "Meal"
@@ -26,25 +26,8 @@ import AppIntents
     }
 }
 
-extension Meal: AppEntity {
-    struct MealQuery: EntityQuery {
-        func entities(for identifiers: [Meal.ID]) async throws -> [Meal] {
-            return await dataStore.calorieActor.getListOfMeals()
-        }
-    }
-    
-    var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "\(name)")
-    }
-    
-    static var defaultQuery = MealQuery()
-    
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Meal"
-}
-
 struct MealEntity: AppEntity, Identifiable {
     var id: UUID
-    var mealUUID: UUID
     
     @Property(title: "Meal")
     var name: String
@@ -57,28 +40,26 @@ struct MealEntity: AppEntity, Identifiable {
     
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Meal"
     
+    // the UUID here is the internal "mealUUID" of the Meal object in the data store
     init(mealUUID: UUID, name: String) {
-        self.id = UUID()
-        self.mealUUID = mealUUID
+        self.id = mealUUID
         self.name = name
-    }
-    
-    init(meal: Meal) {
-        self.id = UUID()
-        self.mealUUID = meal.mealUUID
-        self.name = meal.name
     }
 }
 
 struct StructMealQuery: EntityQuery {
     func entities(for identifiers: [MealEntity.ID]) async throws -> [MealEntity] {
-        print("Calling for MealEntities!")
-        var returns: [MealEntity] = []
+        print("Calling for MealEntities via entities!")
         let mealObjects = await dataStore.calorieActor.getListOfMeals()
-        for object in mealObjects {
-            returns.append(MealEntity(meal: object))
-        }
-        return returns
+        return mealObjects
+            .filter { identifiers.contains($0.mealUUID) }
+            .map { MealEntity(mealUUID: $0.mealUUID, name: $0.name) }
+    }
+    
+    func suggestedEntities() async throws -> [MealEntity] {
+        print("Calling for MealEntities via SuggestedEntities!")
+        let mealObjects = await dataStore.calorieActor.getListOfMeals()
+        return mealObjects.map { MealEntity(mealUUID: $0.mealUUID, name: $0.name) }
     }
 }
 
