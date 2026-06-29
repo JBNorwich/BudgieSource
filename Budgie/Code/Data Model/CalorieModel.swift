@@ -34,43 +34,6 @@ import AppIntents
     }
 }
 
-struct MealEntity: AppEntity, Identifiable {
-    var id: UUID
-    
-    @Property(title: "Meal")
-    var name: String
-    
-    var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "\(name)")
-    }
-    
-    static var defaultQuery = StructMealQuery()
-    
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Meal"
-    
-    // the UUID here is the internal "mealUUID" of the Meal object in the data store
-    init(mealUUID: UUID, name: String) {
-        self.id = mealUUID
-        self.name = name
-    }
-}
-
-struct StructMealQuery: EntityQuery {
-    func entities(for identifiers: [MealEntity.ID]) async throws -> [MealEntity] {
-        print("Calling for MealEntities via entities!")
-        let mealObjects = await dataStore.calorieActor.getListOfMeals()
-        return mealObjects
-            .filter { identifiers.contains($0.mealUUID) }
-            .map { MealEntity(mealUUID: $0.mealUUID, name: $0.name) }
-    }
-    
-    func suggestedEntities() async throws -> [MealEntity] {
-        print("Calling for MealEntities via SuggestedEntities!")
-        let mealObjects = await dataStore.calorieActor.getListOfMeals()
-        return mealObjects.map { MealEntity(mealUUID: $0.mealUUID, name: $0.name) }
-    }
-}
-
 @Model
 final class CalorieEntry {
     private(set) var id: UUID = UUID()
