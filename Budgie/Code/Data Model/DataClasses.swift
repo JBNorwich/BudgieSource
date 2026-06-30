@@ -286,7 +286,7 @@ class TodayLump: ObservableObject {
             let totalToLose: Double = settingsObj.startWeight - settingsObj.weightGoal
             let actLost: Double = settingsObj.startWeight - self.weightToday
             let percentLost: Double = actLost/totalToLose
-            return 1 - percentLost
+            return min(1 - percentLost,1)
         } else {
             return 0
         }
