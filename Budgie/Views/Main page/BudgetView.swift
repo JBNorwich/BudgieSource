@@ -168,7 +168,7 @@ struct BudgetView: View {
                     
                     .toolbar {
                         ToolbarItemGroup(placement: .topBarLeading) {
-                            NavigationLink(destination: SettingsView(whale: $whaleButtonVisible).environmentObject(todayLump)) {
+                            NavigationLink(destination: SettingsView().environmentObject(todayLump)) {
                                 Image(systemName: "gear")
                             }.foregroundColor(backgroundGradient.buttonColour)
                             if settingsObj.whalesEverywhere == true {

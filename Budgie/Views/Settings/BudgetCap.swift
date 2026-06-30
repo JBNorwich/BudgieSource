@@ -44,6 +44,7 @@ struct BudgetCap: View {
         
         .onAppear {
             capBudgetCals = settingsObj.capBudgetCals
+            capBudget = settingsObj.capBudget
         }
         
         .onChange(of: capBudget) {

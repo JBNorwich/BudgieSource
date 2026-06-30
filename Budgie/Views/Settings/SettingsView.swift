@@ -17,27 +17,20 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var todayLump: TodayLump
-    @Binding var whale: Bool
+//    @Binding var whale: Bool
     
     @State private var showingSheet: Bool = false
     @State private var showingBMRHelper: Bool = false
-    @State var manualBMR: Int = 0
-    @State var manualActive: Int = 0
-    @State var doubleDeficit: Double = 0
-    @State var desiredSurplus: Double = 0
     @State var surplusMode: Bool = false
-    @State var whalesEverywhere: Bool = false
-    @State var circleColour: Color = .blue
+    @State var useFitnessGoal: Bool = false
     @State private var isPresented = false
     @State var calsSheetSize = PresentationDetent.medium
     @State var donateOpened = false
     @State var debugOpened = false
-    @State var healthLogging = true
     @State var disclaimerDisplayed = false
-    @State var hideTodayInDetail = false
-    @State var useFitnessGoal = false
-    @State private var weightTime = Date()
-    @State var waterGoal: Int = 0
+    @State var deficitLabel: String = "0"
+    @State var surpDefHeader: String = "Header goes here"
+    @State var surpDefExplainer: String = "Explainer goes here"
     
     @FocusState private var focusResting: Bool
     @FocusState private var focusActive: Bool
@@ -45,102 +38,114 @@ struct SettingsView: View {
     
     @Environment(\.openURL) var openURL
     
+    @State private var refreshID = UUID()
+    
+    private func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>) -> Binding<T> {
+        Binding(
+            get: { settingsObj[keyPath: keyPath] },
+            set: { newValue in
+                settingsObj[keyPath: keyPath] = newValue
+                refreshID = UUID() // forces redraw on update
+            }
+        )
+    }
+    
+    private var deficitBinding: Binding<Double> {
+        Binding(
+            get: {
+                settingsObj.surplusMode
+                    ? Double(-settingsObj.desiredDeficit)
+                    : Double(settingsObj.desiredDeficit)
+            },
+            set: { newValue in
+                settingsObj.desiredDeficit = settingsObj.surplusMode ? Int(-newValue) : Int(newValue)
+            }
+        )
+    }
+    
+    private var weightTimeBinding: Binding<Date> {
+        Binding(
+            get: { minsIntoDayIntoTime(mins: settingsObj.finalMealTime) },
+            set: { settingsObj.finalMealTime = timeToMinsIntoDay(time: $0)})
+    }
+    
+    private func refreshState() {
+        deficitLabel = deficitBinding.wrappedValue.formatted()
+        if settingsObj.surplusMode {
+            surpDefHeader = "Desired calorie surplus"
+            surpDefExplainer = "This is the net calorie surplus you'd like Budgie Diet to help you land at."
+        } else {
+            surpDefHeader = "Desired calorie deficit"
+            surpDefExplainer = "This is the net calorie deficit you'd like Budgie Diet to help you land at."
+        }
+        deficitLabel = deficitBinding.wrappedValue.formatted()
+        refreshID = UUID()
+    }
+    
     var body: some View {
         Form {
-            if surplusMode == false {
-                Section(header: Text("Desired calorie deficit"), footer: Text("This is the net calorie deficit you'd like Budgie Diet to help you land at.")) {
-                    Slider(value: $doubleDeficit,
-                           in: 0...1000,
-                           step: 50,
-                           onEditingChanged: { _ in pingDeficit() },
-                           minimumValueLabel: Text(""),
-                           maximumValueLabel: Text(String(Int(doubleDeficit).formatted())),
-                           label: { Text("Deficit") }
-                    )
-                    Button("Help me choose a goal") {
+            Section(header: Text(surpDefHeader), footer: Text(surpDefExplainer)) {
+                Slider(value: deficitBinding,
+                       in: 0...1000,
+                       step: 50,
+                       onEditingChanged: { _ in refreshState() },
+                       minimumValueLabel: Text(""),
+                       maximumValueLabel: Text(deficitLabel),
+                       label: { Text("Deficit") }
+                )
+                if !settingsObj.surplusMode {
+                Button("Help me choose a goal") {
                         showingSheet = true
-                    }.sheet(isPresented: $showingSheet, onDismiss: {doubleDeficit = Double(settingsObj.desiredDeficit); pingDeficit()}) {
-                        BudgetHelperView(isPresented: $showingSheet, doubleDeficit: $doubleDeficit)
+                    }.sheet(isPresented: $showingSheet, onDismiss: { refreshState() }) {
+                        BudgetHelperView(isPresented: $showingSheet, doubleDeficit: deficitBinding)
                     }
-                }
-            } else {
-                Section(header: Text("Desired calorie surplus"), footer: Text("This is the net calorie surplus you'd like Budgie Diet to help you land at.")) {
-                    Slider(value: $desiredSurplus,
-                           in: 0...1000,
-                           step: 50,
-                           onEditingChanged: { _ in pingDeficit() },
-                           minimumValueLabel: Text(""),
-                           maximumValueLabel: Text(String(Int(desiredSurplus).formatted())),
-                           label: { Text("Surplus") }
-                    )
                 }
             }
             
             Section(header: Text("Estimated daily calorie burn"), footer: Text("This is used when actual calorie data from Apple Health isn't available or is incomplete."))
             {
                 LabeledContent {
-                    TextField(manualBMR.formatted(), value: $manualBMR, format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
+                    TextField(settingsObj.manualBMR.formatted(), value: settingBinding(\.manualBMR), format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
-                        .onSubmit {
-                            let prevManual = manualBMR
-                            if manualBMR < 8000
-                            {
-                                pingManual()
-                            } else {
-                                manualBMR = prevManual
-                            }
-                        }
-                        .focusable()
                         .focused($focusResting)
                 } label: { Text("Resting calories") }
                 
                 LabeledContent {
-                    TextField(manualActive.formatted(), value: $manualActive, format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
+                    TextField(settingsObj.manualActive.formatted(), value: settingBinding(\.manualActive), format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
-                        .onSubmit {
-                            let prevManual = manualActive
-                            if manualActive < 4000
-                            {
-                                pingManual()
-                            } else {
-                                manualActive = prevManual
-                            }
-                        }
-                        .focusable()
                         .focused($focusActive)
                 } label: {
                     Text("Active calories")
                 }
                 Button("Calculate this for me") {
                     showingBMRHelper = true
-                }.sheet(isPresented: $showingBMRHelper, onDismiss: { pingManual() }) {
-                    BMRHelper(isPresented: $showingBMRHelper, manualBMR: $manualBMR, manualActive: $manualActive)
+                }.sheet(isPresented: $showingBMRHelper, onDismiss: { refreshState() }) {
+                    BMRHelper(isPresented: $showingBMRHelper, manualBMR: settingBinding(\.manualBMR), manualActive: settingBinding(\.manualActive))
                 }.presentationDragIndicator(.visible)
             }
             
             Section(header: Text("Water goal"))
             {
                 LabeledContent {
-                    TextField(waterGoal.formatted(), value: $waterGoal, format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
+                    TextField(settingsObj.waterGoal.formatted(), value: settingBinding(\.waterGoal), format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
-                        .focusable()
                         .focused($focusWater)
                 } label: { Text("Daily water goal (ml)") }
             }
             
             Section(header: Text("Surplus mode"), footer: Text("Turn this on to aim for a caloric surplus, rather than a deficit.")) {
                 Toggle("Aim to gain weight", isOn: $surplusMode)
-                if surplusMode == true {
+                if settingsObj.surplusMode {
                     Text("Get them gains. 💪")
                 }
             }
             
             Section(header: Text("Move goal"), footer: Text("If this is turned on, Budgie Diet will use your Apple Fitness Move goal as the starting point for your budget, rather than your average calorie burn figures."))
             {
-                    Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
+                Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
             }
                        
 
@@ -157,12 +162,12 @@ struct SettingsView: View {
                     Text("Budget weighting options")
                 }
                 
-                DatePicker("Typical evening meal time", selection: $weightTime, displayedComponents: .hourAndMinute)
+                DatePicker("Typical evening meal time", selection: weightTimeBinding, displayedComponents: .hourAndMinute)
             }
             
             Section(header: Text("Other settings")) {
-                Toggle("Hide \"Today in detail\"", isOn: $hideTodayInDetail)
-                Toggle("Put whales in various places", isOn: $whalesEverywhere)
+                Toggle("Hide \"Today in detail\"", isOn: settingBinding(\.hideTodayInDetail))
+                Toggle("Put whales in various places", isOn: settingBinding(\.whalesEverywhere))
             }
             
             Section(header: Text("About")) {
@@ -213,61 +218,32 @@ struct SettingsView: View {
 
     
         .onAppear() {
-            manualBMR = settingsObj.manualBMR
-            manualActive = settingsObj.manualActive
             surplusMode = settingsObj.surplusMode
-            whalesEverywhere = settingsObj.whalesEverywhere
-            weightTime = minsIntoDayIntoTime(mins: settingsObj.finalMealTime)
-            if surplusMode == true {
-                doubleDeficit = Double(-settingsObj.desiredDeficit)
-            } else {
-                doubleDeficit = Double(settingsObj.desiredDeficit)
-            }
-            desiredSurplus = doubleDeficit
-            healthLogging = settingsObj.healthLogging
-            hideTodayInDetail = settingsObj.hideTodayInDetail
             useFitnessGoal = settingsObj.useFitnessGoal
-            waterGoal = settingsObj.waterGoal
-        }
-    
-        .onChange(of: healthLogging, initial: false) {
-            settingsObj.healthLogging = healthLogging
+            refreshState()
         }
         
-        .onChange(of: hideTodayInDetail, initial: false) {
-            settingsObj.hideTodayInDetail = hideTodayInDetail
-        }
-    
-        .onChange(of: whalesEverywhere, initial: false) {
-            settingsObj.whalesEverywhere = whalesEverywhere
-            whale = whalesEverywhere
-        }
-        
-        .onChange(of: waterGoal, initial: false) {
-            settingsObj.waterGoal = waterGoal
-        }
-    
-        .onChange(of: surplusMode, initial: false) {
-            if surplusMode == true
-            {
-                //need to save a negative number
-                settingsObj.surplusMode = surplusMode
-                desiredSurplus = doubleDeficit
-                settingsObj.desiredDeficit = Int(-desiredSurplus)
+        // Need to do this to ensure that the deficit updates properly to a surplus and vice versa and to force a UI redraw
+        .onChange(of: surplusMode, initial: false)
+        {
+            if surplusMode {
+                settingsObj.surplusMode = true
+                if settingsObj.desiredDeficit > 0 {
+                    settingsObj.desiredDeficit = -settingsObj.desiredDeficit
+                }
             } else {
-                //need to save a positive number
-                settingsObj.surplusMode = surplusMode
-                doubleDeficit = desiredSurplus
-                settingsObj.desiredDeficit = Int(doubleDeficit)
+                settingsObj.surplusMode = false
+                if settingsObj.desiredDeficit < 0 {
+                    settingsObj.desiredDeficit = -settingsObj.desiredDeficit
+                }
             }
+            refreshState()
         }
         
-        .onChange(of: useFitnessGoal, initial: false) {
+        // Need to do this as otherwise there's no way to trigger the HealthKit permissions popup
+        .onChange(of: useFitnessGoal, initial: false)
+        {
             settingsObj.useFitnessGoal = useFitnessGoal
-        }
-        
-        .onChange(of: weightTime) {
-            settingsObj.finalMealTime = timeToMinsIntoDay(time: weightTime)
         }
         
         .navigationTitle("Settings")
@@ -278,21 +254,6 @@ struct SettingsView: View {
                 Spacer()
 
                 Button("Done") {
-                    let prevActive = manualActive
-                    if manualBMR < 8000
-                    {
-                        pingManual()
-                    } else {
-                        manualBMR = prevActive
-                    }
-                    let prevBMR = manualBMR
-                    if manualBMR < 8000
-                    {
-                        pingManual()
-                    } else {
-                        manualBMR = prevBMR
-                    }
-                    
                     if focusResting == true { focusResting.toggle() }
                     if focusActive == true { focusResting.toggle() }
                     if focusWater == true { focusWater.toggle() }
@@ -316,29 +277,14 @@ struct SettingsView: View {
             }
         }
     }
-    
-    func pingManual() {
-        settingsObj.manualBMR = manualBMR
-        settingsObj.manualActive = manualActive
-    }
-    
-    func pingDeficit() {
-        if surplusMode == false
-        {
-            settingsObj.desiredDeficit = Int(doubleDeficit)
-        } else {
-            settingsObj.desiredDeficit = Int(-desiredSurplus)
-        }
-    }
 }
 
 #Preview {
     struct Preview: View {
-        @State var whale: Bool = false
         @State var lump: TodayLump = TodayLump()
 
         var body: some View {
-            SettingsView(whale: $whale).environmentObject(lump)
+            SettingsView().environmentObject(lump)
         }
     }
     
