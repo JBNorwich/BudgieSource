@@ -16,60 +16,8 @@
 import SwiftUI
 import Charts
 
-func fixDeficit(number: Int) -> Int {
-    var returnNo = Int()
-    
-    if number == 0 {
-        returnNo = 0
-    } else {
-        if settingsObj.surplusMode == true {
-            if number > 0 {
-                //calorie deficit - not what we want!
-                returnNo = 0
-            } else {
-                //display a positive number as we want a surplus
-                returnNo = -number
-            }
-        } else {
-            if number < 0 {
-                //calorie surplus - not what we want!
-                returnNo = 0
-            } else {
-                //display a positive number as we want a surplus
-                returnNo = number
-            }
-        }
-    }
-    
-    return returnNo
-}
-func fixSurplus(number: Int) -> Int {
-    var returnNo = Int()
-    
-    if number == 0 {
-        returnNo = 0
-    } else {
-        if settingsObj.surplusMode == true {
-            if number > 0 {
-                //calorie deficit - not what we want!
-                returnNo = number
-            } else {
-                //display a positive number as we want a surplus
-                returnNo = 0
-            }
-        } else {
-            if number < 0 {
-                //calorie surplus - not what we want!
-                returnNo = -number
-            } else {
-                //display a positive number as we want a surplus
-                returnNo = 0
-            }
-        }
-    }
-    
-    return returnNo
-}
+func deficitMagnitude(_ deficit: Int) -> Int { max(deficit, 0) }
+func surplusMagnitude(_ surplus: Int) -> Int { max(-surplus, 0) }
 
 func graphTargetNumber() -> Int
 {
@@ -101,10 +49,10 @@ func getDerpSef() -> String {
 
 struct ChartView: View {
     @Binding var chartData: [ChartDataLump]
-    @State var goodString = String()
-    @State var badString = String()
-    @State var targString = String()
-    @State var targDeficit = Int()
+    var goodString: String { settingsObj.surplusMode ? "Surplus" : "Deficit" }
+    var badString: String { settingsObj.surplusMode ? "Deficit" : "Surplus" }
+    var targString: String { "TARGET " + goodString.uppercased() }
+    var targDeficit: Int { abs(settingsObj.desiredDeficit) }
     
     var body: some View {
         Chart(chartData) {
@@ -119,26 +67,11 @@ struct ChartView: View {
                 series: .value("Calories out", "B"))
                 .foregroundStyle(.green)
             if settingsObj.surplusMode != true {
-                BarMark(
-                    x: .value("Date", $0.date),
-                    y: .value("Deficit", fixDeficit(number: $0.deficit))
-                ) .foregroundStyle(.teal)
+                BarMark(x: .value("Date", $0.date), y: .value("Deficit", deficitMagnitude($0.deficit))).foregroundStyle(.teal)
+                BarMark(x: .value("Date", $0.date), y: .value("Surplus", surplusMagnitude($0.deficit))).foregroundStyle(.orange)
             } else {
-                BarMark(
-                    x: .value("Date", $0.date),
-                    y: .value("Surplus", fixDeficit(number: $0.deficit))
-                ) .foregroundStyle(.teal)
-            }
-            if settingsObj.surplusMode != true {
-                BarMark(
-                    x: .value("Date", $0.date),
-                    y: .value("Surplus", fixSurplus(number: $0.deficit))
-                ) .foregroundStyle(.orange)
-            } else {
-                BarMark(
-                    x: .value("Date", $0.date),
-                    y: .value("Deficit", fixSurplus(number: $0.deficit))
-                ) .foregroundStyle(.orange)
+                BarMark(x: .value("Date", $0.date), y: .value("Surplus", surplusMagnitude($0.deficit))).foregroundStyle(.teal)
+                BarMark(x: .value("Date", $0.date), y: .value("Deficit", deficitMagnitude($0.deficit))).foregroundStyle(.orange)
             }
             if (targDeficit != 0) {
                 RuleMark(
@@ -156,12 +89,6 @@ struct ChartView: View {
             .chartLegend(.visible)
             .chartLegend(position: .bottom, alignment: .center)
             .contentTransition(.interpolate)
-            .onAppear() {
-                goodString = getSurpDef()
-                badString = getDerpSef()
-                targString = "TARGET " + goodString.uppercased()
-                targDeficit = graphTargetNumber()
-            }
     }
 }
 
