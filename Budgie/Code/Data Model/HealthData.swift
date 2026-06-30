@@ -79,9 +79,10 @@ class HealthData {
         
         // get HealthKit calories
         do {
-            let notBudgieTodayPredicate = getNotBudgieTodayPredicate()
+            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
+            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, timePredicate])
             let query: HKSampleQueryDescriptor<HKQuantitySample> = try await withCheckedThrowingContinuation { continuation in
-                let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: notBudgieTodayPredicate)], sortDescriptors: [])
+                let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: queryPredicate)], sortDescriptors: [])
                 continuation.resume(returning: descriptor)
             }
             do {
