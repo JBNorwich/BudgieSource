@@ -17,7 +17,6 @@ import SwiftUI
 import HealthKitUI
 
 struct ActivityRingView: UIViewRepresentable {
-
     var activitySummary: HKActivitySummary
 
     func makeUIView(context: Context) -> HKActivityRingView {
@@ -39,6 +38,33 @@ struct FitnessView: View {
     let exerciseColour = Color(red: 0.651, green: 1, blue: 0)
     let standColour = Color(red: 0, green: 1, blue: 0.9647)
     
+    private struct FitnessStat: View {
+        let title: String
+        let value: Double
+        let goal: Double
+        let unit: String
+        let colour: Color
+        
+        var body: some View {
+            HStack {
+                Text(title)
+                    .font(.caption)
+                    .multilineTextAlignment(.leading)
+                Spacer()
+            }
+            HStack {
+                Text("\(Int(value).formatted())/\(Int(goal).formatted())")
+                    .foregroundColor(colour)
+                    .multilineTextAlignment(.leading)
+                    .scaledToFit()
+                Text(unit.uppercased())
+                    .font(.caption)
+                    .foregroundColor(colour)
+                Spacer()
+            }
+        }
+    }
+    
     var body: some View {
         HStack {
             VStack {
@@ -50,61 +76,13 @@ struct FitnessView: View {
             }
             Divider()
             VStack {
-                HStack {
-                    Text("Move")
-                        .font(.caption)
-                        .multilineTextAlignment(.leading)
-                    Spacer()
-                }
-                HStack {
-                    Text("\(Int(todayLump.activitySummary.activeEnergyBurned.doubleValue(for: HKUnit.kilocalorie())).formatted())/\(Int(todayLump.activitySummary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie())).formatted())")
-                        .foregroundColor(moveColour)
-                        .multilineTextAlignment(.leading)
-                        .scaledToFit()
-                    Text("KCAL")
-                        .font(.caption)
-                        .foregroundColor(moveColour)
-                    Spacer()
-                }
-                
-                if todayLump.activitySummary.exerciseTimeGoal != nil {
-                    Spacer()
-                    HStack {
-                        Text("Exercise")
-                            .font(.caption)
-                            .multilineTextAlignment(.leading)
-                        Spacer()
-                    }
-                    HStack {
-                        Text("\(Int(todayLump.activitySummary.appleExerciseTime.doubleValue(for: .minute())).formatted())/\(Int(todayLump.activitySummary.exerciseTimeGoal?.doubleValue(for: .minute()) ?? 0).formatted())")
-                            .foregroundColor(exerciseColour)
-                            .multilineTextAlignment(.leading)
-                            .scaledToFit()
-                        Text("MIN")
-                            .font(.caption)
-                            .foregroundColor(exerciseColour)
-                        Spacer()
-                    }
-                }
-                if todayLump.activitySummary.standHoursGoal != nil {
-                    Spacer()
-                    HStack {
-                        Text("Stand")
-                            .font(.caption)
-                        Spacer()
-                    }
-                    HStack {
-                        Text("\(Int(todayLump.activitySummary.appleStandHours.doubleValue(for: .count())).formatted())/\(Int(todayLump.activitySummary.appleStandHoursGoal.doubleValue(for: .count())).formatted())")
-                            .foregroundColor(standColour)
-                            .multilineTextAlignment(.leading)
-                            .scaledToFit()
-                        Text("HRS")
-                            .font(.caption)
-                            .foregroundColor(standColour)
-                        Spacer()
-                        
-                    }
-                }
+                FitnessStat(title: "Move", value: todayLump.activitySummary.activeEnergyBurned.doubleValue(for: HKUnit.kilocalorie()), goal: todayLump.activitySummary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()), unit: "kcal", colour: moveColour)
+                todayLump.activitySummary.exerciseTimeGoal != nil
+                    ? FitnessStat(title: "Exercise", value: todayLump.activitySummary.appleExerciseTime.doubleValue(for: .minute()), goal: todayLump.activitySummary.exerciseTimeGoal?.doubleValue(for: .minute()) ?? 0, unit: "min", colour: exerciseColour)
+                    : nil
+                todayLump.activitySummary.standHoursGoal != nil
+                    ? FitnessStat(title: "Stand", value: todayLump.activitySummary.appleStandHours.doubleValue(for: .count()), goal: todayLump.activitySummary.appleStandHoursGoal.doubleValue(for: .count()), unit: "hrs", colour: standColour)
+                    : nil
             }
         }
     }
