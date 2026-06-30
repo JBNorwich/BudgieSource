@@ -19,25 +19,22 @@ struct FirstRunSheet: View {
     @EnvironmentObject var todayLump: TodayLump
     @Binding var isPresented: Bool
     
-    @State var hkBitDone: Bool = false
     @State var hkPermsToggle: Bool = false
     @State var showingBMRcalc: Bool = false
-    @State var disableBMR: Bool = true
-    @State var BMRdone: Bool = false
     @State var manualBMR: Int = 0
     @State var manualActive: Int = 0
-    @State var goalDisabled = true
-    @State var goalDone = false
     @State var chosenGoal: Int = 0
     @State var showingDeficitChooser: Bool = false
-    @State var doubleDeficit: Double = 0
+    @State var showingWeightGoalSheet: Bool = false
     @State var desiredSurplus: Double = 50
-    @State var deficitDone = false
-    @State var goalWeightDone = false
-    @State var allComplete = false
-    @State var stage = 0
     @State var disclaimerOn = false
     @State var goalNotChosen = true
+    
+    enum Step: Int, Comparable {
+        case healthKit, bmr, goal, calorieTarget, goalWeight, done
+        static func < (a: Step, b: Step) -> Bool { a.rawValue < b.rawValue }
+    }
+    @State private var step: Step = .healthKit
     
     var body: some View {
         NavigationStack {
@@ -54,42 +51,43 @@ struct FirstRunSheet: View {
                     .navigationBarTitleDisplayMode(.inline)
             }
             Form {
-                // healthkit auth
+                // STEP 1
+                // HealthKit authorisation
                 HStack {
                     Button("Authorise Health access") {
                         hkPermsToggle.toggle()
-                    }.disabled(hkBitDone)
+                    }.disabled(step != .healthKit)
                     Spacer()
-                    if hkBitDone == true {
+                    if step > .healthKit {
                         Image(systemName: "checkmark")
                     }
                     
                 }
-                
-                if hkBitDone != true {
+                if step == .healthKit {
                     Text("You need to do this to get the best out of Budgie Diet, as it lets me assess your recent activity to decide your budgets and bring in your food data from other apps. Please do grant permissions after hitting the button!")
                 }
                 
-                // fallback/BMR data request
+                // STEP 2
+                // Manual BMR calculation
                 HStack {
                     Button("Give your height and weight") {
                         showingBMRcalc.toggle()
                     }
-                    .disabled(disableBMR)
+                    .disabled(step != .bmr)
                     Spacer()
-                    if (BMRdone == true)
+                    if (step > .bmr)
                     {
                         Image(systemName: "checkmark")
                     }
                 }
-                if BMRdone != true && hkBitDone == true {
+                if step == .bmr {
                     Text("This helps calculate your budgets if there are gaps in your Health data, for instance if you didn't wear your Apple Watch one day.")
                 }
                 
+                // STEP 3
                 // sort out a goal
                 HStack {
-                    
-                    if hkBitDone != true || BMRdone != true || goalDone == true {
+                    if step != .goal {
                         // grey out, show nothing
                         Button("Set your main goal")
                         { }
@@ -98,12 +96,13 @@ struct FirstRunSheet: View {
                         Text("Set your main goal")
                     }
                     Spacer()
-                    if (goalDone == true)
+                    if step > .goal
                     {
                         Image(systemName: "checkmark")
                     }
                 }
-                if (goalDone != true && hkBitDone == true && BMRdone == true) {
+                
+                if step == .goal {
                     VStack {
                         Text("I want to...")
                         Picker("Goal", selection: $chosenGoal) {
@@ -113,40 +112,35 @@ struct FirstRunSheet: View {
                         }
                         .pickerStyle(.segmented)
                         Button("Continue") {
-                            goalDone = true
+                            switch chosenGoal {
+                                case 1, 3:
+                                    step = .calorieTarget
+                                case 2:
+                                    settingsObj.desiredDeficit = 0
+                                    step = .done
+                                default:
+                                    break
+                            }
                         }.disabled(goalNotChosen)
                     }
                 }
                 
-                if (goalDone == true && hkBitDone == true && BMRdone == true && goalWeightDone == true) || chosenGoal != 1 {
-                    HStack {
-                        Button("Set your goal weight")
-                        { }
-                            .disabled(true)
-                        Spacer()
-                        if deficitDone == true {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
+                // STEP 4
+                // SET CALORIE TARGET
                 
-                if (goalDone == true && goalWeightDone != true) {
-                    
-                }
-                
-                if (goalDone != true || hkBitDone != true || BMRdone != true) || (deficitDone == true) {
+                if step != .calorieTarget {
                     HStack {
                         Button("Set your calorie target")
                         { }
                             .disabled(true)
                         Spacer()
-                        if deficitDone == true {
+                        if step > .calorieTarget {
                             Image(systemName: "checkmark")
                         }
                     }
                 }
                 
-                if goalDone == true && deficitDone != true {
+                if step == .calorieTarget {
                     //deficit
                     if chosenGoal == 1 {
                         Button("Set your calorie target")
@@ -169,13 +163,33 @@ struct FirstRunSheet: View {
                         Button("Save") {
                             settingsObj.surplusMode = true
                             settingsObj.desiredDeficit = Int(-desiredSurplus)
-                            deficitDone = true
-                            allComplete = true
+                            step = .goalWeight
                         }
                     }
                 }
                 
-                if allComplete == true {
+                // STEP 5
+                // Set goal weight
+                
+                if chosenGoal != 2 {
+                    HStack {
+                        Button("Set your goal weight")
+                        {
+                            showingWeightGoalSheet = true
+                        }
+                            .disabled(step != .goalWeight)
+                        Spacer()
+                        if step > .goalWeight {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+                
+                if step == .goalWeight {
+                    Text("This is where you can set your goal weight. You can change this later.")
+                }
+                
+                if step == .done {
                     Section {
                         Text("You're all done! If you want to tweak anything, head to the Settings page by tapping the gear icon in the top left of the budget screen.")
                             .padding()
@@ -193,7 +207,7 @@ struct FirstRunSheet: View {
             }
             
             
-            if allComplete == true {
+            if step == .done {
                 Button("Start using Budgie Diet") {
                     isPresented = false
                     settingsObj.isFirstRun = false
@@ -208,68 +222,26 @@ struct FirstRunSheet: View {
         .healthDataAccessRequest(store: healthStore, shareTypes: writeTypes, readTypes: readTypes, trigger: hkPermsToggle) { result in
             switch result {
             case .success(_):
-                hkBitDone = true
-                disableBMR = false
+                step = .bmr
             case .failure(_):
                 print("Failed for some reason")
             }
         }
         
-        .sheet(isPresented: $showingBMRcalc) {
+        .sheet(isPresented: $showingBMRcalc, onDismiss: { step = .goal }) {
             BMRHelper(isPresented: $showingBMRcalc, manualBMR: $manualBMR, manualActive: $manualActive)
         }.interactiveDismissDisabled(true)
+    
+            .sheet(isPresented: $showingDeficitChooser, onDismiss: { step = .goalWeight }) {
+            BudgetHelperView(isPresented: $showingDeficitChooser, hideZero: true)
+        }.interactiveDismissDisabled(true)
         
-            .onChange(of: showingBMRcalc) {
-                if showingBMRcalc == false {
-                    if settingsObj.manualActive != 0 && settingsObj.manualBMR != 0 {
-                        BMRdone = true
-                        disableBMR = true
-                    }
-                }
-            }
-        
-            .sheet(isPresented: $showingDeficitChooser) {
-                BudgetHelperView(isPresented: $showingDeficitChooser, doubleDeficit: $doubleDeficit, hideZero: true)
-            }.interactiveDismissDisabled(true)
-        
-            .onChange(of: showingDeficitChooser) {
-                if showingDeficitChooser == false {
-                    if settingsObj.desiredDeficit != 0 {
-                        deficitDone = true
-                        allComplete = true
-                    }
-                }
-            }
-        
-        .onChange(of: goalDone)
-        {
-            if chosenGoal == 2
-            {
-                settingsObj.desiredDeficit = 0
-                deficitDone = true
-                allComplete = true
-            }
-        }
+            .sheet(isPresented: $showingWeightGoalSheet, onDismiss: { step = .done }) {
+            WeightGoalSheet(isDisplayed: $showingWeightGoalSheet).environmentObject(todayLump)
+        }.interactiveDismissDisabled(true)
         
         .onChange(of: chosenGoal, initial: false) {
             goalNotChosen = false
         }
     }
 }
-
-//#Preview {
-//    struct Preview: View {
-//        @State var bmr = 2000
-//        @State var manact = 500
-//        @State var ispresent = true
-//        @State var data = HealthData()
-//        
-//        var body: some View {
-//            FirstRunSheet(isPresented: $ispresent, dataStore: $data, manualBMR:bmr, manualActive: manact)
-//        }
-//    }
-//    
-//    return Preview()
-//    
-//    
-//}
