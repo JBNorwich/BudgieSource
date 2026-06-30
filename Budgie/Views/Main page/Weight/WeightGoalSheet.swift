@@ -59,16 +59,31 @@ struct WeightGoalSheet: View {
                 Section {
                     if kilos != nil {
                         if (settingsObj.desiredDeficit > 0) {
-                            if kilos! < todayLump.weightToday {
-                                Text("Your current weight is \(todayLump.weightToday.formatted())kg, so you'll need to lose \(toLose.formatted())kg to get to this goal.")
-                            } else {
-                                Text("This goal is above your current weight. Are you sure this is right?")
-                            }
+                            kilos! < todayLump.weightToday
+                                ? Text("Your current weight is \(todayLump.weightToday.formatted())kg, so you'll need to lose \(toLose.formatted())kg to get to this goal.")
+                                : Text("This goal is above your current weight. Are you sure this is right?")
                         } else {
-                            //if aiming for surplus do something here
+                            kilos! > todayLump.weightToday
+                                ? Text("Your current weight is \(todayLump.weightToday.formatted())kg, so you'll need to gain \((-toLose).formatted())kg to get to this goal.")
+                            : Text("This goal is below your current weight. Are you sure this is right?")
                         }
                         if daysToGo > 0 {
-                            Text("Assuming you hit your target deficit every day, this will take you \(friendlyDuration).")
+                            VStack {
+                                if !settingsObj.surplusMode {
+                                    Text("Assuming you meet your target deficit every day, this will take you \(friendlyDuration).")
+                                    Divider()
+                                    Label("Timescales given are estimates, and are not personalised. Your actual results will vary. This app is not medical advice.", systemImage: "info.circle")
+                                        .lineLimit(nil)
+                                        .fixedSize(horizontal: false, vertical: false)
+                                } else {
+                                    Text("Assuming you meet your target surplus every day, this will take you \(friendlyDuration).")
+                                    Divider()
+                                    Label("Timescales given are estimates, and are not personalised. Your actual results will vary. Gaining muscle, rather than fat, requires strength training and a balanced diet. This app is not medical advice.", systemImage: "info.circle")
+                                        .lineLimit(nil)
+                                        .fixedSize(horizontal: false, vertical: false)
+                                }
+
+                            }
                         }
                     }
                 }
@@ -94,8 +109,14 @@ struct WeightGoalSheet: View {
         .onChange(of: kilos) {
             if kilos != nil {
                 if kilos! > 0 {
+                    // will be negative if new weight goal below current, positive if above (surplus)
                     toLose = todayLump.weightToday - kilos!
-                    daysToGo = getDaysToLose(weight: toLose, deficit: settingsObj.desiredDeficit)
+                    
+                    if settingsObj.surplusMode {
+                        daysToGo = getDaysToGain(weight: toLose, surplus: -settingsObj.desiredDeficit)
+                    } else {
+                        daysToGo = getDaysToLose(weight: toLose, deficit: settingsObj.desiredDeficit)
+                    }
                     friendlyDuration = formatDuration(days:daysToGo)
                 }
             }

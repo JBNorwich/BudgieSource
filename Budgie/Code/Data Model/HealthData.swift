@@ -275,7 +275,7 @@ class HealthData {
                     continuation.resume(returning: [HKActivitySummary()])
                     return
                 }
-                continuation.resume(returning: summariesOrNil!)
+                continuation.resume(returning: summariesOrNil ?? [])
             }
             healthStore.execute(query)
         }
@@ -297,20 +297,9 @@ class HealthData {
             }
         }
         
-        var logNarrative: String
-        if narrative == nil || narrative == "" {
-            logNarrative = "Quick calories"
-        } else {
-            logNarrative = narrative!
-        }
-        
-        if hkUUID != nil {
-            let newCalorieObj: CalorieEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: true, healthKitUUID: hkUUID)
-            await calorieActor.insertNewCals(object: newCalorieObj)
-        } else {
-            let newCalorieObj: CalorieEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: false, healthKitUUID: nil)
-            await calorieActor.insertNewCals(object: newCalorieObj)
-        }
+        let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
+        let newCalorieObj = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID)
+        await calorieActor.insertNewCals(object: newCalorieObj)
     }
     
     func addWater(amount: Int, datetime: Date) async {

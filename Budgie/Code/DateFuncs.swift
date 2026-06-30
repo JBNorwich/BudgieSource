@@ -275,6 +275,7 @@ func formatDuration(days: Int) -> String {
     }
 }
 
+/// Calculates the days it will take to lose a given amount of weight, given the amount of weight to lose in kilos and the expected caloric deficit.
 func getDaysToLose(weight: Double, deficit: Int) -> Int {
     if weight == 0 || deficit == 0 {
         return 0
@@ -282,6 +283,17 @@ func getDaysToLose(weight: Double, deficit: Int) -> Int {
         let calsPerKg: Double = 7700
         let calsToLose = weight * calsPerKg
         let result = Int(calsToLose) / deficit
+        return result
+    }
+}
+
+func getDaysToGain(weight: Double, surplus: Int) -> Int {
+    if weight == 0 || surplus == 0 {
+        return 0
+    } else {
+        let calsPerKg: Double = 2500
+        let calsToGain = weight * calsPerKg
+        let result = Int(calsToGain) / surplus
         return result
     }
 }
