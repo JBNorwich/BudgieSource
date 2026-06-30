@@ -34,15 +34,23 @@ import AppIntents
     }
 }
 
+/// SwiftData class for individual food entries.
 @Model
 final class CalorieEntry {
     private(set) var id: UUID = UUID()
+    /// The date and time of the calorie entry.
     var date: Date = Date()
+    /// The number of calories, as an integer.
     var calories: Int = 0
+    /// Optional variable which describes what the food is. Budgie Diet will unwrap this to "Quick calories" if left blank or as nil.
     var narrative: String?
+    /// Boolean that indicates whether the entry is in HealthKit.
     var isInHK: Bool = false
+    /// The UUID of the matching entry in HealthKit.
     var healthKitUUID: UUID?
+    /// Indicates whether this CalorieEntry is a real one, or a dummy one for display purposes.
     var realEntry: Bool = true
+    /// The mealUUID of the meal which this food is allocated to.
     var meal: UUID = UUID()
     
     init(date: Date, calories: Int, narrative: String?, mealUUID: UUID, isInHK: Bool, healthKitUUID: UUID?) {
@@ -74,6 +82,7 @@ final class CalorieEntry {
     }
 }
 
+/// Actor to act on the CalorieEntry database.
 @ModelActor
 actor CalorieActor {
     func fetchCalsBetween(from: Date,to: Date) async -> [CalorieEntry]{
@@ -95,6 +104,47 @@ actor CalorieActor {
         }
     }
     
+    func fetchCalsByString(search: String?, meal: Meal?) async -> [CalorieEntry] {
+        var searchPredicate: Predicate<CalorieEntry>
+        if search != nil {
+            if meal == nil {
+                searchPredicate = #Predicate<CalorieEntry> { entry in
+                    entry.narrative != nil && entry.calories != 0 && entry.narrative!.contains(search!)
+                }
+            } else {
+                let mealUUID = meal!.mealUUID
+                searchPredicate = #Predicate<CalorieEntry> { entry in
+                    entry.narrative != nil && entry.calories != 0 && entry.narrative!.contains(search!) && entry.meal == mealUUID
+                }
+            }
+        } else {
+            return []
+        }
+        var descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate, sortBy: [SortDescriptor(\CalorieEntry.date, order: .reverse)])
+        descriptor.fetchLimit = 50
+        
+        return await withCheckedContinuation { continuation in
+            do {
+                let returns: [CalorieEntry] = try modelContext.fetch(descriptor)
+                var actualReturns: [CalorieEntry] = []
+                for item in returns {
+                    var dupe: Bool = false
+                    for inActual in actualReturns {
+                        if item.narrative == inActual.narrative && item.narrative != nil && item.calories == inActual.calories {
+                            dupe = true
+                        }
+                    }
+                    if dupe != true {
+                        actualReturns.append(item)
+                    }
+                }
+                continuation.resume(returning: actualReturns)
+            } catch {
+                continuation.resume(returning: [])
+            }
+        }
+    }
+    
     func fetchCalsForMeal(_ meal: Meal?) async -> [CalorieEntry] {
         var searchPredicate: Predicate<CalorieEntry>
         if meal != nil {
@@ -108,12 +158,24 @@ actor CalorieActor {
             }
         }
         var descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate, sortBy: [SortDescriptor(\CalorieEntry.date, order: .reverse)])
-        descriptor.fetchLimit = 30
+        descriptor.fetchLimit = 100
         
         return await withCheckedContinuation { continuation in
             do {
                 let returns: [CalorieEntry] = try modelContext.fetch(descriptor)
-                continuation.resume(returning: returns)
+                var actualReturns: [CalorieEntry] = []
+                for item in returns {
+                    var dupe: Bool = false
+                    for inActual in actualReturns {
+                        if item.narrative == inActual.narrative && item.narrative != nil && item.calories == inActual.calories {
+                            dupe = true
+                        }
+                    }
+                    if dupe != true {
+                        actualReturns.append(item)
+                    }
+                }
+                continuation.resume(returning: actualReturns)
             } catch {
                 continuation.resume(returning: [])
             }
@@ -210,7 +272,7 @@ actor CalorieActor {
                                 do {
                                     try await healthStore.deleteObjects(of: eatenQuantityType, predicate: hkUUIDPredicate)
                                 } catch {
-                                    //balls!
+                                    //Nothing. This is not recoverable.
                                 }
                             }
                         }
@@ -225,7 +287,7 @@ actor CalorieActor {
         do {
             try modelContext.save()
         } catch {
-            // nothing
+            // Nothing. Not recoverable.
         }
     }
 }

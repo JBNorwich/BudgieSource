@@ -92,7 +92,7 @@ struct NewDataView: View {
             }
         }
 
-        if dataLump.desiredDeficit != 0 {
+        if settingsObj.desiredDeficit != 0 {
             HStack {
                 Image(systemName: "equal.circle")
                     .frame(minWidth: 30)
@@ -102,18 +102,18 @@ struct NewDataView: View {
                     .contentTransition(.numericText())
             }
             HStack {
-                if dataLump.desiredDeficit > 0 {
+                if settingsObj.desiredDeficit > 0 {
                     Image(systemName: "arrow.down")
                         .frame(minWidth: 30)
                     Text("Target deficit")
                     Spacer()
-                    Text("-"+dataLump.desiredDeficit.formatted())
+                    Text("-"+settingsObj.desiredDeficit.formatted())
                 } else {
                         Image(systemName: "arrow.up")
                             .frame(minWidth: 30)
                         Text("Target surplus")
                         Spacer()
-                        Text(negate(number: dataLump.desiredDeficit).formatted())
+                        Text(negate(number: settingsObj.desiredDeficit).formatted())
                 }
             }
         }

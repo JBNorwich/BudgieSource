@@ -255,13 +255,11 @@ struct SettingsView: View {
                 settingsObj.surplusMode = surplusMode
                 desiredSurplus = doubleDeficit
                 settingsObj.desiredDeficit = Int(-desiredSurplus)
-                todayLump.desiredDeficit = Int(-desiredSurplus)
             } else {
                 //need to save a positive number
                 settingsObj.surplusMode = surplusMode
                 doubleDeficit = desiredSurplus
                 settingsObj.desiredDeficit = Int(doubleDeficit)
-                todayLump.desiredDeficit = Int(doubleDeficit)
             }
             pingSettingsToWatch()
         }

@@ -37,8 +37,11 @@ struct AddCalsSheet: View {
     @State var selectedMeal: UUID = UUID()
     @State var selectedDate: Date
     @State var prevFoods: [CalorieEntry] = []
+    @State var displayedFoods: [CalorieEntry] = []
     @State private var showAllFoods: Bool = false
-    
+    @State private var searchText: String = ""
+    @State private var showCancelButton: Bool = false
+        
     var body: some View {
         NavigationStack {
             Form {
@@ -52,7 +55,7 @@ struct AddCalsSheet: View {
                     TextField("Narrative (optional)", text: $whatItIs)
                     
                     Picker("Meal", selection: $selectedMeal) {
-                        ForEach(mealList.sorted(by: {$0.order < $1.order})) { meal in
+                        ForEach(mealList) { meal in
                             Text(meal.name)
                                 .tag(meal.mealUUID)
                         }
@@ -66,8 +69,7 @@ struct AddCalsSheet: View {
                     
                     if (getMidnightOnDayBefore(date: Date()) == getMidnightOnDayBefore(date: selectedDate))
                     {
-                        if (newRemBudg > 0)
-                        {
+                        if newRemBudg > 0 {
                             Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(newRemBudg.formatted())** in your overall budget for the rest of the day.")
                         } else {
                             Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\((-newRemBudg).formatted())** over your overall budget for the rest of the day.")
@@ -76,69 +78,66 @@ struct AddCalsSheet: View {
                     
                     HStack {
                         Button("Save") {
-                            if !String(calories ?? 0).isNumber {
-                                calories = nil
-                                isFocused = true
-                            } else {
-                                if calories ?? 0 > 0 {
+                            if caloriesValid() == true {
+                                Task {
+                                    await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+                                    isDisplayed = false
                                     Task {
-                                        await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
-                                        print("Adding calories")
-                                        isDisplayed = false
-                                        Task {
-                                            await dataStore.updateLump(todayLump: todayLump)
-                                        }
+                                        await dataStore.updateLump(todayLump: todayLump)
                                     }
-                                } else {
-                                    caloriesWereNil = true
-                                    isFocused = true
                                 }
+                            } else {
+                                caloriesWereNil = true
+                                isFocused = true
                             }
                         }.buttonStyle(.borderedProminent)
                         
                         Button("Save and add more") {
-                            if !String(calories ?? 0).isNumber {
-                                calories = nil
-                                isFocused = true
-                            } else {
-                                if calories ?? 0 > 0 {
+                            if caloriesValid() == true {
+                                Task {
+                                    await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+                                    print("Adding calories")
+                                    doUpdates()
                                     Task {
-                                        await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
-                                        print("Adding calories")
-                                        if showAllFoods == true {
-                                            Task {
-                                                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(nil)
-                                            }
-                                        } else {
-                                            let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
-                                            Task {
-                                                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
-                                            }
-                                        }
-                                        Task {
-                                            await dataStore.updateLump(todayLump: todayLump)
-                                        }
-                                        calories = nil
-                                        whatItIs = ""
-                                        isFocused = true
+                                        await dataStore.updateLump(todayLump: todayLump)
                                     }
-                                } else {
-                                    caloriesWereNil = true
+                                    calories = nil
+                                    whatItIs = ""
                                     isFocused = true
                                 }
+                            } else {
+                                caloriesWereNil = true
+                                isFocused = true
                             }
                         }.buttonStyle(.borderedProminent)
                     }
                 }
-                    
+                
                 Section(header: Text("Previous entries")) {
+                    // Search box
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                        
+                        TextField("Search", text: $searchText, onEditingChanged: { isEditing in
+                            self.showCancelButton = true
+                        })
+                            .foregroundColor(.primary)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                        
+                        Button(action: {
+                            self.searchText = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill").opacity(searchText == "" ? 0 : 1)
+                        }
+                    }
                     Picker("Label", selection: $showAllFoods) {
                             Text("Current meal").tag(false)
                             Text("All meals").tag(true)
                     }.pickerStyle(.segmented)
                     
                     List {
-                        ForEach(prevFoods) { entry in
+                        ForEach(displayedFoods) { entry in
                             HStack {
                                 Text(entry.narrative ?? "Quick calories")
                                 Spacer()
@@ -181,25 +180,15 @@ struct AddCalsSheet: View {
         }
         
         .onChange(of: selectedMeal) {
-            if showAllFoods != true {
-                let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
-                Task {
-                    prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
-                }
-            }
+            doUpdates()
         }
         
         .onChange(of: showAllFoods) {
-            if showAllFoods == true {
-                Task {
-                    prevFoods = await dataStore.calorieActor.fetchCalsForMeal(nil)
-                }
-            } else {
-                let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
-                Task {
-                    prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
-                }
-            }
+            doUpdates()
+        }
+        
+        .onChange(of: searchText) {
+            doUpdates()
         }
         
         .alert("Calories can't be zero.", isPresented: $caloriesWereNil)
@@ -212,6 +201,38 @@ struct AddCalsSheet: View {
             mealList = mealList.sorted(by: { $0.order < $1.order })
             selectedMeal = mealList.first!.mealUUID
             prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealList.first!)
+        }
+    }
+    
+    func doUpdates() {
+        if showAllFoods == true {
+            Task {
+                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(nil)
+            }
+        } else {
+            let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
+            Task {
+                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
+            }
+        }
+        if searchText != "" {
+            displayedFoods = prevFoods.filter {
+                $0.narrative != nil && $0.narrative!.lowercased().contains(searchText.lowercased())
+            }
+        } else {
+            displayedFoods = prevFoods
+        }
+    }
+    
+    func caloriesValid() -> Bool {
+        if !String(calories ?? 0).isNumber {
+            return false
+        } else {
+            if calories ?? 0 > 0 {
+                return true
+            } else {
+                return false
+            }
         }
     }
 }
