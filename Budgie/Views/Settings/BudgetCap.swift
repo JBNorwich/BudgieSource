@@ -29,7 +29,7 @@ struct BudgetCap: View {
         Form {          
             Section(header: Text("Budget cap"), footer: Text(.init(cappingText))) {
                 Toggle("Cap budget", isOn: $capBudget)
-                if capBudgetBinding.wrappedValue == true {
+                if capBudget {
                     LabeledContent("Cap") {
                         TextField("", value: $capBudgetCals, format: .number .grouping(.automatic) .precision(.integerLength(4)))
                             .multilineTextAlignment(.trailing)
