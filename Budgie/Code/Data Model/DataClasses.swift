@@ -107,22 +107,10 @@ class TodayLump: ObservableObject {
         return settingsObj.capBudgetCals - self.realBudget
     }
     
-//    // Doesn't appear to be used by anything. Pointless. Why did I code this?
-//    var progressTodayInt: Int {
-//        var progress = self.progressTodayAsWholePercent
-//        if progress > 100 { progress = 100 }
-//        return Int(progress)
-//    }
-    
     /// The total amount remaining to eat from the user's budget.
     var totalBudgetRem: Int {
         return self.totalBudget - self.eatenCalories
     }
-
-//      // Another variable I made that isn't read by anything. Yay!
-//    var totalCaloriesOut: Int {
-//        return self.activeCalories + self.basalCalories
-//    }
     
     /// The amount that the user can eat now, as weighted against their last meal time.
     var canEatNow: Int {
