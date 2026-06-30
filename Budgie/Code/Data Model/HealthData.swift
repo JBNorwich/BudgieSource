@@ -189,8 +189,10 @@ class HealthData {
                         }
                     }
                     
-                    if daysInSample < 7 {
-                        let diff = 7 - daysInSample
+                    let totalDays = max(Calendar.current.dateComponents([.day], from: from, to: to).day ?? 7, 1)
+                    
+                    if daysInSample < totalDays {
+                        let diff = totalDays - daysInSample
                         var toAdd: Int = 0
                         
                         if type == .quantityType(forIdentifier: .activeEnergyBurned) {
@@ -203,7 +205,7 @@ class HealthData {
                         estimated = true
                     }
                     
-                    let average = totalCals/7
+                    let average = totalCals/totalDays
                     
                     continuation.resume(returning: (val: average, estimate: estimated))
                 }
