@@ -18,137 +18,72 @@ import SwiftUI
 struct NewDataView: View {
     @EnvironmentObject var dataLump: TodayLump
     
-    var body: some View {
-        Spacer()
-        VStack {
-            HStack {
-                Image(systemName: "figure.walk")
-                    .frame(minWidth: 30)
-                    .foregroundStyle(.secondary)
-                Text("Active calories".uppercased())
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("Calories".uppercased())
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+    private struct DataViewRow: View {
+        let imageName: String
+        let text: String
+        let number: Int
+        
+        var body: some View {
             HStack {
                 HStack {
-                    Image(systemName: "flame.circle")
+                    Image(systemName: imageName)
                         .frame(minWidth: 30)
-                    Text("Burned so far today")
+                    Text(text)
                 }
                 Spacer()
-                Text(dataLump.activeCalories.formatted())
+                Text(number.formatted())
                     .contentTransition(.numericText())
             }
-            if dataLump.projectedActive != 0 {
+        }
+    }
+    
+    private struct DataViewSumRow: View {
+        let imageName: String
+        let text: String
+        let number: Int
+        
+        var body: some View {
+            HStack {
                 HStack {
-                    Image(systemName: "questionmark.circle")
+                    Image(systemName: imageName)
                         .frame(minWidth: 30)
-                    Text("Projected future")
-                    Spacer()
-                    Text(dataLump.projectedActive.formatted())
-                        .contentTransition(.numericText())
+                        .fontWeight(.bold)
+                    Text(text)
+                        .fontWeight(.bold)
                 }
+                Spacer()
+                Text(number.formatted())
+                    .fontWeight(.bold)
+                    .contentTransition(.numericText())
             }
         }
-        VStack {
+    }
+    
+    private struct DataViewHeader: View {
+        let imageName: String
+        let leftText: String
+        let rightText: String
+        
+        var body: some View {
             HStack {
-                Image(systemName: "sofa")
-                    .frame(minWidth: 30)
-                    .foregroundStyle(.secondary)
-                Text("Resting calories".uppercased())
+                HStack {
+                    Image(systemName: imageName)
+                        .frame(minWidth: 30)
+                        .foregroundStyle(.secondary)
+                    Text(leftText.uppercased())
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(rightText.uppercased())
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Spacer()
-                Text("Calories".uppercased())
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            HStack {
-                Image(systemName: "flame.circle")
-                    .frame(minWidth: 30)
-                Text("Burned so far today")
-                Spacer()
-                Text(dataLump.basalCalories.formatted())
-                    .contentTransition(.numericText())
-            }
-            HStack {
-                Image(systemName: "questionmark.circle")
-                    .frame(minWidth: 30)
-                Text("Projected future")
-                Spacer()
-                Text(dataLump.projectedBasal.formatted())
-                    .contentTransition(.numericText())
             }
         }
-        HStack {
-            Spacer()
-            VStack {
-                Divider()
-                    .frame(maxWidth: 100)
-            }
-        }
-
-        if settingsObj.desiredDeficit != 0 {
-            HStack {
-                Image(systemName: "equal.circle")
-                    .frame(minWidth: 30)
-                Text("Total burned today")
-                Spacer()
-                Text(dataLump.totalProjCalories.formatted())
-                    .contentTransition(.numericText())
-            }
-            HStack {
-                if settingsObj.desiredDeficit > 0 {
-                    Image(systemName: "arrow.down")
-                        .frame(minWidth: 30)
-                    Text("Target deficit")
-                    Spacer()
-                    Text("-"+settingsObj.desiredDeficit.formatted())
-                } else {
-                        Image(systemName: "arrow.up")
-                            .frame(minWidth: 30)
-                        Text("Target surplus")
-                        Spacer()
-                        Text(negate(number: settingsObj.desiredDeficit).formatted())
-                }
-            }
-        }
-        
-        if settingsObj.capBudget == true && dataLump.budgetAtCap == true {
-            HStack {
-                Image(systemName: "hat.cap")
-                    .frame(minWidth: 30)
-                Text("Budget at cap")
-                Spacer()
-                Text(dataLump.budgetOverCap.formatted())
-                    .contentTransition(.numericText())
-            }
-        }
-        
-        HStack {
-            Spacer()
-            VStack {
-                Divider()
-                    .frame(maxWidth: 100)
-            }
-        }
-
-        HStack {
-            Image(systemName: "equal.circle")
-                .frame(minWidth: 30)
-                .fontWeight(.bold)
-            Text("Total calorie budget")
-                .fontWeight(.bold)
-            Spacer()
-            Text(dataLump.totalBudget.formatted())
-                .fontWeight(.bold)
-                .contentTransition(.numericText())
-        }
-        if dataLump.eatenCalories != 0 {
+    }
+    
+    private struct DataViewDivider: View {
+        var body: some View {
             HStack {
                 Spacer()
                 VStack {
@@ -156,51 +91,70 @@ struct NewDataView: View {
                         .frame(maxWidth: 100)
                 }
             }
-            HStack {
-                Image(systemName: "fork.knife")
-                    .frame(minWidth: 30)
-                Text("Eaten today")
-                Spacer()
-                Text("-" + dataLump.eatenCalories.formatted())
-                    .contentTransition(.numericText())
-            }
+        }
+    }
+    
+    private struct DataViewAlert: View {
+        let imageName: String
+        let text: String
+        
+        var body: some View {
+            Label(text, systemImage: imageName)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    
+    var body: some View {
+        Spacer()
+        VStack {
+            DataViewHeader(imageName: "figure.walk", leftText: "Active calories", rightText: "Calories")
+            DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.activeCalories)
+            if dataLump.projectedActive != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedActive) }
+        }
+        VStack {
+            DataViewHeader(imageName: "sofa", leftText: "Resting calories", rightText: "Calories")
+            DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.basalCalories)
+            if dataLump.projectedBasal != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedBasal) }
+        }
+
+        DataViewDivider()
+        
+        if settingsObj.desiredDeficit != 0 {
+            DataViewRow(imageName: "equal.circle", text: "Total burned today", number: dataLump.totalProjCalories)
+            settingsObj.desiredDeficit > 0
+                ? DataViewRow(imageName: "arrow.down", text: "Target deficit", number: negate(value: settingsObj.desiredDeficit))
+                : DataViewRow(imageName: "arrow.up", text: "Target surplus", number: negate(value: settingsObj.desiredDeficit))
+        }
+        
+        settingsObj.capBudget && dataLump.budgetAtCap
+            ? DataViewRow(imageName: "hat.cap", text: "Budget at cap", number: dataLump.budgetOverCap)
+            : nil
+        
+        DataViewDivider()
+
+        DataViewSumRow(imageName: "equal.circle", text: "Total calorie budget", number: dataLump.totalBudget)
+
+        if dataLump.eatenCalories != 0 {
+            DataViewDivider()
+            DataViewRow(imageName: "fork.knife", text: "Eaten today", number: negate(value: dataLump.eatenCalories))
             if dataLump.totalBudgetRem != 0 {
-                HStack {
-                    if dataLump.totalBudgetRem > 0 {
-                        Image(systemName: "face.smiling")
-                            .frame(minWidth: 30)
-                        Text("Left in budget today")
-                        Spacer()
-                        Text(dataLump.totalBudgetRem.formatted())
-                            .contentTransition(.numericText())
-                    } else if dataLump.totalBudgetRem < 0 {
-                        Image(systemName: "gauge.with.dots.needle.bottom.100percent")
-                            .frame(minWidth: 30)
-                        Text("Over total budget by")
-                        Spacer()
-                        Text(negate(number: dataLump.totalBudgetRem).formatted())
-                            .contentTransition(.numericText())
-                    }
-                }
+                dataLump.totalBudgetRem > 0
+                    ? DataViewRow(imageName: "face.smiling", text: "Left in budget today", number: dataLump.totalBudgetRem)
+                    : DataViewRow(imageName: "gauge.with.dots.needle.bottom.100percent", text: "Over total budget by", number: negate(value: dataLump.totalBudgetRem))
             }
         }
         if dataLump.activeEstimated == true || dataLump.budgetAtCap == true || dataLump.budgetAtMin == true {
             Divider()
-        }
-        if dataLump.activeEstimated == true {
-            Label("Your active calorie burn figures are estimated, so your budget doesn't reflect your real activity today.", systemImage: "info.circle")
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        if dataLump.budgetAtCap == true {
-            Label("Your budget for today has been capped at the amount chosen in Settings.", systemImage: "info.circle")
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        if dataLump.budgetAtMin == true {
-            Label("Your budget was calculated as lower than the minimum of 1,200 calories, so it has been set at that amount.", systemImage: "exclamationmark.octagon")
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
+            dataLump.activeEstimated
+                ? DataViewAlert(imageName: "info.circle",text: "Your active calorie burn figures are estimated, so your budget doesn't reflect your real activity today.")
+                : nil
+            dataLump.budgetAtCap
+                ? DataViewAlert(imageName: "info.circle", text: "Your budget for today has been capped at the amount chosen in Settings.")
+                : nil
+            dataLump.budgetAtMin
+                ? DataViewAlert(imageName: "exclamationmark.octagon", text: "Your budget was calculated as lower than the minimum of 1,200 calories, so it has been set at that amount.")
+                : nil
         }
     }
 }
