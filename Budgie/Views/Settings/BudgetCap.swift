@@ -19,64 +19,46 @@ struct BudgetCap: View {
     @State var capBudget: Bool = false
     @State var capBudgetCals: Int = 0
     @FocusState private var focusCap: Bool
+    
+    private func commitCap() {
+        capBudgetCals = max(capBudgetCals, 1200)
+        settingsObj.capBudgetCals = capBudgetCals
+    }
        
     var body: some View {
         Form {          
             Section(header: Text("Budget cap"), footer: Text(.init(cappingText))) {
                 Toggle("Cap budget", isOn: $capBudget)
-                if (capBudget == true) {
-                    LabeledContent() {
-                        TextField(capBudgetCals.formatted(), value: $capBudgetCals, format: .number .grouping(.automatic) .precision(.integerLength(4)))
+                if capBudgetBinding.wrappedValue == true {
+                    LabeledContent("Cap") {
+                        TextField("", value: $capBudgetCals, format: .number .grouping(.automatic) .precision(.integerLength(4)))
                             .multilineTextAlignment(.trailing)
                             .keyboardType(.numberPad)
-                            .onSubmit {
-                                if capBudgetCals > 1400
-                                {
-                                    pingCap()
-                                } else {
-                                    capBudgetCals = 1400
-                                }
-                            }
-                            .focusable()
+                            .onSubmit { commitCap() }
                             .focused($focusCap)
-                    } label: { Text("Cap") }
+                    }
                 }
             }
         }
         .navigationTitle("Budget capping")
         
         .onAppear {
-            capBudget = settingsObj.capBudget
             capBudgetCals = settingsObj.capBudgetCals
         }
         
         .onChange(of: capBudget) {
             settingsObj.capBudget = capBudget
         }
+        
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
 
                 Button("Done") {
-                    let prevCals = capBudgetCals
-                    if capBudgetCals > 999
-                    {
-                        pingCap()
-                    } else {
-                        capBudgetCals = prevCals
-                    }
-                    
-                    if focusCap == true { focusCap.toggle() }
+                    commitCap()
+                    focusCap = false
                 }
              }
         }
     }
-    
-    func pingCap() {
-        settingsObj.capBudgetCals = capBudgetCals
-    }
 }
-
-//#Preview {
-//    AdjustWeighting()
-//}
