@@ -148,7 +148,6 @@ class ChartData: ObservableObject {
         }
         
         dataUpdated = false
-        
         returnedChartData = lumpsByDate.values.sorted { $0.date < $1.date }
         cleanDataObject()
         updateInProgress = false
