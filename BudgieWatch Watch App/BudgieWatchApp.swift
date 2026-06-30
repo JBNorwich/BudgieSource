@@ -16,7 +16,7 @@
 import SwiftUI
 import HealthKitUI
 
-let settingsObj = UserSettings()
+let settingsObj = CloudSettings()
 let healthStore = HKHealthStore()
 let dataStore = HealthData()
 
