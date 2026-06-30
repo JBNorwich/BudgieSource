@@ -17,126 +17,78 @@ import SwiftUI
 
 struct MeterView: View {
     @EnvironmentObject var todayLump: TodayLump
-    @State var blobColour: Color = .clear
-    @State var pathColour: Color = .clear
-
-    @State var displayedLTE = Int()
-    @State var displayedTime = Double()
-    var dummy: Bool
+    @State var displayedTime: Double = 0
+    
+    var dummy: Bool = false
     
     func getNiceBudgetDisplay(leftToEat: Int) -> String {
-        var outputString = String()
-        
         if settingsObj.surplusMode == true {
-            if leftToEat > -1
-            {
-                outputString = "Need to eat"
-            } else {
-                outputString = "Overeaten by"
-            }
+            return leftToEat > -1 ? "Need to eat" : "Overeaten by"
         } else {
-            if leftToEat > -1
-            {
-                outputString = "Can eat now"
-            } else {
-                outputString = "Over target by"
+            return leftToEat > -1 ? "Can eat now" : "Over target by"
+        }
+    }
+    
+    private struct BudgetRing: View {
+        let blobColour: Color
+        let pathColour: Color
+        let progress: Double
+        let label: String
+        let value: String
+        var animateFeedback: Bool = true
+
+        var body: some View {
+            ZStack {
+                Circle()
+                    .fill(blobColour.shadow(.drop(color: .black, radius: 4)))
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .rotation(.degrees(-90))
+                    .stroke(pathColour.gradient, style: StrokeStyle(lineWidth: 28, lineCap: .round))
+                    .animation(.easeInOut, value: progress)
+                    .shadow(radius: 10)
+                VStack {
+                    Text(label)
+                        .font(.headline)
+                        .minimumScaleFactor(0.01)
+                    Text(value)
+                        .fontWeight(.heavy)
+                        .font(.system(size: 60))
+                        .minimumScaleFactor(0.01)
+                        .contentTransition(.numericText())
+                        .shadow(radius: 5)
+                }
+                .foregroundColor(.white)
+                .contentMargins(50)
             }
         }
-        return outputString
+    }
+    
+    private func refresh() {
+        withAnimation {
+            // This does nothing but force a view refresh
+            displayedTime = getPercentOfDayDone()
+        }
     }
 
     var body: some View {
-        
-        ZStack {
-            if dummy != true {
-                Circle()
-                    .fill(.shadow(.drop(color: .black, radius: 4)))
-                    .fill(todayLump.getBlobColour())
-                Circle()
-                    .trim(from: 0, to: todayLump.progressToday)
-                    .rotation(Angle(degrees: -90))
-                    // GOES CLOCKWISE FROM EAST
-                    .fill(.clear)
-                    .stroke(todayLump.getPathColour().gradient, style:StrokeStyle(lineWidth: 28, lineCap: .round))
-                    .animation(.easeInOut, value: todayLump.progressToday)
-                    .shadow(radius: 10)
-                    .shadow(radius: 5)
+        if dummy {
+                BudgetRing(blobColour: .teal, pathColour: .green, progress: 0.6,
+                           label: "Can eat now", value: "428")
+        } else {
+                BudgetRing(blobColour: todayLump.getBlobColour(),
+                           pathColour: todayLump.getPathColour(),
+                           progress: todayLump.progressToday,
+                           label: getNiceBudgetDisplay(leftToEat: todayLump.canEatNow),
+                           value: todayLump.normalisedLTE)
                     .sensoryFeedback(.increase, trigger: todayLump.progressToday)
-                VStack {
-                    Text(getNiceBudgetDisplay(leftToEat: todayLump.canEatNow))
-                        .font(.headline)
-                        .minimumScaleFactor(0.01)
-                        .scaledToFill()
-                        .contentMargins(50)
-                        .foregroundColor(.white)
-                    Text(todayLump.normalisedLTE)
-                        .fontWeight(.heavy)
-                        .font(.system(size:60))
-                        .minimumScaleFactor(0.01)
-                        .scaledToFill()
-                        .contentMargins(50)
-                        .contentTransition(.numericText())
-                        .shadow(radius: 5)
-                        .foregroundColor(.white)
-                        .sensoryFeedback(.increase, trigger: todayLump.canEatNow)
-                        .contentTransition(.numericText())
-                }
-            } else {
-                Circle()
-                    .fill(.shadow(.drop(color: .black, radius: 4)))
-                    .fill(.teal.gradient)
-                Circle()
-                    .trim(from: 0, to: 0.6)
-                    .rotation(Angle(degrees: -90))
-                    // GOES CLOCKWISE FROM EAST
-                    .fill(.clear)
-                    .stroke(.green.gradient, style:StrokeStyle(lineWidth: 28, lineCap: .round))
-                    .animation(.easeInOut, value: 0.6)
-                    .shadow(radius: 10)
-                    .shadow(radius: 5)
-                VStack {
-                    Text("Can eat now")
-                        .font(.headline)
-                        .minimumScaleFactor(0.01)
-                        .scaledToFill()
-                        .contentMargins(50)
-                        .foregroundColor(.white)
-                    Text("428")
-                        .fontWeight(.heavy)
-                        .font(.system(size:60))
-                        .minimumScaleFactor(0.01)
-                        .scaledToFill()
-                        .contentMargins(50)
-                        .contentTransition(.numericText())
-                        .shadow(radius: 5)
-                        .foregroundColor(.white)
-                }
-            }
-        }
-            
-            .onChange(of: todayLump.progressTodayAsWholePercent) {
-                withAnimation {
-                    pathColour = todayLump.getPathColour()
-                    displayedTime = getPercentOfDayDone()
-                }
-            }
-        
-            .onChange(of: todayLump.canEatNow) {
-                withAnimation {
-                    displayedTime = getPercentOfDayDone()
-                    pathColour = todayLump.getPathColour()
-                }
-            }
-        
-        
-            .onAppear() {
-                displayedTime = getPercentOfDayDone()
-                withAnimation {
-                    pathColour = todayLump.getPathColour()
-                }
-            }
+                    .sensoryFeedback(.increase, trigger: todayLump.canEatNow)
+                    .onChange(of: todayLump.progressTodayAsWholePercent) { refresh() }
+                    .onChange(of: todayLump.canEatNow) { refresh() }
+                    .onAppear { refresh() }
         }
     }
+}
 
 #Preview {
     struct Preview: View {
