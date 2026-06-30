@@ -22,12 +22,12 @@ struct Disclaimer: View {
         NavigationStack {
             List {
                 Section (header: Text("This app isn't medical advice")) {
-                Text("Budgie Diet is for information purposes only, and its suggestions are not a substitute for professional medical advice. It's best to consult your doctor before starting any new diet plan.")
+                Text("Budgie Diet is for information purposes only, its maker is not a medical professional, and its suggestions are not a substitute for professional medical advice. It's best to consult your doctor before starting any new diet plan.")
                 }
                 
                 
                 Section (header: Text("This app could be wrong")) {
-                    Text("This app estimates your daily energy allowance using Apple Watch data, manual calculations, and various formulas. Any of these could be inaccurate or even completely wrong.")
+                    Text("This app estimates your daily calorie budget using Apple Health data, manual calculations, and various formulae. Any of these could be inaccurate or even completely wrong.")
                 }
                 
                 Section (header: Text("You may not lose weight")) {
@@ -35,7 +35,7 @@ struct Disclaimer: View {
                 }
                 
                 Section(header: Text("You are responsible for your choices")) {
-                    Text("Budgie Diet will let you choose a target calorie deficit to aim for. It is for you, in discussion with your doctor, to work out what calorie deficit is right for you, and whether to use Budgie at all. Its suggestions are purely advisory, and are not specific to you or your needs.\n\nThe maker of this app is not responsible for any harm caused by choosing a diet that is too restrictive for you.")
+                    Text("Budgie Diet will let you choose a target calorie deficit to aim for. It is for you, in discussion with your doctor, to work out what calorie deficit is right for you, and whether to use this app or diet at all. Its suggestions are purely advisory, and are not specific to you or your needs.\n\nThe maker of this app is not responsible for any harm caused by choosing a diet that is too restrictive for you.")
                 }
             }
             .navigationTitle("Disclaimer")
