@@ -16,62 +16,37 @@
 import SwiftUI
 import Charts
 
+struct WeightOptions: View {
+    var body: some View {
+        Text("Don't weight down").tag(-2)
+        Text("Forgiving").tag(-1)
+        Text("Default").tag(0)
+        Text("Harsh").tag(1)
+        Text("Don't predict").tag(2)
+        Text("Default (old)").tag(3)
+    }
+}
+
 func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
-    var doubleInput = Double(input)
-    let styleToUse = style
     let time = Double(timeInput)
     
-    var startTime: Double
-    var stopTime: Double
-    var weightTime: Double
-    var weightFactor: Double
-    var finalWeightFactor: Double
-    
-    switch styleToUse {
-        case -1: doubleInput = 1 * doubleInput
-        case 0: doubleInput = 0.5 * doubleInput
-        case 1: doubleInput = 0.25 * doubleInput
-        default: print("Doing nothing")
+    // multiplier = discount on active projection (i.e. lower fraction = user gets less credit)
+    // startTime = time that weighting down starts
+    // stopTime = time to stop projecting future active calories entirely
+    // exponent = power to which factor is multiplied
+    let (multiplier, startTime, stopTime, exponent): (Double, Double, Double, Double)
+    switch style {
+        case -1:    (multiplier, startTime, stopTime, exponent) = (1, 240, 1440, 5)
+        case 0:     (multiplier, startTime, stopTime, exponent) = (0.5, 0, 1320, 2)
+        case 1:     (multiplier, startTime, stopTime, exponent) = (0.25, 0, 1320, 1)
+        default:    (multiplier, startTime, stopTime, exponent) = (1, 0, 1440, 0)
     }
     
-    switch styleToUse {
-        case -1: startTime = 240
-        case 0: startTime = 0
-        case 1: startTime = 0
-        default: startTime = 0
-    }
-    switch styleToUse {
-        case -1: stopTime = 1440
-        case 0: stopTime = 1320
-        case 1: stopTime = 1320
-        default: stopTime = 1440
-    }
-
-    if time < startTime {
-        weightTime = startTime
-    } else {
-        weightTime = time
-    }
+    let weightTime = max(time,startTime)
+    let weightFactor: Double = weightTime/stopTime
+    let finalWeightFactor = 1 - pow(weightFactor, exponent)
     
-    switch styleToUse {
-        case 2: weightFactor = 0
-        default: weightFactor = weightTime/stopTime
-    }
-    
-    switch styleToUse {
-        case -1: finalWeightFactor = 1 - pow(weightFactor, 5)
-        case 0: finalWeightFactor = 1 - pow(weightFactor, 2)
-        case 1: finalWeightFactor = 1 - weightFactor
-        default: finalWeightFactor = 0
-    }
-    
-    let result = finalWeightFactor * doubleInput
-    
-    if result > 0 {
-        return result
-    } else {
-        return 0
-    }
+    return max(finalWeightFactor * Double(input) * multiplier, 0)
 }
 
 struct WeightingChartPiece {
@@ -103,27 +78,18 @@ class WeightingChartObject {
 
 let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": Color.yellow, "Harsh": Color.red])
 
-struct WeightOptions: View {
-    var body: some View {
-        Text("Don't weight down").tag(-2)
-        Text("Forgiving").tag(-1)
-        Text("Default").tag(0)
-        Text("Harsh").tag(1)
-        Text("Don't predict").tag(2)
-        Text("Default (old)").tag(3)
-    }
-}
-
 struct AdjustWeighting: View {
-    @State var selectedOption: Int = 0
-    @State var differentWeights: Bool = false
-    @State var monWeight: Int = 0
-    @State var tuesWeight: Int = 0
-    @State var wedsWeight: Int = 0
-    @State var thursWeight: Int = 0
-    @State var friWeight: Int = 0
-    @State var satWeight: Int = 0
-    @State var sunWeight: Int = 0
+    @State private var refreshID = UUID()
+    
+    private func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>) -> Binding<T> {
+        Binding(
+            get: { settingsObj[keyPath: keyPath] },
+            set: { newValue in
+                settingsObj[keyPath: keyPath] = newValue
+                refreshID = UUID() // forces redraw on update
+            }
+        )
+    }
     
     var body: some View {
         let object = WeightingChartObject()
@@ -155,86 +121,25 @@ struct AdjustWeighting: View {
                             .padding()
                             .frame(minHeight: 200)
                         
-                        Toggle("Weight differently each day", isOn: $differentWeights)
+                        Toggle("Weight differently each day", isOn: settingBinding(\.differentWeights))
                             .toggleStyle(SwitchToggleStyle())
-                        if differentWeights == false {
-                            Picker("Weighting style", selection: $selectedOption) {
+                        if !settingsObj.differentWeights {
+                            Picker("Weighting style", selection: settingBinding(\.weightingStyle)) {
                                 WeightOptions()
                             }.pickerStyle(.menu)
                         } else {
-                            Picker("Monday", selection: $monWeight) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
-                            Picker("Tuesday", selection: $tuesWeight) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
-                            Picker("Wednesday", selection: $wedsWeight) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
-                            Picker("Thursday", selection: $thursWeight) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
-                            Picker("Friday", selection: $friWeight) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
-                            Picker("Saturday", selection: $satWeight) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
-                            Picker("Sunday", selection: $sunWeight) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
+                            Picker("Monday", selection: settingBinding(\.monWeight)) { WeightOptions() }.pickerStyle(.menu)
+                            Picker("Tuesday", selection: settingBinding(\.tuesWeight)) { WeightOptions() }.pickerStyle(.menu)
+                            Picker("Wednesday", selection: settingBinding(\.wedsWeight)) { WeightOptions() }.pickerStyle(.menu)
+                            Picker("Thursday", selection: settingBinding(\.thursWeight)) { WeightOptions() }.pickerStyle(.menu)
+                            Picker("Friday", selection: settingBinding(\.friWeight)) { WeightOptions() }.pickerStyle(.menu)
+                            Picker("Saturday", selection: settingBinding(\.satWeight)) { WeightOptions() }.pickerStyle(.menu)
+                            Picker("Sunday", selection: settingBinding(\.sunWeight)) { WeightOptions() }.pickerStyle(.menu)
                         }
                     }
                 }.frame(maxHeight: .infinity)
-        .navigationTitle("Calorie weighting options")
-        
-        .onAppear {
-            selectedOption = settingsObj.weightingStyle
-            differentWeights = settingsObj.differentWeights
-            monWeight = settingsObj.monWeight
-            tuesWeight = settingsObj.tuesWeight
-            wedsWeight = settingsObj.wedsWeight
-            thursWeight = settingsObj.thursWeight
-            friWeight = settingsObj.friWeight
-            satWeight = settingsObj.satWeight
-            sunWeight = settingsObj.sunWeight
-        }
-        
-        .onChange(of: selectedOption) {
-            settingsObj.weightingStyle = selectedOption
-        }
-        
-        .onChange(of: differentWeights) {
-            settingsObj.differentWeights = differentWeights
-        }
-        
-        .onChange(of: monWeight) {
-            settingsObj.monWeight = monWeight
-        }
-        
-        .onChange(of: tuesWeight) {
-            settingsObj.tuesWeight = tuesWeight
-        }
-        
-        .onChange(of: wedsWeight) {
-            settingsObj.wedsWeight = wedsWeight
-        }
-        
-        .onChange(of: thursWeight) {
-            settingsObj.thursWeight = thursWeight
-        }
-        
-        .onChange(of: friWeight) {
-            settingsObj.friWeight = friWeight
-        }
-        
-        .onChange(of: satWeight) {
-            settingsObj.satWeight = satWeight
-        }
-        
-        .onChange(of: sunWeight) {
-            settingsObj.sunWeight = sunWeight
-        }
+                .navigationTitle("Calorie weighting options")
+                .id(refreshID)
     }
 }
 
