@@ -96,7 +96,6 @@ struct AddCalsSheet: View {
                             if caloriesValid() == true {
                                 Task {
                                     await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
-                                    print("Adding calories")
                                     doUpdates()
                                     Task {
                                         await dataStore.updateLump(todayLump: todayLump)

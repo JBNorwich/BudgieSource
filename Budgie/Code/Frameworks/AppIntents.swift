@@ -177,7 +177,6 @@ struct MealEntity: AppEntity, Identifiable {
 
 struct StructMealQuery: EntityQuery {
     func entities(for identifiers: [MealEntity.ID]) async throws -> [MealEntity] {
-        print("Calling for MealEntities via entities!")
         let mealObjects = await dataStore.calorieActor.getListOfMeals()
         return mealObjects
             .filter { identifiers.contains($0.mealUUID) }
@@ -185,7 +184,6 @@ struct StructMealQuery: EntityQuery {
     }
     
     func suggestedEntities() async throws -> [MealEntity] {
-        print("Calling for MealEntities via SuggestedEntities!")
         let mealObjects = await dataStore.calorieActor.getListOfMeals()
         return mealObjects.map { MealEntity(mealUUID: $0.mealUUID, name: $0.name) }
     }

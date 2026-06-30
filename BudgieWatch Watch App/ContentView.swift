@@ -17,7 +17,6 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var todayLump: TodayLump = TodayLump()
-    @ObservedObject var connectivity = Connectivity()
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
@@ -70,12 +69,6 @@ struct ContentView: View {
             }
             .navigationTitle("Your target")
             .padding()
-            
-            .onChange(of: connectivity.updated) {
-                Task {
-                    await dataStore.updateLump(todayLump: todayLump)
-                }
-            }
             
             .onChange(of: scenePhase) {
                 guard scenePhase == .active else {

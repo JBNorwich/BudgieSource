@@ -279,11 +279,9 @@ func getDaysToLose(weight: Double, deficit: Int) -> Int {
     if weight == 0 || deficit == 0 {
         return 0
     } else {
-        print("Weight: \(weight.formatted())")
         let calsPerKg: Double = 7700
         let calsToLose = weight * calsPerKg
         let result = Int(calsToLose) / deficit
-        print("Days: \(result)")
         return result
     }
 }
@@ -297,7 +295,6 @@ func adjustDeficitPrediction(deficit: Int, factor: Double) -> Int {
         return 0
     } else {
         let doubleCalc = Double(deficit) * factor
-        print ("Adjusted from \(deficit) to \(Int(doubleCalc).formatted())")
         return Int(doubleCalc)
     }
 }

@@ -146,7 +146,6 @@ class HealthData {
                     
                     actCollection.enumerateStatistics(from: from, to: to) { statistics, _ in
                         if let quantity = statistics.averageQuantity() {
-                            print(quantity.doubleValue(for: .gram()).formatted())
                             totalWeight = totalWeight + quantity.doubleValue(for: .gram())
                             daysInSample = daysInSample + 1
                         }
