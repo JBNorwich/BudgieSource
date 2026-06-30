@@ -40,12 +40,13 @@ struct ChartDatePicker: View {
     @Binding var dateChanged: Bool
     @State var calsSheetSize = PresentationDetent.medium
     
-    @State var atMax: Bool = false
     @State var showingFullPicker: Bool = false
-    @State var prevStartDate: Date = Date()
-    @State var nextStartDate: Date = Date()
-    @State var prevEndDate: Date = Date()
-    @State var nextEndDate: Date = Date()
+
+    var prevStartDate: Date { getWeekBeforeDate(date: startDate) }
+    var prevEndDate: Date { getWeekBeforeDate(date: endDate) }
+    var nextStartDate: Date { getWeekBeforeDate(date: nextEndDate) }
+    var nextEndDate: Date { min(getWeekAfterDate(date: endDate), getMidnightOnDayAfter(date: Date())) }
+    var atMax: Bool { endDate >= getMidnightOnDayAfter(date: Date()) }
     
     var body: some View {
         RoundedRectangle(cornerRadius: 10)
@@ -54,18 +55,10 @@ struct ChartDatePicker: View {
             .overlay {
                 HStack {
                     Button("", systemImage: "arrow.left") {
-                        startDate = prevStartDate // start date becomes 17/8 00:00
-                        endDate = prevEndDate // end date becomes 24/8 00:00
-                        prevStartDate = getWeekBeforeDate(date: startDate) // prev button moves start date to 17/8 00:00
-                        prevEndDate = getWeekBeforeDate(date: endDate) //prev button moves end date to 24/8 00:00
-                        nextStartDate = getWeekAfterDate(date: startDate) //next button moves start date to 24/8 00:00
-                        if getWeekAfterDate(date: endDate) > getMidnightOnDayAfter(date: Date()) { // if proposed end date is after today
-                            nextEndDate = getMidnightOnDayAfter(date: Date())   // set it to today
-                            atMax = true
-                        } else {                                                // if the end date is not after today
-                            nextEndDate = getWeekAfterDate(date: endDate)       // we can use the week after the end date
-                        }
-                        atMax = false
+                        let newStart = prevStartDate
+                        let newEnd = prevEndDate
+                        startDate = newStart
+                        endDate = newEnd
                         dateChanged = true
                     }
                     .padding()
@@ -90,22 +83,10 @@ struct ChartDatePicker: View {
                     Spacer()
                     
                     Button("", systemImage: "arrow.right") {
-                        endDate = nextEndDate
-                        startDate = nextStartDate
-                        prevStartDate = getWeekBeforeDate(date: startDate)
-                        prevEndDate = getWeekBeforeDate(date: endDate)
-                        if getWeekAfterDate(date: endDate) < getMidnightOnDayAfter(date: Date()) {
-                            nextEndDate = getWeekAfterDate(date: endDate)
-                        } else {
-                            nextEndDate = getMidnightOnDayAfter(date: Date())
-                        }
-                        nextStartDate = getWeekBeforeDate(date: nextEndDate)
-                        if endDate >= getMidnightOnDayAfter(date: Date()) {
-                            endDate = getMidnightOnDayAfter(date: Date())
-                            atMax = true
-                        } else {
-                            atMax = false
-                        }
+                        let newStart = nextStartDate
+                        let newEnd = nextEndDate
+                        startDate = newStart
+                        endDate = newEnd
                         dateChanged = true
                     }
                     .padding()
@@ -117,16 +98,6 @@ struct ChartDatePicker: View {
                 NavigationStack {
                     FullDatePicker(displayedStartDate: visualDateForChart(date: getMidnightOnDayAfter(date: startDate)), displayedEndDate: visualDateForChart(date: endDate), showing: $showingFullPicker, endDate: $endDate, startDate: $startDate, dateChanged: $dateChanged)
                 }.presentationDetents([.height(175)], selection: $calsSheetSize)
-            }
-        
-            .onAppear() {
-                prevStartDate = getWeekBeforeDate(date: startDate)
-                prevEndDate = getWeekBeforeDate(date: endDate)
-                nextStartDate = getWeekAfterDate(date: startDate)
-                nextEndDate = getWeekAfterDate(date: endDate)
-                if isAfterToday(date: nextEndDate) {
-                    atMax = true
-                }
             }
     }
 }
