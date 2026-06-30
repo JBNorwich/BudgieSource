@@ -488,47 +488,13 @@ class HealthData {
     
     /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, or new water entries.
     func setUpObserverQueries(todayLump: TodayLump) {
-        let activeQuery = HKObserverQuery(sampleType: activeQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                // Properly handle the error.
-                return
+        for sampleType in [activeQuantityType, basalQuantityType, eatenQuantityType, waterQuantityType] {
+            let query = HKObserverQuery(sampleType: sampleType, predicate: observerPredicate) { _, _, errorOrNil in
+                guard errorOrNil == nil else { return }
+                Task { await self.updateLump(todayLump: todayLump) }
             }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
+            healthStore.execute(query)
         }
-        let basalQuery = HKObserverQuery(sampleType: basalQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                // Properly handle the error.
-                return
-            }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
-        }
-        
-        let eatenQuery = HKObserverQuery(sampleType: eatenQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                return
-            }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
-        }
-        let waterQuery = HKObserverQuery(sampleType: waterQuantityType, predicate: observerPredicate){ (query, completionHandler, errorOrNil) in
-            if errorOrNil != nil {
-                // Properly handle the error.
-                return
-            }
-            Task {
-                await self.updateLump(todayLump: todayLump)
-            }
-        }
-       
-        healthStore.execute(activeQuery)
-        healthStore.execute(basalQuery)
-        healthStore.execute(eatenQuery)
-        healthStore.execute(waterQuery)
     }
 }
 
