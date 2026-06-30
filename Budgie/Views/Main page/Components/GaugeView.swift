@@ -24,11 +24,9 @@ struct GaugeView: View {
             VStack {
                 Gauge(value: todayLump.progressAgainstTarget, in: 0...2) {
                 } currentValueLabel: {
-                    if todayLump.gaugeNumber > 0 {
-                        Text("+" + todayLump.gaugeNumber.formatted() + "%")
-                    } else {
-                        Text("-" + (-todayLump.gaugeNumber).formatted() + "%")
-                    }
+                    todayLump.gaugeNumber > 0
+                        ? Text("+" + todayLump.gaugeNumber.formatted() + "%")
+                        : Text("-" + (-todayLump.gaugeNumber).formatted() + "%")
                 } minimumValueLabel: {
                     Text("")
                         .foregroundColor(.teal)
@@ -60,11 +58,9 @@ struct GaugeView: View {
                     Spacer()
                 }
                 HStack {
-                    if todayLump.totalBudgetRem > -1 {
-                        Text("**\(todayLump.totalBudgetRem.formatted())** cals left in budget today")
-                    } else {
-                        Text("**\((-todayLump.totalBudgetRem).formatted())** cals over budget")
-                    }
+                    todayLump.totalBudgetRem > -1
+                        ? Text("**\(todayLump.totalBudgetRem.formatted())** cals left in budget today")
+                        : Text("**\((-todayLump.totalBudgetRem).formatted())** cals over budget")
                     Spacer()
                 }
                 if settingsObj.hideTodayInDetail == true && todayLump.activeEstimated == true {
