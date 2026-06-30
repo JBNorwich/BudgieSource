@@ -41,7 +41,6 @@ struct BudgieApp: App {
                 settingsObj.onCloud = true
             }
         }
-        pingSettingsToWatch()
     }
     var body: some Scene {
         WindowGroup {

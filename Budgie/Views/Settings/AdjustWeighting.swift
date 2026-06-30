@@ -202,47 +202,38 @@ struct AdjustWeighting: View {
         
         .onChange(of: selectedOption) {
             settingsObj.weightingStyle = selectedOption
-            pingSettingsToWatch()
         }
         
         .onChange(of: differentWeights) {
             settingsObj.differentWeights = differentWeights
-            pingSettingsToWatch()
         }
         
         .onChange(of: monWeight) {
             settingsObj.monWeight = monWeight
-            pingSettingsToWatch()
         }
         
         .onChange(of: tuesWeight) {
             settingsObj.tuesWeight = tuesWeight
-            pingSettingsToWatch()
         }
         
         .onChange(of: wedsWeight) {
             settingsObj.wedsWeight = wedsWeight
-            pingSettingsToWatch()
         }
         
         .onChange(of: thursWeight) {
             settingsObj.thursWeight = thursWeight
-            pingSettingsToWatch()
         }
         
         .onChange(of: friWeight) {
             settingsObj.friWeight = friWeight
-            pingSettingsToWatch()
         }
         
         .onChange(of: satWeight) {
             settingsObj.satWeight = satWeight
-            pingSettingsToWatch()
         }
         
         .onChange(of: sunWeight) {
             settingsObj.sunWeight = sunWeight
-            pingSettingsToWatch()
         }
     }
 }

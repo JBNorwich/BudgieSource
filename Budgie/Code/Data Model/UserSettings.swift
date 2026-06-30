@@ -17,6 +17,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 
+/// Class used for querying iCloud hosted key-value storage.
 class CloudSettings {
     private let defaults = NSUbiquitousKeyValueStore.default
     
@@ -24,6 +25,7 @@ class CloudSettings {
         defaults.synchronize()
     }
     
+    /// Function to copy existing settings from UserSettings into the CloudKit based storage.
     func copyFromLocal(localObj: UserSettings) {
         self.desiredDeficit = localObj.desiredDeficit
         self.isFirstRun = localObj.isFirstRun
@@ -235,30 +237,9 @@ class CloudSettings {
         get { return defaults.object(forKey: "weightDisplayUnit") as? Int ?? 0 }
         set { defaults.set(newValue, forKey: "weightDisplayUnit")}
     }
-    
-    func dumpToDict() -> [String:Any] {
-        var dict: [String:Any] = [:]
-        dict["surplusMode"] = self.surplusMode
-        dict["desiredDeficit"] = self.desiredDeficit
-        dict["manualBMR"] = self.manualBMR
-        dict["manualActive"] = self.manualActive
-        dict["weightingStyle"] = self.weightingStyle
-        dict["differentWeights"] = self.differentWeights
-        dict["monWeight"] = self.monWeight
-        dict["tuesWeight"] = self.tuesWeight
-        dict["wedsWeight"] = self.wedsWeight
-        dict["thursWeight"] = self.thursWeight
-        dict["friWeight"] = self.friWeight
-        dict["satWeight"] = self.satWeight
-        dict["sunWeight"] = self.sunWeight
-        dict["useFitnessGoal"] = self.useFitnessGoal
-        dict["capBudget"] = self.capBudget
-        dict["capBudgetCals"] = self.capBudgetCals
-        dict["finalMealTime"] = self.finalMealTime
-        return dict
-    }
 }
 
+/// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.
 class UserSettings {
     private let defaults = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
     
@@ -441,29 +422,6 @@ class UserSettings {
     var weightDisplayUnit: Int {
         get { return defaults?.value(forKey: "weightDisplayUnit") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "weightDisplayUnit")}
-    }
-    
-    func dumpToDict() -> [String:Any] {
-        var dict: [String:Any] = [:]
-        dict["surplusMode"] = self.surplusMode
-        dict["desiredDeficit"] = self.desiredDeficit
-        dict["manualBMR"] = self.manualBMR
-        dict["manualActive"] = self.manualActive
-        dict["weightingStyle"] = self.weightingStyle
-        dict["manualMode"] = self.manualMode
-        dict["differentWeights"] = self.differentWeights
-        dict["monWeight"] = self.monWeight
-        dict["tuesWeight"] = self.tuesWeight
-        dict["wedsWeight"] = self.wedsWeight
-        dict["thursWeight"] = self.thursWeight
-        dict["friWeight"] = self.friWeight
-        dict["satWeight"] = self.satWeight
-        dict["sunWeight"] = self.sunWeight
-        dict["useFitnessGoal"] = self.useFitnessGoal
-        dict["capBudget"] = self.capBudget
-        dict["capBudgetCals"] = self.capBudgetCals
-        dict["finalMealTime"] = self.finalMealTime
-        return dict
     }
 }
 

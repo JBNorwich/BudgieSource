@@ -52,7 +52,6 @@ struct BudgetCap: View {
         
         .onChange(of: capBudget) {
             settingsObj.capBudget = capBudget
-            pingSettingsToWatch()
         }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -73,11 +72,8 @@ struct BudgetCap: View {
         }
     }
     
-    
-    
     func pingCap() {
         settingsObj.capBudgetCals = capBudgetCals
-        pingSettingsToWatch()
     }
 }
 

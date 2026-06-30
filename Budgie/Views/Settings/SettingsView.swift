@@ -228,7 +228,6 @@ struct SettingsView: View {
             hideTodayInDetail = settingsObj.hideTodayInDetail
             useFitnessGoal = settingsObj.useFitnessGoal
             waterGoal = settingsObj.waterGoal
-            pingSettingsToWatch()
         }
     
         .onChange(of: healthLogging, initial: false) {
@@ -261,7 +260,6 @@ struct SettingsView: View {
                 doubleDeficit = desiredSurplus
                 settingsObj.desiredDeficit = Int(doubleDeficit)
             }
-            pingSettingsToWatch()
         }
         
         .onChange(of: useFitnessGoal, initial: false) {
@@ -270,7 +268,6 @@ struct SettingsView: View {
         
         .onChange(of: weightTime) {
             settingsObj.finalMealTime = timeToMinsIntoDay(time: weightTime)
-            pingSettingsToWatch()
         }
         
         .navigationTitle("Settings")
@@ -323,7 +320,6 @@ struct SettingsView: View {
     func pingManual() {
         settingsObj.manualBMR = manualBMR
         settingsObj.manualActive = manualActive
-        pingSettingsToWatch()
     }
     
     func pingDeficit() {
@@ -333,13 +329,7 @@ struct SettingsView: View {
         } else {
             settingsObj.desiredDeficit = Int(-desiredSurplus)
         }
-        pingSettingsToWatch()
     }
-}
-
-func pingSettingsToWatch() {
-    let dict = settingsObj.dumpToDict()
-    Connectivity.shared.send(settings: dict)
 }
 
 #Preview {
