@@ -36,11 +36,9 @@ struct WaterView: View {
                 .padding(.top, 10)
                 .animation(.easeInOut, value: todayLump.waterGoalDone)
             Spacer()
-            if todayLump.waterGoalRem != 0 {
-                Text("\(todayLump.waterGoalRem.formatted())ml to go")
-            } else {
-                Text("Goal met!")
-            }
+            todayLump.waterGoalRem != 0
+                ? Text("\(todayLump.waterGoalRem.formatted())ml to go")
+                : Text("Goal met!")
         }
     }
 }
