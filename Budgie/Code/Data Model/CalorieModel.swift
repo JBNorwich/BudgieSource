@@ -104,47 +104,6 @@ actor CalorieActor {
         }
     }
     
-    func fetchCalsByString(search: String?, meal: Meal?) async -> [CalorieEntry] {
-        var searchPredicate: Predicate<CalorieEntry>
-        if search != nil {
-            if meal == nil {
-                searchPredicate = #Predicate<CalorieEntry> { entry in
-                    entry.narrative != nil && entry.calories != 0 && entry.narrative!.contains(search!)
-                }
-            } else {
-                let mealUUID = meal!.mealUUID
-                searchPredicate = #Predicate<CalorieEntry> { entry in
-                    entry.narrative != nil && entry.calories != 0 && entry.narrative!.contains(search!) && entry.meal == mealUUID
-                }
-            }
-        } else {
-            return []
-        }
-        var descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate, sortBy: [SortDescriptor(\CalorieEntry.date, order: .reverse)])
-        descriptor.fetchLimit = 50
-        
-        return await withCheckedContinuation { continuation in
-            do {
-                let returns: [CalorieEntry] = try modelContext.fetch(descriptor)
-                var actualReturns: [CalorieEntry] = []
-                for item in returns {
-                    var dupe: Bool = false
-                    for inActual in actualReturns {
-                        if item.narrative == inActual.narrative && item.narrative != nil && item.calories == inActual.calories {
-                            dupe = true
-                        }
-                    }
-                    if dupe != true {
-                        actualReturns.append(item)
-                    }
-                }
-                continuation.resume(returning: actualReturns)
-            } catch {
-                continuation.resume(returning: [])
-            }
-        }
-    }
-    
     func fetchCalsForMeal(_ meal: Meal?) async -> [CalorieEntry] {
         var searchPredicate: Predicate<CalorieEntry>
         if meal != nil {
