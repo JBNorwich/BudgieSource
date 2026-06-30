@@ -68,8 +68,6 @@ func assessDeficit(desired: Int, actual: Int) -> DeficitAssessment {
 struct ChartTableView: View {
     @EnvironmentObject var todayLump: TodayLump
     @State var chartData: [ChartDataLump]
-    @State var openedFood: Bool = false
-    @State var lumpToOpen = ChartDataLump()
     @State var openingFoodHub: Bool = false
     @State var selDate: Date = Date()
     
@@ -86,7 +84,7 @@ struct ChartTableView: View {
                 VStack {
                     Spacer()
                     VStack {
-                        Text("🐋 " + whaleSalutations.randomElement()!)
+                        Text("🐋 " + (whaleSalutations.randomElement() ?? "Whoops, I'm a whale."))
                             .padding()
                     }
                 } .frame(minHeight: 100)
@@ -111,12 +109,13 @@ func negate(number: Int) -> Int {
 
 struct ChartTableRow: View {
     let dateFormatter = DateFormatter()
-    @State var openedFood: Bool = false
     var dataLump: ChartDataLump
     @State var formDate: String = ""
     @EnvironmentObject var todayLump: TodayLump
 
     var body: some View {
+        let assessment = assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit)
+        
         VStack {
             HStack {
                 VStack {
@@ -168,27 +167,27 @@ struct ChartTableRow: View {
                         }
                 }
                 VStack {
-                    Text(assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).narrative)
+                    Text(assessment.narrative)
                         .font(.caption)
                         .minimumScaleFactor(0.1)
                         .scaledToFit()
                     Spacer()
                     HStack {
-                        if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget == 0 {
+                        if assessment.offTarget == 0 {
                             Image(systemName: "arrow.right")
-                        } else if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget < 0 {
+                        } else if assessment.offTarget < 0 {
                             Image(systemName: "arrow.up")
                         } else {
                             Image(systemName: "arrow.down")
                         }
                         Spacer()
-                        if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget < 0 {
-                            Text(negate(number: assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget).formatted())
+                        if assessment.offTarget < 0 {
+                            Text((-assessment.offTarget).formatted())
                                 .font(.title)
                                 .minimumScaleFactor(0.1)
                                 .scaledToFit()
                         } else {
-                            Text(assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget.formatted())
+                            Text(assessment.offTarget.formatted())
                                 .font(.title)
                                 .minimumScaleFactor(0.1)
                                 .scaledToFit()
@@ -199,8 +198,7 @@ struct ChartTableRow: View {
             
             .onAppear() {
                 dateFormatter.dateFormat = "dd/MM"
-                formDate = dataLump.date.formatted(date: .numeric, time: .omitted)
-                formDate = String(formDate.dropLast(5))
+                formDate = dateFormatter.string(from: dataLump.date)
             }
         .buttonStyle(PlainButtonStyle())
     }
