@@ -22,7 +22,6 @@ struct BudgetHelperView: View {
     var hideZero: Bool = false
     
     @State var displaying1000kcalWarning: Bool = false
-    @State var displaying750kcalWarning: Bool = false
     
     var body: some View {
 
@@ -161,6 +160,9 @@ struct BudgetHelperView: View {
                 Text("A 1,000kcal daily deficit poses **serious health risks** unless you have significant weight to lose. Most people can’t sustain this while getting enough nutrients.")
                     .multilineTextAlignment(.center)
                     .padding()
+                Text("Budgie Diet is hard coded to not give you a budget below 1,200kcal under any circumstances, so for a great number of people, this will have no effect anyway.")
+                    .multilineTextAlignment(.center)
+                    .padding()
                 Text("It is strongly recommended that you do not pursue this without medical supervision. The app maker is not responsible for any health issues caused by choosing too high a deficit.")
                     .multilineTextAlignment(.center)
                     .padding()
@@ -180,38 +182,6 @@ struct BudgetHelperView: View {
             }.padding()
         }
             .presentationDragIndicator(.visible)
-        
-        .sheet(isPresented: $displaying750kcalWarning)
-        {
-            VStack {
-                Text("Be careful")
-                    .font(.largeTitle)
-                    .multilineTextAlignment(.center)
-                Text("This daily deficit may be hard to sustain unless you are very overweight or exercise a lot. Those of normal weight who don’t exercise much may struggle to get enough nutrients and energy.")
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Text("It is recommended that you do not aim for such a high deficit without medical supervision, especially if your BMI is below 25. A safer starting point for most people is a 500kcal deficit per day.")
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Text("The app maker is not responsible for any health issues caused by choosing too high a deficit.")
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Button("Choose a different deficit") {
-                    displaying750kcalWarning = false
-                }
-                .padding()
-                Button("Set deficit to 750kcal") {
-                    settingsObj.desiredDeficit = 750
-                    doubleDeficit = 750
-                    displaying750kcalWarning = false
-                    isPresented = false
-                }
-                .foregroundStyle(.red)
-
-            }.padding()
-            
-        }
-        .presentationDragIndicator(.visible)
     }
 }
 
