@@ -53,10 +53,10 @@ struct FitnessView: View {
                 Spacer()
             }
             HStack {
-                Text("\(Int(value).formatted())/\(Int(goal).formatted())")
+                Text("\(Int(value.rounded()).formatted())/\(Int(goal).formatted())")
                     .foregroundColor(colour)
                     .multilineTextAlignment(.leading)
-                    .scaledToFit()
+                    .lineLimit(1)
                 Text(unit.uppercased())
                     .font(.caption)
                     .foregroundColor(colour)
@@ -69,9 +69,7 @@ struct FitnessView: View {
         HStack {
             VStack {
                 ActivityRingView(activitySummary: todayLump.activitySummary)
-                    .background(.clear)
                     .frame(width: 40, height: 40)
-                    .scaledToFit()
                 Spacer()
             }
             Divider()
@@ -81,7 +79,7 @@ struct FitnessView: View {
                     ? FitnessStat(title: "Exercise", value: todayLump.activitySummary.appleExerciseTime.doubleValue(for: .minute()), goal: todayLump.activitySummary.exerciseTimeGoal?.doubleValue(for: .minute()) ?? 0, unit: "min", colour: exerciseColour)
                     : nil
                 todayLump.activitySummary.standHoursGoal != nil
-                    ? FitnessStat(title: "Stand", value: todayLump.activitySummary.appleStandHours.doubleValue(for: .count()), goal: todayLump.activitySummary.appleStandHoursGoal.doubleValue(for: .count()), unit: "hrs", colour: standColour)
+                    ? FitnessStat(title: "Stand", value: todayLump.activitySummary.appleStandHours.doubleValue(for: .count()), goal: todayLump.activitySummary.standHoursGoal?.doubleValue(for: .count()) ?? 0, unit: "hrs", colour: standColour)
                     : nil
             }
         }
