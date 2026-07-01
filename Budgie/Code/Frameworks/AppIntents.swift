@@ -38,10 +38,7 @@ struct LogQuickCaloriesIntent: AppIntent {
             calsToLog = try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?"))
         }
         
-        // Right now there's no more graceful means of knowing what the UUID is for "Snacks/Other" other than this.
-        // I'm going to try and put something more elegant in for this in the future, but right now, this works.
-        let snacksUUID = await dataStore.calorieActor.getMealUUIDbyName(name: "Snacks/Other")
-        await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: snacksUUID)
+        await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: settingsObj.snacksUUID!)
         
         return .result()
     }

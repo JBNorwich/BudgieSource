@@ -29,6 +29,9 @@ struct BudgieApp: App {
             if await dataStore.calorieActor.getListOfMeals() == [] {
                 await dataStore.calorieActor.setUpMeals()
             }
+            if settingsObj.snacksUUID == nil {
+                settingsObj.snacksUUID = await dataStore.calorieActor.getMealUUIDbyName(name: "Snacks/Other")
+            }
         }
         if settingsObj.onCloud == false {
             // cloud sync not done

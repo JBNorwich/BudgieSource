@@ -237,6 +237,11 @@ class CloudSettings {
         get { return defaults.object(forKey: "weightDisplayUnit") as? Int ?? 0 }
         set { defaults.set(newValue, forKey: "weightDisplayUnit")}
     }
+    
+    var snacksUUID: UUID? {
+        get { return defaults.object(forKey: "snacksUUID") as? UUID ?? nil}
+        set { defaults.set(newValue, forKey: "snacksUUID")}
+    }
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.
