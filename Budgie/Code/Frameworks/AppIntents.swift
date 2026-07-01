@@ -38,7 +38,10 @@ struct LogQuickCaloriesIntent: AppIntent {
             calsToLog = try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?"))
         }
         
-        await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: settingsObj.snacksUUID!)
+        guard let snacksUUID = settingsObj.snacksUUID else {
+            throw $calories.needsValueError("Budgie Diet hasn't finished setting up yet — please open the app first.")
+        }
+        await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: snacksUUID)
         
         return .result()
     }
