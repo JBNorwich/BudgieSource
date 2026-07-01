@@ -17,10 +17,7 @@ import SwiftUI
 
 struct BudgetHelperView: View {
     @Binding var isPresented: Bool
-    @Binding var doubleDeficit: Double
-    
     var hideZero: Bool = false
-    
     @State var displaying1000kcalWarning: Bool = false
     
     var body: some View {
@@ -35,9 +32,7 @@ struct BudgetHelperView: View {
                 Section(footer: Text("Choose this if your goal is to maintain your current weight.")) {
                     Button("No deficit at all")
                     {
-                        //HealthData.updateDesiredDeficit(newDeficit: 0)
                         settingsObj.desiredDeficit = 0
-                        doubleDeficit = 0
                         isPresented = false
                     } .fontWeight(.bold)
                 }
@@ -45,9 +40,7 @@ struct BudgetHelperView: View {
             Section(footer: Text("Most people will find this easy to stick to.")) {
                 Button("Easy - 250kcal per day")
                 {
-                    //HealthData.updateDesiredDeficit(newDeficit: 250)
                     settingsObj.desiredDeficit = 250
-                    doubleDeficit = 250
                     isPresented = false
                 } .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
                 HStack{
@@ -75,9 +68,7 @@ struct BudgetHelperView: View {
             Section(footer: Text("This is a good recommended starting point for people with a bit of weight to lose - not too hard, not too easy.")) {
                 Button("Moderate - 500kcal per day")
                 {
-                    //HealthData.updateDesiredDeficit(newDeficit: 500)
                     settingsObj.desiredDeficit = 500
-                    doubleDeficit = 500
                     isPresented = false
                 } .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
                 HStack{
@@ -104,9 +95,7 @@ struct BudgetHelperView: View {
             Section(footer: Text("This level of deficit may work for you if you exercise a lot, or you are very overweight. Otherwise, you may not be able to eat enough on the budget that this will give you.")) {
                 Button("Hard - 750kcal per day")
                 {
-                    //HealthData.updateDesiredDeficit(newDeficit: 500)
                     settingsObj.desiredDeficit = 750
-                    doubleDeficit = 750
                     isPresented = false
                 } .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
                 HStack{
@@ -173,7 +162,6 @@ struct BudgetHelperView: View {
                 .padding()
                 Button("Set deficit to 1,000") {
                     settingsObj.desiredDeficit = 1000
-                    doubleDeficit = 1000
                     displaying1000kcalWarning = false
                     isPresented = false
                 }
@@ -188,9 +176,8 @@ struct BudgetHelperView: View {
 #Preview {
     struct Preview: View {
         @State var isPresented = Bool()
-        @State var doubleDeficit = Double()
         var body: some View {
-            BudgetHelperView(isPresented: $isPresented, doubleDeficit: $doubleDeficit)
+            BudgetHelperView(isPresented: $isPresented)
         }
     }
 

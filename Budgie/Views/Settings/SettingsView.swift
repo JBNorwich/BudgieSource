@@ -97,7 +97,7 @@ struct SettingsView: View {
                 Button("Help me choose a goal") {
                         showingSheet = true
                     }.sheet(isPresented: $showingSheet, onDismiss: { refreshState() }) {
-                        BudgetHelperView(isPresented: $showingSheet, doubleDeficit: deficitBinding)
+                        BudgetHelperView(isPresented: $showingSheet)
                     }
                 }
             }

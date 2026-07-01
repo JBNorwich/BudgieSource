@@ -58,14 +58,16 @@ struct WeightGoalSheet: View {
                 }
                 Section {
                     if kilos != nil {
-                        if (settingsObj.desiredDeficit > 0) {
-                            kilos! < todayLump.weightToday
+                        if todayLump.weightToday != 0 {
+                            if (settingsObj.desiredDeficit > 0) {
+                                kilos! < todayLump.weightToday
                                 ? Text("Your current weight is \(todayLump.weightToday.formatted())kg, so you'll need to lose \(toLose.formatted())kg to get to this goal.")
                                 : Text("This goal is above your current weight. Are you sure this is right?")
-                        } else {
-                            kilos! > todayLump.weightToday
+                            } else {
+                                kilos! > todayLump.weightToday
                                 ? Text("Your current weight is \(todayLump.weightToday.formatted())kg, so you'll need to gain \((-toLose).formatted())kg to get to this goal.")
-                            : Text("This goal is below your current weight. Are you sure this is right?")
+                                : Text("This goal is below your current weight. Are you sure this is right?")
+                            }
                         }
                         if daysToGo > 0 {
                             VStack {
@@ -78,7 +80,7 @@ struct WeightGoalSheet: View {
                                 } else {
                                     Text("Assuming you meet your target surplus every day, this will take you \(friendlyDuration).")
                                     Divider()
-                                    Label("Timescales given are estimates, and are not personalised. Your actual results will vary. Gaining muscle, rather than fat, requires strength training and a balanced diet. This app is not medical advice.", systemImage: "info.circle")
+                                    Label("Timescales given are estimates, and are not personalised. Your actual results will vary. Gaining muscle from a caloric surplus, rather than fat, requires strength training and a balanced, protein-rich diet. This app is not medical advice.", systemImage: "info.circle")
                                         .lineLimit(nil)
                                         .fixedSize(horizontal: false, vertical: false)
                                 }
