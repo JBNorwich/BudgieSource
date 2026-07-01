@@ -25,44 +25,30 @@ import HealthKit
     var quantity: Int = 0
     var healthKitUUID: UUID?
     
-    init(quantity: Int, healthKitUUID: UUID? = nil, date: Date? = Date()) {
-        self.id = UUID()
-        self.date = date!
+    init(quantity: Int, healthKitUUID: UUID? = nil, date: Date = Date()) {
+        self.date = date
         self.quantity = quantity
         self.healthKitUUID = healthKitUUID
     }
 }
 
 @ModelActor actor WaterActor {
-    func addWater(object: WaterEntry) {
+    func addWater(object: WaterEntry) async {
+        modelContext.insert(object)
         do {
-            modelContext.insert(object)
             try modelContext.save()
         } catch {
-            // check to see if the water object saved to HealthKit and if so, bin it so we don't have orphans floating around
-            if object.healthKitUUID != nil {
-                Task {
-                    if healthStore.authorizationStatus(for: waterQuantityType) == HKAuthorizationStatus.sharingAuthorized {
-                        let hkUUIDPredicate = HKQuery.predicateForObjects(with: [object.healthKitUUID!])
-                        
-                        try await healthStore.deleteObjects(of: waterQuantityType, predicate: hkUUIDPredicate)
-                    }
-                }
+            if let hkUUID = object.healthKitUUID {
+                await dataStore.deleteHKSample(uuid: hkUUID, type: waterQuantityType)
             }
             print("Water insertion error: \(error)")
         }
     }
     
-    func deleteEntries(objects: [WaterEntry]) {
+    func deleteEntries(objects: [WaterEntry]) async {
         for object in objects {
-            if object.healthKitUUID != nil {
-                Task {
-                    if healthStore.authorizationStatus(for: waterQuantityType) == HKAuthorizationStatus.sharingAuthorized {
-                        let hkUUIDPredicate = HKQuery.predicateForObjects(with: [object.healthKitUUID!])
-                        
-                        try await healthStore.deleteObjects(of: waterQuantityType, predicate: hkUUIDPredicate)
-                    }
-                }
+            if let hkUUID = object.healthKitUUID {
+                await dataStore.deleteHKSample(uuid: hkUUID, type: waterQuantityType)
             }
             modelContext.delete(object)
         }
@@ -74,53 +60,17 @@ import HealthKit
     }
     
     func getTotalOnDate(date: Date) async -> Int {
-        // pull total water on date given from the Budgie Diet model
-        
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
-        let searchPredicate = #Predicate<WaterEntry> { entry in
-            entry.date > start && entry.date < end
-        }
-        let descriptor = FetchDescriptor<WaterEntry>(predicate: searchPredicate)
-        return await withCheckedContinuation { continuation in
-            do {
-                let returns = try modelContext.fetch(descriptor)
-
-                if returns.count == 0 {
-                    continuation.resume(returning: 0)
-                } else {
-                    var sum: Int = 0
-                    for entry in returns {
-                        sum = sum + entry.quantity
-                    }
-                    continuation.resume(returning: sum)
-                }
-            } catch {
-                continuation.resume(returning: 0)
-            }
-        }
+        let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > start && $0.date < end })
+        let entries = (try? modelContext.fetch(descriptor)) ?? []
+        return entries.reduce(0) { $0 + $1.quantity }
     }
-    
+
     func getEntriesOnDate(date: Date) async -> [WaterEntry] {
-        // retrieve the water entries on a date
-        
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
-        let searchPredicate = #Predicate<WaterEntry> { entry in
-            entry.date > start && entry.date < end
-        }
-        let descriptor = FetchDescriptor<WaterEntry>(predicate: searchPredicate)
-        return await withCheckedContinuation { continuation in
-            do {
-                let returns = try modelContext.fetch(descriptor)
-                if returns.count == 0 {
-                    continuation.resume(returning: [])
-                } else {
-                    continuation.resume(returning: returns)
-                }
-            } catch {
-                continuation.resume(returning: [])
-            }
-        }
+        let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > start && $0.date < end })
+        return (try? modelContext.fetch(descriptor)) ?? []
     }
 }

@@ -239,8 +239,13 @@ class CloudSettings {
     }
     
     var snacksUUID: UUID? {
-        get { return defaults.object(forKey: "snacksUUID") as? UUID ?? nil}
-        set { defaults.set(newValue, forKey: "snacksUUID")}
+        get {
+            guard let uuidString = defaults.string(forKey: "snacksUUID") else {
+                return nil
+            }
+            return UUID(uuidString: uuidString)
+        }
+        set { defaults.set(newValue?.uuidString, forKey: "snacksUUID")}
     }
 }
 

@@ -18,17 +18,37 @@ import HealthKitUI
 import Observation
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 /// HealthData is a "god object" which acts as the main data store for the application. There should only ever be one instance of HealthData, which is instantiated at app start as "dataStore". You should never call HealthData(), subclass it or create a new object from it.
-class HealthData {
-    let calorieMealConfig = ModelConfiguration(schema: Schema([CalorieEntry.self,Meal.self]))
-    let waterConfig = ModelConfiguration("waterDB", schema: Schema([WaterEntry.self]))
+final class HealthData {
+    static let shared = HealthData()
+    
+    let calorieMealConfig = ModelConfiguration(schema: Schema([CalorieEntry.self,Meal.self]), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
+    let waterConfig = ModelConfiguration("waterDB", schema: Schema([WaterEntry.self]), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
     let modelContainer: ModelContainer
     let calorieActor: CalorieActor
     let waterActor: WaterActor
+    private(set) var storeFailedToLoad = false
     
-    init() {
-        modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
+//    private init() {
+//        modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
+//        calorieActor = CalorieActor(modelContainer: modelContainer)
+//        waterActor = WaterActor(modelContainer: modelContainer)
+//    }
+    
+    private init() {
+        let realContainer = try? ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
+
+        if let realContainer {
+            modelContainer = realContainer
+        } else {
+            storeFailedToLoad = true
+            // In-memory fallback: keeps the app running rather than crashing on launch.
+            // Data won't persist for this session, but the user gets a working app instead of a crash.
+            let fallbackConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+            modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: fallbackConfig)
+        }
         calorieActor = CalorieActor(modelContainer: modelContainer)
         waterActor = WaterActor(modelContainer: modelContainer)
     }
@@ -50,23 +70,13 @@ class HealthData {
             calories = Double(budgieCalories)
         }
         
-        do {
-            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-            let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
-            let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
-                let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
-                continuation.resume(returning: sumActCalsQuery)
-            }
-            do {
-                let kcals = try await query.result(for: healthStore)?.sumQuantity()
-                calories += kcals?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
-            } catch {
-                calories += 0
-            }
-        } catch {
-            calories += 0
-        }
+        let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
+        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+        let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
+        let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
+        let kcals = (try? await sumActCalsQuery.result(for: healthStore))??.sumQuantity()
+        calories += kcals?.doubleValue(for: .kilocalorie()) ?? 0
+        
         calories = calories.rounded()
         
         return Int(calories)
@@ -78,24 +88,13 @@ class HealthData {
         var healthKitcalories: Double = 0
         
         // get HealthKit calories
+        let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
+        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, timePredicate])
+        let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: queryPredicate)], sortDescriptors: [])
         do {
-            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
-            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, timePredicate])
-            let query: HKSampleQueryDescriptor<HKQuantitySample> = try await withCheckedThrowingContinuation { continuation in
-                let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: queryPredicate)], sortDescriptors: [])
-                continuation.resume(returning: descriptor)
-            }
-            do {
-                let results = try await query.result(for: healthStore)
-                for result in results {
-                    let source = result.sourceRevision.source
-                    if source != HKSource.default() {
-                        //Note to self: You need to total the doubleValues and *then* convert to Int as otherwise it gives very annoying rounding errors
-                        healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
-                    }
-                }
-            } catch {
-                healthKitcalories = 0
+            let results = try await descriptor.result(for: healthStore)
+            for result in results {
+                healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
             }
         } catch {
             healthKitcalories = 0
@@ -115,11 +114,9 @@ class HealthData {
     }
     
     func getProjBasalCalories() async -> Int {
-        var avgBasalCals = Int()
-
         let endDate = getStartOfDay(date: Date())
         let startDate = getWeekBeforeDate(date: endDate)
-        avgBasalCals = await self.getAverageCalories(from: startDate, to: endDate, type: basalQuantityType).val
+        let avgBasalCals = await self.getAverageCalories(from: startDate, to: endDate, type: basalQuantityType).val
         
         let calsPerMinute: Double = Double(avgBasalCals) / 1440
         let projectedCals = Double(1440 - minutesIntoDay()) * calsPerMinute
@@ -129,89 +126,85 @@ class HealthData {
     func getAverageWeight(from: Date, to: Date) async -> Double {
         let everyDay = DateComponents(day:1)
         
-        do {
-            let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
-            let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+        let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
+        let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+        
+        return await withCheckedContinuation { continuation in
+            let statQuery = HKStatisticsCollectionQuery(quantityType: weightSampleType, quantitySamplePredicate: searchPredicate, options: .discreteAverage, anchorDate: from, intervalComponents: everyDay)
             
-            return await withCheckedContinuation { continuation in
-                let statQuery = HKStatisticsCollectionQuery(quantityType: weightSampleType, quantitySamplePredicate: searchPredicate, options: .discreteAverage, anchorDate: from, intervalComponents: everyDay)
-                
-                statQuery.initialResultsHandler = { query, results, error in
-                    guard let actCollection = results else {
-                        continuation.resume(returning: 0)
-                        return
-                    }
-                    
-                    var daysInSample: Double = 0
-                    var totalWeight: Double = 0
-                    
-                    actCollection.enumerateStatistics(from: from, to: to) { statistics, _ in
-                        if let quantity = statistics.averageQuantity() {
-                            totalWeight = totalWeight + quantity.doubleValue(for: .gram())
-                            daysInSample = daysInSample + 1
-                        }
-                    }
-                    
-                    let average: Double = (totalWeight/daysInSample)/1000
-                    
-                    continuation.resume(returning: roundDoubleWeight(input: average))
+            statQuery.initialResultsHandler = { query, results, error in
+                guard let actCollection = results else {
+                    continuation.resume(returning: 0)
+                    return
                 }
                 
-                healthStore.execute(statQuery)
+                var daysInSample: Double = 0
+                var totalWeight: Double = 0
+                
+                actCollection.enumerateStatistics(from: from, to: to) { statistics, _ in
+                    if let quantity = statistics.averageQuantity() {
+                        totalWeight = totalWeight + quantity.doubleValue(for: .gram())
+                        daysInSample = daysInSample + 1
+                    }
+                }
+                
+                let average: Double = (totalWeight/daysInSample)/1000
+                
+                continuation.resume(returning: roundDoubleWeight(input: average))
             }
+            
+            healthStore.execute(statQuery)
         }
     }
     
     func getAverageCalories(from: Date, to: Date, type: HKQuantityType) async -> (val: Int, estimate: Bool) {
         let everyDay = DateComponents(day:1)
         
-        do {
-            let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
-            let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-            return await withCheckedContinuation { continuation in
-                
-                let statQuery = HKStatisticsCollectionQuery(quantityType: type, quantitySamplePredicate: searchPredicate, options: .cumulativeSum, anchorDate: from, intervalComponents: everyDay)
-                
-                statQuery.initialResultsHandler = { query, results, error in
-                    guard let actCollection = results else {
-                        continuation.resume(returning:(val: 0, estimate: true))
-                        return
-                    }
-                    
-                    var daysInSample: Int = 0
-                    var totalCals: Int = 0
-                    var estimated = false
-                    
-                    actCollection.enumerateStatistics(from: from, to: to) { statistics, _ in
-                        if let quantity = statistics.sumQuantity() {
-                            totalCals = totalCals + Int(quantity.doubleValue(for: .kilocalorie()))
-                            daysInSample = daysInSample + 1
-                        }
-                    }
-                    
-                    let totalDays = max(Calendar.current.dateComponents([.day], from: from, to: to).day ?? 7, 1)
-                    
-                    if daysInSample < totalDays {
-                        let diff = totalDays - daysInSample
-                        var toAdd: Int = 0
-                        
-                        if type == .quantityType(forIdentifier: .activeEnergyBurned) {
-                            toAdd = settingsObj.manualActive
-                        } else if type == .quantityType(forIdentifier: .basalEnergyBurned) {
-                            toAdd = settingsObj.manualBMR
-                        }
-                        
-                        totalCals = totalCals + (diff * toAdd)
-                        estimated = true
-                    }
-                    
-                    let average = totalCals/totalDays
-                    
-                    continuation.resume(returning: (val: average, estimate: estimated))
+        let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
+        let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+        return await withCheckedContinuation { continuation in
+            
+            let statQuery = HKStatisticsCollectionQuery(quantityType: type, quantitySamplePredicate: searchPredicate, options: .cumulativeSum, anchorDate: from, intervalComponents: everyDay)
+            
+            statQuery.initialResultsHandler = { query, results, error in
+                guard let actCollection = results else {
+                    continuation.resume(returning:(val: 0, estimate: true))
+                    return
                 }
                 
-                healthStore.execute(statQuery)
+                var daysInSample: Int = 0
+                var totalCals: Int = 0
+                var estimated = false
+                
+                actCollection.enumerateStatistics(from: from, to: to) { statistics, _ in
+                    if let quantity = statistics.sumQuantity() {
+                        totalCals = totalCals + Int(quantity.doubleValue(for: .kilocalorie()))
+                        daysInSample = daysInSample + 1
+                    }
+                }
+                
+                let totalDays = max(Calendar.current.dateComponents([.day], from: from, to: to).day ?? 7, 1)
+                
+                if daysInSample < totalDays {
+                    let diff = totalDays - daysInSample
+                    var toAdd: Int = 0
+                    
+                    if type == .quantityType(forIdentifier: .activeEnergyBurned) {
+                        toAdd = settingsObj.manualActive
+                    } else if type == .quantityType(forIdentifier: .basalEnergyBurned) {
+                        toAdd = settingsObj.manualBMR
+                    }
+                    
+                    totalCals = totalCals + (diff * toAdd)
+                    estimated = true
+                }
+                
+                let average = totalCals/totalDays
+                
+                continuation.resume(returning: (val: average, estimate: estimated))
             }
+            
+            healthStore.execute(statQuery)
         }
     }
     
@@ -264,7 +257,7 @@ class HealthData {
     
     /// Pull the user's activity rings from HealthKit.
     func getActivitySummary() async -> HKActivitySummary {
-        let calendar = NSCalendar.current
+        let calendar = Calendar.current
         var startDateComponents = calendar.dateComponents([.year, .month, .day], from: Date())
         startDateComponents.calendar = calendar
 
@@ -282,10 +275,10 @@ class HealthData {
         return activitySummaries.first ?? HKActivitySummary()
     }
     
-    func saveHKSample(calories: Int, date: Date) async -> UUID? {
-        guard healthStore.authorizationStatus(for: eatenQuantityType) == .sharingAuthorized else { return nil }
-        let quantity = HKQuantity(unit: HKUnit(from: .kilocalorie), doubleValue: Double(calories))
-        let sample = HKQuantitySample(type: eatenQuantityType, quantity: quantity, start: date, end: date)
+    func saveHKSample(value: Double, unit: HKUnit, type: HKQuantityType, date: Date) async -> UUID? {
+        guard healthStore.authorizationStatus(for: type) == .sharingAuthorized else { return nil }
+        let quantity = HKQuantity(unit: unit, doubleValue: value)
+        let sample = HKQuantitySample(type: type, quantity: quantity, start: date, end: date)
         do {
             try await healthStore.save(sample)
             return sample.uuid
@@ -294,37 +287,26 @@ class HealthData {
         }
     }
 
-    func deleteHKSample(uuid: UUID) async {
-        guard healthStore.authorizationStatus(for: eatenQuantityType) == .sharingAuthorized else { return }
+    func deleteHKSample(uuid: UUID, type: HKQuantityType) async {
+        guard healthStore.authorizationStatus(for: type) == .sharingAuthorized else { return }
         let predicate = HKQuery.predicateForObjects(with: [uuid])
         do {
-            try await healthStore.deleteObjects(of: eatenQuantityType, predicate: predicate)
+            try await healthStore.deleteObjects(of: type, predicate: predicate)
         } catch {
             // Not recoverable.
         }
     }
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
-        let hkUUID = await saveHKSample(calories: calories, date: date)
+        let hkUUID = await saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID)
         await calorieActor.insertNewCals(object: newEntry)
     }
     
     func addWater(amount: Int, datetime: Date) async {
-        var hkUUID: UUID?
-        let authStatus = healthStore.authorizationStatus(for: waterQuantityType)
-        if authStatus == HKAuthorizationStatus.sharingAuthorized {
-            let quantityAmount = HKQuantity(unit: HKUnit.literUnit(with: .milli), doubleValue: Double(amount))
-            let sample = HKQuantitySample(type: waterQuantityType, quantity: quantityAmount, start: datetime, end: datetime)
-            hkUUID = sample.uuid
-            do {
-                try await healthStore.save(sample)
-            } catch {
-                //errorhandling
-            }
-        }
-        let newWaterObj = WaterEntry(quantity: amount, healthKitUUID: hkUUID ?? nil, date: datetime)
+        let hkUUID = await saveHKSample(value: Double(amount), unit: .literUnit(with: .milli), type: waterQuantityType, date: datetime)
+        let newWaterObj = WaterEntry(quantity: amount, healthKitUUID: hkUUID, date: datetime)
         await waterActor.addWater(object: newWaterObj)
     }
     
@@ -332,6 +314,7 @@ class HealthData {
         let today = getStartOfDay(date: Date())
         let startQuery = getWeekBeforeDate(date: today)
         let eatenCals = await pullEatenCalories(startDate: startQuery, endDate: today)
+        // It's safe to divide this by seven because today and startQuery will always be 7 days apart
         let averageEaten = (eatenCals.hk + eatenCals.budgie) / 7
         let averageResting = await getAverageCalories(from: startQuery, to: today, type: basalQuantityType).val
         let averageActive = await getAverageCalories(from: startQuery, to: today, type: activeQuantityType).val
@@ -386,21 +369,14 @@ class HealthData {
         let startDate = getStartOfDay(date: date)
         let endDate = getMidnightOnDayAfter(date: startDate)
     
+        let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
+        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+        let waterToday = HKSamplePredicate.quantitySample(type: waterQuantityType, predicate: queryPredicate)
+        let sumWaterQuery = HKStatisticsQueryDescriptor(predicate: waterToday, options: .cumulativeSum)
         do {
-            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
-            let waterToday = HKSamplePredicate.quantitySample(type: waterQuantityType, predicate: queryPredicate)
-            let query: HKStatisticsQueryDescriptor = try await withCheckedThrowingContinuation { continuation in
-                let sumWaterQuery = HKStatisticsQueryDescriptor(predicate: waterToday, options: .cumulativeSum)
-                continuation.resume(returning: sumWaterQuery)
-            }
-            do {
-                let queryResult = try await query.result(for: healthStore)?.sumQuantity()
-                let ml = queryResult?.doubleValue(for: HKUnit.literUnit(with: .milli)) ?? 0
-                waterTotalInHealthKit = Int(ml)
-            } catch {
-                waterTotalInHealthKit = 0
-            }
+            let queryResult = try await sumWaterQuery.result(for: healthStore)?.sumQuantity()
+            let ml = queryResult?.doubleValue(for: HKUnit.literUnit(with: .milli)) ?? 0
+            waterTotalInHealthKit = Int(ml)
         } catch {
             waterTotalInHealthKit = 0
         }
@@ -412,76 +388,91 @@ class HealthData {
     
     /// Main function that updates the "todayLump" that contains up to the minute data and underpins the main screen.
     @MainActor func updateLump(todayLump: TodayLump) async {
-        // Don't do anything if the lump is already being updated, to prevent conflicts.
-        if todayLump.updateInProgress == false {
-            // Turn on the "updating" flag to prevent conflicts
-            todayLump.updateInProgress = true
-            
-            // Set up date variables for ease
-            let today = Date()
-            let todayStart = getStartOfDay(date: today)
-            let todayEnd = getMidnightOnDayAfter(date: todayStart)
-            let weekBeforeYesterday = getWeekBeforeDate(date: getMidnightOnDayBefore(date: todayStart))
-            let weekBeforeWeekBeforeYesterday = getWeekBeforeDate(date: weekBeforeYesterday)
-            
-            let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
-            todayLump.eatenCalories = eatenCalories.hk + eatenCalories.budgie
-            todayLump.healthKitCalories = eatenCalories.hk
-            todayLump.foodList = await calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
-            todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
-            
-            // Calculate meal totals for the food list on the main page
-            for meal in todayLump.mealList {
-                var sum: Int = 0
-                for food in todayLump.foodList where food.meal == meal.mealUUID {
-                    sum = sum + food.calories
-                }
-                todayLump.mealTotalList[meal.mealUUID] = sum
-            }
-            
-            // Pull in projected basal and active calories
-            todayLump.projectedBasal = await getProjBasalCalories()
-            todayLump.projectedActive = await getProjActiveCalories()
-            
-            // Pull in actual basal and active calories
-            let recBasalCalories = await pullCalorieTotalForDate(date: today, type: basalQuantityType, hkOnly: true)
-            let recActiveCalories = await pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
-
-            if recBasalCalories != 0 {
-                todayLump.basalEstimated = false
-                todayLump.basalCalories = recBasalCalories
-            } else {
-                todayLump.basalEstimated = true
-                todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
-            }
-            if recActiveCalories != 0 {
-                todayLump.activeEstimated = false
-                todayLump.activeCalories = recActiveCalories
-            } else {
-                todayLump.activeEstimated = true
-                todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
-            }
-            
-            // Obtaining weight information
-            let weightsToday = await getLatestWeight()
-            todayLump.weightToday = weightsToday.first
-            todayLump.weightYesterday = weightsToday.second
-            todayLump.lastWeightDate = weightsToday.firstDate
-            todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))
-            todayLump.averageDeficit = await getAverageDeficitForPastWeek()
-            todayLump.lastWeekAvgWeight = await getAverageWeight(from: weekBeforeYesterday, to: todayEnd)
-            todayLump.prevWeekAvgWeight = await getAverageWeight(from: weekBeforeWeekBeforeYesterday, to: getWeekBeforeDate(date: todayEnd))
-            
-            // Pull in water
-            let waterDetails = await getWaterOnDate(date: todayStart)
-            todayLump.waterToday = waterDetails.bd + waterDetails.hk
-            
-            // Get user's Activity Rings
-            todayLump.activitySummary = await getActivitySummary()
-
-            todayLump.lastUpdate = Date()
-            todayLump.updateInProgress = false
+        // If an update is already running, flag that another pass is needed once this one
+        // finishes, rather than silently dropping this request.
+        if todayLump.updateInProgress {
+            todayLump.updateQueued = true
+            return
         }
+        
+        // Turn on the "updating" flag to prevent conflicts
+        todayLump.updateInProgress = true
+        
+        defer {
+            todayLump.updateInProgress = false
+            if todayLump.updateQueued {
+                todayLump.updateQueued = false
+                Task { await updateLump(todayLump: todayLump) }
+            }
+        }
+        
+        // Set up date variables for ease
+        let today = Date()
+        let todayStart = getStartOfDay(date: today)
+        let todayEnd = getMidnightOnDayAfter(date: todayStart)
+        let weekBeforeYesterday = getWeekBeforeDate(date: getMidnightOnDayBefore(date: todayStart))
+        let weekBeforeWeekBeforeYesterday = getWeekBeforeDate(date: weekBeforeYesterday)
+        
+        let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+        todayLump.eatenCalories = eatenCalories.hk + eatenCalories.budgie
+        todayLump.healthKitCalories = eatenCalories.hk
+        todayLump.foodList = await calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
+        todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
+        
+        // Calculate meal totals for the food list on the main page
+        todayLump.mealTotalList = [:]
+        for meal in todayLump.mealList {
+            var sum: Int = 0
+            for food in todayLump.foodList where food.meal == meal.mealUUID {
+                sum = sum + food.calories
+            }
+            todayLump.mealTotalList[meal.mealUUID] = sum
+        }
+        
+        // Pull in projected basal and active calories
+        todayLump.projectedBasal = await getProjBasalCalories()
+        todayLump.projectedActive = await getProjActiveCalories()
+        
+        // Pull in actual basal and active calories
+        let recBasalCalories = await pullCalorieTotalForDate(date: today, type: basalQuantityType, hkOnly: true)
+        let recActiveCalories = await pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
+
+        if recBasalCalories != 0 {
+            todayLump.basalEstimated = false
+            todayLump.basalCalories = recBasalCalories
+        } else {
+            todayLump.basalEstimated = true
+            todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
+        }
+        if recActiveCalories != 0 {
+            todayLump.activeEstimated = false
+            todayLump.activeCalories = recActiveCalories
+        } else {
+            todayLump.activeEstimated = true
+            todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
+        }
+        
+        todayLump.recalculateBudget()
+        
+        // Obtaining weight information
+        let weightsToday = await getLatestWeight()
+        todayLump.weightToday = weightsToday.first
+        todayLump.weightYesterday = weightsToday.second
+        todayLump.lastWeightDate = weightsToday.firstDate
+        todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))
+        todayLump.averageDeficit = await getAverageDeficitForPastWeek()
+        todayLump.lastWeekAvgWeight = await getAverageWeight(from: weekBeforeYesterday, to: todayEnd)
+        todayLump.prevWeekAvgWeight = await getAverageWeight(from: weekBeforeWeekBeforeYesterday, to: getWeekBeforeDate(date: todayEnd))
+        
+        // Pull in water
+        let waterDetails = await getWaterOnDate(date: todayStart)
+        todayLump.waterToday = waterDetails.bd + waterDetails.hk
+        
+        // Get user's Activity Rings
+        todayLump.activitySummary = await getActivitySummary()
+
+        todayLump.lastUpdate = Date()
+        WidgetCenter.shared.reloadAllTimelines()
     }
     
     /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, or new water entries.
@@ -492,6 +483,12 @@ class HealthData {
                 Task { await self.updateLump(todayLump: todayLump) }
             }
             healthStore.execute(query)
+        }
+    }
+    
+    func setUpRemoteChangeObserver(todayLump: TodayLump) {
+        NotificationCenter.default.addObserver(forName: .NSPersistentStoreRemoteChange, object: nil, queue: .main) { _ in
+            Task { await self.updateLump(todayLump: todayLump) }
         }
     }
 }

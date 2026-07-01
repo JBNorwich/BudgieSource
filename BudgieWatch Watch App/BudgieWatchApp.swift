@@ -18,7 +18,7 @@ import HealthKitUI
 
 let settingsObj = CloudSettings()
 let healthStore = HKHealthStore()
-let dataStore = HealthData()
+let dataStore = HealthData.shared
 
 @main
 struct BudgieWatch_Watch_AppApp: App {

@@ -34,9 +34,9 @@ class TodayLump: ObservableObject {
     @Published var lastWeekAvgWeight: Double = 0
     @Published var prevWeekAvgWeight: Double = 0
     
-    var budgetAtCap: Bool = false
-    var budgetAtMin: Bool = false
-    var budgetNil: Bool = false
+    @Published private(set) var totalBudget: Int = 1200
+    @Published private(set) var budgetAtCap: Bool = false
+    @Published private(set) var budgetAtMin: Bool = false
     
     // food data
     @Published var mealList: [Meal] = []
@@ -51,38 +51,26 @@ class TodayLump: ObservableObject {
     
     // signals re. data updates
     @Published var updateInProgress: Bool = false
+    @Published var updateQueued: Bool = false
     @Published var lastUpdate: Date = Date()
     
-    // CALCULATED BUDGET VARIABLES
-    /// The user's calculated budget, taking into account their current and predicted caloric burn.
-    var totalBudget: Int {
-        var budget: Int
-        
-        // If the user's total caloric burn less their desired deficit is more than -1, return it. Otherwise, set the budget to the lower bound and flag it. (We'll clean this up later when we implement the hard bottom.)
-        if self.totalProjCalories - settingsObj.desiredDeficit > -1 {
-            budget = self.totalProjCalories - settingsObj.desiredDeficit
-        } else {
-            budgetNil = true
-            budget = 1200
-        }
-        
-        // Budget capping. If the user has turned on budget capping, and the calculated budget above is above the cap, set the budget to the cap and toggle the flag.
-        if settingsObj.capBudget == true && budget > settingsObj.capBudgetCals {
+    func recalculateBudget() {
+        var budget = totalProjCalories - settingsObj.desiredDeficit > -1
+            ? totalProjCalories - settingsObj.desiredDeficit
+            : 1200
+        let atCap = settingsObj.capBudget && budget > settingsObj.capBudgetCals
+        if atCap {
             budget = settingsObj.capBudgetCals
-            self.budgetAtCap = true
-        } else {
-            self.budgetAtCap = false
         }
         
-        // Budget minimum to prevent the user from being given a budget that is unsustainably low, either deliberately or through a failure of HealthKit.
-        if budget < 1200 {
+        let atMin = budget < 1200
+        if atMin {
             budget = 1200
-            self.budgetAtMin = true
-        } else {
-            self.budgetAtMin = false
         }
         
-        return budget
+        totalBudget = budget
+        budgetAtCap = atCap
+        budgetAtMin = atMin
     }
     
     /// The "real" budget that would be calculated if the budget was not capped. Only relevant if the user has turned on capping; otherwise this will just return whatever the budget is.

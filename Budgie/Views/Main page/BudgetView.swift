@@ -321,6 +321,7 @@ struct BudgetView: View {
             
         .task() {
             dataStore.setUpObserverQueries(todayLump: todayLump)
+            dataStore.setUpRemoteChangeObserver(todayLump: todayLump)
             await dataStore.updateLump(todayLump: todayLump)
             if settingsObj.isFirstRun != true {
                 if settingsObj.startWeight == 0 {

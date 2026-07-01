@@ -145,9 +145,9 @@ actor CalorieActor {
     func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID) async {
         // HK can't be updated in place — delete the old sample, then write a fresh one.
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
-            await dataStore.deleteHKSample(uuid: oldUUID)
+            await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
         }
-        let newUUID = entry.isInHK ? await dataStore.saveHKSample(calories: calories, date: date) : nil
+        let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
 
         // SwiftData, unlike HK, can just be mutated — this preserves the entry's identity.
         entry.calories = calories
@@ -167,7 +167,7 @@ actor CalorieActor {
     func deleteEntries(objects: [CalorieEntry]) async {
         for object in objects {
             if object.isInHK, let hkUUID = object.healthKitUUID {
-                await dataStore.deleteHKSample(uuid: hkUUID)
+                await dataStore.deleteHKSample(uuid: hkUUID, type: eatenQuantityType)
             }
             modelContext.delete(object)
         }

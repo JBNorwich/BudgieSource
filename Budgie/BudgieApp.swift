@@ -19,7 +19,7 @@ import HealthKitUI
 let healthStore: HKHealthStore = HKHealthStore()
 let settingsObj: CloudSettings = CloudSettings()
 let localSettings: UserSettings = UserSettings()
-let dataStore: HealthData = HealthData()
+let dataStore: HealthData = HealthData.shared
 
 @main
 struct BudgieApp: App {

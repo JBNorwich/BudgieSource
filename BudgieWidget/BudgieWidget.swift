@@ -19,7 +19,7 @@ import HealthKit
 
 let settingsObj = CloudSettings()
 let healthStore = HKHealthStore()
-let dataStore = HealthData()
+let dataStore = HealthData.shared
 
 struct TinyMeter: View {
     var leftToEat: Int
@@ -54,7 +54,10 @@ struct TinyMeter: View {
         let okColour = Color(.systemYellow)
         let badColour = Color(.systemRed)
         
-        let diff = progress / getPercentOfDayDone()
+        var diff = progress / getPercentOfDayDone()
+        if !diff.isFinite {
+            diff = 0
+        }
         
         if diff < 0.25 {
             return reallyGoodColor
@@ -97,8 +100,6 @@ struct TinyMeter: View {
     }
 
 struct Provider: TimelineProvider {
-    var lump = TodayLump()
-    
     func placeholder(in context: Context) -> BudgieEntry {
         BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
     }
@@ -176,6 +177,7 @@ struct BudgieWidgetEntryView : View {
                     HStack {
                         if entry.totalBudgRem > -1 {
                             Text(entry.totalBudgRem.formatted())
+                                .font(.title)
                         } else {
                             Text(negate(value: entry.totalBudgRem).formatted())
                                 .font(.title)
