@@ -53,22 +53,16 @@ struct EditCalsSheet: View {
                     )
                     
                     Button("Save") {
-                        if !String(calories).isNumber {
-                            calories = 0
+                        guard calories > 0 else
+                        {
+                            caloriesWereNil = true
                             isFocused = true
-                        } else {
-                            if calories > 0 {
-                                Task {
-                                    await dataStore.calorieActor.deleteEntries(objects: [entryToEdit])
-                                    await dataStore.addCalories(calories: calories, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
-                                    await dataStore.updateLump(todayLump: todayLump)
-                                }
-                                dismiss()
-                            } else {
-                                caloriesWereNil = true
-                                isFocused = true
-                            }
+                            return
                         }
+                        Task {
+                            await saveEntry()
+                        }
+                        dismiss()
                     }.buttonStyle(.borderedProminent)
                 }
             }
@@ -80,5 +74,11 @@ struct EditCalsSheet: View {
             selectedDate = entryToEdit.date
             selectedMeal = entryToEdit.meal
         }
+    }
+    
+    func saveEntry() async {
+        await dataStore.calorieActor.deleteEntries(objects: [entryToEdit])
+        await dataStore.addCalories(calories: calories, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+        await dataStore.updateLump(todayLump: todayLump)
     }
 }

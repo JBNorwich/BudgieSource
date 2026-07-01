@@ -37,20 +37,15 @@ struct AddWaterSheet: View {
                         Text("ml")
                             .font(.largeTitle)
                         Button("Add") {
-                            if !String(millilitres ?? 0).isNumber {
+                            guard (millilitres ?? 0) > 0 else {
                                 millilitres = nil
                                 isFocused = true
-                            } else {
-                                if millilitres ?? 0 > 0 {
-                                    Task {
-                                        await dataStore.addWater(amount: millilitres!, datetime: dateToAddOn)
-                                        isDisplayed = false
-                                    }
-                                } else {
-                                    milsWereNil = true
-                                    isFocused = true
-                                }
+                                return
                             }
+                            Task {
+                                await dataStore.addWater(amount: millilitres!, datetime: dateToAddOn)
+                            }
+                            isDisplayed = false
                         }.buttonStyle(.borderedProminent)
                     }
                 }

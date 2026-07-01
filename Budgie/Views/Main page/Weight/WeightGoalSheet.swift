@@ -41,18 +41,13 @@ struct WeightGoalSheet: View {
                         Text("kg")
                             .font(.largeTitle)
                         Button("Add") {
-                            if String(kilos ?? 0.0).isNumber {
+                            guard (kilos ?? 0) > 0 else {
                                 kilos = nil
                                 isFocused = true
-                            } else {
-                                if kilos! > 0 {
-                                    settingsObj.weightGoal = kilos!
-                                    isDisplayed = false
-                                } else {
-                                    kilosWereNil = true
-                                    isFocused = true
-                                }
+                                return
                             }
+                            settingsObj.weightGoal = kilos!
+                            isDisplayed = false
                         }.buttonStyle(.borderedProminent)
                     }
                 }

@@ -15,32 +15,29 @@
 
 import SwiftUI
 
-extension String {
-    var isNumber: Bool {
-        return self.allSatisfy { character in
-            character.isNumber || character.isMathSymbol
-        }
-    }
-}
-
 struct AddCalsSheet: View {
     @Binding var isDisplayed: Bool
     @EnvironmentObject var todayLump: TodayLump
-    @State var fieldString: String = "0"
     @State var calories: Int?
-    @State var newCalsIn: Int = 0
-    @State var newRemBudg: Int = 0
     @State var caloriesWereNil: Bool = false
     @State var whatItIs: String = ""
     @FocusState var isFocused: Bool
     @State private var mealList: [Meal] = []
     @State var selectedMeal: UUID = UUID()
     @State var selectedDate: Date
-    @State var prevFoods: [CalorieEntry] = []
-    @State var displayedFoods: [CalorieEntry] = []
     @State private var showAllFoods: Bool = false
     @State private var searchText: String = ""
-    @State private var showCancelButton: Bool = false
+    
+    @State private var prevFoods: [CalorieEntry] = []
+    var displayedFoods: [CalorieEntry] {
+        guard !searchText.isEmpty else { return prevFoods }
+        return prevFoods.filter {
+            $0.narrative?.localizedCaseInsensitiveContains(searchText) ?? false
+        }
+    }
+    
+    var newCalsIn: Int { (calories ?? 0) + todayLump.eatenCalories }
+    var newRemBudg: Int { todayLump.totalBudgetRem - (calories ?? 0) }
         
     var body: some View {
         NavigationStack {
@@ -69,43 +66,36 @@ struct AddCalsSheet: View {
                     
                     if (getMidnightOnDayBefore(date: Date()) == getMidnightOnDayBefore(date: selectedDate))
                     {
-                        if newRemBudg > 0 {
-                            Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(newRemBudg.formatted())** in your overall budget for the rest of the day.")
-                        } else {
-                            Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\((-newRemBudg).formatted())** over your overall budget for the rest of the day.")
-                        }
+                        Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(abs(newRemBudg).formatted())** \(newRemBudg > 0 ? "in" : "over") your overall budget for the rest of the day.")
+
                     }
                     
                     HStack {
                         Button("Save") {
-                            if caloriesValid() == true {
-                                Task {
-                                    await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
-                                    isDisplayed = false
-                                    Task {
-                                        await dataStore.updateLump(todayLump: todayLump)
-                                    }
-                                }
-                            } else {
+                            guard (calories ?? 0) > 0 else
+                            {
                                 caloriesWereNil = true
                                 isFocused = true
+                                return
+                            }
+                            Task {
+                                await saveEntry()
+                                isDisplayed = false
                             }
                         }.buttonStyle(.borderedProminent)
                         
                         Button("Save and add more") {
-                            if caloriesValid() == true {
-                                Task {
-                                    await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
-                                    doUpdates()
-                                    Task {
-                                        await dataStore.updateLump(todayLump: todayLump)
-                                    }
-                                    calories = nil
-                                    whatItIs = ""
-                                    isFocused = true
-                                }
-                            } else {
+                            guard (calories ?? 0) > 0 else
+                            {
                                 caloriesWereNil = true
+                                isFocused = true
+                                return
+                            }
+                            Task {
+                                await saveEntry()
+                                doUpdates()
+                                calories = nil
+                                whatItIs = ""
                                 isFocused = true
                             }
                         }.buttonStyle(.borderedProminent)
@@ -117,17 +107,15 @@ struct AddCalsSheet: View {
                     HStack {
                         Image(systemName: "magnifyingglass")
                         
-                        TextField("Search", text: $searchText, onEditingChanged: { isEditing in
-                            self.showCancelButton = true
-                        })
+                        TextField("Search", text: $searchText)
                             .foregroundColor(.primary)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                         
-                        Button(action: {
-                            self.searchText = ""
-                        }) {
-                            Image(systemName: "xmark.circle.fill").opacity(searchText == "" ? 0 : 1)
+                        if !searchText.isEmpty {
+                            Button(action: { searchText = "" }) {
+                                Image(systemName: "xmark.circle.fill")
+                            }
                         }
                     }
                     Picker("Label", selection: $showAllFoods) {
@@ -151,7 +139,7 @@ struct AddCalsSheet: View {
                     }
                 }
                     
-                if calories == 424242 && whatItIs == "Please help me Joe" {
+                if calories == 424242 && whatItIs.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("please help me joe") == .orderedSame {
                     NavigationLink {
                         Tests()
                     } label: {
@@ -161,17 +149,6 @@ struct AddCalsSheet: View {
             }
             
             .navigationTitle("Add eaten calories")
-        }
-        
-        .onAppear() {
-            newCalsIn = todayLump.eatenCalories
-            newRemBudg = todayLump.totalBudgetRem
-        }
-        
-        .onChange(of: calories)
-        {
-            newCalsIn = (calories ?? 0) + todayLump.eatenCalories
-            newRemBudg = todayLump.totalBudgetRem - (calories ?? 0)
         }
         
         .onChange(of: whatItIs) {
@@ -186,21 +163,22 @@ struct AddCalsSheet: View {
             doUpdates()
         }
         
-        .onChange(of: searchText) {
-            doUpdates()
-        }
-        
         .alert("Calories can't be zero.", isPresented: $caloriesWereNil)
         {
             Button("OK", role: .cancel) { }
         }
         
         .task {
-            mealList = await dataStore.calorieActor.getListOfMeals()
-            mealList = mealList.sorted(by: { $0.order < $1.order })
-            selectedMeal = mealList.first!.mealUUID
-            prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealList.first!)
+            mealList = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
+            guard let firstMeal = mealList.first else { return }
+            selectedMeal = firstMeal.mealUUID
+            prevFoods = await dataStore.calorieActor.fetchCalsForMeal(firstMeal)
         }
+    }
+    
+    func saveEntry() async {
+        await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+        await dataStore.updateLump(todayLump: todayLump)
     }
     
     func doUpdates() {
@@ -214,32 +192,12 @@ struct AddCalsSheet: View {
                 prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
             }
         }
-        if searchText != "" {
-            displayedFoods = prevFoods.filter {
-                $0.narrative != nil && $0.narrative!.lowercased().contains(searchText.lowercased())
-            }
-        } else {
-            displayedFoods = prevFoods
-        }
-    }
-    
-    func caloriesValid() -> Bool {
-        if !String(calories ?? 0).isNumber {
-            return false
-        } else {
-            if calories ?? 0 > 0 {
-                return true
-            } else {
-                return false
-            }
-        }
     }
 }
 
 #Preview {
     struct Preview: View {
         @State var presented = true
-        @State var data = HealthData()
         
         var body: some View {
             AddCalsSheet(isDisplayed:$presented, selectedDate: Date()).environmentObject(TodayLump())
