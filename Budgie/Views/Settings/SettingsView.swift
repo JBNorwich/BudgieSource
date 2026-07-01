@@ -17,16 +17,12 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var todayLump: TodayLump
-//    @Binding var whale: Bool
     
     @State private var showingSheet: Bool = false
     @State private var showingBMRHelper: Bool = false
     @State var surplusMode: Bool = false
     @State var useFitnessGoal: Bool = false
     @State private var isPresented = false
-    @State var calsSheetSize = PresentationDetent.medium
-    @State var donateOpened = false
-    @State var debugOpened = false
     @State var disclaimerDisplayed = false
     @State var deficitLabel: String = "0"
     @State var surpDefHeader: String = "Header goes here"
@@ -39,6 +35,8 @@ struct SettingsView: View {
     @Environment(\.openURL) var openURL
     
     @State private var refreshID = UUID()
+    
+    private static let integerFieldFormat: IntegerFormatStyle<Int> = .number.grouping(.automatic).precision(.integerLength(1...4))
     
     private func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>) -> Binding<T> {
         Binding(
@@ -70,7 +68,6 @@ struct SettingsView: View {
     }
     
     private func refreshState() {
-        deficitLabel = deficitBinding.wrappedValue.formatted()
         if settingsObj.surplusMode {
             surpDefHeader = "Desired calorie surplus"
             surpDefExplainer = "This is the net calorie surplus you'd like Budgie Diet to help you land at."
@@ -105,14 +102,14 @@ struct SettingsView: View {
             Section(header: Text("Estimated daily calorie burn"), footer: Text("This is used when actual calorie data from Apple Health isn't available or is incomplete."))
             {
                 LabeledContent {
-                    TextField(settingsObj.manualBMR.formatted(), value: settingBinding(\.manualBMR), format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
+                    TextField(settingsObj.manualBMR.formatted(), value: settingBinding(\.manualBMR), format: SettingsView.integerFieldFormat)
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
                         .focused($focusResting)
                 } label: { Text("Resting calories") }
                 
                 LabeledContent {
-                    TextField(settingsObj.manualActive.formatted(), value: settingBinding(\.manualActive), format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
+                    TextField(settingsObj.manualActive.formatted(), value: settingBinding(\.manualActive), format: SettingsView.integerFieldFormat)
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
                         .focused($focusActive)
@@ -123,13 +120,14 @@ struct SettingsView: View {
                     showingBMRHelper = true
                 }.sheet(isPresented: $showingBMRHelper, onDismiss: { refreshState() }) {
                     BMRHelper(isPresented: $showingBMRHelper, manualBMR: settingBinding(\.manualBMR), manualActive: settingBinding(\.manualActive))
-                }.presentationDragIndicator(.visible)
+                        .presentationDragIndicator(.visible)
+                }
             }
             
             Section(header: Text("Water goal"))
             {
                 LabeledContent {
-                    TextField(settingsObj.waterGoal.formatted(), value: settingBinding(\.waterGoal), format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
+                    TextField(settingsObj.waterGoal.formatted(), value: settingBinding(\.waterGoal), format: SettingsView.integerFieldFormat)
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
                         .focused($focusWater)
@@ -254,18 +252,11 @@ struct SettingsView: View {
                 Spacer()
 
                 Button("Done") {
-                    if focusResting == true { focusResting.toggle() }
-                    if focusActive == true { focusResting.toggle() }
-                    if focusWater == true { focusWater.toggle() }
+                    focusResting = false
+                    focusActive = false
+                    focusWater = false
                 }
              }
-        }
-    
-        .navigationDestination(isPresented: $donateOpened) {
-            Donate()
-        }
-        .navigationDestination(isPresented: $debugOpened) {
-            Tests()
         }
         
         .healthDataAccessRequest(store: healthStore, shareTypes: [], readTypes: fitnessGoalSet, trigger: useFitnessGoal) { result in

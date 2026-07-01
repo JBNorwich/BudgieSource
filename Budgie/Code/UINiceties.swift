@@ -100,56 +100,45 @@ enum weightUnits: Int {
 }
 
 struct StonePounds {
+    init(kilos: Double) {
+        self.kilos = kilos
+    }
+
+    init(stones: Int, pounds: Int) {
+        self.kilos = Double((stones * 14) + pounds) * 0.454
+    }
+    
     var kilos: Double
     
     var totalPounds: Int {
-        return Int((kilos - 0.454).rounded())
+        get { Int((kilos / 0.454).rounded()) }
+        set { kilos = Double(newValue) * 0.454 }
     }
     
     var stones: Int {
-        return totalPounds / 14
+        get { totalPounds / 14 }
+        set { totalPounds = (newValue * 14) + pounds }
     }
     
     var pounds: Int {
-        return totalPounds % 14
+        get { totalPounds % 14 }
+        set { totalPounds = (stones * 14) + newValue }
     }
     
     var string: String {
         switch (stones, pounds) {
-            case (0, 0):
-                return "0lb"
-            case (_, 0):
-                return "\(stones.formatted())st"
-            case (0, _):
-                return "\(pounds.formatted())lb"
-            default:
-                return "\(stones.formatted())st \(pounds.formatted())lb"
+        case (0, 0):
+            return "0lb"
+        case (_, 0):
+            return "\(stones.formatted())st"
+        case (0, _):
+            return "\(pounds.formatted())lb"
+        default:
+            return "\(stones.formatted())st \(pounds.formatted())lb"
         }
     }
 }
 
-func kilosToLbs(kilos: Double) -> Double {
-    let result = roundDoubleWeight(input: kilos / 0.454)
-    return result
-}
-
-func renderStLbsAsString(st: Int,lb: Int) -> String {
-    var returnString: String = ""
-    if st != 0 && lb != 0 {
-        if st != 0 {
-            returnString = st.formatted() + "st"
-        }
-        if st != 0 && lb != 0 {
-            returnString += " "
-        }
-        if lb != 0 {
-            returnString += lb.formatted() + "lb"
-        }
-    } else {
-        returnString = "Nil"
-    }
-    return returnString
-}
 
 func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: Bool? = true) -> String {
     let usedOutputUnit: weightUnits = outputUnit ?? weightUnits(rawValue: settingsObj.weightDisplayUnit)!
@@ -158,13 +147,14 @@ func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: 
     switch usedOutputUnit {
         case .kilograms: returnString = roundDoubleWeight(input: kilos).formatted()
         case .pounds: returnString = roundDoubleWeight(input: kilos / 0.454).formatted()
-        case .stonepounds: returnString = StonePounds(kilos: kilos).string
+        case .stonepounds: returnString = StonePounds(kilos: kilos).string // stonepounds doesn't make sense without units
     }
-    if includeSuffix != true {
+    
+    if includeSuffix == true {
         switch usedOutputUnit {
             case .kilograms: returnString += "kg"
             case .pounds: returnString += "lbs"
-            case .stonepounds: print("Doing nothing - StLbs can't work without suffix")
+            case .stonepounds: break
         }
     }
     
