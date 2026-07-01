@@ -20,6 +20,18 @@ struct WeightView: View {
     
     let gradient = Gradient(colors: [.green, .blue])
     
+    private var trendLabel: (text: String, color: Color) {
+        if todayLump.weightTrend > 0.3 { return ("Trending down", .green) }
+        if todayLump.weightTrend < -0.3 { return ("Trending up", .red) }
+        return ("Static", .yellow)
+    }
+
+    private var performanceLabel: (text: String, color: Color) {
+        if todayLump.performanceAgainstWeightTrend > 1.5 { return ("Exceeding target", .blue) }
+        if todayLump.performanceAgainstWeightTrend < 0.5 { return ("Off target", .yellow) }
+        return ("On target", .green)
+    }
+    
     var body: some View {
         HStack {
             VStack {
@@ -60,16 +72,7 @@ struct WeightView: View {
             VStack {
                 HStack {
                     VStack {
-                        if todayLump.weightTrend > 0.3 {
-                            Text("**Trending down**")
-                                .foregroundColor(.green)
-                        } else if todayLump.weightTrend < -0.3 {
-                            Text("**Trending up**")
-                                .foregroundColor(.red)
-                        } else {
-                            Text("**Static**")
-                                .foregroundColor(.yellow)
-                        }
+                        Text("**\(trendLabel.text)**").foregroundColor(trendLabel.color)
                         HStack {
                             if todayLump.weightTrend > 0 {
                                 //lost weight
@@ -77,7 +80,8 @@ struct WeightView: View {
                                     .foregroundColor(.secondary)
                             } else if todayLump.weightTrend < 0 {
                                 //gained weight
-                                Text("\(renderWeight(kilos: todayLump.weightTrend)) up on last week's average")
+                                Text("\(renderWeight(kilos: -todayLump.weightTrend)) up on last week's average")
+                                    .foregroundColor(.secondary)
                             } else {
                                 Text("No change from last week's average")
                             }
@@ -85,16 +89,7 @@ struct WeightView: View {
                     }
                     Divider()
                     VStack {
-                        if todayLump.performanceAgainstWeightTrend > 1.5 {
-                            Text("**Exceeding target**")
-                                .foregroundColor(.blue)
-                        } else if todayLump.performanceAgainstWeightTrend < 0.5 {
-                            Text("**Off targets**")
-                                .foregroundColor(.yellow)
-                        } else {
-                            Text("**On target**")
-                                .foregroundColor(.green)
-                        }
+                        Text("**\(performanceLabel.text)**").foregroundColor(performanceLabel.color)
                         Text("Expected \(renderWeight(kilos: todayLump.expectedWeightLossAtRealDeficit))")
                             .foregroundColor(.secondary)
                         Text("Real deficit: \(todayLump.realDeficit.formatted())")
