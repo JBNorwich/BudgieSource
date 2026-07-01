@@ -35,14 +35,14 @@ struct WeightGoalSheet: View {
                     HStack {
                         TextField("Goal", value: $kilos, format: .number)
                             .font(.largeTitle)
-                            .keyboardType(.numberPad)
+                            .keyboardType(.decimalPad)
                             .autocorrectionDisabled()
                             .focused($isFocused)
                         Text("kg")
                             .font(.largeTitle)
                         Button("Add") {
                             guard (kilos ?? 0) > 0 else {
-                                kilos = nil
+                                kilosWereNil = true
                                 isFocused = true
                                 return
                             }

@@ -124,7 +124,7 @@ class CloudSettings {
     
     var bmrMultiplier: Double {
         get { return defaults.object(forKey: "bmrMultiplier") as? Double ?? 0.2 }
-        set { defaults.set(newValue, forKey: "userSex")}
+        set { defaults.set(newValue, forKey: "bmrMultiplier")}
     }
     
     var whalesEverywhere: Bool {
@@ -320,7 +320,7 @@ class UserSettings {
     
     var bmrMultiplier: Double {
         get { return defaults?.value(forKey: "bmrMultiplier") as? Double ?? 0.2 }
-        set { defaults?.set(newValue, forKey: "userSex")}
+        set { defaults?.set(newValue, forKey: "bmrMultiplier")}
     }
     
     var whalesEverywhere: Bool {
