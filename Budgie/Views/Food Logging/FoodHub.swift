@@ -40,35 +40,34 @@ struct FoodHub: View {
     
     @State var loadingDone: Bool = false
     
+    var groupedByMeal: [UUID: [CalorieEntry]] {
+        Dictionary(grouping: budgieData, by: \.meal)
+    }
+    
     func doUpdates() async {
+        loadingDone = false
+        
+        let newData = await dataStore.calorieActor.fetchCalsBetween(from: curDate, to: getMidnightOnDayAfter(date: curDate))
+        let budgieCalsOnDate = newData.reduce(0) { $0 + $1.calories }
+        async let hkEatenTask = dataStore.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
+        async let activeTask = dataStore.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
+        async let basalTask = dataStore.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
+        let (hkEaten, newActive, newBasal) = await (hkEatenTask, activeTask, basalTask)
+        
+        let newLump = ChartDataLump()
+        newLump.eatenCals = hkEaten + budgieCalsOnDate
+        newLump.activeCals = newActive
+        newLump.basalCals = newBasal
+        newLump.date = curDate
+        
+        mealList = await dataStore.calorieActor.cleansedMealList(data: newData)
+        budgieData = newData.sorted { $0.date < $1.date }
+        hkCalories = hkEaten
+        dataLump = newLump
+        
         timeToAddOn = getCurrentTimeonDate(date: curDate)
-        Task {
-            loadingDone = false
-            
-            let newData = await dataStore.calorieActor.fetchCalsBetween(from: curDate, to: getMidnightOnDayAfter(date: curDate))
-            var budgieCalsOnDate: Int = 0
-            for entry in newData {
-                budgieCalsOnDate += entry.calories
-            }
-            let hkEaten = await dataStore.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
-            let newActive = await dataStore.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
-            let newBasal = await dataStore.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
-            let newLump = ChartDataLump()
-            newLump.eatenCals = hkEaten + budgieCalsOnDate
-            newLump.activeCals = newActive
-            newLump.basalCals = newBasal
-            newLump.date = curDate
-            
-            mealList = await dataStore.calorieActor.cleansedMealList(data: newData)
-            budgieData = newData
-            budgieData.sort(by: {$0.date < $1.date})
-            hkCalories = hkEaten
-            dataLump = newLump
-            
-            timeToAddOn = getCurrentTimeonDate(date: curDate)
-            loadingDone = true
-            dateChanged = false
-        }
+        loadingDone = true
+        dateChanged = false
     }
     
     var body: some View {
@@ -81,23 +80,20 @@ struct FoodHub: View {
             .padding()
             List {
                 if budgieData.count != 0 {
-                    ForEach(mealList, id: \.self) { meal in
-                        Section(header: Text(meal.name)) {
-                            ForEach(budgieData, id: \.self) { entry in
-                                if entry.meal == meal.mealUUID {
+                    ForEach(mealList) { meal in
+                        let entries = groupedByMeal[meal.mealUUID] ?? []
+                        if !entries.isEmpty {
+                            Section(header: Text(meal.name)) {
+                                ForEach(entries) { entry in
                                     NavigationLink(destination: EditCalsSheet(entryToEdit: entry)
                                             .environmentObject(todayLump)
-                                            .onDisappear {
-                                                Task {
-                                                    await doUpdates()
-                                                }
-                                            }
+                                            .onDisappear { Task { await doUpdates() } }
                                     ) {
                                         CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
-                                            .contentShape(Rectangle())
                                     }
                                 }
-                            }.onDelete(perform: delete)
+                                .onDelete { offsets in delete(offsets, from: entries) }
+                            }
                         }
                     }
                 } else {
@@ -149,12 +145,9 @@ struct FoodHub: View {
         }
     }
     
-    func delete(at offsets: IndexSet) {
-        var toBin: [CalorieEntry] = []
-        for itemId in offsets {
-            toBin.append(budgieData[itemId])
-        }
-        budgieData.remove(atOffsets: offsets)
+    func delete(_ offsets: IndexSet, from entries: [CalorieEntry]) {
+        let toBin = offsets.map { entries[$0] }
+        budgieData.removeAll { toBin.contains($0) }
         Task {
             await dataStore.calorieActor.deleteEntries(objects: toBin)
             await doUpdates()
@@ -171,7 +164,7 @@ struct CalorieEntryView: View {
     
     var body: some View {
         HStack {
-            if realEntry != false {
+            if realEntry {
                 Text(date.formatted(date: .omitted, time:.shortened))
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 50)
