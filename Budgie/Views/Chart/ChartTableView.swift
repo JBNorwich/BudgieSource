@@ -21,45 +21,20 @@ struct DeficitAssessment {
 }
 
 func sortChartData(data: [ChartDataLump]) -> [ChartDataLump] {
-    var sorted: [ChartDataLump] = []
-    sorted = data.sorted { $0.date > $1.date }
-    return sorted
+    return data.sorted { $0.date > $1.date }
 }
 
 func assessDeficit(desired: Int, actual: Int) -> DeficitAssessment {
-    
-    // actual will be POSITIVE if calorie deficit, NEGATIVE if surplus
-    
     var returnStruct = DeficitAssessment()
     let diff = actual - desired
-    // actual = -500, desired = -250 = 250 - too much eaten, over target
-    // actual = -250, desired = -250 = 0 - on target
-    // actual = 0, desired = -250 = -250 - not enough eaten, under target
-    //NORMAL - negative diff = over budget, positive diff = under budget surplus
-    //SURPLUS - positive diff = ate too much, negative diff = ate too little
+    returnStruct.offTarget = diff
     
-    if settingsObj.surplusMode == true {
-        if diff == 0 {
-            returnStruct.narrative = "ON TARGET"
-            returnStruct.offTarget = 0
-        } else if diff > 0 {
-            returnStruct.narrative = "UNDER TARGET"
-            returnStruct.offTarget = diff
-        } else {
-            returnStruct.narrative = "ABOVE TARGET"
-            returnStruct.offTarget = diff
-        }
+    if diff == 0 {
+        returnStruct.narrative = "ON TARGET"
+    } else if diff > 0 {
+        returnStruct.narrative = settingsObj.surplusMode ? "UNDER TARGET" : "UNDER BUDGET"
     } else {
-        if diff == 0 {
-            returnStruct.narrative = "ON TARGET"
-            returnStruct.offTarget = 0
-        } else if diff < 0 {
-            returnStruct.narrative = "OVER BUDGET"
-            returnStruct.offTarget = diff
-        } else {
-            returnStruct.narrative = "UNDER BUDGET"
-            returnStruct.offTarget = diff
-        }
+        returnStruct.narrative = settingsObj.surplusMode ? "ABOVE TARGET" : "OVER BUDGET"
     }
     
     return returnStruct
@@ -108,10 +83,18 @@ func negate(number: Int) -> Int {
 }
 
 struct ChartTableRow: View {
-    let dateFormatter = DateFormatter()
+    private static let dayMonthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM"
+        return formatter
+    }()
+    
     var dataLump: ChartDataLump
-    @State var formDate: String = ""
     @EnvironmentObject var todayLump: TodayLump
+    
+    private var formDate: String {
+        Self.dayMonthFormatter.string(from: dataLump.date)
+    }
 
     var body: some View {
         let assessment = assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit)
@@ -195,12 +178,6 @@ struct ChartTableRow: View {
                     }
                 }.frame(minWidth: 105, maxWidth: 105)
             }
-            
-            .onAppear() {
-                dateFormatter.dateFormat = "dd/MM"
-                formDate = dateFormatter.string(from: dataLump.date)
-            }
-        .buttonStyle(PlainButtonStyle())
     }
         Divider()
     }
