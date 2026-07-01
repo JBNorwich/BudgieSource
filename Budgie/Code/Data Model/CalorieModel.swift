@@ -25,11 +25,7 @@ import AppIntents
     var order: Int = 0
     
     init(name: String, order: Int) {
-        if name != "" {
-            self.name = name
-        } else {
-            self.name = "Unnamed meal"
-        }
+        self.name = name.isEmpty ? "Unnamed meal" : name
         self.order = order
     }
 }
@@ -56,52 +52,23 @@ final class CalorieEntry {
     init(date: Date, calories: Int, narrative: String?, mealUUID: UUID, isInHK: Bool, healthKitUUID: UUID?) {
         self.date = date
         self.calories = calories
-        self.narrative = narrative ?? nil
+        self.narrative = narrative
         self.isInHK = isInHK
         self.realEntry = true
         self.meal = mealUUID
-        if (self.isInHK) == false {
-            self.healthKitUUID = nil
-        } else {
-            if healthKitUUID != nil {
-                self.healthKitUUID = healthKitUUID
-            } else {
-                self.healthKitUUID = nil
-                self.isInHK = false
-            }
-        }
-    }
-    
-    func delete(context: ModelContext) {
-        do {
-            context.delete(self)
-            try context.save()
-        } catch {
-            print("Error deleting calories: \(error)")
-        }
+        self.healthKitUUID = isInHK ? healthKitUUID : nil
+        self.isInHK = self.healthKitUUID != nil
     }
 }
 
 /// Actor to act on the CalorieEntry database.
 @ModelActor
 actor CalorieActor {
-    func fetchCalsBetween(from: Date,to: Date) async -> [CalorieEntry]{
-        let searchPredicate = #Predicate<CalorieEntry> { entry in
-            (entry.date > from) && (entry.date < to)
-        }
-        let descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate)
-        return await withCheckedContinuation { continuation in
-            do {
-                let returns = try modelContext.fetch(descriptor)
-                if returns.count != 0 {
-                    continuation.resume(returning: returns)
-                } else {
-                    continuation.resume(returning: [])
-                }
-            } catch {
-                continuation.resume(returning: [])
-            }
-        }
+    func fetchCalsBetween(from: Date, to: Date) async -> [CalorieEntry] {
+        let descriptor = FetchDescriptor<CalorieEntry>(
+            predicate: #Predicate<CalorieEntry> { $0.date > from && $0.date < to }
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
     }
     
     func fetchCalsForMeal(_ meal: Meal?) async -> [CalorieEntry] {
@@ -112,32 +79,16 @@ actor CalorieActor {
                 entry.meal == mealUUID
             }
         } else {
-            searchPredicate = #Predicate<CalorieEntry> { entry in
-                entry.calories != 0
-            }
+            searchPredicate = #Predicate<CalorieEntry> { _ in true }
         }
         var descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate, sortBy: [SortDescriptor(\CalorieEntry.date, order: .reverse)])
         descriptor.fetchLimit = 100
         
-        return await withCheckedContinuation { continuation in
-            do {
-                let returns: [CalorieEntry] = try modelContext.fetch(descriptor)
-                var actualReturns: [CalorieEntry] = []
-                for item in returns {
-                    var dupe: Bool = false
-                    for inActual in actualReturns {
-                        if item.narrative == inActual.narrative && item.narrative != nil && item.calories == inActual.calories {
-                            dupe = true
-                        }
-                    }
-                    if dupe != true {
-                        actualReturns.append(item)
-                    }
-                }
-                continuation.resume(returning: actualReturns)
-            } catch {
-                continuation.resume(returning: [])
-            }
+        guard let results = try? modelContext.fetch(descriptor) else { return [] }
+        var seenKeys = Set<String>()
+        return results.filter { entry in
+            guard let narrative = entry.narrative else { return true }
+            return seenKeys.insert("\(narrative)|\(entry.calories)").inserted
         }
     }
     
@@ -179,42 +130,16 @@ actor CalorieActor {
     }
     
     func cleansedMealList(data: [CalorieEntry]) -> [Meal] {
-        var returnedMealUUIDs: [UUID] = []
-        var returnedMeals: [Meal] = []
-        let fullMealList = getListOfMeals()
-        
-        for entry in data {
-            if !returnedMealUUIDs.contains(entry.meal) {
-                returnedMealUUIDs.append(entry.meal)
-            }
-        }
-        
-        for uuid in returnedMealUUIDs {
-            for meal in fullMealList {
-                if meal.mealUUID == uuid {
-                    returnedMeals.append(meal)
-                }
-            }
-        }
-        
-        returnedMeals.sort { $0.order < $1.order }
-        return returnedMeals
+        let usedMealUUIDs = Set(data.map(\.meal))
+        return getListOfMeals()
+            .filter { usedMealUUIDs.contains($0.mealUUID) }
+            .sorted { $0.order < $1.order }
     }
     
-    func getMealUUIDbyName(name: String) async -> UUID {
-        let searchPredicate = #Predicate<Meal> { meal in
-            meal.name == "\(name)"
-        }
-        let descriptor = FetchDescriptor<Meal>(predicate: searchPredicate)
-        let returnval = await withCheckedContinuation { continuation in
-            do {
-                let returns = try modelContext.fetch(descriptor)
-                continuation.resume(returning: returns)
-            } catch {
-                ///error handling
-            }
-        }
-        return returnval.first(where: { $0.name == name })!.mealUUID
+    func getMealUUIDbyName(name: String) async -> UUID? {
+        let descriptor = FetchDescriptor<Meal>(predicate: #Predicate<Meal> { $0.name == name })
+        let results = (try? modelContext.fetch(descriptor)) ?? []
+        return results.first?.mealUUID
     }
     
     func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID) async {
@@ -222,7 +147,7 @@ actor CalorieActor {
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
             await dataStore.deleteHKSample(uuid: oldUUID)
         }
-        let newUUID = await dataStore.saveHKSample(calories: calories, date: date)
+        let newUUID = entry.isInHK ? await dataStore.saveHKSample(calories: calories, date: date) : nil
 
         // SwiftData, unlike HK, can just be mutated — this preserves the entry's identity.
         entry.calories = calories

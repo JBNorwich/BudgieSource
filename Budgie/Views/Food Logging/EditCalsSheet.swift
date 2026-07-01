@@ -61,8 +61,8 @@ struct EditCalsSheet: View {
                         }
                         Task {
                             await saveEntry()
+                            dismiss()
                         }
-                        dismiss()
                     }.buttonStyle(.borderedProminent)
                 }
             }
@@ -74,11 +74,23 @@ struct EditCalsSheet: View {
             selectedDate = entryToEdit.date
             selectedMeal = entryToEdit.meal
         }
+        
+        .onChange(of: whatItIs)
+        {
+            whatItIs = String(whatItIs.prefix(30))
+        }
+        
+        .task {
+            mealList = await dataStore.calorieActor.getListOfMeals()
+        }
+        
+        .alert("Calories can't be zero.", isPresented: $caloriesWereNil) {
+            Button("OK", role: .cancel) { }
+        }
     }
     
     func saveEntry() async {
-        await dataStore.calorieActor.deleteEntries(objects: [entryToEdit])
-        await dataStore.addCalories(calories: calories, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+        await dataStore.calorieActor.updateCalories(entry: entryToEdit, calories: calories, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
         await dataStore.updateLump(todayLump: todayLump)
     }
 }
