@@ -40,8 +40,8 @@ struct TodayFoodList: View {
     }
     
     var body: some View {
-        if dataLump.foodList.count != 0 || dataLump.healthKitCalories != 0 {
-            if dataLump.foodList.count != 0 {
+        if !dataLump.foodList.isEmpty || dataLump.healthKitCalories != 0 {
+            if !dataLump.foodList.isEmpty {
                 ForEach(dataLump.mealList) { meal in
                     let entries = groupedByMeal[meal.mealUUID] ?? []
                     if !entries.isEmpty {

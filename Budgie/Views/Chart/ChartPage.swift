@@ -31,7 +31,7 @@ struct ChartPage: View {
                 VStack {
                     ChartDatePicker(startDate: $startDate, endDate: $endDate, dateChanged: $dateChanged)
                     
-                    if chartDataStore.returnedChartData.count != 0 {
+                    if !chartDataStore.returnedChartData.isEmpty {
                         ChartView(chartData: $chartDataStore.returnedChartData)
                         ChartTableView(chartData: chartDataStore.returnedChartData).environmentObject(todayLump)
                     } else {

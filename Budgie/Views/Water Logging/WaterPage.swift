@@ -30,10 +30,9 @@ struct WaterPage: View {
     
     func doUpdates() async {
         timeToAddOn = getCurrentTimeonDate(date: curDate)
-        let totalData = await dataStore.getWaterOnDate(date: curDate)
-        hkQuantity = totalData.hk
-        totalWater = totalData.hk + totalData.bd
+        hkQuantity = await dataStore.getWaterOnDate(date: curDate).hk
         budgieData = await dataStore.waterActor.getEntriesOnDate(date: curDate)
+        totalWater = hkQuantity + budgieData.reduce(0) { $0 + $1.quantity }
         dateChanged = false
     }
     
@@ -44,7 +43,7 @@ struct WaterPage: View {
             Text("Total water: \(totalWater)ml")
                 .font(.title)
             List {
-                if budgieData.count != 0 {
+                if !budgieData.isEmpty {
                     Section(header: Text("Water logged in Budgie Diet")) {
                         ForEach(budgieData) { entry in
                             WaterEntryView(quantity: entry.quantity, date: entry.date, realEntry: true)
@@ -115,7 +114,7 @@ struct WaterEntryView: View {
     
     var body: some View {
         HStack {
-            if realEntry != false {
+            if realEntry {
                 Text(date.formatted(date: .omitted, time:.shortened))
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 50)

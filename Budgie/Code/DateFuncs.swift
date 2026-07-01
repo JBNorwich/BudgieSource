@@ -21,40 +21,37 @@ import Foundation
 
 // For purposes relating to UI, where no time is shown, a date is treated as midnight on that date.
 
+/// Returns midnight on a day offset from another day.
+private func midnight(daysOffset: Int, from date: Date) -> Date {
+    let calendar = Calendar.current
+    guard let adjusted = calendar.date(byAdding: .day, value: daysOffset, to: date) else {
+        return calendar.startOfDay(for: date) // fallback rather than crash, in the unlikely event this fails
+    }
+    return calendar.startOfDay(for: adjusted)
+}
+
 /// Returns the start of the day for the date passed. Simple wrapper for calendar.startOfDay.
 func getStartOfDay(date: Date) -> Date {
-    let calendar = NSCalendar.current
+    let calendar = Calendar.current
     return calendar.startOfDay(for: date)
 }
 
 /// Returns midnight on the day before the date passed. For example, if you passed this function 19:02 on the 29th June, this would return 00:00 on the 28th June.
-func getMidnightOnDayBefore(date: Date) -> Date {
-    let calendar = NSCalendar.current
-    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: -1, to: date)!)
-}
+func getMidnightOnDayBefore(date: Date) -> Date { midnight(daysOffset: -1, from: date) }
+
+/// Returns midnight on the day after the date passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 30th June.
+func getMidnightOnDayAfter(date: Date) -> Date { midnight(daysOffset: 1, from: date) }
+
+/// Returns midnight on the date 7 days before the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 22nd June.
+func getWeekBeforeDate(date: Date) -> Date { midnight(daysOffset: -7, from: date) }
+
+/// Returns midnight on the date 7 days after the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 6th July.
+func getWeekAfterDate(date: Date) -> Date { midnight(daysOffset: 7, from: date) }
 
 /// Returns half an hour before the Date() passed.
 func getHalfHourBefore(date: Date) -> Date {
-    let calendar = NSCalendar.current
+    let calendar = Calendar.current
     return calendar.date(byAdding: .minute, value: -30, to: date)!
-}
-
-/// Returns midnight on the day after the date passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 30th June.
-func getMidnightOnDayAfter(date: Date) -> Date {
-    let calendar = NSCalendar.current
-    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: date)!)
-}
-
-/// Returns midnight on the date 7 days before the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 22nd June.
-func getWeekBeforeDate(date: Date) -> Date {
-    let calendar = NSCalendar.current
-    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: -7, to: date)!)
-}
-
-/// Returns midnight on the date 7 days after the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 6th July.
-func getWeekAfterDate(date: Date) -> Date {
-    let calendar = NSCalendar.current
-    return calendar.startOfDay(for: calendar.date(byAdding: .day, value: 7, to: date)!)
 }
 
 /// Returns the number of minutes that have passed in the current day. Will return 0 at midnight.
@@ -62,12 +59,6 @@ func minutesIntoDay() -> Int {
     let date = Date()
     let calendar = Calendar.current
     return (60 * calendar.component(.hour, from: date)) + calendar.component(.minute, from: date)
-}
-
-/// Returns the day of the week in Int format.
-func getDayOfWeek() -> Int {
-    let calendar = NSCalendar.current
-    return calendar.dateComponents([.weekday], from: Date()).weekday!
 }
 
 /// Returns the hour number of the current time. For example, if passed 19:02 on the 29th June, would return 19.
@@ -102,7 +93,7 @@ func getWeightingStyle() -> Int {
     if settingsObj.differentWeights != true {
         return settingsObj.weightingStyle
     } else {
-        switch getDayOfWeek() {
+        switch Calendar.current.component(.weekday, from: Date()) {
             case 1: return settingsObj.sunWeight
             case 2: return settingsObj.monWeight
             case 3: return settingsObj.tuesWeight
@@ -181,16 +172,6 @@ func weightActiveProjection(input: Int, style: Int = getWeightingStyle(), timeIn
     }
 }
 
-/// Returns true if the date received is on a day after today.
-func isAfterToday(date: Date) -> Bool
-{
-    if date > getMidnightOnDayAfter(date: Date()) {
-        return true
-    } else {
-        return false
-    }
-}
-
 /// Returns the current time of day on the date passed. For instance, if passed 19:02 on the 29th June, but it is 16:45, it will return 16:45 on the 29th June.
 func getCurrentTimeonDate(date: Date) -> Date {
     let calendar = Calendar.current
@@ -241,62 +222,32 @@ func minsIntoDayIntoTime(mins: Int) -> Date {
     return Calendar.current.date(from: dateComponents)!
 }
 
+/// Formats a future duration of time (ETA) in a fuzzy format.
 func formatDuration(days: Int) -> String {
     if days < 7 {
-        if days > 0 {
-            return "about \(days) days"
-        } else {
-            return "not very long from now"
-        }
-    } else {
-        var weeks: Int = 0
-        let excess = days % 7
-        if excess == 0 {
-            weeks = days / 7
-        } else {
-            weeks = (days / 7) + 1
-        }
-        if weeks < 12 {
-            return "about \(weeks) weeks"
-        } else {
-            if weeks > 52 {
-                return "over a year"
-            } else {
-                if days % 30 != 0 {
-                    let months = (days/30) + 1
-                    return "about \(months) months"
-                } else {
-                    let months = (days/30)
-                    return "about \(months) months"
-                }
-                
-            }
-        }
+        return days > 0 ? "about \(days) days" : "not very long from now"
     }
+    let weeks = (days + 6) / 7
+    if weeks < 12 {
+        return "about \(weeks) weeks"
+    }
+    if weeks > 52 {
+        return "over a year"
+    }
+    let months = (days + 29) / 30
+    return "about \(months) months"
+}
+
+private func daysToChangeWeight(weight: Double, calsPerDay: Int, calsPerKg: Double) -> Int {
+    guard weight != 0, calsPerDay != 0 else { return 0 }
+    return Int(weight * calsPerKg) / calsPerDay
 }
 
 /// Calculates the days it will take to lose a given amount of weight, given the amount of weight to lose in kilos and the expected caloric deficit.
-func getDaysToLose(weight: Double, deficit: Int) -> Int {
-    if weight == 0 || deficit == 0 {
-        return 0
-    } else {
-        let calsPerKg: Double = 7700
-        let calsToLose = weight * calsPerKg
-        let result = Int(calsToLose) / deficit
-        return result
-    }
-}
+func getDaysToLose(weight: Double, deficit: Int) -> Int { daysToChangeWeight(weight: weight, calsPerDay: deficit, calsPerKg: 7700) }
 
-func getDaysToGain(weight: Double, surplus: Int) -> Int {
-    if weight == 0 || surplus == 0 {
-        return 0
-    } else {
-        let calsPerKg: Double = 2500
-        let calsToGain = weight * calsPerKg
-        let result = Int(calsToGain) / surplus
-        return result
-    }
-}
+/// Calculates the days it will take to gain a given amount of weight, given the amount of weight to lose in kilos and the expected caloric deficit.
+func getDaysToGain(weight: Double, surplus: Int) -> Int { daysToChangeWeight(weight: weight, calsPerDay: surplus, calsPerKg: 2500) }
 
 func roundDoubleWeight(input: Double) -> Double {
     return round(input * 10) / 10
@@ -308,15 +259,5 @@ func adjustDeficitPrediction(deficit: Int, factor: Double) -> Int {
     } else {
         let doubleCalc = Double(deficit) * factor
         return Int(doubleCalc)
-    }
-}
-
-extension String {
-    func capitalizingFirstLetter() -> String {
-      return prefix(1).uppercased() + self.lowercased().dropFirst()
-    }
-
-    mutating func capitalizeFirstLetter() {
-      self = self.capitalizingFirstLetter()
     }
 }

@@ -62,7 +62,7 @@ final class HealthData {
         if type == eatenQuantityType && hkOnly == false {
             var budgieCalories: Int = 0
             let budgieResults = await calorieActor.fetchCalsBetween(from: date, to: endDate)
-            if budgieResults.count != 0 {
+            if !budgieResults.isEmpty {
                 for result in budgieResults {
                     budgieCalories += result.calories
                 }

@@ -18,8 +18,6 @@ import SwiftUI
 struct FoodDatePicker: View {
     @Binding var curDate: Date
     @Binding var dateChanged: Bool
-
-    @State var atMax: Bool = false
     @State var prevDate: Date = Date()
     @State var nextDate: Date = Date()
     
@@ -29,10 +27,11 @@ struct FoodDatePicker: View {
             .frame(maxHeight: 50)
             .overlay {
                 HStack {
-                    Button("", systemImage: "arrow.left") {
+                    Button("Previous day", systemImage: "arrow.left") {
                         curDate = prevDate
                     }
-                    .padding()
+                        .labelStyle(.iconOnly)
+                        .padding()
                     
                     HStack {
                         Spacer()
@@ -42,11 +41,11 @@ struct FoodDatePicker: View {
                             label: { Text("Date")}).labelsHidden()
                         Spacer()
                     }
-                    Button("", systemImage: "arrow.right") {
+                    Button("Next day", systemImage: "arrow.right") {
                         curDate = nextDate
                     }
+                        .labelStyle(.iconOnly)
                         .padding()
-                        .disabled(atMax)
                 }
             }
         

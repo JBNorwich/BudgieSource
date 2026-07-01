@@ -79,7 +79,7 @@ struct FoodHub: View {
             }
             .padding()
             List {
-                if budgieData.count != 0 {
+                if !budgieData.isEmpty {
                     ForEach(mealList) { meal in
                         let entries = groupedByMeal[meal.mealUUID] ?? []
                         if !entries.isEmpty {
