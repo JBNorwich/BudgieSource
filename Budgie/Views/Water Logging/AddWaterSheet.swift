@@ -19,10 +19,31 @@ struct AddWaterSheet: View {
     @Binding var isDisplayed: Bool
     
     var dateToAddOn: Date
-    @State var fieldString: String = "0"
     @State var millilitres: Int?
     @State var milsWereNil: Bool = false
     @FocusState var isFocused: Bool
+    
+    struct QuickWaterButton: View {
+        let image: String
+        let amount: Int
+        let date: Date
+        @Binding var isDisplayed: Bool
+        
+        var body: some View {
+            VStack {
+                Button("\(amount)ml", systemImage: image) {
+                    Task {
+                        await dataStore.addWater(amount: amount, datetime: date)
+                        isDisplayed = false
+                    }
+                }.buttonStyle(.bordered)
+                    .controlSize(.extraLarge)
+                    .buttonBorderShape(.circle)
+                    .labelStyle(.iconOnly)
+                Text("\(amount)ml")
+            }
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -38,71 +59,27 @@ struct AddWaterSheet: View {
                             .font(.largeTitle)
                         Button("Add") {
                             guard (millilitres ?? 0) > 0 else {
-                                millilitres = nil
+                                milsWereNil = true
                                 isFocused = true
                                 return
                             }
                             Task {
                                 await dataStore.addWater(amount: millilitres!, datetime: dateToAddOn)
+                                isDisplayed = false
                             }
-                            isDisplayed = false
                         }.buttonStyle(.borderedProminent)
                     }
                 }
                 
                 Section(header: Text("Quick add")) {
                     HStack {
-                        VStack {
-                            Button("250ml", systemImage: "mug.fill") {
-                                Task {
-                                    await dataStore.addWater(amount: 250, datetime: dateToAddOn)
-                                    isDisplayed = false
-                                }
-                            }.buttonStyle(.bordered)
-                                .controlSize(.extraLarge)
-                                .buttonBorderShape(.circle)
-                                .labelStyle(.iconOnly)
-                            Text("250ml")
-                        }
+                        QuickWaterButton(image: "mug.fill", amount: 250, date: dateToAddOn, isDisplayed: $isDisplayed)
                         Spacer()
-                        VStack {
-                            Button("500ml", systemImage: "waterbottle") {
-                                Task {
-                                    await dataStore.addWater(amount: 500, datetime: dateToAddOn)
-                                    isDisplayed = false
-                                }
-                            }.buttonStyle(.bordered)
-                                .controlSize(.extraLarge)
-                                .buttonBorderShape(.circle)
-                                .labelStyle(.iconOnly)
-                            Text("500ml")
-                        }
+                        QuickWaterButton(image: "waterbottle", amount: 500, date: dateToAddOn, isDisplayed: $isDisplayed)
                         Spacer()
-                        VStack {
-                            Button("750ml", systemImage: "waterbottle.fill") {
-                                Task {
-                                    await dataStore.addWater(amount: 750, datetime: dateToAddOn)
-                                    isDisplayed = false
-                                }
-                            }.buttonStyle(.bordered)
-                                .controlSize(.extraLarge)
-                                .buttonBorderShape(.circle)
-                                .labelStyle(.iconOnly)
-                            Text("750ml")
-                        }
+                        QuickWaterButton(image: "waterbottle.fill", amount: 750, date: dateToAddOn, isDisplayed: $isDisplayed)
                         Spacer()
-                        VStack {
-                            Button("1l", systemImage: "waterbottle.fill") {
-                                Task {
-                                    await dataStore.addWater(amount: 1000, datetime: dateToAddOn)
-                                    isDisplayed = false
-                                }
-                            }.buttonStyle(.bordered)
-                                .controlSize(.extraLarge)
-                                .buttonBorderShape(.circle)
-                                .labelStyle(.iconOnly)
-                            Text("1 litre")
-                        }
+                        QuickWaterButton(image: "waterbottle.fill", amount: 1000, date: dateToAddOn, isDisplayed: $isDisplayed)
                     }
                 }
             }
@@ -120,7 +97,6 @@ struct AddWaterSheet: View {
 #Preview {
     struct Preview: View {
         @State var presented = true
-        @State var data = HealthData()
         
         var body: some View {
             AddWaterSheet(isDisplayed:$presented, dateToAddOn: Date())
