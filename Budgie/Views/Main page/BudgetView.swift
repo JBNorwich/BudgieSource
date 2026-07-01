@@ -17,7 +17,7 @@ import SwiftUI
 import HealthKitUI
 import Observation
 
-struct currentGradient {
+struct CurrentGradient {
     var backgroundGradient: LinearGradient
     var buttonColour: Color
     
@@ -29,17 +29,10 @@ struct currentGradient {
     }
 }
 
-struct WhiteButton: ButtonStyle {
+struct ColoredButton: ButtonStyle {
+    let color: Color
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(.white)
-    }
-}
-
-struct BlackButton: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(.black)
+        configuration.label.foregroundStyle(color)
     }
 }
 
@@ -48,11 +41,7 @@ struct BudgetView: View {
     @Environment(\.colorScheme) var colorScheme
     
     @StateObject var todayLump: TodayLump = TodayLump()
-    
-    @State var hkAuthenticated: Bool = false
     @State var hkAuthenticationTrigger: Bool = false
-
-    @State var firstRun = Bool()
 
     // state vars for various sheets
     @State var showingHelp: Bool = false
@@ -64,11 +53,19 @@ struct BudgetView: View {
     @State var showingDetail: Bool = false
     @State var showingWeightSheet: Bool = false
     @State var showingWeightDetail: Bool = false
+    @State var showingFirstRun: Bool = false
+    @State var backgroundGradient = CurrentGradient()
     
-    // this is needed because otherwise it won't update state when returning from settings
-    @State var whaleButtonVisible: Bool = false
-    
-    @State var backgroundGradient = currentGradient()
+    func updateGradient() {
+        switch colorScheme {
+        case .dark:
+            backgroundGradient.backgroundGradient = LinearGradient(colors: [.black, .blue], startPoint: .top, endPoint: .bottom)
+            backgroundGradient.buttonColour = .white
+        default:
+            backgroundGradient.backgroundGradient = LinearGradient(colors: [.cyan, .blue], startPoint: .top, endPoint: .bottom)
+            backgroundGradient.buttonColour = .black
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -189,15 +186,9 @@ struct BudgetView: View {
                                 Image(systemName: "chart.xyaxis.line")
                             }.foregroundColor(backgroundGradient.buttonColour)
                             
-                            if colorScheme == .dark {
-                                Button("Add quick calories", systemImage: "plus") {
-                                    showAddCalsSheet = true
-                                }.buttonStyle(WhiteButton())
-                            } else {
-                                Button("Add quick calories", systemImage: "plus") {
-                                    showAddCalsSheet = true
-                                }.buttonStyle(BlackButton())
-                            }
+                            Button("Add quick calories", systemImage: "plus") {
+                                showAddCalsSheet = true
+                            }.buttonStyle(ColoredButton(color: backgroundGradient.buttonColour))
                         }
                     }
                 }
@@ -227,63 +218,29 @@ struct BudgetView: View {
             guard scenePhase == .active else {
                return
             }
-            
-            switch colorScheme {
-            case .dark: backgroundGradient.backgroundGradient = LinearGradient(
-                colors: [Color.black, Color.blue],
-                startPoint: .top, endPoint: .bottom)
-                backgroundGradient.buttonColour = .white
-            default: backgroundGradient.backgroundGradient = LinearGradient(
-                colors: [Color.cyan, Color.blue],
-                startPoint: .top, endPoint: .bottom)
-                backgroundGradient.buttonColour = .black
-            }
-            
+            updateGradient()
             Task {
                 await dataStore.updateLump(todayLump: todayLump)
             }
         }
         
         .onChange(of: colorScheme) {
-            switch colorScheme {
-            case .dark: backgroundGradient.backgroundGradient = LinearGradient(
-                colors: [Color.black, Color.blue],
-                startPoint: .top, endPoint: .bottom)
-                backgroundGradient.buttonColour = .white
-            default: backgroundGradient.backgroundGradient = LinearGradient(
-                colors: [Color.cyan, Color.blue],
-                startPoint: .top, endPoint: .bottom)
-                backgroundGradient.buttonColour = .black
-            }
+            updateGradient()
         }
         
         .onAppear() {
-            firstRun = settingsObj.isFirstRun
-            
-            switch colorScheme {
-            case .dark: backgroundGradient.backgroundGradient = LinearGradient(
-                colors: [Color.black, Color.blue],
-                startPoint: .top, endPoint: .bottom)
-                backgroundGradient.buttonColour = .white
-            default: backgroundGradient.backgroundGradient = LinearGradient(
-                colors: [Color.cyan, Color.blue],
-                startPoint: .top, endPoint: .bottom)
-                backgroundGradient.buttonColour = .black
-            }
-            
-            if firstRun != true {
+            updateGradient()
+            if !settingsObj.isFirstRun {
                 if HKHealthStore.isHealthDataAvailable() {
                     hkAuthenticationTrigger.toggle()
                 }
             }
-        
-            whaleButtonVisible = settingsObj.whalesEverywhere
         }
                     
         .healthDataAccessRequest(store: healthStore, shareTypes: writeTypes, readTypes: readTypes, trigger: hkAuthenticationTrigger) { result in
             switch result {
             case .success(_):
-                hkAuthenticated = true
+                print("HealthKit is authenticated")
             case .failure(_):
                 print("Failed for some reason")
             }
@@ -303,8 +260,8 @@ struct BudgetView: View {
             .presentationDetents([.medium])
         }
         
-        .sheet(isPresented: $firstRun) {
-            FirstRunSheet(isPresented: $firstRun)
+        .sheet(isPresented: $showingFirstRun) {
+            FirstRunSheet(isPresented: $showingFirstRun)
                 .environmentObject(todayLump)
                 .onDisappear {
                     showingHelp = true
@@ -316,13 +273,15 @@ struct BudgetView: View {
         }
         
         .sheet(isPresented: $showWaterSheet) {
+            // No environment object needs to be passed to AddWaterSheet as that view doesn't do anything with it.
             NavigationStack {
                 AddWaterSheet(isDisplayed: $showWaterSheet, dateToAddOn: Date())
             }
             .presentationDetents([.medium])
-        }.onDisappear() {
-            Task {
-                await dataStore.updateLump(todayLump: todayLump)
+            .onDisappear() {
+                Task {
+                    await dataStore.updateLump(todayLump: todayLump)
+                }
             }
         }
         
