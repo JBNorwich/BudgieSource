@@ -12,9 +12,15 @@ The below licence, the Expat licence, applies to all files except any called CLA
 # Licence for CLAUDE.md and .claude/settings.json
 These files are *not* licenced under the Expat licence. These are under a different licence, the Non-enforceable Overtly, Violently Indisposed to Bot Engineering (NO-VIBE) licence. The text of this is as below:
 
-> The copyright for this work is held by Joseph Baldwin, who denies any rights to edit it, including for your own personal use, or to do anything with it at all other than to either reproduce it verbatim or to delete it from any locally held or redistributed copy of the code it accompanies.
+> Copyright 2026 Joseph Baldwin
 
-> I am aware this doesn't do anything concrete. I just really don't want people running AI agents over this codebase. I can't prevent you from doing so, but please respect that. I don't believe people should vibe code anything they want other people to run.
+> The copyright holder for this work denies any rights to edit it, including (insofar as this is disallowable under copyright law) for your own personal use, or to create and/or distribute derivative works. You may reproduce it freely, but only verbatim. You may also, if you choose, delete it entirely, and are not bound to redistribute it.
+
+> The intention of the work and this licence is to prevent you, as far as is practicable, from automatically editing or merging code into a software product via AI agents. The copyright holder is aware that they cannot prevent you from doing this, either physically or (depending on the licence of that software) per the terms of another licence. However they do not want you to do so, and ask for you to respect that.
+
+> Nothing in this licence should be taken as denying you any rights over any software or code that have been granted under any other licence.
+
+> You may reuse this licence for your own work, if you choose. The text of this licence may also not be edited, and must be reproduced verbatim alongside anything licenced under it.
 
 # Trademarks
 The Expat licence above applies solely to the source code of this application. It does not apply to the name "Budgie" or "Budgie Diet", the green bird logo or any derivatives of it. These elements, and all intellectual property, trademark rights and copyrights associated with them, are the property of Joseph Baldwin. They may not be used for, in or in connection with any other application without permission, nor may you use them for a commercial purpose (including for a fork or separate distribution of Budgie Diet, whether you charge money for it or not) however you may redistribute unamended copies of them alongside this project's code.
