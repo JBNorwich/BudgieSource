@@ -282,24 +282,33 @@ class HealthData {
         return activitySummaries.first ?? HKActivitySummary()
     }
     
-    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
-        var hkUUID: UUID?
-        let authStatus = healthStore.authorizationStatus(for: eatenQuantityType)
-        if authStatus == HKAuthorizationStatus.sharingAuthorized {
-            let quantityUnit = HKUnit(from:.kilocalorie)
-            let quantityAmount = HKQuantity(unit: quantityUnit, doubleValue:Double(calories))
-            let sample = HKQuantitySample(type: eatenQuantityType, quantity: quantityAmount, start: date, end: date)
-            hkUUID = sample.uuid
-            do {
-                try await healthStore.save(sample)
-            } catch {
-                hkUUID = nil
-            }
+    func saveHKSample(calories: Int, date: Date) async -> UUID? {
+        guard healthStore.authorizationStatus(for: eatenQuantityType) == .sharingAuthorized else { return nil }
+        let quantity = HKQuantity(unit: HKUnit(from: .kilocalorie), doubleValue: Double(calories))
+        let sample = HKQuantitySample(type: eatenQuantityType, quantity: quantity, start: date, end: date)
+        do {
+            try await healthStore.save(sample)
+            return sample.uuid
+        } catch {
+            return nil
         }
-        
+    }
+
+    func deleteHKSample(uuid: UUID) async {
+        guard healthStore.authorizationStatus(for: eatenQuantityType) == .sharingAuthorized else { return }
+        let predicate = HKQuery.predicateForObjects(with: [uuid])
+        do {
+            try await healthStore.deleteObjects(of: eatenQuantityType, predicate: predicate)
+        } catch {
+            // Not recoverable.
+        }
+    }
+    
+    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
+        let hkUUID = await saveHKSample(calories: calories, date: date)
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
-        let newCalorieObj = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID)
-        await calorieActor.insertNewCals(object: newCalorieObj)
+        let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID)
+        await calorieActor.insertNewCals(object: newEntry)
     }
     
     func addWater(amount: Int, datetime: Date) async {

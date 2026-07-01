@@ -217,36 +217,39 @@ actor CalorieActor {
         return returnval.first(where: { $0.name == name })!.mealUUID
     }
     
-    func deleteEntries(objects: [CalorieEntry])
-    {
+    func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID) async {
+        // HK can't be updated in place — delete the old sample, then write a fresh one.
+        if entry.isInHK, let oldUUID = entry.healthKitUUID {
+            await dataStore.deleteHKSample(uuid: oldUUID)
+        }
+        let newUUID = await dataStore.saveHKSample(calories: calories, date: date)
+
+        // SwiftData, unlike HK, can just be mutated — this preserves the entry's identity.
+        entry.calories = calories
+        entry.narrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
+        entry.date = date
+        entry.meal = meal
+        entry.isInHK = newUUID != nil
+        entry.healthKitUUID = newUUID
+
+        do {
+            try modelContext.save()
+        } catch {
+            // Not recoverable.
+        }
+    }
+    
+    func deleteEntries(objects: [CalorieEntry]) async {
         for object in objects {
-            do {
-                if object.isInHK == true {
-                    Task {
-                        if object.healthKitUUID != nil {
-                            if healthStore.authorizationStatus(for: eatenQuantityType) == HKAuthorizationStatus.sharingAuthorized
-                            {
-                                let hkUUIDPredicate = HKQuery.predicateForObjects(with: [object.healthKitUUID!])
-                                
-                                do {
-                                    try await healthStore.deleteObjects(of: eatenQuantityType, predicate: hkUUIDPredicate)
-                                } catch {
-                                    //Nothing. This is not recoverable.
-                                }
-                            }
-                        }
-                    }
-                }
-                let uuidToDelete = object.id
-                try modelContext.delete(model: CalorieEntry.self, where: #Predicate<CalorieEntry> { ($0.id == uuidToDelete) }, includeSubclasses: true)
-            } catch {
-                print("Calorie deletion error: \(error)")
+            if object.isInHK, let hkUUID = object.healthKitUUID {
+                await dataStore.deleteHKSample(uuid: hkUUID)
             }
+            modelContext.delete(object)
         }
         do {
             try modelContext.save()
         } catch {
-            // Nothing. Not recoverable.
+            // Not recoverable.
         }
     }
 }
