@@ -106,55 +106,56 @@ struct NewDataView: View {
     }
     
     var body: some View {
-        Spacer()
         VStack {
-            DataViewHeader(imageName: "figure.walk", leftText: "Active calories", rightText: "Calories")
-            DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.activeCalories)
-            if dataLump.projectedActive != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedActive) }
-        }
-        VStack {
-            DataViewHeader(imageName: "sofa", leftText: "Resting calories", rightText: "Calories")
-            DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.basalCalories)
-            if dataLump.projectedBasal != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedBasal) }
-        }
-
-        DataViewDivider()
-        
-        if settingsObj.desiredDeficit != 0 {
-            DataViewRow(imageName: "equal.circle", text: "Total burned today", number: dataLump.totalProjCalories)
-            settingsObj.desiredDeficit > 0
+            VStack {
+                DataViewHeader(imageName: "figure.walk", leftText: "Active calories", rightText: "Calories")
+                DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.activeCalories)
+                if dataLump.projectedActive != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedActive) }
+            }
+            VStack {
+                DataViewHeader(imageName: "sofa", leftText: "Resting calories", rightText: "Calories")
+                DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.basalCalories)
+                if dataLump.projectedBasal != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedBasal) }
+            }
+            
+            DataViewDivider()
+            
+            if settingsObj.desiredDeficit != 0 {
+                DataViewRow(imageName: "equal.circle", text: "Total burned today", number: dataLump.totalProjCalories)
+                settingsObj.desiredDeficit > 0
                 ? DataViewRow(imageName: "arrow.down", text: "Target deficit", number: negate(value: settingsObj.desiredDeficit))
                 : DataViewRow(imageName: "arrow.up", text: "Target surplus", number: negate(value: settingsObj.desiredDeficit))
-        }
-        
-        settingsObj.capBudget && dataLump.budgetAtCap
+            }
+            
+            settingsObj.capBudget && dataLump.budgetAtCap
             ? DataViewRow(imageName: "hat.cap", text: "Budget at cap", number: dataLump.budgetOverCap)
             : nil
-        
-        DataViewDivider()
-
-        DataViewSumRow(imageName: "equal.circle", text: "Total calorie budget", number: dataLump.totalBudget)
-
-        if dataLump.eatenCalories != 0 {
+            
             DataViewDivider()
-            DataViewRow(imageName: "fork.knife", text: "Eaten today", number: negate(value: dataLump.eatenCalories))
-            if dataLump.totalBudgetRem != 0 {
-                dataLump.totalBudgetRem > 0
+            
+            DataViewSumRow(imageName: "equal.circle", text: "Total calorie budget", number: dataLump.totalBudget)
+            
+            if dataLump.eatenCalories != 0 {
+                DataViewDivider()
+                DataViewRow(imageName: "fork.knife", text: "Eaten today", number: negate(value: dataLump.eatenCalories))
+                if dataLump.totalBudgetRem != 0 {
+                    dataLump.totalBudgetRem > 0
                     ? DataViewRow(imageName: "face.smiling", text: "Left in budget today", number: dataLump.totalBudgetRem)
                     : DataViewRow(imageName: "gauge.with.dots.needle.bottom.100percent", text: "Over total budget by", number: negate(value: dataLump.totalBudgetRem))
+                }
             }
-        }
-        if dataLump.activeEstimated == true || dataLump.budgetAtCap == true || dataLump.budgetAtMin == true {
-            Divider()
-            dataLump.activeEstimated
+            if dataLump.activeEstimated == true || dataLump.budgetAtCap == true || dataLump.budgetAtMin == true {
+                Divider()
+                dataLump.activeEstimated
                 ? DataViewAlert(imageName: "info.circle",text: "Your active calorie burn figures are estimated, so your budget doesn't reflect your real activity today.")
                 : nil
-            dataLump.budgetAtCap
+                dataLump.budgetAtCap
                 ? DataViewAlert(imageName: "info.circle", text: "Your budget for today has been capped at the amount chosen in Settings.")
                 : nil
-            dataLump.budgetAtMin
+                dataLump.budgetAtMin
                 ? DataViewAlert(imageName: "exclamationmark.octagon", text: "Your budget was calculated as lower than the minimum of 1,200 calories, so it has been set at that amount.")
                 : nil
+            }
         }
     }
 }
