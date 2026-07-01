@@ -18,134 +18,81 @@ import SwiftUI
 struct WeightDetailsSheet: View {
     @EnvironmentObject var todayLump: TodayLump
     
+    struct StatColumn: View {
+        let title: String
+        let value: Double
+        let unit: String
+        let subtitle: String
+        let dateLabel: String? = nil
+
+        private var hasData: Bool { !value.isZero && !value.isNaN }
+
+        var body: some View {
+            VStack {
+                Text(title)
+                    .multilineTextAlignment(.leading)
+                    .font(.caption)
+                if hasData {
+                    Text("\(value.formatted())\(unit)")
+                        .font(.largeTitle)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("-")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                    Text("NO DATA")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(minWidth: 0, maxWidth: .infinity)
+        }
+    }
+    
+    struct PredictionRow: View {
+        let title: String
+        let value: Double
+        let unit: String
+        let subtitle: String
+        let description: String
+
+        var body: some View {
+            HStack {
+                VStack {
+                    Text(title).font(.caption)
+                    !value.isNaN
+                        ? Text("\(value.formatted())\(unit)").font(.largeTitle)
+                        : Text("0"+unit).font(.largeTitle)
+                    Text(subtitle).font(.caption).foregroundStyle(.secondary)
+                }.frame(minWidth: 0, maxWidth: .infinity)
+                Divider()
+                Text(description)
+                    .frame(minWidth: 0, maxWidth: .infinity)
+            }
+        }
+    }
+    
     var body: some View {
          NavigationStack {
              ScrollView {
-                 GroupBox(label: Label("Progress", systemImage: "gauge.with.needle")) {
-                     HStack{
-                         VStack {
-                             Text("WEEK BEFORE LAST")
-                                 .multilineTextAlignment(.leading)
-                                 .font(.caption)
-                             Text("\(todayLump.prevWeekAvgWeight.formatted())kg")
-                                 .font(.largeTitle)
-                             Text("AVERAGE")
-                                 .multilineTextAlignment(.leading)
-                                 .font(.caption)
-                                 .foregroundStyle(.secondary)
-                             
-                         }.frame(minWidth: 0, maxWidth: .infinity)
+                GroupBox(label: Label("Progress", systemImage: "gauge.with.needle")) {
+                     HStack {
+                         StatColumn(title: "WEEK BEFORE", value: todayLump.prevWeekAvgWeight, unit: "kg", subtitle: "AVERAGE")
                          Divider()
-                         VStack {
-                             Text("LAST WEEK")
-                                 .multilineTextAlignment(.leading)
-                                 .font(.caption)
-                             Text("\(todayLump.lastWeekAvgWeight.formatted())kg")
-                                 .font(.largeTitle)
-                             Text("AVERAGE")
-                                 .multilineTextAlignment(.leading)
-                                 .font(.caption)
-                                 .foregroundStyle(.secondary)
-                         }.frame(minWidth: 0, maxWidth: .infinity)
+                         StatColumn(title: "LAST WEEK", value: todayLump.lastWeekAvgWeight, unit: "kg", subtitle: "AVERAGE")
                          Divider()
-                         VStack {
-                             Text("LAST WEIGH IN")
-                                 .multilineTextAlignment(.leading)
-                                 .font(.caption)
-                             if todayLump.weightToday != 0 {
-                                 Text("\(todayLump.weightToday.formatted())kg")
-                                     .font(.largeTitle)
-                             } else {
-                                 Text("--")
-                                     .font(.largeTitle)
-                                     .fontWeight(.bold)
-                                     .foregroundStyle(.secondary)
-                             }
-                             if todayLump.lastWeightDate != nil {
-                                 Text(todayLump.lastWeightDate!.formatted(date: .abbreviated, time: .omitted).uppercased())
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                     .foregroundStyle(.secondary)
-                             } else {
-                                 Text("NO DATA")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                     .foregroundStyle(.secondary)
-                             }
-                         }.frame(minWidth: 0, maxWidth: .infinity)
+                         StatColumn(title: "LAST WEIGH IN", value: todayLump.weightToday, unit: "kg", subtitle: todayLump.lastWeightDate?.formatted(date: .abbreviated, time: .omitted).uppercased() ?? "NO DATA")
                      }
                  }
                  GroupBox(label: Label("Predictions", systemImage: "chart.bar.xaxis.descending")) {
                      VStack {
-                         HStack {
-                             VStack {
-                                 Text("RECORDED DAILY DEFICIT")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                 Text("\(todayLump.averageDeficit.formatted())kcal")
-                                     .font(.largeTitle)
-                                 Text("OVER LAST WEEK")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                     .foregroundStyle(.secondary)
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                             Divider()
-                             VStack {
-                                 Text("This is your daily deficit, based on the data available.")
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                         }
-                         HStack {
-                             VStack {
-                                 Text("EXPECTED LOSS")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                 Text("\(todayLump.expectedWeightLossAtRealDeficit.formatted())kg")
-                                     .font(.largeTitle)
-                                 Text("AT THIS DEFICIT")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                     .foregroundStyle(.secondary)
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                             Divider()
-                             VStack {
-                                 Text("This is how much weight you'd expect to lose at that deficit.")
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                         }
-                         HStack {
-                             VStack {
-                                 Text("ACTUAL LOSS")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                 Text("\(todayLump.weightTrend.formatted())kg")
-                                     .font(.largeTitle)
-                                 Text("OVER LAST WEEK")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                     .foregroundStyle(.secondary)
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                             Divider()
-                             VStack {
-                                 Text("This is your actual weight loss trend.")
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                         }
-                         HStack {
-                             VStack {
-                                 Text("REAL DEFICIT")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                 Text("\(todayLump.realDeficit.formatted())kcal")
-                                     .font(.largeTitle)
-                                 Text("PER DAY")
-                                     .multilineTextAlignment(.leading)
-                                     .font(.caption)
-                                     .foregroundStyle(.secondary)
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                             Divider()
-                             VStack {
-                                 Text("This is the deficit your progress suggests you're actually at.")
-                             }.frame(minWidth: 0, maxWidth: .infinity)
-                         }
-                     }
+                            PredictionRow(title: "RECORDED DAILY DEFICIT", value: Double(todayLump.averageDeficit), unit: "kcal", subtitle: "OVER LAST WEEK", description: "This is your daily deficit, based on the data available.")
+                            PredictionRow(title: "EXPECTED LOSS", value: todayLump.expectedWeightLossAtRealDeficit, unit: "kg", subtitle: "AT THIS DEFICIT", description: "This is how much weight you'd expect to lose at that deficit.")
+                            PredictionRow(title: "ACTUAL LOSS", value: todayLump.weightTrend, unit: "kg", subtitle: "OVER LAST WEEK", description: "This is your actual weight loss trend.")
+                            PredictionRow(title: "REAL DEFICIT", value: Double(todayLump.realDeficit), unit: "kcal", subtitle: "PER DAY", description: "This is the deficit your progress suggests you're actually at.")
+                        }
                  }
              }
         }
