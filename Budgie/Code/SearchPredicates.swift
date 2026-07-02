@@ -16,35 +16,10 @@
 import Foundation
 import HealthKitUI
 
-//PREDICATES FOR REUSE
 /// Predicate that returns only data not logged by Budgie Diet.
-
 let notBudgiePredicate = NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(from: HKSource.default()))
 
-
-func getTodayPredicate() -> NSPredicate {
-    let todayPredicate = HKQuery.predicateForSamples(withStart: getStartOfDay(date: Date()), end: getMidnightOnDayAfter(date: Date()), options: HKQueryOptions.strictEndDate)
-    return todayPredicate
-}
-
-func getPrevWeekPredicate() -> NSPredicate {
-    let prevWeekPredicate = HKQuery.predicateForSamples(withStart: getWeekBeforeDate(date: getStartOfDay(date: Date())), end: getStartOfDay(date: Date()), options: HKQueryOptions.strictEndDate)
-    return prevWeekPredicate
-}
-
-/// Predicate that returns everything from 00:00 today until forever. Used for continuous fetching of calorie data.
-let observerPredicate = HKQuery.predicateForSamples(withStart: getStartOfDay(date: Date()), end:.none)
-
-/// Predicate that returns samples from today that were not logged by Budgie Diet.
-func getNotBudgieTodayPredicate() -> NSCompoundPredicate
-{
-    let todayPredicate = getTodayPredicate()
-    let notBudgieTodayPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,todayPredicate])
-    return notBudgieTodayPredicate
-}
-
 //HKQUANTITYTYPES FOR REUSE
-
 ///HKQuantityType that represents resting energy.
 let basalQuantityType = HKQuantityType(.basalEnergyBurned)
 
@@ -57,8 +32,10 @@ let eatenQuantityType = HKQuantityType(.dietaryEnergyConsumed)
 ///HKQuantityType for water
 let waterQuantityType = HKQuantityType(.dietaryWater)
 
+/// Returns Fitness rings
 let fitnessGoalType = HKSampleType.activitySummaryType()
 
+/// HKQuantityType for body weight.
 let weightSampleType = HKQuantityType(.bodyMass)
 
 let fitnessGoalSet: Set = [fitnessGoalType]
