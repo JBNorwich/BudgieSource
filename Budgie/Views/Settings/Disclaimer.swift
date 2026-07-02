@@ -18,11 +18,13 @@ import SwiftUI
 struct Disclaimer: View {
     @Binding var displayed: Bool
     
+    @Environment(\.openURL) var openURL
+    
     var body: some View {
         NavigationStack {
             List {
                 Section (header: Text("This app isn't medical advice")) {
-                Text("Budgie Diet is for information purposes only, its maker is not a medical professional, and its suggestions are not a substitute for professional medical advice. It's best to consult your doctor before starting any new diet plan.")
+                    Text("Budgie Diet is for information purposes only, its maker is not a medical professional, and its suggestions are not a substitute for professional medical advice. It's best to consult your doctor before starting any new diet plan.")
                 }
                 
                 
@@ -36,6 +38,13 @@ struct Disclaimer: View {
                 
                 Section(header: Text("You are responsible for your choices")) {
                     Text("Budgie Diet will let you choose a target calorie deficit to aim for. It is for you, in discussion with your doctor, to work out what calorie deficit is right for you, and whether to use this app or diet at all. Its suggestions are purely advisory, and are not specific to you or your needs.\n\nThe maker of this app is not responsible for any harm caused by choosing a diet that is too restrictive for you.")
+                }
+                
+                Section(header: Text("Struggling with food or weight?")) {
+                    Text("If food, dieting or your weight feels like it's taking over your life, you're not alone and support is available from charities and medical professionals. Budgie Diet is a calorie tracker, not a treatment tool.")
+                    Link("Beat Eating Disorders (UK)", destination: URL(string: "https://www.beateatingdisorders.org.uk")!)
+                    Link("National Eating Disorders Association (USA)", destination: URL(string: "https://www.nationaleatingdisorders.org")!)
+                    Link("NHS guidance on eating disorders", destination: URL(string: "https://www.nhs.uk/mental-health/feelings-symptoms-behaviours/behaviours/eating-disorders/overview/")!)
                 }
             }
             .navigationTitle("Disclaimer")
