@@ -17,9 +17,9 @@ import SwiftUI
 import StoreKit
 
 struct Donate: View {
+    @State private var donated = false
+    
     var body: some View {
-        var donated: Bool = false
-        
             VStack {
                 Image("Thumbsup")
                     .resizable()

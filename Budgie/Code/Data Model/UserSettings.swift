@@ -148,7 +148,7 @@ class CloudSettings {
     }
     
     var donated: Bool {
-        get { return defaults.object(forKey: "donated") as? Bool ?? true }
+        get { return defaults.object(forKey: "donated") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "donated")}
     }
     
@@ -339,7 +339,7 @@ class UserSettings {
     }
     
     var donated: Bool {
-        get { return defaults?.value(forKey: "donated") as? Bool ?? true }
+        get { return defaults?.value(forKey: "donated") as? Bool ?? false }
         set { defaults?.set(newValue, forKey: "donated")}
     }
     
