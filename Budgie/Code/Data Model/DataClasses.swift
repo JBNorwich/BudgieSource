@@ -30,7 +30,6 @@ class TodayLump: ObservableObject {
     @Published var weightYesterday: Double = 0
     @Published var lastWeightDate: Date? = nil
     @Published var averageDeficit: Int = 0
-    @Published var yesterdayDeficit: Int = 0
     @Published var lastWeekAvgWeight: Double = 0
     @Published var prevWeekAvgWeight: Double = 0
     @Published var foodDaysLoggedFortnight: Int = 0
@@ -42,7 +41,6 @@ class TodayLump: ObservableObject {
     // food data
     @Published var mealList: [Meal] = []
     @Published var mealTotalList: [UUID:Int] = [:]
-    var mealsWithUUIDs: [String:UUID] = [:]
     @Published var foodList: [CalorieEntry] = []
     @Published var healthKitCalories: Int = 0
     
@@ -144,32 +142,12 @@ class TodayLump: ObservableObject {
         return returnVal
     }
     
-    var progressAgainstTime: Double {
-        //0.74 / 0.666
-        let value = self.progressToday / getPercentOfDayDone()
-        return value
-    }
-    
-    var budgetDiffByTime: Int {
-        // 0.11 * (0.666 * 2454)
-        let result = (self.progressAgainstTime - 1) * (getPercentOfDayDone() * Double(self.totalBudget))
-        return Int(result)
-    }
-    
     var gaugeNumber: Int {
         if self.progressAgainstTarget != 0 {
             return Int(self.progressAgainstTarget * 100) - 100
         } else {
             return 0
         }
-    }
-    
-    var meterNumber: Double {
-        let budg = Double(weightForCertainty(input: self.totalBudget))
-        let eaten = Double(self.eatenCalories)
-        let weighted = eaten/budg
-        
-        return weighted
     }
     
     func getPathColour() -> Color

@@ -39,7 +39,6 @@ class CloudSettings {
         self.userSex = localObj.userSex
         self.bmrMultiplier = localObj.bmrMultiplier
         self.whalesEverywhere = localObj.whalesEverywhere
-        self.healthLogging = localObj.healthLogging
         self.weightingStyle = localObj.weightingStyle
         self.hideTodayInDetail = localObj.hideTodayInDetail
         self.shownExplainer = localObj.shownExplainer
@@ -130,11 +129,6 @@ class CloudSettings {
     var whalesEverywhere: Bool {
         get { return defaults.object(forKey: "whalesEverywhere") as? Bool ?? false}
         set { defaults.set(newValue, forKey: "whalesEverywhere")}
-    }
-    
-    var healthLogging: Bool {
-        get { return defaults.object(forKey: "healthLogging") as? Bool ?? true}
-        set { defaults.set(newValue, forKey: "healthLogging")}
     }
     
     /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all.
@@ -283,11 +277,6 @@ class UserSettings {
         set { defaults?.set(newValue, forKey: "manualActive")}
     }
     
-    var manualMode: Bool {
-        get { return false }
-        set { defaults?.set(newValue, forKey: "manualMode")}
-    }
-    
     var surplusMode: Bool {
         get { return defaults?.value(forKey: "surplusMode") as? Bool ?? false}
         set { defaults?.set(newValue, forKey: "surplusMode")}
@@ -326,11 +315,6 @@ class UserSettings {
     var whalesEverywhere: Bool {
         get { return defaults?.value(forKey: "whalesEverywhere") as? Bool ?? false}
         set { defaults?.set(newValue, forKey: "whalesEverywhere")}
-    }
-    
-    var healthLogging: Bool {
-        get { return defaults?.value(forKey: "healthLogging") as? Bool ?? true}
-        set { defaults?.set(newValue, forKey: "healthLogging")}
     }
     
     /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all.

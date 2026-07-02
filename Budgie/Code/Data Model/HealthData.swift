@@ -500,7 +500,6 @@ final class HealthData {
         async let recBasalTask     = pullCalorieTotalForDate(date: today, type: basalQuantityType, hkOnly: true)
         async let recActiveTask    = pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
         async let weightsTask      = getLatestWeight()
-        async let yesterdayDefTask = getDeficitForDate(date: getMidnightOnDayBefore(date: today))
         async let avgDeficitTask   = getAverageDeficitForPastWeek()
         async let lastWeekAvgTask  = getAverageWeight(from: recentWeekStart, to: todayEnd)
         async let prevWeekAvgTask  = getAverageWeight(from: previousWeekStart, to: recentWeekStart)
@@ -558,7 +557,6 @@ final class HealthData {
         todayLump.weightToday = weightsToday.first
         todayLump.weightYesterday = weightsToday.second
         todayLump.lastWeightDate = weightsToday.firstDate
-        todayLump.yesterdayDeficit = await yesterdayDefTask
         todayLump.averageDeficit = await avgDeficitTask
         todayLump.lastWeekAvgWeight = await lastWeekAvgTask
         todayLump.prevWeekAvgWeight = await prevWeekAvgTask
