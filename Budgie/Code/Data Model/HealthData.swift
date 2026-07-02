@@ -321,14 +321,6 @@ final class HealthData {
         return totalDeficit
     }
     
-    func getDeficitForDate(date: Date) async -> Int {
-        let eatenCals = await pullEatenCalories(startDate: getStartOfDay(date: date), endDate: getMidnightOnDayAfter(date: date))
-        let basalCals = await pullCalorieTotalForDate(date: date, type: basalQuantityType, hkOnly: false)
-        let activeCals = await pullCalorieTotalForDate(date: date, type: activeQuantityType, hkOnly: false)
-        let deficit = basalCals + activeCals - eatenCals.hk - eatenCals.budgie
-        return deficit
-    }
-    
     func getLatestWeight() async -> (first: Double, second: Double, firstDate: Date?, secondDate: Date?) {
             let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
             let cutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())
