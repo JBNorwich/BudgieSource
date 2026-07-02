@@ -33,8 +33,6 @@ class ChartDataLump: Identifiable {
 
 @MainActor
 class ChartData: ObservableObject {
-    static let shared = ChartData()
-    
     @Published var returnedChartData: [ChartDataLump] = []
     var activePackets: [CalsPacket] = []
     var basalPackets: [CalsPacket] = []
@@ -48,9 +46,6 @@ class ChartData: ObservableObject {
     init() {
         endDate = getMidnightOnDayAfter(date: Date())
         startDate = getWeekBeforeDate(date: endDate)
-        Task {
-            await self.pokeForUpdate()
-        }
     }
     
     func cleanDataObject() {
