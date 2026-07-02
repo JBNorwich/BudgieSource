@@ -280,9 +280,9 @@ class TodayLump: ObservableObject {
         }
     }
     
-    /// The user's weight lost as the difference between last week's average weight, and the weight today, in kilograms.
+    /// The user's weight lost as the difference between last week's average weight, and the past week's average weight, in kilograms.
     var weightTrend: Double {
-        return self.lastWeekAvgWeight - self.weightToday
+        return self.prevWeekAvgWeight - self.lastWeekAvgWeight
     }
     
     /// The number of days (as an Int) that it will take the user to get to their next weight goal, based on a real average deficit adjusted for real performance
@@ -348,9 +348,9 @@ struct CalsPacket {
     var cals: Int
 }
 
-struct WeightPacket: Identifiable {
-    var id: UUID
-    var date: Date
-    var weight: Double
-    var deficit: Int
+/// Struct that holds an individual data point of weight.
+struct WeightPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let kilos: Double
 }
