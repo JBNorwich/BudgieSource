@@ -68,6 +68,8 @@ struct WeightView: View {
                                 .foregroundStyle(.secondary)
                                 .fixedSize()
                         }
+                        .accessibilityLabel("Current weight")
+                        .accessibilityValue("\(renderWeight(kilos: todayLump.currentWeight, includeSuffix: true)), goal \(renderWeight(kilos: settingsObj.weightGoal, includeSuffix: true))")
                     
                     if let prev = todayLump.prevWeightDate,
                        let last = todayLump.lastWeightDate,

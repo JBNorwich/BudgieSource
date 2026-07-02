@@ -50,6 +50,9 @@ struct MeterView: View {
                 .foregroundColor(.white)
                 .contentMargins(50)
             }
+            .accessibilityElement(children: .ignore)
+            accessibilityLabel(label)
+            accessibilityValue("\(value) calories")
         }
     }
 
