@@ -234,6 +234,23 @@ class TodayLump: ObservableObject {
     var consistentlyLoggedFood: Bool {
         foodDaysLoggedFortnight >= 12
     }
+    
+    /// The daily calorie deficit to base "time to goal" projections on. Uses the
+    /// user's measured rate once they've logged food consistently enough for it to
+    /// be meaningful; otherwise falls back to their planned target deficit.
+    var goalProjectionDeficit: Int {
+        guard consistentlyLoggedFood, averageDeficit > 0 else {
+            return settingsObj.desiredDeficit
+        }
+        return realDeficit > 0 ? realDeficit : averageDeficit
+    }
+
+    /// Whether there's a meaningful "time to goal" estimate to show — i.e. we're not
+    /// looking at a measured caloric surplus, and the projection deficit is positive.
+    var hasGoalTimeEstimate: Bool {
+        if consistentlyLoggedFood && averageDeficit <= 0 { return false }
+        return goalProjectionDeficit > 0
+    }
 }
 
 struct CalsPacket {
