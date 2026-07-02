@@ -17,26 +17,17 @@ import SwiftUI
 import SwiftData
 
 struct FoodHub: View {
-    @State private var searchTerm = ""
-    
     @EnvironmentObject var todayLump: TodayLump
     
     @State var budgieData: [CalorieEntry] = []
-    @State var healthKitData: [CalorieEntry] = []
     @State var mealList: [Meal] = []
     
     @State var curDate: Date
     @State var dateChanged: Bool = false
-    @State var firstInit: Bool = true
-    @State var sumCals: Int = 0
     @State var dataLump: ChartDataLump = ChartDataLump()
     @State var timeToAddOn: Date = Date()
-    
     @State var hkCalories = 0
-    
-    @State var editingDone: Bool = false
     @State var addSheetDisplayed: Bool = false
-    @State var toEdit: [CalorieEntry] = []
     
     @State var loadingDone: Bool = false
     
@@ -123,12 +114,6 @@ struct FoodHub: View {
         }
         
         .onChange(of: dateChanged, initial: true) {
-            Task {
-                await doUpdates()
-            }
-        }
-        
-        .onChange(of: sumCals, initial: false) {
             Task {
                 await doUpdates()
             }
