@@ -19,34 +19,6 @@ import Charts
 func deficitMagnitude(_ deficit: Int) -> Int { max(deficit, 0) }
 func surplusMagnitude(_ surplus: Int) -> Int { max(-surplus, 0) }
 
-func graphTargetNumber() -> Int
-{
-    if settingsObj.desiredDeficit > 0
-    {
-        return settingsObj.desiredDeficit
-    } else if settingsObj.desiredDeficit < 0 {
-        return -settingsObj.desiredDeficit
-    } else {
-        return 0
-    }
-}
-
-func getSurpDef() -> String {
-    if settingsObj.surplusMode == true{
-        return "Surplus"
-    } else {
-        return "Deficit"
-    }
-}
-
-func getDerpSef() -> String {
-    if settingsObj.surplusMode == true{
-        return "Deficit"
-    } else {
-        return "Surplus"
-    }
-}
-
 struct ChartView: View {
     @Binding var chartData: [ChartDataLump]
     var goodString: String { settingsObj.surplusMode ? "Surplus" : "Deficit" }

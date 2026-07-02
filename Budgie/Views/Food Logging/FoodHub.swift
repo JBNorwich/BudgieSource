@@ -74,8 +74,7 @@ struct FoodHub: View {
         VStack {
             VStack {
                 FoodDatePicker(curDate: $curDate, dateChanged: $dateChanged)
-                SummaryRow(dataLump: dataLump, curDate: $curDate)
-                    .frame(maxHeight: 60)
+                ChartTableRow(dataLump: dataLump)
             }
             .padding()
             List {

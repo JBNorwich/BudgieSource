@@ -49,11 +49,13 @@ struct ChartTableView: View {
     var body: some View {
         ScrollView {
             ForEach(sortChartData(data: chartData)) { dataLump in
-                ChartTableRow(dataLump: dataLump).environmentObject(todayLump)
+                ChartTableRow(dataLump: dataLump)
                     .onTapGesture {
                         selDate = dataLump.date
                         openingFoodHub = true
                     }
+                
+                Divider()
             }
             if settingsObj.whalesEverywhere == true {
                 VStack {
@@ -84,9 +86,9 @@ struct ChartTableRow: View {
         formatter.dateFormat = "dd/MM"
         return formatter
     }()
-    
+
     var dataLump: ChartDataLump
-    @EnvironmentObject var todayLump: TodayLump
+    var maxHeight: CGFloat = 50
     
     private var formDate: String {
         Self.dayMonthFormatter.string(from: dataLump.date)
@@ -94,57 +96,44 @@ struct ChartTableRow: View {
 
     var body: some View {
         let assessment = assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit)
-        
+
         VStack {
             HStack {
+                // Left: day of week + date
                 VStack {
                     Text(getFullDayOfWeek(date: dataLump.date))
                     Text(formDate)
                         .font(.title)
-                        .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
+                        .bold()
                 }.frame(minWidth: 70)
-                ZStack {
-                    RoundedRectangle(cornerRadius: 5)
-                        .foregroundStyle(.background)
-                        .overlay {
-                            VStack {
-                                HStack {
-                                    Text("CALS IN")
-                                        .font(.caption)
-                                    Spacer()
-                                    Text(dataLump.eatenCals.formatted())
-                                        .font(.caption)
-                                }
-                                HStack {
-                                    Text("CALS OUT")
-                                        .font(.caption)
-                                    Spacer()
-                                    Text(dataLump.totalCals.formatted())
-                                        .font(.caption)
-                                }
-                                Divider()
-                                HStack {
-                                    
-                                    if dataLump.deficit < 0 {
-                                        Text("SURPLUS")
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                    } else {
-                                        Text("DEFICIT")
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                    }
-                                    
-                                    Spacer()
-                                    Text((-dataLump.deficit).formatted())
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                }
-                            }.minimumScaleFactor(0.1)
-                                .scaledToFill()
-                                .padding()
-                        }
+
+                // Middle: cals in / out / deficit (card optional)
+                VStack(spacing: 2) {
+                    HStack {
+                        Text("CALS IN").font(.caption)
+                        Spacer()
+                        Text(dataLump.eatenCals.formatted()).font(.caption)
+                    }
+                    HStack {
+                        Text("CALS OUT").font(.caption)
+                        Spacer()
+                        Text(dataLump.totalCals.formatted()).font(.caption)
+                    }
+                    Divider()
+                    HStack {
+                        Text(dataLump.deficit < 0 ? "SURPLUS" : "DEFICIT")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                        Spacer()
+                        Text((-dataLump.deficit).formatted())
+                            .font(.caption)
+                            .fontWeight(.bold)
+                    }
                 }
+                .padding(.horizontal, 10)
+                .background(RoundedRectangle(cornerRadius: 5).fill(.background))
+
+                // Right: assessment narrative + off-target figure
                 VStack {
                     Text(assessment.narrative)
                         .font(.caption)
@@ -160,21 +149,13 @@ struct ChartTableRow: View {
                             Image(systemName: "arrow.down")
                         }
                         Spacer()
-                        if assessment.offTarget < 0 {
-                            Text((-assessment.offTarget).formatted())
-                                .font(.title)
-                                .minimumScaleFactor(0.1)
-                                .scaledToFit()
-                        } else {
-                            Text(assessment.offTarget.formatted())
-                                .font(.title)
-                                .minimumScaleFactor(0.1)
-                                .scaledToFit()
-                        }
+                        Text(abs(assessment.offTarget).formatted())
+                            .font(.title)
+                            .minimumScaleFactor(0.1)
+                            .scaledToFit()
                     }
                 }.frame(minWidth: 105, maxWidth: 105)
-            }
-    }
-        Divider()
+            }.frame(maxHeight: maxHeight)
+        }
     }
 }
