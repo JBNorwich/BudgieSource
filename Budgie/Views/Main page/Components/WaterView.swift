@@ -25,7 +25,7 @@ struct WaterView: View {
             Spacer()
             Gauge(value: todayLump.waterGoalDone, in: 0...1) {
             } currentValueLabel: {
-                Text("\(todayLump.waterToday.formatted())ml")
+                Text(renderVolume(millilitres: todayLump.waterToday))
             } minimumValueLabel: {
                 Text("")
             } maximumValueLabel: {
@@ -37,7 +37,7 @@ struct WaterView: View {
                 .animation(.easeInOut, value: todayLump.waterGoalDone)
             Spacer()
             todayLump.waterGoalRem != 0
-                ? Text("\(todayLump.waterGoalRem.formatted())ml to go")
+                ? Text("\(renderVolume(millilitres: todayLump.waterGoalRem)) to go")
                 : Text("Goal met!")
         }
     }

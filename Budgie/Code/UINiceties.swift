@@ -121,6 +121,66 @@ func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: 
     return returnString
 }
 
+// VOLUME RELATED STRUCTS/FUNCTIONS
+/// Enum detailing volume options - millilitres, US fluid ounces or British (imperial) fluid ounces.
+enum volumeUnits: Int {
+    case millilitres = 0
+    case usFluidOunces = 1
+    case imperialFluidOunces = 2
+
+    /// Millilitres in one unit of this measure (1 for millilitres themselves).
+    var millilitresPerUnit: Double {
+        switch self {
+            case .millilitres:         return 1
+            case .usFluidOunces:       return 29.5735
+            case .imperialFluidOunces: return 28.4130625
+        }
+    }
+
+    /// Suffix appended when rendering a value in this unit.
+    var suffix: String {
+        switch self {
+            case .millilitres:                            return "ml"
+            case .usFluidOunces, .imperialFluidOunces:    return "fl oz"
+        }
+    }
+
+    /// Human-readable name for pickers.
+    var pickerLabel: String {
+        switch self {
+            case .millilitres:         return "Millilitres"
+            case .usFluidOunces:       return "US fluid ounces"
+            case .imperialFluidOunces: return "Imperial fluid ounces"
+        }
+    }
+}
+
+/// Converts a value expressed in the given volume unit into whole millilitres for storage.
+func millilitres(from displayValue: Double, in unit: volumeUnits) -> Int {
+    Int((displayValue * unit.millilitresPerUnit).rounded())
+}
+
+/// Renders a volume given in millilitres into a formatted string, either using a supplied unit or the user's setting. Includes a suffix by default.
+func renderVolume(millilitres ml: Int, outputUnit: volumeUnits? = nil, includeSuffix: Bool = true) -> String {
+    let usedUnit = outputUnit ?? volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
+    var returnString: String
+
+    switch usedUnit {
+        case .millilitres:
+            returnString = ml.formatted()
+        case .usFluidOunces, .imperialFluidOunces:
+            returnString = (Double(ml) / usedUnit.millilitresPerUnit)
+                .formatted(.number.precision(.fractionLength(0...1)))
+    }
+
+    if includeSuffix {
+        // Millilitres sit flush ("250ml"); fluid ounces read better spaced ("8.5 fl oz").
+        returnString += (usedUnit == .millilitres ? "" : " ") + usedUnit.suffix
+    }
+
+    return returnString
+}
+
 // BLOB FUNCTIONS
 /// Colour of the central blob, based on how much the user can still eat.
 func budgetBlobColour(canEatNow: Int) -> Color {

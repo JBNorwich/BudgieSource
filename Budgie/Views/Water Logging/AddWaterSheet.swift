@@ -17,90 +17,93 @@ import SwiftUI
 
 struct AddWaterSheet: View {
     @Binding var isDisplayed: Bool
-    
+
     var dateToAddOn: Date
-    @State var millilitres: Int?
-    @State var milsWereNil: Bool = false
+    @State var amount: Int?          // entered in the user's chosen volume unit
+    @State var amountWasZero: Bool = false
     @FocusState var isFocused: Bool
-    
+
+    private var unit: volumeUnits {
+        volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
+    }
+
+    /// Quick-add presets, expressed in the current display unit.
+    private var quickAmounts: [Int] {
+        unit == .millilitres ? [250, 500, 750, 1000] : [8, 16, 24, 32]
+    }
+
+    private let quickImages = ["mug.fill", "waterbottle", "waterbottle.fill", "waterbottle.fill"]
+
     struct QuickWaterButton: View {
         let image: String
-        let amount: Int
+        let displayAmount: Int
+        let unit: volumeUnits
         let date: Date
         @Binding var isDisplayed: Bool
-        
+
+        private var label: String {
+            unit == .millilitres ? "\(displayAmount)ml" : "\(displayAmount) fl oz"
+        }
+
         var body: some View {
             VStack {
-                Button("\(amount)ml", systemImage: image) {
+                Button(label, systemImage: image) {
                     Task {
-                        await dataStore.addWater(amount: amount, datetime: date)
+                        await dataStore.addWater(amount: millilitres(from: Double(displayAmount), in: unit), datetime: date)
                         isDisplayed = false
                     }
                 }.buttonStyle(.bordered)
                     .controlSize(.extraLarge)
                     .buttonBorderShape(.circle)
                     .labelStyle(.iconOnly)
-                Text("\(amount)ml")
+                Text(label)
             }
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     HStack {
-                        TextField("Amount", value: $millilitres, format: .number)
+                        TextField("Amount", value: $amount, format: .number)
                             .font(.largeTitle)
                             .keyboardType(.numberPad)
                             .autocorrectionDisabled()
                             .focused($isFocused)
-                        Text("ml")
+                        Text(unit.suffix)
                             .font(.largeTitle)
                         Button("Add") {
-                            guard (millilitres ?? 0) > 0 else {
-                                milsWereNil = true
+                            guard (amount ?? 0) > 0 else {
+                                amountWasZero = true
                                 isFocused = true
                                 return
                             }
                             Task {
-                                await dataStore.addWater(amount: millilitres!, datetime: dateToAddOn)
+                                await dataStore.addWater(amount: millilitres(from: Double(amount!), in: unit), datetime: dateToAddOn)
                                 isDisplayed = false
                             }
                         }.buttonStyle(.borderedProminent)
                     }
                 }
-                
+
                 Section(header: Text("Quick add")) {
                     HStack {
-                        QuickWaterButton(image: "mug.fill", amount: 250, date: dateToAddOn, isDisplayed: $isDisplayed)
-                        Spacer()
-                        QuickWaterButton(image: "waterbottle", amount: 500, date: dateToAddOn, isDisplayed: $isDisplayed)
-                        Spacer()
-                        QuickWaterButton(image: "waterbottle.fill", amount: 750, date: dateToAddOn, isDisplayed: $isDisplayed)
-                        Spacer()
-                        QuickWaterButton(image: "waterbottle.fill", amount: 1000, date: dateToAddOn, isDisplayed: $isDisplayed)
+                        ForEach(Array(quickAmounts.enumerated()), id: \.offset) { index, qa in
+                            if index != 0 { Spacer() }
+                            QuickWaterButton(image: quickImages[min(index, quickImages.count - 1)],
+                                             displayAmount: qa,
+                                             unit: unit,
+                                             date: dateToAddOn,
+                                             isDisplayed: $isDisplayed)
+                        }
                     }
                 }
             }
-            
             .navigationTitle("Add water")
         }
-        
-        .alert("Millilitres can't be zero.", isPresented: $milsWereNil)
-        {
+        .alert("Amount can't be zero.", isPresented: $amountWasZero) {
             Button("OK", role: .cancel) { }
         }
     }
-}
-
-#Preview {
-    struct Preview: View {
-        @State var presented = true
-        
-        var body: some View {
-            AddWaterSheet(isDisplayed:$presented, dateToAddOn: Date())
-        }
-    }
-    return Preview()
 }

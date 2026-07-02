@@ -67,6 +67,27 @@ struct SettingsView: View {
             set: { settingsObj.finalMealTime = timeToMinsIntoDay(time: $0)})
     }
     
+    private var waterGoalBinding: Binding<Int> {
+        Binding(
+            get: {
+                let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
+                return unit == .millilitres
+                    ? settingsObj.waterGoal
+                    : Int((Double(settingsObj.waterGoal) / unit.millilitresPerUnit).rounded())
+            },
+            set: { newValue in
+                let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
+                settingsObj.waterGoal = millilitres(from: Double(newValue), in: unit)
+                refreshID = UUID()
+            }
+        )
+    }
+
+    private var waterGoalLabel: String {
+        let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
+        return "Daily water goal (\(unit.suffix))"
+    }
+    
     private func refreshState() {
         if settingsObj.surplusMode {
             surpDefHeader = "Desired calorie surplus"
@@ -124,14 +145,27 @@ struct SettingsView: View {
                 }
             }
             
-            Section(header: Text("Water goal"))
+            Section(header: Text("Water logging"))
             {
+                Picker("Show volumes in", selection: settingBinding(\.waterDisplayUnit)) {
+                    Text(volumeUnits.millilitres.pickerLabel).tag(0)
+                    Text(volumeUnits.usFluidOunces.pickerLabel).tag(1)
+                    Text(volumeUnits.imperialFluidOunces.pickerLabel).tag(2)
+                }
                 LabeledContent {
-                    TextField(settingsObj.waterGoal.formatted(), value: settingBinding(\.waterGoal), format: SettingsView.integerFieldFormat)
+                    TextField(waterGoalBinding.wrappedValue.formatted(), value: waterGoalBinding, format: SettingsView.integerFieldFormat)
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
                         .focused($focusWater)
-                } label: { Text("Daily water goal (ml)") }
+                } label: { Text(waterGoalLabel) }
+            }
+            
+            Section(header: Text("Weight units")) {
+                Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit)) {
+                    Text("Kilograms").tag(0)
+                    Text("Pounds").tag(1)
+                    Text("Stones & pounds").tag(2)
+                }
             }
             
             Section(header: Text("Surplus mode"), footer: Text("Turn this on to aim for a caloric surplus, rather than a deficit.")) {
@@ -144,14 +178,6 @@ struct SettingsView: View {
             Section(header: Text("Move goal"), footer: Text("If this is turned on, Budgie Diet will use your Apple Fitness Move goal as the starting point for your budget, rather than your average calorie burn figures."))
             {
                 Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
-            }
-            
-            Section(header: Text("Weight units")) {
-                Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit)) {
-                    Text("Kilograms").tag(0)
-                    Text("Pounds").tag(1)
-                    Text("Stones & pounds").tag(2)
-                }
             }
 
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {

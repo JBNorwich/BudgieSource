@@ -40,7 +40,7 @@ struct WaterPage: View {
         VStack {
             FoodDatePicker(curDate: $curDate, dateChanged: $dateChanged)
                 .padding()
-            Text("Total water: \(totalWater)ml")
+            Text("Total water: \(renderVolume(millilitres: totalWater))")
                 .font(.title)
             List {
                 if !budgieData.isEmpty {
@@ -123,7 +123,7 @@ struct WaterEntryView: View {
                 Text("Total in Apple Health")
             }
             Spacer()
-            Text("\(quantity.formatted())ml")
+            Text(renderVolume(millilitres: quantity))
                 .contentTransition(.numericText())
         }
     }
