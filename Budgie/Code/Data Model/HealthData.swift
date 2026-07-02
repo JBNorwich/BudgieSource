@@ -224,9 +224,17 @@ final class HealthData {
                 wasEstimate = true
             }
         } else {
-            // User wants to use their Move goal as the basis for their projections. Yank it from HealthKit
+            // User wants to use their Move goal as the basis for their projections. Yank it from HealthKit.
             let summary = await getActivitySummary()
-            averageBurn = Int(summary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()))
+            // A user with no Move goal set still gets a non-nil activeEnergyBurnedGoal back, but carrying a
+            // dimensionless count unit rather than an energy one. Converting that to kilocalories throws an
+            // uncatchable "incompatible units" exception, so guard it and fall back to the manual figure.
+            if summary.activeEnergyBurnedGoal.is(compatibleWith: .kilocalorie()) {
+                averageBurn = Int(summary.activeEnergyBurnedGoal.doubleValue(for: .kilocalorie()))
+            } else {
+                averageBurn = settingsObj.manualActive
+                wasEstimate = true
+            }
         }
         // Remaining from average = how much more would user have to burn to reach their previous week's average?
         remainingFromAvg = averageBurn - curActive

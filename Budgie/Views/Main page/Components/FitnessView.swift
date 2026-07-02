@@ -74,7 +74,15 @@ struct FitnessView: View {
             }
             Divider()
             VStack {
-                FitnessStat(title: "Move", value: todayLump.activitySummary.activeEnergyBurned.doubleValue(for: HKUnit.kilocalorie()), goal: todayLump.activitySummary.activeEnergyBurnedGoal.doubleValue(for: HKUnit.kilocalorie()), unit: "kcal", colour: moveColour)
+                FitnessStat(
+                    title: "Move",
+                    value: todayLump.activitySummary.activeEnergyBurned.doubleValue(for: .kilocalorie()),
+                    goal: todayLump.activitySummary.activeEnergyBurnedGoal.is(compatibleWith: .kilocalorie())
+                        ? todayLump.activitySummary.activeEnergyBurnedGoal.doubleValue(for: .kilocalorie())
+                        : 0,
+                    unit: "kcal",
+                    colour: moveColour
+                )
                 todayLump.activitySummary.exerciseTimeGoal != nil
                     ? FitnessStat(title: "Exercise", value: todayLump.activitySummary.appleExerciseTime.doubleValue(for: .minute()), goal: todayLump.activitySummary.exerciseTimeGoal?.doubleValue(for: .minute()) ?? 0, unit: "min", colour: exerciseColour)
                     : nil
