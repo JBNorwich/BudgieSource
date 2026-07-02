@@ -66,13 +66,6 @@ func getPercentOfDayDone() -> Double {
     return Double(minutesIntoDay()) / 1440
 }
 
-/// Used to weight a number which becomes more certain as a day progresses, with full certainty at 8pm.
-func weightForCertainty(input: Int) -> Int {
-    var factor: Double = (Double(minutesIntoDay()) + 1) / 1200
-    if factor > 1 {  factor = 1 }
-    return Int(Double(input) * factor)
-}
-
 /// Used to weight the user's "left to eat" figure based on the time into the day and the closeness to the user's set "final meal time". Weights more generously the closer to final meal time it is.
 func weightCanEatNow(input: Int) -> Int {
     var factor = Double(minutesIntoDay() + 1)/Double(settingsObj.finalMealTime)
@@ -240,13 +233,4 @@ func getDaysToGain(weight: Double, surplus: Int) -> Int { daysToChangeWeight(wei
 
 func roundDoubleWeight(input: Double) -> Double {
     return round(input * 10) / 10
-}
-
-func adjustDeficitPrediction(deficit: Int, factor: Double) -> Int {
-    if deficit <= 0 {
-        return 0
-    } else {
-        let doubleCalc = Double(deficit) * factor
-        return Int(doubleCalc)
-    }
 }

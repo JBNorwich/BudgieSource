@@ -51,6 +51,11 @@ func getBudgieGreeting() -> String {
 }
 
 // WEIGHT RELATED STRUCTS/FUNCTIONS
+/// Hardcoded constant of the amount in kg of a lb.
+let lbInKg: Double = 0.45359237
+/// Hardcoded constant of the amount in kg of a st.
+let stInKg: Double = lbInKg * 14
+
 /// Enum detailing different options for weights - kilograms, plain pounds or British-style stones and pounds.
 enum weightUnits: Int {
     case kilograms = 0
@@ -65,14 +70,14 @@ struct StonePounds {
     }
 
     init(stones: Int, pounds: Int) {
-        self.kilos = Double((stones * 14) + pounds) * 0.454
+        self.kilos = Double((stones * 14) + pounds) * lbInKg
     }
     
     var kilos: Double
     
     var totalPounds: Int {
-        get { Int((kilos / 0.454).rounded()) }
-        set { kilos = Double(newValue) * 0.454 }
+        get { Int((kilos / lbInKg).rounded()) }
+        set { kilos = Double(newValue) * lbInKg }
     }
     
     var stones: Int {
@@ -106,7 +111,7 @@ func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: 
     
     switch usedOutputUnit {
         case .kilograms: returnString = roundDoubleWeight(input: kilos).formatted()
-        case .pounds: returnString = roundDoubleWeight(input: kilos / 0.454).formatted()
+        case .pounds: returnString = roundDoubleWeight(input: kilos / lbInKg).formatted()
         case .stonepounds: returnString = StonePounds(kilos: kilos).string // stonepounds doesn't make sense without units
     }
     

@@ -48,13 +48,13 @@ func showCMfromFootIn(feet: Int, inches: Int) -> Int
 }
 
 func lbToKg(lbs: Int) -> Int{
-    var resultDouble: Double = Double(lbs) * 0.454 //89.89
+    var resultDouble: Double = Double(lbs) * lbInKg //89.89
     resultDouble = resultDouble.rounded()
     return Int(resultDouble)
 }
 
 func kgToLb(kgs: Int) -> Int {
-    var resultDouble: Double = Double(kgs) / 0.454 // 198.237...
+    var resultDouble: Double = Double(kgs) / lbInKg // 198.237...
     resultDouble = resultDouble.rounded()
     return Int(resultDouble)
 }

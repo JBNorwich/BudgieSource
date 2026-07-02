@@ -50,7 +50,7 @@ struct WeightGoalSheet: View {
             return kilosField
         case .pounds:
             guard let pounds = poundsField else { return nil }
-            return pounds * 0.454
+            return pounds * lbInKg
         case .stonepounds:
             let stones = stonesField ?? 0
             let pounds = poundsPart ?? 0
@@ -209,7 +209,7 @@ struct WeightGoalSheet: View {
                 case .kilograms:
                     kilosField = goal
                 case .pounds:
-                    poundsField = (goal / 0.454).rounded()
+                    poundsField = (goal / lbInKg).rounded()
                 case .stonepounds:
                     let sp = StonePounds(kilos: goal)
                     stonesField = sp.stones

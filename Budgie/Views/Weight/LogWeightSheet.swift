@@ -36,7 +36,7 @@ struct LogWeightSheet: View {
             return kilosField
         case .pounds:
             guard let p = poundsField else { return nil }
-            return p * 0.454
+            return p * lbInKg
         case .stonepounds:
             let s = stonesField ?? 0, p = poundsPart ?? 0
             guard s != 0 || p != 0 else { return nil }

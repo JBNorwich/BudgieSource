@@ -135,13 +135,13 @@ struct WeightHistoryView: View {
     private func plotValue(_ kilos: Double) -> Double {
         switch unit {
         case .kilograms:            return kilos
-        case .pounds, .stonepounds: return kilos / 0.454   // pounds; stone+pounds is plotted on a pound scale
+        case .pounds, .stonepounds: return kilos / lbInKg   // pounds; stone+pounds is plotted on a pound scale
         }
     }
 
     /// Format a Y-axis tick (already in the plotted unit) via the app's standard weight formatter.
     private func axisLabel(_ value: Double) -> String {
-        let kilos = (unit == .kilograms) ? value : value * 0.454
+        let kilos = (unit == .kilograms) ? value : value * lbInKg
         return renderWeight(kilos: kilos)
     }
 
