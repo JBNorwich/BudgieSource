@@ -161,10 +161,9 @@ final class HealthData {
         let everyDay = DateComponents(day:1)
         
         let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
-        let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
         return await withCheckedContinuation { continuation in
             
-            let statQuery = HKStatisticsCollectionQuery(quantityType: type, quantitySamplePredicate: searchPredicate, options: .cumulativeSum, anchorDate: from, intervalComponents: everyDay)
+            let statQuery = HKStatisticsCollectionQuery(quantityType: type, quantitySamplePredicate: timePredicate, options: .cumulativeSum, anchorDate: from, intervalComponents: everyDay)
             
             statQuery.initialResultsHandler = { query, results, error in
                 guard let actCollection = results else {
@@ -360,6 +359,29 @@ final class HealthData {
             }
             healthStore.execute(query)
         }
+    }
+    
+    /// Fetches weight samples written to healthKit by Budgie Diet, newest first.
+    func fetchBudgieWeightSamples(from: Date, to: Date) async -> [HKQuantitySample] {
+        let ownSource = HKQuery.predicateForObjects(from: HKSource.default())
+        let time = HKQuery.predicateForSamples(withStart: from, end: to, options: .strictEndDate)
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [ownSource, time])
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: weightSampleType, predicate: predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+        return (try? await descriptor.result(for: healthStore)) ?? []
+    }
+
+    /// Fetches weight samples written to healthKit by other apps, newest first.
+    func fetchOtherWeightSamples(from: Date, to: Date) async -> [HKQuantitySample] {
+        let time = HKQuery.predicateForSamples(withStart: from, end: to, options: .strictEndDate)
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, time])
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: weightSampleType, predicate: predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+        return (try? await descriptor.result(for: healthStore)) ?? []
     }
     
     func getWaterOnDate(date: Date) async -> (hk: Int, bd: Int) {
