@@ -18,49 +18,113 @@ import SwiftUI
 struct WeightGoalSheet: View {
     @EnvironmentObject var todayLump: TodayLump
     @Binding var isDisplayed: Bool
-    
-    @State var fieldString: String = "0"
-    @State var kilos: Double?
-    @State var kilosWereNil: Bool = false
-    @FocusState var isFocused: Bool
-    @State var toLose: Double = 0
-    @State var daysToGo: Int = 0
-    @State var friendlyDuration: String = ""
-    @State var calsToBurn: Int = 0
-    
+
+    // Input fields — only the ones relevant to the chosen unit are shown.
+    @State private var kilosField: Double?
+    @State private var poundsField: Double?
+    @State private var stonesField: Int?
+    @State private var poundsPart: Int?
+
+    @State private var goalWasInvalid: Bool = false
+
+    private enum Field { case kilos, pounds, stones, poundsPart }
+    @FocusState private var focusedField: Field?
+
+    @State private var toLose: Double = 0
+    @State private var daysToGo: Int = 0
+    @State private var friendlyDuration: String = ""
+
+    /// The unit the user has chosen for displaying/entering weights.
+    private var unit: weightUnits {
+        weightUnits(rawValue: settingsObj.weightDisplayUnit) ?? .kilograms
+    }
+
+    /// The goal the user has entered, converted to kilograms for storage.
+    /// Returns nil when nothing meaningful has been entered.
+    private var enteredKilos: Double? {
+        switch unit {
+        case .kilograms:
+            return kilosField
+        case .pounds:
+            guard let pounds = poundsField else { return nil }
+            return pounds * 0.454
+        case .stonepounds:
+            let stones = stonesField ?? 0
+            let pounds = poundsPart ?? 0
+            guard stones != 0 || pounds != 0 else { return nil }
+            return StonePounds(stones: stones, pounds: pounds).kilos
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    HStack {
-                        TextField("Goal", value: $kilos, format: .number)
-                            .font(.largeTitle)
-                            .keyboardType(.decimalPad)
-                            .autocorrectionDisabled()
-                            .focused($isFocused)
-                        Text("kg")
-                            .font(.largeTitle)
-                        Button("Add") {
-                            guard (kilos ?? 0) > 0 else {
-                                kilosWereNil = true
-                                isFocused = true
-                                return
-                            }
-                            settingsObj.weightGoal = kilos!
-                            isDisplayed = false
-                        }.buttonStyle(.borderedProminent)
+                    switch unit {
+                    case .kilograms:
+                        HStack {
+                            TextField("Goal", value: $kilosField, format: .number)
+                                .font(.largeTitle)
+                                .keyboardType(.decimalPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .kilos)
+                            Text("kg")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                    case .pounds:
+                        HStack {
+                            TextField("Goal", value: $poundsField, format: .number)
+                                .font(.largeTitle)
+                                .keyboardType(.decimalPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .pounds)
+                            Text("lbs")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                    case .stonepounds:
+                        HStack {
+                            TextField("0", value: $stonesField, format: .number)
+                                .font(.largeTitle)
+                                .keyboardType(.numberPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .stones)
+                            Text("st")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                            TextField("0", value: $poundsPart, format: .number)
+                                .font(.largeTitle)
+                                .keyboardType(.numberPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .poundsPart)
+                            Text("lb")
+                                .font(.largeTitle)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+
+                    Button("Add") {
+                        guard let goal = enteredKilos, goal > 0 else {
+                            goalWasInvalid = true
+                            focusedField = firstField
+                            return
+                        }
+                        settingsObj.weightGoal = goal
+                        isDisplayed = false
+                    }.buttonStyle(.borderedProminent)
                 }
+
                 Section {
-                    if kilos != nil {
+                    if let goal = enteredKilos {
                         if todayLump.weightToday != 0 {
-                            if (settingsObj.desiredDeficit > 0) {
-                                kilos! < todayLump.weightToday
-                                ? Text("Your current weight is \(todayLump.weightToday.formatted())kg, so you'll need to lose \(toLose.formatted())kg to get to this goal.")
+                            if settingsObj.desiredDeficit > 0 {
+                                goal < todayLump.weightToday
+                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.weightToday)), so you'll need to lose \(renderWeight(kilos: toLose)) to get to this goal.")
                                 : Text("This goal is above your current weight. Are you sure this is right?")
                             } else {
-                                kilos! > todayLump.weightToday
-                                ? Text("Your current weight is \(todayLump.weightToday.formatted())kg, so you'll need to gain \((-toLose).formatted())kg to get to this goal.")
+                                goal > todayLump.weightToday
+                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.weightToday)), so you'll need to gain \(renderWeight(kilos: -toLose)) to get to this goal.")
                                 : Text("This goal is below your current weight. Are you sure this is right?")
                             }
                         }
@@ -79,44 +143,72 @@ struct WeightGoalSheet: View {
                                         .lineLimit(nil)
                                         .fixedSize(horizontal: false, vertical: false)
                                 }
-
                             }
                         }
                     }
                 }
             }
-            
+
             .navigationTitle("Set weight goal")
-        }
-        
-        .alert("Your weight goal can't be zero.", isPresented: $kilosWereNil)
-        {
-            Button("OK", role: .cancel) { }
-        }
-        
-        .onAppear {
-            if settingsObj.weightGoal != 0 {
-                kilos = settingsObj.weightGoal
-                toLose = todayLump.weightToday - settingsObj.weightGoal
-                daysToGo = getDaysToLose(weight: toLose, deficit: settingsObj.desiredDeficit)
-                friendlyDuration = formatDuration(days:daysToGo)
-            }
-        }
-        
-        .onChange(of: kilos) {
-            if kilos != nil {
-                if kilos! > 0 {
-                    // will be negative if new weight goal below current, positive if above (surplus)
-                    toLose = todayLump.weightToday - kilos!
-                    
-                    if settingsObj.surplusMode {
-                        daysToGo = getDaysToGain(weight: toLose, surplus: -settingsObj.desiredDeficit)
-                    } else {
-                        daysToGo = getDaysToLose(weight: toLose, deficit: settingsObj.desiredDeficit)
-                    }
-                    friendlyDuration = formatDuration(days:daysToGo)
+
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { focusedField = nil }
                 }
             }
         }
+
+        .alert("Please enter a weight above zero.", isPresented: $goalWasInvalid) {
+            Button("OK", role: .cancel) { }
+        }
+
+        .onAppear {
+            if settingsObj.weightGoal != 0 {
+                let goal = settingsObj.weightGoal
+                switch unit {
+                case .kilograms:
+                    kilosField = goal
+                case .pounds:
+                    poundsField = (goal / 0.454).rounded()
+                case .stonepounds:
+                    let sp = StonePounds(kilos: goal)
+                    stonesField = sp.stones
+                    poundsPart = sp.pounds
+                }
+                recalculate()
+            }
+        }
+
+        .onChange(of: enteredKilos) {
+            recalculate()
+        }
+    }
+
+    /// The field to return focus to when the entry is rejected.
+    private var firstField: Field {
+        switch unit {
+        case .kilograms: return .kilos
+        case .pounds: return .pounds
+        case .stonepounds: return .stones
+        }
+    }
+
+    private func recalculate() {
+        guard let goal = enteredKilos, goal > 0, todayLump.weightToday != 0 else {
+            toLose = 0
+            daysToGo = 0
+            friendlyDuration = ""
+            return
+        }
+        // Positive => need to lose; negative => need to gain.
+        toLose = todayLump.weightToday - goal
+
+        if settingsObj.surplusMode {
+            daysToGo = getDaysToGain(weight: toLose, surplus: -settingsObj.desiredDeficit)
+        } else {
+            daysToGo = getDaysToLose(weight: toLose, deficit: settingsObj.desiredDeficit)
+        }
+        friendlyDuration = formatDuration(days: daysToGo)
     }
 }

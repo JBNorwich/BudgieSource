@@ -63,236 +63,281 @@ struct BMRHelper: View {
     @Binding var isPresented: Bool
     @Binding var manualBMR: Int
     @Binding var manualActive: Int
-    
+
     @State var selectedSex: Int = 0
     @State var yearOfBirth: Int = 2000
-    @State var age: Int = 0
-    @State var years: [Int] = []
-    @State var year: Int = 2024
     @State var heightCM: Int = 175
     @State var heightFt: Int = 5
     @State var heightIn: Int = 9
     @State var weightKg: Int = 90
     @State var weightLb: Int = 198
-    @State var weightString: String = ""
+    @State var weightSt: Int = 14
+    @State var weightStLb: Int = 2
     @State var metricImperial: Int = 0
+    @State var weightUnitSelection: Int = 0
     @State var activityLevel: Double = 0.2
-    
-    @FocusState var weightFocused: Bool
-    @FocusState var heightFocused: Bool
-    
-    var body: some View {
-        VStack {
 
-            Form {
-                Section(header: Text("About you")) {
+    private enum Field { case weightKg, weightLb, weightSt, weightStLb, heightCM }
+    @FocusState private var focusedField: Field?
+
+    /// The weight unit currently chosen in this sheet's picker.
+    private var currentWeightUnit: weightUnits {
+        weightUnits(rawValue: weightUnitSelection) ?? .kilograms
+    }
+
+    /// The entered weight, always resolved back to whole kilograms for storage/BMR.
+    private var weightInKg: Int {
+        kilograms(from: currentWeightUnit)
+    }
+    
+    /// Resolve whichever unit's fields into whole kilograms.
+    private func kilograms(from unit: weightUnits) -> Int {
+        switch unit {
+        case .kilograms:
+            return weightKg
+        case .pounds:
+            return lbToKg(lbs: weightLb)
+        case .stonepounds:
+            return Int(StonePounds(stones: weightSt, pounds: weightStLb).kilos.rounded())
+        }
+    }
+
+    /// Keep every unit's field representation in step with a known kilogram value.
+    private func syncWeightFields(fromKg kg: Int) {
+        weightKg = kg
+        weightLb = kgToLb(kgs: kg)
+        let sp = StonePounds(kilos: Double(kg))
+        weightSt = sp.stones
+        weightStLb = sp.pounds
+    }
+    
+    private var birthYearRange: ClosedRange<Int> {
+        let thisYear = Calendar.current.component(.year, from: Date())
+        return (thisYear - 100)...(thisYear - 18)
+    }
+
+    var body: some View {
+        Form {
+            Section(header: Text("About you")) {
+                LabeledContent {
+                    Picker("Sex", selection: $selectedSex) {
+                        Text("Male").tag(1)
+                        Text("Female").tag(2)
+                    }
+                    .pickerStyle(.segmented)
+                } label: {
+                    HStack {
+                        Text("Sex at birth")
+                        Spacer()
+                    }
+                }
+                LabeledContent
+                {
+                    Picker("Year of birth", selection: $yearOfBirth) {
+                        ForEach(birthYearRange.reversed(), id: \.self) { year in
+                            Text(String(year)).tag(year)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(height: 125)
+                } label: {
+                    HStack {
+                        Text("Year of birth")
+                        Spacer()
+                    }
+                }
+
+                // Weight units — persists app-wide and drives the field(s) below.
+                Picker("Weight units", selection: $weightUnitSelection) {
+                    Text("Kilograms").tag(0)
+                    Text("Pounds").tag(1)
+                    Text("Stone & pounds").tag(2)
+                }
+
+                // Weight — entered in the chosen weight unit.
+                switch currentWeightUnit {
+                case .kilograms:
                     LabeledContent {
-                        Picker("Sex", selection: $selectedSex) {
-                            Text("Male").tag(1)
-                            Text("Female").tag(2)
-                        }
-                        .pickerStyle(.segmented)
-                    } label: {
                         HStack {
-                            Text("Sex at birth")
-                            Spacer()
-                        }
-                    }
-                    LabeledContent
-                    {
-                        Picker("Year of birth", selection: $yearOfBirth)
-                        {
-                            ForEach(years.indices, id: \.self) { index in
-                                Text(String(years[index]))
-                            }
-                        }
-                        .pickerStyle(.wheel)
-                        .frame(height: 125)
-                        .onSubmit {
-                            age = year - yearOfBirth
+                            TextField("", value: $weightKg, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                .keyboardType(.numberPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .weightKg)
+                            Text("kg")
                         }
                     } label: {
+                        Text("Weight")
+                    }
+                case .pounds:
+                    LabeledContent {
                         HStack {
-                            Text("Year of birth")
-                            Spacer()
+                            TextField("", value: $weightLb, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                .keyboardType(.numberPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .weightLb)
+                            Text("lbs")
                         }
+                    } label: {
+                        Text("Weight")
                     }
-                    Picker("Units to use", selection: $metricImperial)
-                    {
-                        Text("Metric").tag(0)
-                        Text("Imperial").tag(1)
-                    }
-                    if metricImperial == 0 {
-                        LabeledContent {
-                            HStack {
-                                TextField("", value: $weightKg, format: .number)
-                                    .multilineTextAlignment(.trailing)
-                                    .keyboardType(.numberPad)
-                                    .autocorrectionDisabled()
-                                    .focused($weightFocused)
-                                Text("kg")
-                            }
-                        } label: {
-                            Text("Weight")
+                case .stonepounds:
+                    LabeledContent {
+                        HStack {
+                            TextField("", value: $weightSt, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                .keyboardType(.numberPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .weightSt)
+                            Text("st")
+                            TextField("", value: $weightStLb, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                .keyboardType(.numberPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .weightStLb)
+                            Text("lb")
                         }
-                    } else {
-                        LabeledContent {
-                            HStack {
-                                TextField("", value: $weightLb, format: .number)
-                                    .multilineTextAlignment(.trailing)
-                                    .keyboardType(.numberPad)
-                                    .autocorrectionDisabled()
-                                    .focused($weightFocused)
-                                Text("lbs")
-                            }
-                        } label: {
-                            Text("Weight")
-                        }
+                    } label: {
+                        Text("Weight")
                     }
-                    if metricImperial == 0 {
-                        LabeledContent {
-                            HStack {
-                                TextField("", value: $heightCM, format: .number)
-                                    .multilineTextAlignment(.trailing)
-                                    .keyboardType(.numberPad)
-                                    .autocorrectionDisabled()
-                                    .focused($heightFocused)
-                                Text("cm")
+                }
+
+                // Height units control height entry only.
+                Picker("Height units", selection: $metricImperial)
+                {
+                    Text("Metric").tag(0)
+                    Text("Imperial").tag(1)
+                }
+                if metricImperial == 0 {
+                    LabeledContent {
+                        HStack {
+                            TextField("", value: $heightCM, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                .keyboardType(.numberPad)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .heightCM)
+                            Text("cm")
+                        }
+                    } label: {
+                        Text("Height")
+                    }
+                } else {
+                    LabeledContent {
+                        HStack {
+                            Picker("", selection: $heightFt) {
+                                ForEach(1...8, id: \.self) { ft in
+                                    Text("\(ft)ft").tag(ft)
+                                }
                             }
-                        } label: {
+                            .pickerStyle(.wheel)
+                            .frame(height: 125)
+
+                            Picker("", selection: $heightIn) {
+                                ForEach(0...11, id: \.self) { inch in
+                                    Text("\(inch)in").tag(inch)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(height: 125)
+                        }
+                    } label: {
+                        HStack {
                             Text("Height")
+                            Spacer()
                         }
-                    } else {
-                        LabeledContent {
-                            HStack {
-                                Picker("", selection: $heightFt)
-                                {
-                                    Text("1ft").tag(1)
-                                    Text("2ft").tag(2)
-                                    Text("3ft").tag(3)
-                                    Text("4ft").tag(4)
-                                    Text("5ft").tag(5)
-                                    Text("6ft").tag(6)
-                                    Text("7ft").tag(7)
-                                    Text("8ft").tag(8)
-                                }.pickerStyle(.wheel)
-                                    .frame(height: 125)
-                                Picker("", selection: $heightIn)
-                                {
-                                    Text("1in").tag(1)
-                                    Text("2in").tag(2)
-                                    Text("3in").tag(3)
-                                    Text("4in").tag(4)
-                                    Text("5in").tag(5)
-                                    Text("6in").tag(6)
-                                    Text("7in").tag(7)
-                                    Text("8in").tag(8)
-                                    Text("9in").tag(9)
-                                    Text("10in").tag(10)
-                                    Text("11in").tag(11)
-                                }.pickerStyle(.wheel)
-                                    .frame(height: 125)
-                            }
-                        } label: {
-                            HStack {
-                                Text("Height")
-                                Spacer()
-                            }
-                        }
-                    }
-                }
-                
-                Section(header: Text("Your activity")) {
-                    Picker("Usual activity", selection: $activityLevel) {
-                        Text("None").tag(0.2)
-                        Text("Light").tag(0.375)
-                        Text("Moderate").tag(0.55)
-                        Text("Lots").tag(0.725)
-                        Text("Extremely active").tag(0.9)
-                    }
-                    Text(getActivityNarrative(activityLevel:activityLevel))
-                        .foregroundStyle(.secondary)
-                }
-                
-                Section {
-                    Button("Calculate resting and active calories") {
-                        var calcCM = 0
-                        if metricImperial == 1 {
-                            calcCM = showCMfromFootIn(feet: heightFt, inches: heightIn)
-                        } else {
-                            calcCM = heightCM
-                        }
-                        manualBMR = calcBMR(height: calcCM, weight: weightKg, age: age, sex: selectedSex)
-                        let activeCals = Double(manualBMR) * activityLevel
-                        manualActive = 10 * Int(round(activeCals / 10.0))
-                        settingsObj.manualActive = manualActive
-                        settingsObj.manualBMR = manualBMR
-                        settingsObj.height = heightCM
-                        settingsObj.weight = weightKg
-                        settingsObj.userSex = selectedSex
-                        settingsObj.birthYear = yearOfBirth
-                        settingsObj.bmrMultiplier = activityLevel
-                        if settingsObj.isFirstRun == true {
-                            settingsObj.startWeight = Double(weightKg)
-                        }
-                        isPresented = false
                     }
                 }
             }
-            .onAppear {
-                year = Calendar.current.component(.year, from: Date())
-                let firstYear = year - 100
-                let finalYear = year - 18
-                let diff = firstYear...finalYear
-                for number in diff {
-                    years.insert(number, at: 0)
+
+            Section(header: Text("Your activity")) {
+                Picker("Usual activity", selection: $activityLevel) {
+                    Text("None").tag(0.2)
+                    Text("Light").tag(0.375)
+                    Text("Moderate").tag(0.55)
+                    Text("Lots").tag(0.725)
+                    Text("Extremely active").tag(0.9)
                 }
-                
-                heightCM = settingsObj.height
+                Text(getActivityNarrative(activityLevel:activityLevel))
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Button("Calculate resting and active calories") {
+                    var calcCM = 0
+                    if metricImperial == 1 {
+                        calcCM = showCMfromFootIn(feet: heightFt, inches: heightIn)
+                    } else {
+                        calcCM = heightCM
+                    }
+                    let calcWeightKg = weightInKg
+                    let age = Calendar.current.component(.year, from: Date()) - yearOfBirth
+                    manualBMR = calcBMR(height: calcCM, weight: calcWeightKg, age: age, sex: selectedSex)
+                    let activeCals = Double(manualBMR) * activityLevel
+                    manualActive = 10 * Int(round(activeCals / 10.0))
+                    settingsObj.manualActive = manualActive
+                    settingsObj.manualBMR = manualBMR
+                    settingsObj.height = calcCM
+                    settingsObj.weight = calcWeightKg
+                    settingsObj.userSex = selectedSex
+                    settingsObj.birthYear = yearOfBirth
+                    settingsObj.bmrMultiplier = activityLevel
+                    if settingsObj.isFirstRun == true {
+                        settingsObj.startWeight = Double(calcWeightKg)
+                    }
+                    isPresented = false
+                }
+            }
+        }
+        .onAppear {
+            heightCM = settingsObj.height
+            heightFt = showFootFromCM(cms: heightCM)
+            heightIn = showInchesFromCM(cms: heightCM)
+            weightUnitSelection = settingsObj.weightDisplayUnit
+            syncWeightFields(fromKg: settingsObj.weight)
+            yearOfBirth = settingsObj.birthYear
+            metricImperial = settingsObj.impMetric
+            selectedSex = settingsObj.userSex
+            activityLevel = settingsObj.bmrMultiplier
+
+        }
+
+        .onChange(of: selectedSex) {
+            settingsObj.userSex = selectedSex
+        }
+
+        .onChange(of: weightUnitSelection) { oldValue, newValue in
+            settingsObj.weightDisplayUnit = newValue
+            // Carry the entered weight across to the newly chosen unit's fields.
+            let previousUnit = weightUnits(rawValue: oldValue) ?? .kilograms
+            syncWeightFields(fromKg: kilograms(from: previousUnit))
+        }
+
+        .onChange(of: metricImperial) {
+            settingsObj.impMetric = metricImperial
+            // Height units only — keep the cm and ft/in representations in step.
+            if metricImperial == 0 {
+                heightCM = showCMfromFootIn(feet: heightFt, inches: heightIn)
+            } else {
                 heightFt = showFootFromCM(cms: heightCM)
                 heightIn = showInchesFromCM(cms: heightCM)
-                weightKg = settingsObj.weight
-                weightLb = kgToLb(kgs: weightKg)
-                yearOfBirth = settingsObj.birthYear
-                metricImperial = settingsObj.impMetric
-                selectedSex = settingsObj.userSex
-                activityLevel = settingsObj.bmrMultiplier
-                
-            }.frame(minWidth:0, minHeight:0)
-            
-            .onChange(of: selectedSex) {
-                settingsObj.userSex = selectedSex
             }
-            
-            .onChange(of: metricImperial) {
-                settingsObj.impMetric = metricImperial
-                if metricImperial == 0 {
-                    // convertftintometric
-                    heightCM = showCMfromFootIn(feet: heightFt, inches: heightIn)
-                    weightKg = lbToKg(lbs: weightLb)
-                } else {
-                    heightFt = showFootFromCM(cms: heightCM)
-                    heightIn = showInchesFromCM(cms: heightCM)
-                    weightLb = kgToLb(kgs: weightKg)
-                }
-            }
-            
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
+        }
 
-                    Button("Done") {
-                        if weightFocused == true { weightFocused.toggle() }
-                        if heightFocused == true { heightFocused.toggle() }
-                    }
-                 }
-            }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+
+                Button("Done") {
+                    focusedField = nil
+                }
+             }
         }
     }
 }
 
 #Preview {
-    
+
     struct Preview: View {
         @State var bmr = 2000
         @State var manact = 500
@@ -301,6 +346,6 @@ struct BMRHelper: View {
             BMRHelper(isPresented: $presented, manualBMR: $bmr, manualActive: $manact)
         }
     }
-    
+
     return Preview()
 }

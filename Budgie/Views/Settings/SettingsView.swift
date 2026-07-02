@@ -145,7 +145,14 @@ struct SettingsView: View {
             {
                 Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
             }
-                       
+            
+            Section(header: Text("Weight units")) {
+                Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit)) {
+                    Text("Kilograms").tag(0)
+                    Text("Pounds").tag(1)
+                    Text("Stones & pounds").tag(2)
+                }
+            }
 
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
                 NavigationLink {
