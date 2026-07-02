@@ -56,7 +56,7 @@ struct WeightView: View {
                 VStack {
                     Gauge(value: todayLump.weightGoalRemaining, in: 0...1) {
                     } currentValueLabel: {
-                        Text(renderWeight(kilos: todayLump.currentWeight, includeSuffix: false))
+                        Text(renderWeight(kilos: todayLump.weightToday, includeSuffix: false))
                     }.gaugeStyle(.accessoryCircular)
                         .tint(gradient)
                         .scaleEffect(1.5)
@@ -69,7 +69,7 @@ struct WeightView: View {
                                 .fixedSize()
                         }
                         .accessibilityLabel("Current weight")
-                        .accessibilityValue("\(renderWeight(kilos: todayLump.currentWeight, includeSuffix: true)), goal \(renderWeight(kilos: settingsObj.weightGoal, includeSuffix: true))")
+                        .accessibilityValue("\(renderWeight(kilos: todayLump.weightToday, includeSuffix: true)), goal \(renderWeight(kilos: settingsObj.weightGoal, includeSuffix: true))")
                     
                     if let prev = todayLump.prevWeightDate,
                        let last = todayLump.lastWeightDate,

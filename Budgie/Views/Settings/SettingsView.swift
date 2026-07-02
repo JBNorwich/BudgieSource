@@ -244,7 +244,7 @@ struct SettingsView: View {
             Button("Frequently asked questions") {
                 openURL(URL(string: "https://joebaldwin.me.uk/apps/budgiediet/faq/")!)
             }
-        }
+        }.id(refreshID)
         
 
     

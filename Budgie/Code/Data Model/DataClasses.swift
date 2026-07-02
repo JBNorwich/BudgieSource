@@ -155,18 +155,18 @@ class TodayLump: ObservableObject {
     // WEIGHT RELATED CALCULATED VARIABLES
 
     /// A smoothed "current weight": the trailing weekly average when available, else the latest reading.
-    /// Used for goal maths and the headline figure so day-to-day scale noise doesn't make them jump.
+    /// Used for trend analysis so day-to-day scale noise doesn't make them jump.
     var currentWeight: Double {
         lastWeekAvgWeight != 0 ? lastWeekAvgWeight : weightToday
     }
 
     /// The amount of weight (kg) the user has to go to meet their goal.
     var weightToGo: Double {
-        guard settingsObj.weightGoal != 0, currentWeight != 0 else { return 0 }
+        guard settingsObj.weightGoal != 0, weightToday != 0 else { return 0 }
         if weightGoalMet { return 0 }
         let remaining = settingsObj.surplusMode
-            ? settingsObj.weightGoal - currentWeight
-            : currentWeight - settingsObj.weightGoal
+            ? settingsObj.weightGoal - weightToday
+            : weightToday - settingsObj.weightGoal
         return max(remaining, 0)
     }
 
@@ -177,24 +177,24 @@ class TodayLump: ObservableObject {
 
     /// Progress from start weight toward goal, 0 (just started) → 1 (met).
     var weightGoalProgress: Double {
-        guard settingsObj.weightGoal != 0, settingsObj.startWeight != 0, currentWeight != 0 else { return 0 }
+        guard settingsObj.weightGoal != 0, settingsObj.startWeight != 0, weightToday != 0 else { return 0 }
         if weightGoalMet { return 1 }
         let total = settingsObj.surplusMode
             ? settingsObj.weightGoal - settingsObj.startWeight
             : settingsObj.startWeight - settingsObj.weightGoal
         let done = settingsObj.surplusMode
-            ? currentWeight - settingsObj.startWeight
-            : settingsObj.startWeight - currentWeight
+            ? weightToday - settingsObj.startWeight
+            : settingsObj.startWeight - weightToday
         guard total > 0 else { return 0 }
         return min(max(done / total, 0), 1)
     }
 
     /// Whether the user has reached their weight goal, respecting goal direction.
     var weightGoalMet: Bool {
-        guard settingsObj.weightGoal != 0, currentWeight != 0 else { return false }
+        guard settingsObj.weightGoal != 0, weightToday != 0 else { return false }
         return settingsObj.surplusMode
-            ? currentWeight >= settingsObj.weightGoal
-            : currentWeight <= settingsObj.weightGoal
+            ? weightToday >= settingsObj.weightGoal
+            : weightToday <= settingsObj.weightGoal
     }
 
     /// The gauge value: how much of the journey is left (1 at start → 0 at goal).

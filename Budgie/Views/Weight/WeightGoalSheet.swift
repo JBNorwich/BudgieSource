@@ -139,8 +139,8 @@ struct WeightGoalSheet: View {
                         }
                         // If the old goal was already reached, restart progress from the current weight
                         // so the new goal's gauge begins fresh rather than from the original baseline.
-                        if todayLump.weightGoalMet, todayLump.currentWeight != 0 {
-                            settingsObj.startWeight = todayLump.currentWeight
+                        if todayLump.weightGoalMet, todayLump.weightToday != 0 {
+                            settingsObj.startWeight = todayLump.weightToday
                         }
                         settingsObj.weightGoal = goal
                         isDisplayed = false
@@ -156,14 +156,14 @@ struct WeightGoalSheet: View {
                         Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
                     }
                     if let goal = enteredKilos {
-                        if todayLump.currentWeight != 0 {
+                        if todayLump.weightToday != 0 {
                             if settingsObj.desiredDeficit > 0 {
-                                goal < todayLump.currentWeight
-                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.currentWeight)), so you'll need to lose \(renderWeight(kilos: toLose)) to get to this goal.")
+                                goal < todayLump.weightToday
+                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.weightToday)), so you'll need to lose \(renderWeight(kilos: toLose)) to get to this goal.")
                                 : Text("This goal is above your current weight. Are you sure this is right?")
                             } else {
-                                goal > todayLump.currentWeight
-                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.currentWeight)), so you'll need to gain \(renderWeight(kilos: -toLose)) to get to this goal.")
+                                goal > todayLump.weightToday
+                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.weightToday)), so you'll need to gain \(renderWeight(kilos: -toLose)) to get to this goal.")
                                 : Text("This goal is below your current weight. Are you sure this is right?")
                             }
                         }
@@ -234,14 +234,14 @@ struct WeightGoalSheet: View {
     }
 
     private func recalculate() {
-        guard let goal = enteredKilos, goal > 0, todayLump.currentWeight != 0 else {
+        guard let goal = enteredKilos, goal > 0, todayLump.weightToday != 0 else {
             toLose = 0
             daysToGo = 0
             friendlyDuration = ""
             return
         }
         // Positive => need to lose; negative => need to gain.
-        toLose = todayLump.currentWeight - goal
+        toLose = todayLump.weightToday - goal
 
         let magnitude = abs(toLose)
         if settingsObj.surplusMode {
