@@ -57,15 +57,18 @@ struct WeightView: View {
                     Gauge(value: todayLump.weightGoalRemaining, in: 0...1) {
                     } currentValueLabel: {
                         Text(renderWeight(kilos: todayLump.currentWeight, includeSuffix: false))
-                    } minimumValueLabel: {
-                        Text(renderWeight(kilos: settingsObj.weightGoal, includeSuffix: false))
-                    } maximumValueLabel: {
-                        Text("")
                     }.gaugeStyle(.accessoryCircular)
                         .tint(gradient)
                         .scaleEffect(1.5)
                         .padding()
                         .animation(.easeInOut, value: todayLump.weightGoalRemaining)
+                        .overlay(alignment: .bottom) {
+                            Text("Goal: " + renderWeight(kilos: settingsObj.weightGoal, includeSuffix: true))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .fixedSize()
+                        }
+                    
                     if todayLump.weightYesterday != 0 {
                         HStack {
                             if todayLump.weightToday < todayLump.weightYesterday {
@@ -96,7 +99,7 @@ struct WeightView: View {
                                 } else {
                                     Text("No change from the previous week")
                                 }
-                            }
+                            }.padding(.leading)
                         }
                         if !settingsObj.surplusMode {
                             Divider()
@@ -128,6 +131,8 @@ struct WeightView: View {
                             }
                         } else if todayLump.hasGoalTimeEstimate {
                             Text("Expect to hit goal in **\(formatDuration(days: getDaysToLose(weight: todayLump.weightToGo, deficit: todayLump.goalProjectionDeficit)))**")
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
                         } else {
                             Text("**In caloric surplus** over past week")
                         }
