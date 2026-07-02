@@ -80,6 +80,9 @@
 		D8DE2B402FF6C24000513101 /* UINiceties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831662C74835900AAF555 /* UINiceties.swift */; };
 		D8DE2B422FF6DD5400513101 /* FirstRunWizard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8DE2B412FF6DD5200513101 /* FirstRunWizard.swift */; };
 		D8DE2B442FF700F500513101 /* ReviewPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8DE2B432FF700F000513101 /* ReviewPrompt.swift */; };
+		D8DE2B462FF70E6F00513101 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D8DE2B452FF70E6B00513101 /* README.md */; };
+		D8DE2B472FF70E6F00513101 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D8DE2B452FF70E6B00513101 /* README.md */; };
+		D8DE2B482FF70E6F00513101 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D8DE2B452FF70E6B00513101 /* README.md */; };
 		D8E3B2452F6FE42100458DDD /* EditCalsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E3B2442F6FE41D00458DDD /* EditCalsSheet.swift */; };
 		D8E831622C73C7EE00AAF555 /* HealthData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831612C73C7EE00AAF555 /* HealthData.swift */; };
 		D8E831652C73D0BA00AAF555 /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
@@ -201,6 +204,7 @@
 		D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddCalsSheet.swift; sourceTree = "<group>"; };
 		D8DE2B412FF6DD5200513101 /* FirstRunWizard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunWizard.swift; sourceTree = "<group>"; };
 		D8DE2B432FF700F000513101 /* ReviewPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPrompt.swift; sourceTree = "<group>"; };
+		D8DE2B452FF70E6B00513101 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		D8E3B2442F6FE41D00458DDD /* EditCalsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCalsSheet.swift; sourceTree = "<group>"; };
 		D8E831612C73C7EE00AAF555 /* HealthData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthData.swift; sourceTree = "<group>"; };
 		D8E831632C73C84900AAF555 /* Budgie.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Budgie.entitlements; sourceTree = "<group>"; };
@@ -324,6 +328,7 @@
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
+				D8DE2B452FF70E6B00513101 /* README.md */,
 				D80D1DBB2FF3CDB500D01B51 /* .claude */,
 				D86806F02FF2D288007D6231 /* .gitignore */,
 				D86806EA2FF2CC7A007D6231 /* LICENCE.md */,
@@ -590,6 +595,7 @@
 				D86806EF2FF2D088007D6231 /* CLAUDE.md in Resources */,
 				D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
 				D83398582C83A0CF00A09CDB /* LaunchScreen.storyboard in Resources */,
+				D8DE2B472FF70E6F00513101 /* README.md in Resources */,
 				D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -600,6 +606,7 @@
 			files = (
 				D86806F12FF2D28E007D6231 /* .gitignore in Resources */,
 				D81987E92E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
+				D8DE2B462FF70E6F00513101 /* README.md in Resources */,
 				D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */,
 				D86806ED2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
@@ -612,6 +619,7 @@
 			files = (
 				D86806F32FF2D28E007D6231 /* .gitignore in Resources */,
 				D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */,
+				D8DE2B482FF70E6F00513101 /* README.md in Resources */,
 				D89A95CD2C84F753007796AB /* Preview Assets.xcassets in Resources */,
 				D86806EB2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */,
