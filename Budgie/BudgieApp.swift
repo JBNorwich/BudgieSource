@@ -66,10 +66,8 @@ struct RootView: View {
                 FirstRunWizard(needsSetup: $needsSetup)
                     .transition(.opacity)
             } else {
-                NavigationStack {
-                    BudgetView()
-                }
-                .transition(.opacity)
+                BudgetView()
+                    .transition(.opacity)
             }
         }
     }
