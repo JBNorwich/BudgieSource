@@ -16,6 +16,7 @@
 import SwiftUI
 import HealthKitUI
 import Observation
+import StoreKit
 
 struct CurrentGradient {
     var backgroundGradient: LinearGradient
@@ -39,6 +40,8 @@ struct ColoredButton: ButtonStyle {
 struct BudgetView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.requestReview) private var requestReview
+
     
     @StateObject var todayLump: TodayLump = TodayLump()
     @State var hkAuthenticationTrigger: Bool = false
@@ -218,12 +221,17 @@ struct BudgetView: View {
         }
         
         .onChange(of: scenePhase) {
-            guard scenePhase == .active else {
-               return
-            }
+            guard scenePhase == .active else { return }
             updateGradient()
-            Task {
-                await dataStore.updateLump(todayLump: todayLump)
+            Task { await dataStore.updateLump(todayLump: todayLump) }
+            
+            // Ask for a review on the user's 3rd distinct day (only once, never during setup).
+            if !settingsObj.isFirstRun, ReviewPrompt.registerUseAndShouldPrompt() {
+                ReviewPrompt.markRequested()
+                Task {
+                    try? await Task.sleep(for: .seconds(2))   // let the screen settle first
+                    requestReview()
+                }
             }
         }
         
