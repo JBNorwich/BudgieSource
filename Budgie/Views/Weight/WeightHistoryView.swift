@@ -15,44 +15,110 @@
 
 import SwiftUI
 import HealthKit
+import Charts
 
 struct WeightHistoryView: View {
     @EnvironmentObject var todayLump: TodayLump
 
+    @State private var points: [WeightPoint] = []
     @State private var ownEntries: [HKQuantitySample] = []
     @State private var otherEntries: [HKQuantitySample] = []
     @State private var showAddSheet = false
+    @State private var showGoalSheet = false
+
+    // Default range: the last month, up to (and including) today.
+    @State private var startDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? getWeekBeforeDate(date: Date())
+    @State private var endDate: Date = getMidnightOnDayAfter(date: Date())
+    @State private var dateChanged: Bool = false
+
+    private var unit: weightUnits {
+        weightUnits(rawValue: settingsObj.weightDisplayUnit) ?? .kilograms
+    }
 
     var body: some View {
-        List {
-            Section(header: Text("Logged in Budgie Diet")) {
-                if ownEntries.isEmpty {
-                    Text("You haven't logged your weight in Budgie Diet in the last six months.")
-                } else {
-                    ForEach(ownEntries, id: \.uuid) { row(for: $0) }
-                        .onDelete(perform: delete)
-                }
+        VStack(spacing: 0) {
+            VStack {
+                ChartDatePicker(startDate: $startDate, endDate: $endDate, dateChanged: $dateChanged)
+                chart
             }
+            .padding(.horizontal)
+            .padding(.top)
 
-            if !otherEntries.isEmpty {
-                Section(header: Text("Logged in other apps"),
-                        footer: Text("These come from other apps via Apple Health. You'll need to change or delete them in the app that logged them.")) {
-                    ForEach(otherEntries, id: \.uuid) { row(for: $0) }
+            List {
+                Section(header: Text("Logged in Budgie Diet")) {
+                    if ownEntries.isEmpty {
+                        Text("You haven't logged your weight in Budgie Diet in this period.")
+                    } else {
+                        ForEach(ownEntries, id: \.uuid) { row(for: $0) }
+                            .onDelete(perform: delete)
+                    }
+                }
+
+                if !otherEntries.isEmpty {
+                    Section(header: Text("Logged in other apps"),
+                            footer: Text("These come from other apps via Apple Health. You'll need to change or delete them in the app that logged them.")) {
+                        ForEach(otherEntries, id: \.uuid) { row(for: $0) }
+                    }
                 }
             }
+            .listStyle(.grouped)
         }
-        .listStyle(.grouped)
-        .navigationTitle("Weight log")
+        .navigationTitle("Weight")
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Change goal", systemImage: "target") { showGoalSheet = true }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Log weight", systemImage: "plus") { showAddSheet = true }
             }
         }
         .task { await load() }
+        .onChange(of: dateChanged) {
+            if dateChanged {
+                Task { await load() }
+                dateChanged = false
+            }
+        }
         .sheet(isPresented: $showAddSheet, onDismiss: { Task { await load() } }) {
             LogWeightSheet(isDisplayed: $showAddSheet)
                 .environmentObject(todayLump)
                 .presentationDetents([.medium])
+        }
+        
+        .sheet(isPresented: $showGoalSheet) {
+            NavigationStack {
+                WeightGoalSheet(isDisplayed: $showGoalSheet)
+                    .environmentObject(todayLump)
+            }.presentationDetents([.medium])
+        }.onDisappear() {
+            Task {
+                await dataStore.updateLump(todayLump: todayLump)
+            }
+        }
+    }
+
+    @ViewBuilder private var chart: some View {
+        if points.isEmpty {
+            ContentUnavailableView("No weight data", systemImage: "scalemass",
+                description: Text("Log your weight, or record it in another Health app, to see your trend."))
+                .frame(height: 220)
+        } else {
+            Chart(points) { point in
+                LineMark(x: .value("Date", point.date), y: .value("Weight", plotValue(point.kilos)))
+                PointMark(x: .value("Date", point.date), y: .value("Weight", plotValue(point.kilos)))
+            }
+            .chartYScale(domain: yDomain)
+            .chartYAxis {
+                AxisMarks { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let v = value.as(Double.self) {
+                            Text(axisLabel(v))
+                        }
+                    }
+                }
+            }
+            .frame(height: 220)
         }
     }
 
@@ -65,11 +131,33 @@ struct WeightHistoryView: View {
         }
     }
 
+    /// The value plotted on the Y axis, in the user's chosen unit, so the ticks land on round numbers of that unit.
+    private func plotValue(_ kilos: Double) -> Double {
+        switch unit {
+        case .kilograms:            return kilos
+        case .pounds, .stonepounds: return kilos / 0.454   // pounds; stone+pounds is plotted on a pound scale
+        }
+    }
+
+    /// Format a Y-axis tick (already in the plotted unit) via the app's standard weight formatter.
+    private func axisLabel(_ value: Double) -> String {
+        let kilos = (unit == .kilograms) ? value : value * 0.454
+        return renderWeight(kilos: kilos)
+    }
+
+    private var yDomain: ClosedRange<Double> {
+        let values = points.map { plotValue($0.kilos) }
+        guard let lo = values.min(), let hi = values.max() else { return 0...100 }
+        let pad = max((hi - lo) * 0.15, 1)
+        return (lo - pad)...(hi + pad)
+    }
+
     private func load() async {
-        let end = getMidnightOnDayAfter(date: Date())
-        let start = Calendar.current.date(byAdding: .month, value: -6, to: end) ?? end
-        ownEntries = await dataStore.fetchBudgieWeightSamples(from: start, to: end)
-        otherEntries = await dataStore.fetchOtherWeightSamples(from: start, to: end)
+        let from = getStartOfDay(date: startDate)
+        let to = endDate
+        points = await dataStore.weightSeries(from: from, to: to)
+        ownEntries = await dataStore.fetchBudgieWeightSamples(from: from, to: to)
+        otherEntries = await dataStore.fetchOtherWeightSamples(from: from, to: to)
     }
 
     private func delete(_ offsets: IndexSet) {

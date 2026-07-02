@@ -51,8 +51,9 @@ struct BudgetView: View {
     @State var showAddCalsSheet: Bool = false
     @State var showWaterSheet: Bool = false
     @State var showingDetail: Bool = false
-    @State var showingWeightSheet: Bool = false
+    @State var showingWeightGoalSheet: Bool = false
     @State var showingWeightDetail: Bool = false
+    @State var showingWeightLogSheet: Bool = false
     @State var showingFirstRun: Bool = false
     @State var backgroundGradient = CurrentGradient()
     
@@ -130,8 +131,8 @@ struct BudgetView: View {
                                 .frame(minHeight: 100)
                         }
                         
-                        GroupBox(label: WeightLabelView(showingWeightGoalSheet: $showingWeightSheet)) {
-                            WeightView().environmentObject(todayLump)
+                        GroupBox(label: WeightLabelView(showingWeightGoalSheet: $showingWeightGoalSheet, showingLogWeightSheet: $showingWeightLogSheet)) {
+                            WeightView(showingWeightGoalSheet: $showingWeightGoalSheet).environmentObject(todayLump)
                         }.backgroundStyle(.regularMaterial)
                             .frame(minHeight: 100)
                             .onTapGesture {
@@ -181,6 +182,9 @@ struct BudgetView: View {
                             }.foregroundColor(backgroundGradient.buttonColour)
                             NavigationLink(destination: WaterPage(curDate: Date()).environmentObject(todayLump)) {
                                 Image(systemName: "drop.fill")
+                            }.foregroundColor(backgroundGradient.buttonColour)
+                            NavigationLink(destination: WeightHistoryView().environmentObject(todayLump)) {
+                                Image(systemName: "scalemass.fill")
                             }.foregroundColor(backgroundGradient.buttonColour)
                             NavigationLink(destination: ChartPage().environmentObject(todayLump)) {
                                 Image(systemName: "chart.xyaxis.line")
@@ -301,9 +305,9 @@ struct BudgetView: View {
             .presentationDragIndicator(.visible)
         }
         
-        .sheet(isPresented: $showingWeightSheet) {
+        .sheet(isPresented: $showingWeightGoalSheet) {
             NavigationStack {
-                WeightGoalSheet(isDisplayed: $showingWeightSheet)
+                WeightGoalSheet(isDisplayed: $showingWeightGoalSheet)
                     .environmentObject(todayLump)
             }.presentationDetents([.medium])
         }.onDisappear() {
@@ -317,6 +321,17 @@ struct BudgetView: View {
                 WeightDetailsSheet()
                     .environmentObject(todayLump)
             }.presentationDetents([.medium])
+        }
+        
+        .sheet(isPresented: $showingWeightLogSheet) {
+            NavigationStack {
+                LogWeightSheet(isDisplayed: $showingWeightLogSheet)
+                    .environmentObject(todayLump)
+            }.presentationDetents([.medium])
+        }.onDisappear() {
+            Task {
+                await dataStore.updateLump(todayLump: todayLump)
+            }
         }
             
         .task() {
@@ -371,14 +386,20 @@ struct ActivityLabelView: View {
 
 struct WeightLabelView: View {
     @Binding var showingWeightGoalSheet: Bool
+    @Binding var showingLogWeightSheet: Bool
     
     var body: some View {
         HStack {
             Label("Weight", systemImage: "figure")
             Spacer()
-            Button("Goal", systemImage: "target") {
-                showingWeightGoalSheet = true
-            }.buttonStyle(.plain)
+            HStack {
+                Button("Goal", systemImage: "target") {
+                    showingWeightGoalSheet = true
+                }.buttonStyle(.plain)
+                Button("Log", systemImage: "plus") {
+                    showingLogWeightSheet = true
+                }.buttonStyle(.plain)
+            }
         }
     }
 }

@@ -435,6 +435,32 @@ final class HealthData {
         }
     }
     
+    /// Distinct days within the range that have any eaten-calorie data — from HealthKit (any source) or Budgie Diet's own store. Used to decide whether food logging is consistent enough to draw conclusions from.
+    func daysWithFoodLogged(from: Date, to: Date) async -> Int {
+        let calendar = Calendar.current
+        var loggedDays = Set<Date>()
+
+        // Budgie Diet's own entries.
+        let budgieEntries = await calorieActor.fetchCalsBetween(from: from, to: to)
+        for entry in budgieEntries {
+            loggedDays.insert(calendar.startOfDay(for: entry.date))
+        }
+
+        // HealthKit eaten samples from any source (includes other apps and Budgie's own mirrored samples).
+        let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: .strictEndDate)
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: eatenQuantityType, predicate: timePredicate)],
+            sortDescriptors: []
+        )
+        if let samples = try? await descriptor.result(for: healthStore) {
+            for sample in samples {
+                loggedDays.insert(calendar.startOfDay(for: sample.startDate))
+            }
+        }
+
+        return loggedDays.count
+    }
+    
     /// Main function that updates the "todayLump" that contains up to the minute data and underpins the main screen.
     @MainActor func updateLump(todayLump: TodayLump) async {
         // If an update is already running, flag that another pass is needed once this one
@@ -512,6 +538,7 @@ final class HealthData {
         todayLump.averageDeficit = await getAverageDeficitForPastWeek()
         todayLump.lastWeekAvgWeight = await getAverageWeight(from: weekBeforeYesterday, to: todayEnd)
         todayLump.prevWeekAvgWeight = await getAverageWeight(from: weekBeforeWeekBeforeYesterday, to: getWeekBeforeDate(date: todayEnd))
+        todayLump.foodDaysLoggedFortnight = await daysWithFoodLogged(from: weekBeforeWeekBeforeYesterday, to: getMidnightOnDayAfter(date: Date()))
         
         // Pull in water
         let waterDetails = await getWaterOnDate(date: todayStart)

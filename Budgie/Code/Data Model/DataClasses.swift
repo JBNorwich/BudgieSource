@@ -33,6 +33,7 @@ class TodayLump: ObservableObject {
     @Published var yesterdayDeficit: Int = 0
     @Published var lastWeekAvgWeight: Double = 0
     @Published var prevWeekAvgWeight: Double = 0
+    @Published var foodDaysLoggedFortnight: Int = 0
     
     @Published private(set) var totalBudget: Int = 1200
     @Published private(set) var budgetAtCap: Bool = false
@@ -251,16 +252,12 @@ class TodayLump: ObservableObject {
     // WEIGHT RELATED CALCULATED VARIABLES
     /// The amount of weight that the user has to go, as a Double reflecting kilograms, in order to meet their goal.
     var weightToGo: Double {
-        if settingsObj.weightGoal != 0 && self.weightToday != 0
-        {
-            if self.weightToday <= settingsObj.weightGoal {
-                return 0
-            } else {
-                return weightToday - settingsObj.weightGoal
-            }
-        } else {
-            return 0
-        }
+        guard settingsObj.weightGoal != 0, self.weightToday != 0 else { return 0 }
+        if weightGoalMet { return 0 }
+        let remaining = settingsObj.surplusMode
+            ? settingsObj.weightGoal - self.weightToday
+            : self.weightToday - settingsObj.weightGoal
+        return max(remaining, 0)
     }
     
     /// The amount of weight that the user has lost, in kilograms as a Double.
@@ -268,17 +265,30 @@ class TodayLump: ObservableObject {
         return self.weightYesterday - self.weightToday
     }
     
-    /// The percentage of the user's weight goal to go, against their start weight.
-    var weightGoalLeft: Double {
-        if settingsObj.weightGoal != 0 && settingsObj.startWeight != 0 && self.weightToday != 0 {
-            let totalToLose: Double = settingsObj.startWeight - settingsObj.weightGoal
-            let actLost: Double = settingsObj.startWeight - self.weightToday
-            let percentLost: Double = actLost/totalToLose
-            return min(1 - percentLost,1)
-        } else {
-            return 0
-        }
+    /// Progress from start weight toward goal, 0 (just started) → 1 (met).
+    var weightGoalProgress: Double {
+        guard settingsObj.weightGoal != 0, settingsObj.startWeight != 0, self.weightToday != 0 else { return 0 }
+        if weightGoalMet { return 1 }
+        let total = settingsObj.surplusMode
+            ? settingsObj.weightGoal - settingsObj.startWeight
+            : settingsObj.startWeight - settingsObj.weightGoal
+        let done = settingsObj.surplusMode
+            ? self.weightToday - settingsObj.startWeight
+            : settingsObj.startWeight - self.weightToday
+        guard total > 0 else { return 0 }
+        return min(max(done / total, 0), 1)
     }
+
+    /// Whether the user has reached their weight goal, respecting goal direction.
+    var weightGoalMet: Bool {
+        guard settingsObj.weightGoal != 0, self.weightToday != 0 else { return false }
+        return settingsObj.surplusMode
+            ? self.weightToday >= settingsObj.weightGoal      // gaining
+            : self.weightToday <= settingsObj.weightGoal      // losing
+    }
+    
+    /// The gauge value: how much of the journey is left (1 at start → 0 at goal).
+    var weightGoalRemaining: Double { 1 - weightGoalProgress }
     
     /// The user's weight lost as the difference between last week's average weight, and the past week's average weight, in kilograms.
     var weightTrend: Double {
@@ -333,6 +343,11 @@ class TodayLump: ObservableObject {
                 return 0
             }
         }
+    }
+    
+    /// Whether the user has logged food on enough of the last 14 days for target-tracking figures to be meaningful.
+    var consistentlyLoggedFood: Bool {
+        foodDaysLoggedFortnight >= 12
     }
 }
 
