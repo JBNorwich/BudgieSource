@@ -302,24 +302,6 @@ class TodayLump: ObservableObject {
         return self.prevWeekAvgWeight - self.lastWeekAvgWeight
     }
 
-    /// Days to the goal based on the performance-adjusted real deficit.
-    var daysToWeightGoal: Int {
-        return getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
-    }
-
-    /// Days to the goal based on the user's expressed desired deficit.
-    var daysToGoalAtPlanned: Int {
-        return getDaysToLose(weight: self.weightToGo, deficit: settingsObj.desiredDeficit)
-    }
-
-    var diffDays: Int {
-        return daysToWeightGoal - daysToGoalAtPlanned
-    }
-
-    var diffBetweenAvgDeficitandDesired: Int {
-        return self.averageDeficit - settingsObj.desiredDeficit
-    }
-
     /// Expected weekly weight change from the recorded average deficit (kg), unrounded — for maths.
     private var expectedWeeklyChangeExact: Double {
         return Double(self.averageDeficit * 7) / 7700
