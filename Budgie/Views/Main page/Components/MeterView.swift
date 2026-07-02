@@ -51,8 +51,8 @@ struct MeterView: View {
                 .contentMargins(50)
             }
             .accessibilityElement(children: .ignore)
-            accessibilityLabel(label)
-            accessibilityValue("\(value) calories")
+            .accessibilityLabel(label)
+            .accessibilityValue("\(value) calories")
         }
     }
 
