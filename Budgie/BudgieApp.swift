@@ -45,10 +45,31 @@ struct BudgieApp: App {
             }
         }
     }
+    @State private var needsSetup = settingsObj.isFirstRun
+
     var body: some Scene {
-        WindowGroup {
-            NavigationStack() {
-                BudgetView()
+           WindowGroup {
+               RootView()
+           }
+       }
+   }
+
+   /// Chooses between first-run setup and the main app, crossfading between them
+   /// when setup completes. `CloudSettings` isn't observable, so we mirror its
+   /// first-run flag into local state that the wizard flips when it's done.
+struct RootView: View {
+    @State private var needsSetup = settingsObj.isFirstRun
+    
+    var body: some View {
+        ZStack {
+            if needsSetup {
+                FirstRunWizard(needsSetup: $needsSetup)
+                    .transition(.opacity)
+            } else {
+                NavigationStack {
+                    BudgetView()
+                }
+                .transition(.opacity)
             }
         }
     }

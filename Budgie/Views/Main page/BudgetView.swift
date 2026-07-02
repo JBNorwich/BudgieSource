@@ -54,7 +54,6 @@ struct BudgetView: View {
     @State var showingWeightGoalSheet: Bool = false
     @State var showingWeightDetail: Bool = false
     @State var showingWeightLogSheet: Bool = false
-    @State var showingFirstRun: Bool = false
     @State var backgroundGradient = CurrentGradient()
     
     func updateGradient() {
@@ -262,14 +261,6 @@ struct BudgetView: View {
                 WhaleFacts(showing: $showingWhales)
             }
             .presentationDetents([.medium])
-        }
-        
-        .sheet(isPresented: $showingFirstRun) {
-            FirstRunSheet(isPresented: $showingFirstRun)
-                .environmentObject(todayLump)
-                .onDisappear {
-                    showingHelp = true
-                }
         }
         
         .sheet(isPresented: $showingHelp) {
