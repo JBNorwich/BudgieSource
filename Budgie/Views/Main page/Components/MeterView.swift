@@ -80,7 +80,7 @@ struct MeterView: View {
                            pathColour: todayLump.getPathColour(),
                            progress: todayLump.progressToday,
                            label: getNiceBudgetDisplay(leftToEat: todayLump.canEatNow),
-                           value: todayLump.normalisedLTE)
+                           value: abs(todayLump.canEatNow).formatted())
                     .sensoryFeedback(.increase, trigger: todayLump.progressToday)
                     .sensoryFeedback(.increase, trigger: todayLump.canEatNow)
                     .onChange(of: todayLump.progressTodayAsWholePercent) { refresh() }

@@ -178,16 +178,3 @@ struct ChartTableRow: View {
         Divider()
     }
 }
-
-#Preview {
-    struct Preview: View {
-        @State var dummyData: [ChartDataLump] = fetchDummyData()
-        @State var todayLump = TodayLump()
-        
-        var body: some View {
-            ChartTableView(chartData: dummyData).environmentObject(todayLump)
-        }
-    }
-    
-    return Preview()
-}

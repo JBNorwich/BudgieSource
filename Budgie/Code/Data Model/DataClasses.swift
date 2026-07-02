@@ -74,19 +74,7 @@ class TodayLump: ObservableObject {
     
     /// The "real" budget that would be calculated if the budget was not capped. Only relevant if the user has turned on capping; otherwise this will just return whatever the budget is.
     var realBudget: Int {
-        var budget: Int
-        
-        if self.totalProjCalories - settingsObj.desiredDeficit > -1 {
-            budget = self.totalProjCalories - settingsObj.desiredDeficit
-        } else {
-            budget = 0
-        }
-        
-        if budget < 1200 {
-            budget = 1200
-        }
-        
-        return budget
+        return max(totalProjCalories - settingsObj.desiredDeficit, 1200)
     }
     
     /// The amount that has been knocked off the user's budget because of the cap.
@@ -190,17 +178,6 @@ class TodayLump: ObservableObject {
             }
         }
         return returnColor
-    }
-    
-    var normalisedLTE: String {
-        var valueReturned: Int = 0
-        if self.canEatNow < 0
-        {
-            valueReturned = -self.canEatNow
-        } else {
-            valueReturned = self.canEatNow
-        }
-        return valueReturned.formatted()
     }
     
     var calsOutNow: Int {

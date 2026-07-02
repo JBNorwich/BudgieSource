@@ -27,49 +27,6 @@ func getActivityNarrative(activityLevel: Double) -> String {
     }
 }
 
-
-// creates dummy data for the chart
-func fetchDummyData() -> [ChartDataLump] {
-    var curDate = Date()
-    var dummyData: [ChartDataLump] = []
-    let dummyData1 = ChartDataLump()
-    //500 deficit - on target
-    dummyData1.date = curDate
-    dummyData1.eatenCals = 2300
-    dummyData1.basalCals = 2000
-    dummyData1.activeCals = 800
-    //dummyData1.totalCals = 2800
-    dummyData.append(dummyData1)
-    curDate = getMidnightOnDayBefore(date: curDate)
-    //nil deficit - 500 over target
-    let dummyData2 = ChartDataLump()
-    dummyData2.date = curDate
-    dummyData2.eatenCals = 1900
-    dummyData2.basalCals = 1500
-    dummyData2.activeCals = 400
-    //dummyData2.totalCals = 1900
-    dummyData.append(dummyData2)
-    curDate = getMidnightOnDayBefore(date: curDate)
-    //500 surplus - 1000 over target
-    let dummyData3 = ChartDataLump()
-    dummyData3.date = curDate
-    dummyData3.eatenCals = 2600
-    dummyData3.basalCals = 2000
-    dummyData3.activeCals = 100
-    //dummyData3.totalCals = 2100
-    dummyData.append(dummyData3)
-    curDate = getMidnightOnDayBefore(date: curDate)
-    // 1000 deficit - 500 below target
-    let dummyData4 = ChartDataLump()
-    dummyData4.date = curDate
-    dummyData4.eatenCals = 1500
-    dummyData4.basalCals = 2100
-    dummyData4.activeCals = 400
-    //dummyData4.totalCals = 2500
-    dummyData.append(dummyData4)
-    return dummyData
-}
-
 func calcBMR(height: Int, weight: Int, age: Int, sex: Int)-> Int {
     var calculated = Double()
     let doubleWeight = Double(weight)
@@ -93,12 +50,15 @@ func getBudgieGreeting() -> String {
     return greetingArray.randomElement()!
 }
 
+// WEIGHT RELATED STRUCTS/FUNCTIONS
+/// Enum detailing different options for weights - kilograms, plain pounds or British-style stones and pounds.
 enum weightUnits: Int {
     case kilograms = 0
     case pounds = 1
     case stonepounds = 2
 }
 
+/// Struct that simplifies conversions between kilograms (as used on the back-end), stones and stones and pounds.
 struct StonePounds {
     init(kilos: Double) {
         self.kilos = kilos
@@ -139,7 +99,7 @@ struct StonePounds {
     }
 }
 
-
+/// Renders a weight given in kilograms into a formatted string either depending on a function argument, or the user's settings. By default, includes a suffix, but can optionally not have one (although this does not work for stones and pounds as this does not make sense.)
 func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: Bool? = true) -> String {
     let usedOutputUnit: weightUnits = outputUnit ?? weightUnits(rawValue: settingsObj.weightDisplayUnit)!
     var returnString: String = ""

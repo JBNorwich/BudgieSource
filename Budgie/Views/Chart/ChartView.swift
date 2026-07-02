@@ -91,15 +91,3 @@ struct ChartView: View {
             .contentTransition(.interpolate)
     }
 }
-
-#Preview {
-    struct Preview: View {
-        @State var dummyData: [ChartDataLump] = fetchDummyData()
-        
-        var body: some View {
-            ChartView(chartData: $dummyData)
-        }
-    }
-    
-    return Preview()
-}
