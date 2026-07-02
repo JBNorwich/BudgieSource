@@ -50,7 +50,6 @@ func weightForGraph(input: Int, style: Int, timeInput: Int) -> Double {
 }
 
 struct WeightingChartPiece {
-    var time: Int
     var percent: Double
 }
 
@@ -65,9 +64,9 @@ class WeightingChartObject {
         harsh = []
         var time: Int = 0
         while time < 1440 {
-            let newForgivingPiece = WeightingChartPiece(time: time, percent: weightForGraph(input: 100, style: -1, timeInput: time))
-            let newRegularPiece = WeightingChartPiece(time: time, percent: weightForGraph(input: 100, style: 0, timeInput: time))
-            let newHarshPiece = WeightingChartPiece(time: time, percent: weightForGraph(input: 100, style: 1, timeInput: time))
+            let newForgivingPiece = WeightingChartPiece(percent: weightForGraph(input: 100, style: -1, timeInput: time))
+            let newRegularPiece = WeightingChartPiece(percent: weightForGraph(input: 100, style: 0, timeInput: time))
+            let newHarshPiece = WeightingChartPiece(percent: weightForGraph(input: 100, style: 1, timeInput: time))
             forgiving.append(newForgivingPiece)
             regular.append(newRegularPiece)
             harsh.append(newHarshPiece)
