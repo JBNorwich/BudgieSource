@@ -34,3 +34,4 @@ let mealTimeText = "Budgie Diet usually weights to ensure that you have your \"f
 let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
 let appBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
 let versionString = "Version \(appVersion) (Build \(appBuild))"
+let copyrightString = "Copyright 2024- Joe Baldwin"

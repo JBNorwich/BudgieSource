@@ -221,7 +221,7 @@ struct SettingsView: View {
                         Spacer()
                     }
                     Text(versionString)
-                    Text("Copyright 2024-5 Joe Baldwin")
+                    Text(copyrightString)
                 }
             }
 

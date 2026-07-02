@@ -58,6 +58,7 @@ struct BudgetView: View {
     @State var showingWeightDetail: Bool = false
     @State var showingWeightLogSheet: Bool = false
     @State var backgroundGradient = CurrentGradient()
+    @State private var showStorageError = dataStore.storeFailedToLoad
     
     func updateGradient() {
         switch colorScheme {
@@ -207,6 +208,11 @@ struct BudgetView: View {
                     }
                 }
 
+            }
+            .alert("Storage problem", isPresented: $showStorageError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("I couldn't open my database, so anything you log may not be saved. Please restart the app; if this keeps happening, restart your device.")
             }
         }
         
