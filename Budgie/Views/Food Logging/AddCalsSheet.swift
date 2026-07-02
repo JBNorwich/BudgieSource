@@ -187,7 +187,7 @@ struct AddCalsSheet: View {
                 prevFoods = await dataStore.calorieActor.fetchCalsForMeal(nil)
             }
         } else {
-            let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal })!
+            guard let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal }) else { return }
             Task {
                 prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
             }

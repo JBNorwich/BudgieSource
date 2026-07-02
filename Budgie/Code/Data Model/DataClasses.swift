@@ -54,18 +54,10 @@ class TodayLump: ObservableObject {
     @Published var lastUpdate: Date = Date()
     
     func recalculateBudget() {
-        var budget = totalProjCalories - settingsObj.desiredDeficit > -1
-            ? totalProjCalories - settingsObj.desiredDeficit
-            : 1200
+        var budget = max(totalProjCalories - settingsObj.desiredDeficit, 1200)
         let atCap = settingsObj.capBudget && budget > settingsObj.capBudgetCals
-        if atCap {
-            budget = settingsObj.capBudgetCals
-        }
-        
-        let atMin = budget < 1200
-        if atMin {
-            budget = 1200
-        }
+        if atCap { budget = settingsObj.capBudgetCals }
+        let atMin = budget <= 1200
         
         totalBudget = budget
         budgetAtCap = atCap
@@ -242,13 +234,6 @@ class TodayLump: ObservableObject {
     var consistentlyLoggedFood: Bool {
         foodDaysLoggedFortnight >= 12
     }
-}
-
-struct calorieChartData: Identifiable {
-    var id: UUID
-    var date: Date
-    var calsIn: Int
-    var calsOut: Int
 }
 
 struct CalsPacket {

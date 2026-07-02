@@ -101,7 +101,7 @@ struct StonePounds {
 
 /// Renders a weight given in kilograms into a formatted string either depending on a function argument, or the user's settings. By default, includes a suffix, but can optionally not have one (although this does not work for stones and pounds as this does not make sense.)
 func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: Bool? = true) -> String {
-    let usedOutputUnit: weightUnits = outputUnit ?? weightUnits(rawValue: settingsObj.weightDisplayUnit)!
+    let usedOutputUnit = outputUnit ?? weightUnits(rawValue: settingsObj.weightDisplayUnit) ?? .kilograms
     var returnString: String = ""
     
     switch usedOutputUnit {
