@@ -26,8 +26,6 @@ struct TinyMeter: View {
     var progress: Double
     var totalBudg: Int
     var projBasal: Int
-    @State var blobColour: Color = .clear
-    @State var pathColour: Color = .clear
     
     func getBlobColour(input: Int) -> Color
     {
