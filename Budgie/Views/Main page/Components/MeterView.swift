@@ -17,16 +17,7 @@ import SwiftUI
 
 struct MeterView: View {
     @EnvironmentObject var todayLump: TodayLump
-    
     var dummy: Bool = false
-    
-    func getNiceBudgetDisplay(leftToEat: Int) -> String {
-        if settingsObj.surplusMode == true {
-            return leftToEat > -1 ? "Need to eat" : "Overeaten by"
-        } else {
-            return leftToEat > -1 ? "Can eat now" : "Over target by"
-        }
-    }
     
     private struct BudgetRing: View {
         let blobColour: Color
@@ -67,10 +58,10 @@ struct MeterView: View {
                 BudgetRing(blobColour: .teal, pathColour: .green, progress: 0.6,
                            label: "Can eat now", value: "428")
         } else {
-                BudgetRing(blobColour: todayLump.getBlobColour(),
-                           pathColour: todayLump.getPathColour(),
+                BudgetRing(blobColour: budgetBlobColour(canEatNow: todayLump.canEatNow),
+                           pathColour: budgetPathColour(diff: todayLump.progressAgainstTarget, budget: todayLump.totalBudget, projectedBasal: todayLump.projectedBasal),
                            progress: todayLump.progressToday,
-                           label: getNiceBudgetDisplay(leftToEat: todayLump.canEatNow),
+                           label: budgetStatusLabel(leftToEat: todayLump.canEatNow),
                            value: abs(todayLump.canEatNow).formatted())
                     .sensoryFeedback(.increase, trigger: todayLump.progressToday)
                     .sensoryFeedback(.increase, trigger: todayLump.canEatNow)

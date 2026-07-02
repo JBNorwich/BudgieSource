@@ -27,62 +27,22 @@ struct TinyMeter: View {
     var totalBudg: Int
     var projBasal: Int
     
-    func getBlobColour(input: Int) -> Color
-    {
-        var returnColor: Color = .teal
-        if input < -49
-        {
-            switch settingsObj.surplusMode {
-            case true: returnColor = .green
-            case false : returnColor = .red
-            }
-        } else if input < 50 {
-            switch settingsObj.surplusMode {
-            case true: returnColor = .red
-            case false: returnColor = .green
-            }
-        }
-        return returnColor
+    private var pathDiff: Double {
+        let d = progress / getPercentOfDayDone()
+        return d.isFinite ? d : 0          // ← the guard, relocated here
     }
     
-    func getPathColour() -> Color
-    {
-        let reallyGoodColor = (Color.blue)
-        let goodColour = Color(.systemGreen)
-        let okColour = Color(.systemYellow)
-        let badColour = Color(.systemRed)
-        
-        var diff = progress / getPercentOfDayDone()
-        if !diff.isFinite {
-            diff = 0
-        }
-        
-        if diff < 0.25 {
-            return reallyGoodColor
-        } else if diff < 1.05 {
-            return goodColour
-        } else if diff < 1.20 {
-            if (diff - 1) * Double(totalBudg) < Double(projBasal) {
-                return goodColour
-            } else {
-                return okColour
-            }
-        } else {
-            return badColour
-        }
-    }
-
     var body: some View {
         ZStack {
                 Circle()
                     .fill(.shadow(.drop(color: .black, radius: 4)))
-                    .fill(getBlobColour(input: leftToEat))
+                    .fill(budgetBlobColour(canEatNow: leftToEat))
                 Circle()
                     .trim(from: 0, to: progress)
                     .rotation(Angle(degrees: -90))
                     // GOES CLOCKWISE FROM EAST
                     .fill(.clear)
-                    .stroke(getPathColour().gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
+                    .stroke(budgetPathColour(diff: pathDiff, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
                     .shadow(radius: 10)
                 Text(leftToEat.formatted())
                     .fontWeight(.heavy)

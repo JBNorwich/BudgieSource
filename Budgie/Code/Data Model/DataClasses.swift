@@ -109,6 +109,7 @@ class TodayLump: ObservableObject {
         }
     }
     
+    /// The user's "target" calories - how much of their budget, in total, the app thinks the user can eat while keeping some aside for their final meal.
     var currentTarget: Int {
         return weightCanEatNow(input: self.totalBudget)
     }
@@ -132,48 +133,6 @@ class TodayLump: ObservableObject {
         } else {
             return 0
         }
-    }
-    
-    func getPathColour() -> Color
-    {
-        let reallyGoodColor = (Color.blue)
-        let goodColour = Color(.green)
-        let okColour = Color(.yellow)
-        let badColour = Color(.red)
-        
-        let diff = self.progressAgainstTarget
-        
-        if diff < 0.25 {
-            return reallyGoodColor
-        } else if diff < 1.05 {
-            return goodColour
-        } else if diff < 1.20 {
-            if (diff - 1) * Double(self.totalBudget) < Double(self.projectedBasal) {
-                return goodColour
-            } else {
-                return okColour
-            }
-        } else {
-            return badColour
-        }
-    }
-    
-    func getBlobColour() -> Color
-    {
-        var returnColor: Color = .teal
-        if self.canEatNow < -49
-        {
-            switch settingsObj.surplusMode {
-            case true: returnColor = .green
-            case false : returnColor = .red
-            }
-        } else if self.canEatNow < 50 {
-            switch settingsObj.surplusMode {
-            case true: returnColor = .red
-            case false: returnColor = .green
-            }
-        }
-        return returnColor
     }
     
     var calsOutNow: Int {

@@ -120,3 +120,38 @@ func renderWeight(kilos: Double, outputUnit: weightUnits? = nil, includeSuffix: 
     
     return returnString
 }
+
+// BLOB FUNCTIONS
+/// Colour of the central blob, based on how much the user can still eat.
+func budgetBlobColour(canEatNow: Int) -> Color {
+    if canEatNow < -49 {
+        return settingsObj.surplusMode ? .green : .red
+    } else if canEatNow < 50 {
+        return settingsObj.surplusMode ? .red : .green
+    } else {
+        return .teal
+    }
+}
+
+/// Colour of the progress ring. `diff` is the caller's progress metric (1.0 == on pace).
+func budgetPathColour(diff: Double, budget: Int, projectedBasal: Int) -> Color {
+    if diff < 0.25 {
+        return .blue
+    } else if diff < 1.05 {
+        return .green
+    } else if diff < 1.20 {
+        // A little over, but fine if the overage is smaller than the resting calories left to burn.
+        return (diff - 1) * Double(budget) < Double(projectedBasal) ? .green : .yellow
+    } else {
+        return .red          // ← single source of truth; fixes the watch's yellow "bad" bug
+    }
+}
+
+/// Headline label above the meter.
+func budgetStatusLabel(leftToEat: Int) -> String {
+    if settingsObj.surplusMode {
+        return leftToEat > -1 ? "Need to eat" : "Overeaten by"
+    } else {
+        return leftToEat > -1 ? "Can eat now" : "Over target by"
+    }
+}
