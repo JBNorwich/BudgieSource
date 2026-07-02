@@ -296,15 +296,11 @@ struct BudgetView: View {
             .presentationDragIndicator(.visible)
         }
         
-        .sheet(isPresented: $showingWeightGoalSheet) {
+        .sheet(isPresented: $showingWeightGoalSheet, onDismiss: { Task { await dataStore.updateLump(todayLump: todayLump)}}) {
             NavigationStack {
                 WeightGoalSheet(isDisplayed: $showingWeightGoalSheet)
                     .environmentObject(todayLump)
             }.presentationDetents([.medium])
-        }.onDisappear() {
-            Task {
-                await dataStore.updateLump(todayLump: todayLump)
-            }
         }
         
         .sheet(isPresented: $showingWeightDetail) {
@@ -314,15 +310,11 @@ struct BudgetView: View {
             }.presentationDetents([.medium])
         }
         
-        .sheet(isPresented: $showingWeightLogSheet) {
+        .sheet(isPresented: $showingWeightLogSheet, onDismiss: { Task { await dataStore.updateLump(todayLump: todayLump)}}) {
             NavigationStack {
                 LogWeightSheet(isDisplayed: $showingWeightLogSheet)
                     .environmentObject(todayLump)
             }.presentationDetents([.medium])
-        }.onDisappear() {
-            Task {
-                await dataStore.updateLump(todayLump: todayLump)
-            }
         }
             
         .task() {

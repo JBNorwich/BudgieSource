@@ -56,7 +56,7 @@ class TodayLump: ObservableObject {
     func recalculateBudget() {
         var budget = max(totalProjCalories - settingsObj.desiredDeficit, 1200)
         let atCap = settingsObj.capBudget && budget > settingsObj.capBudgetCals
-        if atCap { budget = settingsObj.capBudgetCals }
+        if atCap { budget = max(settingsObj.capBudgetCals, 1200) }
         let atMin = budget <= 1200
         
         totalBudget = budget
