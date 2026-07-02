@@ -17,7 +17,6 @@ import SwiftUI
 
 struct MeterView: View {
     @EnvironmentObject var todayLump: TodayLump
-    @State var displayedTime: Double = 0
     
     var dummy: Bool = false
     
@@ -35,7 +34,6 @@ struct MeterView: View {
         let progress: Double
         let label: String
         let value: String
-        var animateFeedback: Bool = true
 
         var body: some View {
             ZStack {
@@ -63,13 +61,6 @@ struct MeterView: View {
             }
         }
     }
-    
-    private func refresh() {
-        withAnimation {
-            // This does nothing but force a view refresh
-            displayedTime = getPercentOfDayDone()
-        }
-    }
 
     var body: some View {
         if dummy {
@@ -83,9 +74,7 @@ struct MeterView: View {
                            value: abs(todayLump.canEatNow).formatted())
                     .sensoryFeedback(.increase, trigger: todayLump.progressToday)
                     .sensoryFeedback(.increase, trigger: todayLump.canEatNow)
-                    .onChange(of: todayLump.progressTodayAsWholePercent) { refresh() }
-                    .onChange(of: todayLump.canEatNow) { refresh() }
-                    .onAppear { refresh() }
+                    .animation(.easeInOut, value: todayLump.canEatNow)
         }
     }
 }
