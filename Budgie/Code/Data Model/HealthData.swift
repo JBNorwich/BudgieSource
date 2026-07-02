@@ -491,30 +491,48 @@ final class HealthData {
         let recentWeekStart = calendar.date(byAdding: .day, value: -6, to: todayStart) ?? todayStart     // last 7 days, incl. today
         let previousWeekStart = calendar.date(byAdding: .day, value: -13, to: todayStart) ?? todayStart   // the 7 days before that
         
-        let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+        // Kick every independent query off concurrently. These fan out across HealthKit and the
+        // calorie actor: the HK queries run in parallel, and the actor serialises its own work safely.
+        async let eatenTask        = pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+        async let foodListTask     = calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
+        async let projBasalTask    = getProjBasalCalories()
+        async let projActiveTask   = getProjActiveCalories()
+        async let recBasalTask     = pullCalorieTotalForDate(date: today, type: basalQuantityType, hkOnly: true)
+        async let recActiveTask    = pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
+        async let weightsTask      = getLatestWeight()
+        async let yesterdayDefTask = getDeficitForDate(date: getMidnightOnDayBefore(date: today))
+        async let avgDeficitTask   = getAverageDeficitForPastWeek()
+        async let lastWeekAvgTask  = getAverageWeight(from: recentWeekStart, to: todayEnd)
+        async let prevWeekAvgTask  = getAverageWeight(from: previousWeekStart, to: recentWeekStart)
+        async let foodDaysTask     = daysWithFoodLogged(from: previousWeekStart, to: todayEnd)
+        async let waterTask        = getWaterOnDate(date: todayStart)
+        async let activityTask     = getActivitySummary()
+
+        // Food eaten today
+        let eatenCalories = await eatenTask
         todayLump.eatenCalories = eatenCalories.hk + eatenCalories.budgie
         todayLump.healthKitCalories = eatenCalories.hk
-        todayLump.foodList = await calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
-        todayLump.mealList = await calorieActor.cleansedMealList(data: todayLump.foodList)
-        
-        // Calculate meal totals for the food list on the main page
+
+        // Food list + meal breakdown (the meal list depends on the fetched food list)
+        let foodList = await foodListTask
+        todayLump.foodList = foodList
+        todayLump.mealList = await calorieActor.cleansedMealList(data: foodList)
+
         todayLump.mealTotalList = [:]
         for meal in todayLump.mealList {
-            var sum: Int = 0
-            for food in todayLump.foodList where food.meal == meal.mealUUID {
-                sum = sum + food.calories
+            var sum = 0
+            for food in foodList where food.meal == meal.mealUUID {
+                sum += food.calories
             }
             todayLump.mealTotalList[meal.mealUUID] = sum
         }
-        
-        // Pull in projected basal and active calories
-        todayLump.projectedBasal = await getProjBasalCalories()
-        todayLump.projectedActive = await getProjActiveCalories()
-        
-        // Pull in actual basal and active calories
-        let recBasalCalories = await pullCalorieTotalForDate(date: today, type: basalQuantityType, hkOnly: true)
-        let recActiveCalories = await pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
 
+        // Projected burn (needed before the estimated-fallback branches below)
+        todayLump.projectedBasal = await projBasalTask
+        todayLump.projectedActive = await projActiveTask
+
+        // Recorded basal — fall back to the manual figure if HealthKit has none
+        let recBasalCalories = await recBasalTask
         if recBasalCalories != 0 {
             todayLump.basalEstimated = false
             todayLump.basalCalories = recBasalCalories
@@ -522,6 +540,9 @@ final class HealthData {
             todayLump.basalEstimated = true
             todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
         }
+
+        // Recorded active — fall back to the manual figure if HealthKit has none
+        let recActiveCalories = await recActiveTask
         if recActiveCalories != 0 {
             todayLump.activeEstimated = false
             todayLump.activeCalories = recActiveCalories
@@ -529,26 +550,26 @@ final class HealthData {
             todayLump.activeEstimated = true
             todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
         }
-        
+
         todayLump.recalculateBudget()
-        
-        // Obtaining weight information
-        let weightsToday = await getLatestWeight()
+
+        // Weight + deficit history
+        let weightsToday = await weightsTask
         todayLump.weightToday = weightsToday.first
         todayLump.weightYesterday = weightsToday.second
         todayLump.lastWeightDate = weightsToday.firstDate
-        todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))
-        todayLump.averageDeficit = await getAverageDeficitForPastWeek()
-        todayLump.lastWeekAvgWeight = await getAverageWeight(from: recentWeekStart, to: todayEnd)
-        todayLump.prevWeekAvgWeight = await getAverageWeight(from: previousWeekStart, to: recentWeekStart)
-        todayLump.foodDaysLoggedFortnight = await daysWithFoodLogged(from: previousWeekStart, to: todayEnd)
-        
-        // Pull in water
-        let waterDetails = await getWaterOnDate(date: todayStart)
+        todayLump.yesterdayDeficit = await yesterdayDefTask
+        todayLump.averageDeficit = await avgDeficitTask
+        todayLump.lastWeekAvgWeight = await lastWeekAvgTask
+        todayLump.prevWeekAvgWeight = await prevWeekAvgTask
+        todayLump.foodDaysLoggedFortnight = await foodDaysTask
+
+        // Water
+        let waterDetails = await waterTask
         todayLump.waterToday = waterDetails.bd + waterDetails.hk
-        
-        // Get user's Activity Rings
-        todayLump.activitySummary = await getActivitySummary()
+
+        // Activity rings
+        todayLump.activitySummary = await activityTask
 
         todayLump.lastUpdate = Date()
         WidgetCenter.shared.reloadAllTimelines()
