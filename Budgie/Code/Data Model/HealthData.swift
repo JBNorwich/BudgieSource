@@ -571,9 +571,20 @@ final class HealthData {
     /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, weight entries, or new water entries.
     func setUpObserverQueries(todayLump: TodayLump) {
         for sampleType in [activeQuantityType, basalQuantityType, eatenQuantityType, waterQuantityType, weightSampleType] {
-            let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { _, _, errorOrNil in
-                guard errorOrNil == nil else { return }
-                Task { await self.updateLump(todayLump: todayLump) }
+            // Ask HealthKit to wake the app when this type changes, even while backgrounded.
+            healthStore.enableBackgroundDelivery(for: sampleType, frequency: .hourly) { success, error in
+                if let error { print("Background delivery failed for \(sampleType): \(error)") }
+            }
+
+            let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { _, completionHandler, errorOrNil in
+                guard errorOrNil == nil else {
+                    completionHandler()          // still must acknowledge, even on error
+                    return
+                }
+                Task {
+                    await self.updateLump(todayLump: todayLump)   // ends with reloadAllTimelines()
+                    completionHandler()          // tell HealthKit we've handled it
+                }
             }
             healthStore.execute(query)
         }
