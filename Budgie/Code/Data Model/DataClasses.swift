@@ -250,99 +250,100 @@ class TodayLump: ObservableObject {
     }
     
     // WEIGHT RELATED CALCULATED VARIABLES
-    /// The amount of weight that the user has to go, as a Double reflecting kilograms, in order to meet their goal.
+
+    /// A smoothed "current weight": the trailing weekly average when available, else the latest reading.
+    /// Used for goal maths and the headline figure so day-to-day scale noise doesn't make them jump.
+    var currentWeight: Double {
+        lastWeekAvgWeight != 0 ? lastWeekAvgWeight : weightToday
+    }
+
+    /// The amount of weight (kg) the user has to go to meet their goal.
     var weightToGo: Double {
-        guard settingsObj.weightGoal != 0, self.weightToday != 0 else { return 0 }
+        guard settingsObj.weightGoal != 0, currentWeight != 0 else { return 0 }
         if weightGoalMet { return 0 }
         let remaining = settingsObj.surplusMode
-            ? settingsObj.weightGoal - self.weightToday
-            : self.weightToday - settingsObj.weightGoal
+            ? settingsObj.weightGoal - currentWeight
+            : currentWeight - settingsObj.weightGoal
         return max(remaining, 0)
     }
-    
-    /// The amount of weight that the user has lost, in kilograms as a Double.
-    var lostInDay: Double {
+
+    /// The change (kg) since the user's previous weigh-in (positive = down). Not necessarily one day.
+    var changeSinceLastReading: Double {
         return self.weightYesterday - self.weightToday
     }
-    
+
     /// Progress from start weight toward goal, 0 (just started) → 1 (met).
     var weightGoalProgress: Double {
-        guard settingsObj.weightGoal != 0, settingsObj.startWeight != 0, self.weightToday != 0 else { return 0 }
+        guard settingsObj.weightGoal != 0, settingsObj.startWeight != 0, currentWeight != 0 else { return 0 }
         if weightGoalMet { return 1 }
         let total = settingsObj.surplusMode
             ? settingsObj.weightGoal - settingsObj.startWeight
             : settingsObj.startWeight - settingsObj.weightGoal
         let done = settingsObj.surplusMode
-            ? self.weightToday - settingsObj.startWeight
-            : settingsObj.startWeight - self.weightToday
+            ? currentWeight - settingsObj.startWeight
+            : settingsObj.startWeight - currentWeight
         guard total > 0 else { return 0 }
         return min(max(done / total, 0), 1)
     }
 
     /// Whether the user has reached their weight goal, respecting goal direction.
     var weightGoalMet: Bool {
-        guard settingsObj.weightGoal != 0, self.weightToday != 0 else { return false }
+        guard settingsObj.weightGoal != 0, currentWeight != 0 else { return false }
         return settingsObj.surplusMode
-            ? self.weightToday >= settingsObj.weightGoal      // gaining
-            : self.weightToday <= settingsObj.weightGoal      // losing
+            ? currentWeight >= settingsObj.weightGoal
+            : currentWeight <= settingsObj.weightGoal
     }
-    
+
     /// The gauge value: how much of the journey is left (1 at start → 0 at goal).
     var weightGoalRemaining: Double { 1 - weightGoalProgress }
-    
-    /// The user's weight lost as the difference between last week's average weight, and the past week's average weight, in kilograms.
+
+    /// Weight change between the previous week's average and the most recent week's average (positive = down).
     var weightTrend: Double {
         return self.prevWeekAvgWeight - self.lastWeekAvgWeight
     }
-    
-    /// The number of days (as an Int) that it will take the user to get to their next weight goal, based on a real average deficit adjusted for real performance
+
+    /// Days to the goal based on the performance-adjusted real deficit.
     var daysToWeightGoal: Int {
-        let days = getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
-        return days
+        return getDaysToLose(weight: self.weightToGo, deficit: self.averageDeficit)
     }
 
-    /// The number of days (as an Int) that it would take the user to get to their next weight goal, as a rough calculation based on their expressed desired deficit.
+    /// Days to the goal based on the user's expressed desired deficit.
     var daysToGoalAtPlanned: Int {
         return getDaysToLose(weight: self.weightToGo, deficit: settingsObj.desiredDeficit)
     }
-    
-    /// The difference between the days to the user's weight goal at current trend, and days as calculated from their desired deficit. If positive, it is taking the user longer than planned (i.e. more days to goal); if negative, it is taking the user less time than planned (i.e. fewer days to goal.)
+
     var diffDays: Int {
         return daysToWeightGoal - daysToGoalAtPlanned
     }
-    
-    /// The difference between the user's average caloric deficit, and the desired deficit they've set. If this is negative, their deficit is less than they planned; if positive, the opposite.
+
     var diffBetweenAvgDeficitandDesired: Int {
         return self.averageDeficit - settingsObj.desiredDeficit
     }
-    
-    /// How much weight would be expected to be lost at the users's current real deficit. If this is positive, the user is expected to lose weight; if negative, gain.
+
+    /// Expected weekly weight change from the recorded average deficit (kg), unrounded — for maths.
+    private var expectedWeeklyChangeExact: Double {
+        return Double(self.averageDeficit * 7) / 7700
+    }
+
+    /// Expected weekly weight loss at the recorded deficit, rounded for display.
     var expectedWeightLossAtRealDeficit: Double {
-        let totalDeficit = self.averageDeficit * 7
-        let kilosExpected: Double = Double(totalDeficit) / 7700
-        return roundDoubleWeight(input: kilosExpected)
+        return roundDoubleWeight(input: expectedWeeklyChangeExact)
     }
-    
-    /// How the user's weight loss (as recorded via HealthKit) is against what would be expected based on their deficits as recorded in Budgie Diet. If the result is above 1, the weight loss is above expectations; if the result is below 1, it's below what would be expected.
-    var performanceAgainstWeightTrend: Double {
-        let expected = self.expectedWeightLossAtRealDeficit
-        let actual = self.weightTrend
-        let result = actual/expected
-        return result
+
+    /// How actual weight change compares to expectation. >1 better than expected, <1 worse.
+    /// nil when there's no meaningful expectation to compare against (deficit ≈ 0).
+    var performanceAgainstWeightTrend: Double? {
+        let expected = expectedWeeklyChangeExact
+        guard abs(expected) > 0.001 else { return nil }
+        return self.weightTrend / expected
     }
-    
-    /// What the user's "actual" caloric deficit is, based on their weight loss performance.
+
+    /// The deficit the user's actual progress implies, adjusting the recorded deficit by performance.
     var realDeficit: Int {
-        if self.averageDeficit <= 0 {
-            return 0
-        } else {
-            let doubleCalc = Double(self.averageDeficit) * self.performanceAgainstWeightTrend
-            if doubleCalc.isFinite == true && doubleCalc.isNaN == false {
-                return Int(doubleCalc)
-            } else {
-                return 0
-            }
-        }
+        guard self.averageDeficit > 0, let performance = performanceAgainstWeightTrend else { return 0 }
+        let doubleCalc = Double(self.averageDeficit) * performance
+        guard doubleCalc.isFinite, !doubleCalc.isNaN else { return 0 }
+        return Int(doubleCalc)
     }
     
     /// Whether the user has logged food on enough of the last 14 days for target-tracking figures to be meaningful.

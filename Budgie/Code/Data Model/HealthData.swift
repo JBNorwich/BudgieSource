@@ -330,10 +330,12 @@ final class HealthData {
     }
     
     func getLatestWeight() async -> (first: Double, second: Double, firstDate: Date?, secondDate: Date?) {
-        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
-        
-        return await withCheckedContinuation { continuation in
-            let query = HKSampleQuery(sampleType: weightSampleType, predicate: nil, limit: 2, sortDescriptors: [sortDescriptor]) { _, samples, error in
+            let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+            let cutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date())
+            let recencyPredicate = HKQuery.predicateForSamples(withStart: cutoff, end: nil, options: [])
+
+            return await withCheckedContinuation { continuation in
+                let query = HKSampleQuery(sampleType: weightSampleType, predicate: recencyPredicate, limit: 2, sortDescriptors: [sortDescriptor]) { _, samples, error in
                 if error != nil {
                     continuation.resume(returning: (first: 0, second: 0, firstDate: nil, secondDate: nil))
                 } else {
@@ -484,9 +486,10 @@ final class HealthData {
         // Set up date variables for ease
         let today = Date()
         let todayStart = getStartOfDay(date: today)
-        let todayEnd = getMidnightOnDayAfter(date: todayStart)
-        let weekBeforeYesterday = getWeekBeforeDate(date: getMidnightOnDayBefore(date: todayStart))
-        let weekBeforeWeekBeforeYesterday = getWeekBeforeDate(date: weekBeforeYesterday)
+        let todayEnd = getMidnightOnDayAfter(date: todayStart)        
+        let calendar = Calendar.current
+        let recentWeekStart = calendar.date(byAdding: .day, value: -6, to: todayStart) ?? todayStart     // last 7 days, incl. today
+        let previousWeekStart = calendar.date(byAdding: .day, value: -13, to: todayStart) ?? todayStart   // the 7 days before that
         
         let eatenCalories = await pullEatenCalories(startDate: todayStart, endDate: todayEnd)
         todayLump.eatenCalories = eatenCalories.hk + eatenCalories.budgie
@@ -536,9 +539,9 @@ final class HealthData {
         todayLump.lastWeightDate = weightsToday.firstDate
         todayLump.yesterdayDeficit = await getDeficitForDate(date: getMidnightOnDayBefore(date: Date()))
         todayLump.averageDeficit = await getAverageDeficitForPastWeek()
-        todayLump.lastWeekAvgWeight = await getAverageWeight(from: weekBeforeYesterday, to: todayEnd)
-        todayLump.prevWeekAvgWeight = await getAverageWeight(from: weekBeforeWeekBeforeYesterday, to: getWeekBeforeDate(date: todayEnd))
-        todayLump.foodDaysLoggedFortnight = await daysWithFoodLogged(from: weekBeforeWeekBeforeYesterday, to: getMidnightOnDayAfter(date: Date()))
+        todayLump.lastWeekAvgWeight = await getAverageWeight(from: recentWeekStart, to: todayEnd)
+        todayLump.prevWeekAvgWeight = await getAverageWeight(from: previousWeekStart, to: recentWeekStart)
+        todayLump.foodDaysLoggedFortnight = await daysWithFoodLogged(from: previousWeekStart, to: todayEnd)
         
         // Pull in water
         let waterDetails = await getWaterOnDate(date: todayStart)
