@@ -86,7 +86,6 @@ class ChartData: ObservableObject {
                     return
                 }
                 guard let collection = results else {
-                    assertionFailure("")
                     continuation.resume(returning: [])
                     return
                 }
@@ -124,32 +123,28 @@ class ChartData: ObservableObject {
 
         return (budgie: budgiePackets, hk: hkPackets)
     }
-        
-    func assembleChartData()
-    {
+    
+    /// Digest packets of data received from HealthKit/SwiftData into a dictionary between Date and ChartData lump, for rendering.
+    func assembleChartData() {
         var lumpsByDate: [Date: ChartDataLump] = [:]
-        
-        for basalStruct in basalPackets where basalStruct.date < endDate {
+
+        func lump(for date: Date) -> ChartDataLump {
+            if let existing = lumpsByDate[date] { return existing }
             let newLump = ChartDataLump()
-            newLump.date = basalStruct.date
-            newLump.basalCals = basalStruct.cals
-            lumpsByDate[basalStruct.date] = newLump
+            newLump.date = date
+            lumpsByDate[date] = newLump
+            return newLump
         }
-        
-        for activeStruct in activePackets {
-            lumpsByDate[activeStruct.date]?.activeCals = activeStruct.cals
-        }
-        
-        for eatenStruct in eatenPackets {
-            lumpsByDate[eatenStruct.date]?.eatenCals = eatenStruct.cals
-        }
-        for budgieStruct in budgieEatenPackets {
-            lumpsByDate[budgieStruct.date]?.eatenCals += budgieStruct.cals
-        }
-        
+
+        for p in basalPackets       where p.date < endDate { lump(for: p.date).basalCals  = p.cals }
+        for p in activePackets      where p.date < endDate { lump(for: p.date).activeCals = p.cals }
+        for p in eatenPackets       where p.date < endDate { lump(for: p.date).eatenCals  = p.cals }
+        for p in budgieEatenPackets where p.date < endDate { lump(for: p.date).eatenCals += p.cals }
+
         dataUpdated = false
         returnedChartData = lumpsByDate.values.sorted { $0.date < $1.date }
         cleanDataObject()
         updateInProgress = false
     }
+
 }
