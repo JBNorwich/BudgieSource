@@ -575,10 +575,10 @@ final class HealthData {
         WidgetCenter.shared.reloadAllTimelines()
     }
     
-    /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, or new water entries.
+    /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, weight entries, or new water entries.
     func setUpObserverQueries(todayLump: TodayLump) {
-        for sampleType in [activeQuantityType, basalQuantityType, eatenQuantityType, waterQuantityType] {
-            let query = HKObserverQuery(sampleType: sampleType, predicate: observerPredicate) { _, _, errorOrNil in
+        for sampleType in [activeQuantityType, basalQuantityType, eatenQuantityType, waterQuantityType, weightSampleType] {
+            let query = HKObserverQuery(sampleType: sampleType, predicate: nil) { _, _, errorOrNil in
                 guard errorOrNil == nil else { return }
                 Task { await self.updateLump(todayLump: todayLump) }
             }
