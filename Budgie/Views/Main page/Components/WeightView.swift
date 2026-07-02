@@ -126,9 +126,18 @@ struct WeightView: View {
                                     showingWeightGoalSheet = true
                                 }.buttonStyle(.borderedProminent)
                             }
-                        } else if todayLump.averageDeficit > 0 {
-                            let deficit = todayLump.realDeficit > 0 ? todayLump.realDeficit : todayLump.averageDeficit
-                            Text("Expect to hit goal in **\(formatDuration(days: getDaysToLose(weight: todayLump.weightToGo, deficit: deficit)))**")
+                        } else if todayLump.consistentlyLoggedFood {
+                            // Enough logged history for the measured pace to mean something.
+                            if todayLump.averageDeficit > 0 {
+                                let deficit = todayLump.realDeficit > 0 ? todayLump.realDeficit : todayLump.averageDeficit
+                                Text("Expect to hit goal in **\(formatDuration(days: getDaysToLose(weight: todayLump.weightToGo, deficit: deficit)))**")
+                            } else {
+                                Text("**In caloric surplus** over past week")
+                            }
+                        } else if settingsObj.desiredDeficit > 0 {
+                            // Not enough logged food yet — show the planned estimate so this
+                            // matches the goal-setting screen instead of an inflated measured deficit.
+                            Text("Expect to hit goal in **\(formatDuration(days: getDaysToLose(weight: todayLump.weightToGo, deficit: settingsObj.desiredDeficit)))**")
                         } else {
                             Text("**In caloric surplus** over past week")
                         }
