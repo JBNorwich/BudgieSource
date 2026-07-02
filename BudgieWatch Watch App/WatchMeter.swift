@@ -62,7 +62,7 @@ struct WatchMeter: View {
         let reallyGoodColor = (Color.blue)
         let goodColour = Color(.green)
         let okColour = Color(.yellow)
-        let badColour = Color(.yellow)
+        let badColour = Color(.red)
         
         let diff = todayLump.progressToday / getPercentOfDayDone()
         
