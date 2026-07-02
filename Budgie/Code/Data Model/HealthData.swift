@@ -551,6 +551,7 @@ final class HealthData {
         todayLump.weightToday = weightsToday.first
         todayLump.weightYesterday = weightsToday.second
         todayLump.lastWeightDate = weightsToday.firstDate
+        todayLump.prevWeightDate = weightsToday.secondDate
         todayLump.averageDeficit = await avgDeficitTask
         todayLump.lastWeekAvgWeight = await lastWeekAvgTask
         todayLump.prevWeekAvgWeight = await prevWeekAvgTask

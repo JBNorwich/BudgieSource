@@ -69,7 +69,9 @@ struct WeightView: View {
                                 .fixedSize()
                         }
                     
-                    if todayLump.weightYesterday != 0 {
+                    if let prev = todayLump.prevWeightDate,
+                       let last = todayLump.lastWeightDate,
+                       prev != last {
                         HStack {
                             if todayLump.weightToday < todayLump.weightYesterday {
                                 Image(systemName: "arrow.down").foregroundStyle(.secondary)
