@@ -31,12 +31,6 @@ final class HealthData {
     let waterActor: WaterActor
     private(set) var storeFailedToLoad = false
     
-//    private init() {
-//        modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
-//        calorieActor = CalorieActor(modelContainer: modelContainer)
-//        waterActor = WaterActor(modelContainer: modelContainer)
-//    }
-    
     private init() {
         let realContainer = try? ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
 
