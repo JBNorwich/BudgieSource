@@ -109,10 +109,6 @@ class TodayLump: ObservableObject {
         }
     }
     
-    var progressTodayAsWholePercent: Double {
-        return progressToday * 100
-    }
-    
     var currentTarget: Int {
         return weightCanEatNow(input: self.totalBudget)
     }
