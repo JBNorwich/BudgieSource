@@ -174,7 +174,7 @@ func getCurrentTimeonDate(date: Date) -> Date {
     
     let newDateComps = DateComponents(year: year, month: month, day: day, hour: hours, minute: mins, second: seconds)
     let newDate = calendar.date(from: newDateComps)
-    return newDate!
+    return newDate ?? date
 }
 
 extension Calendar {
@@ -182,9 +182,8 @@ extension Calendar {
     func numberOfDaysBetween(_ from: Date, and to: Date) -> Int {
         let fromDate = startOfDay(for: from) // <1>
         let toDate = startOfDay(for: to) // <2>
-        let numberOfDays = dateComponents([.day], from: fromDate, to: toDate) // <3>
-        
-        return numberOfDays.day!
+        let numberOfDays = dateComponents([.day], from: fromDate, to: toDate)
+        return numberOfDays.day ?? 0
     }
 }
 
@@ -201,7 +200,7 @@ func minsIntoDayIntoTime(mins: Int) -> Date {
     var dateComponents = DateComponents()
     dateComponents.hour = hours
     dateComponents.minute = minutes
-    return Calendar.current.date(from: dateComponents)!
+    return Calendar.current.date(from: dateComponents) ?? Calendar.current.startOfDay(for: Date())
 }
 
 /// Formats a future duration of time (ETA) in a fuzzy format.
