@@ -127,10 +127,9 @@ final class HealthData {
         let everyDay = DateComponents(day:1)
         
         let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
-        let searchPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
         
         return await withCheckedContinuation { continuation in
-            let statQuery = HKStatisticsCollectionQuery(quantityType: weightSampleType, quantitySamplePredicate: searchPredicate, options: .discreteAverage, anchorDate: from, intervalComponents: everyDay)
+            let statQuery = HKStatisticsCollectionQuery(quantityType: weightSampleType, quantitySamplePredicate: timePredicate, options: .discreteAverage, anchorDate: from, intervalComponents: everyDay)
             
             statQuery.initialResultsHandler = { query, results, error in
                 guard let actCollection = results else {
@@ -406,6 +405,34 @@ final class HealthData {
         waterTotalInBudgie = await waterActor.getTotalOnDate(date: date)
         
         return (waterTotalInHealthKit, waterTotalInBudgie)
+    }
+
+    /// Returns an array of WeightPoints that represent weight entries over a period of time. Does not distinguish between Budgie Diet and non-Budgie Diet weight entries.
+    func weightSeries(from: Date, to: Date) async -> [WeightPoint] {
+        let everyDay = DateComponents(day: 1)
+        let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: .strictEndDate)
+        // NB: deliberately NO notBudgiePredicate — see caveat below.
+        return await withCheckedContinuation { continuation in
+            let statQuery = HKStatisticsCollectionQuery(
+                quantityType: weightSampleType,
+                quantitySamplePredicate: timePredicate,
+                options: .discreteAverage,
+                anchorDate: from,
+                intervalComponents: everyDay
+            )
+            statQuery.initialResultsHandler = { _, results, _ in
+                guard let results else { continuation.resume(returning: []); return }
+                var points: [WeightPoint] = []
+                results.enumerateStatistics(from: from, to: to) { stat, _ in
+                    if let q = stat.averageQuantity() {
+                        points.append(WeightPoint(date: stat.startDate,
+                                                  kilos: q.doubleValue(for: .gramUnit(with: .kilo))))
+                    }
+                }
+                continuation.resume(returning: points)
+            }
+            healthStore.execute(statQuery)
+        }
     }
     
     /// Main function that updates the "todayLump" that contains up to the minute data and underpins the main screen.
