@@ -130,11 +130,16 @@ struct WeightView: View {
                                 }.buttonStyle(.borderedProminent)
                             }
                         } else if todayLump.hasGoalTimeEstimate {
-                            Text("Expect to hit goal in **\(formatDuration(days: getDaysToLose(weight: todayLump.weightToGo, deficit: todayLump.goalProjectionDeficit)))**")
+                            let daysToGoal = settingsObj.surplusMode
+                                ? getDaysToGain(weight: todayLump.weightToGo, surplus: todayLump.goalProjectionDeficit)
+                                : getDaysToLose(weight: todayLump.weightToGo, deficit: todayLump.goalProjectionDeficit)
+                            Text("Expect to hit goal in **\(formatDuration(days: daysToGoal))**")
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)
                         } else {
-                            Text("**In caloric surplus** over past week")
+                            Text(settingsObj.surplusMode
+                                 ? "**In caloric deficit** over past week"
+                                 : "**In caloric surplus** over past week")
                         }
                         Spacer()
                     }

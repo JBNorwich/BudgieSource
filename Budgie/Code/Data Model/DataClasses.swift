@@ -222,33 +222,39 @@ class TodayLump: ObservableObject {
         return self.weightTrend / expected
     }
 
-    /// The deficit the user's actual progress implies, adjusting the recorded deficit by performance.
+    /// Measured daily energy imbalance in the direction of the user's goal: a deficit when
+    /// losing, a surplus when gaining. Positive means they're moving toward their goal.
+    private var measuredGoalRate: Int {
+        settingsObj.surplusMode ? -averageDeficit : averageDeficit
+    }
+
+    /// The rate the user's actual progress implies, adjusting the measured rate by performance.
     var realDeficit: Int {
-        guard self.averageDeficit > 0, let performance = performanceAgainstWeightTrend else { return 0 }
-        let doubleCalc = Double(self.averageDeficit) * performance
+        guard measuredGoalRate > 0, let performance = performanceAgainstWeightTrend else { return 0 }
+        let doubleCalc = Double(measuredGoalRate) * performance
         guard doubleCalc.isFinite, !doubleCalc.isNaN else { return 0 }
         return Int(doubleCalc)
     }
-    
+
     /// Whether the user has logged food on enough of the last 14 days for target-tracking figures to be meaningful.
     var consistentlyLoggedFood: Bool {
         foodDaysLoggedFortnight >= 12
     }
-    
-    /// The daily calorie deficit to base "time to goal" projections on. Uses the
-    /// user's measured rate once they've logged food consistently enough for it to
-    /// be meaningful; otherwise falls back to their planned target deficit.
+
+    /// The daily rate (cal/day, always positive, in the goal direction) to base "time to goal"
+    /// projections on. Uses the user's measured rate once they've logged food consistently
+    /// enough for it to be meaningful; otherwise falls back to their planned target.
     var goalProjectionDeficit: Int {
-        guard consistentlyLoggedFood, averageDeficit > 0 else {
-            return settingsObj.desiredDeficit
+        guard consistentlyLoggedFood, measuredGoalRate > 0 else {
+            return abs(settingsObj.desiredDeficit)
         }
-        return realDeficit > 0 ? realDeficit : averageDeficit
+        return realDeficit > 0 ? realDeficit : measuredGoalRate
     }
 
-    /// Whether there's a meaningful "time to goal" estimate to show — i.e. we're not
-    /// looking at a measured caloric surplus, and the projection deficit is positive.
+    /// Whether there's a meaningful "time to goal" estimate to show — i.e. we're not moving
+    /// the wrong way (surplus when losing, deficit when gaining) and the projection is positive.
     var hasGoalTimeEstimate: Bool {
-        if consistentlyLoggedFood && averageDeficit <= 0 { return false }
+        if consistentlyLoggedFood && measuredGoalRate <= 0 { return false }
         return goalProjectionDeficit > 0
     }
 }
