@@ -179,7 +179,7 @@ struct BudgieWidgetEntryView : View {
                             Text(entry.totalBudgRem.formatted())
                                 .font(.title)
                         } else {
-                            Text(negate(value: entry.totalBudgRem).formatted())
+                            Text((-entry.totalBudgRem).formatted())
                                 .font(.title)
                         }
                         

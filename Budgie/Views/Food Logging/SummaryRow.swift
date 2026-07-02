@@ -59,7 +59,7 @@ struct SummaryRow: View {
                         }
                         
                         Spacer()
-                        Text(negate(number: dataLump.deficit).formatted())
+                        Text((-dataLump.deficit).formatted())
                             .font(.caption)
                             .fontWeight(.bold)
                     }
@@ -80,7 +80,7 @@ struct SummaryRow: View {
                             Image(systemName: "arrow.down")
                         }
                         if assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget < 0 {
-                            Text(negate(number: assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget).formatted())
+                            Text((-assessDeficit(desired: settingsObj.desiredDeficit, actual: dataLump.deficit).offTarget).formatted())
                                 .font(.title)
                                 .minimumScaleFactor(0.5)
                                 .scaledToFit()

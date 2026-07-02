@@ -201,11 +201,6 @@ extension Calendar {
     }
 }
 
-/// Returns the negation of a number. Needed for extremely dumb SwiftUI related reasons.
-func negate(value: Int) -> Int {
-    return -value
-}
-
 func timeToMinsIntoDay(time: Date) -> Int {
     let calendar = Calendar.current
     let hour = calendar.component(.hour, from: time)

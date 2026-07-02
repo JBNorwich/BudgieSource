@@ -78,10 +78,6 @@ func getFullDayOfWeek(date: Date) -> String {
     return Calendar.current.weekdaySymbols[index - 1]
 }
 
-func negate(number: Int) -> Int {
-    return -number
-}
-
 struct ChartTableRow: View {
     private static let dayMonthFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -140,7 +136,7 @@ struct ChartTableRow: View {
                                     }
                                     
                                     Spacer()
-                                    Text(negate(number: dataLump.deficit).formatted())
+                                    Text((-dataLump.deficit).formatted())
                                         .font(.caption)
                                         .fontWeight(.bold)
                                 }

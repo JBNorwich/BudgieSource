@@ -123,8 +123,8 @@ struct NewDataView: View {
             if settingsObj.desiredDeficit != 0 {
                 DataViewRow(imageName: "equal.circle", text: "Total burned today", number: dataLump.totalProjCalories)
                 settingsObj.desiredDeficit > 0
-                ? DataViewRow(imageName: "arrow.down", text: "Target deficit", number: negate(value: settingsObj.desiredDeficit))
-                : DataViewRow(imageName: "arrow.up", text: "Target surplus", number: negate(value: settingsObj.desiredDeficit))
+                ? DataViewRow(imageName: "arrow.down", text: "Target deficit", number: -settingsObj.desiredDeficit)
+                : DataViewRow(imageName: "arrow.up", text: "Target surplus", number: -settingsObj.desiredDeficit)
             }
             
             settingsObj.capBudget && dataLump.budgetAtCap
@@ -137,11 +137,11 @@ struct NewDataView: View {
             
             if dataLump.eatenCalories != 0 {
                 DataViewDivider()
-                DataViewRow(imageName: "fork.knife", text: "Eaten today", number: negate(value: dataLump.eatenCalories))
+                DataViewRow(imageName: "fork.knife", text: "Eaten today", number: -dataLump.eatenCalories)
                 if dataLump.totalBudgetRem != 0 {
                     dataLump.totalBudgetRem > 0
                     ? DataViewRow(imageName: "face.smiling", text: "Left in budget today", number: dataLump.totalBudgetRem)
-                    : DataViewRow(imageName: "gauge.with.dots.needle.bottom.100percent", text: "Over total budget by", number: negate(value: dataLump.totalBudgetRem))
+                    : DataViewRow(imageName: "gauge.with.dots.needle.bottom.100percent", text: "Over total budget by", number: -dataLump.totalBudgetRem)
                 }
             }
             if dataLump.activeEstimated == true || dataLump.budgetAtCap == true || dataLump.budgetAtMin == true {
