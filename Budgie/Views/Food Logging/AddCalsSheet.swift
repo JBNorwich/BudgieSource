@@ -65,11 +65,7 @@ struct AddCalsSheet: View {
                         }
                     }.pickerStyle(.menu)
                     
-                    DatePicker(selection: $selectedDate,
-                        label: {
-                            Text("Date and time")
-                        }
-                    )
+                    DatePicker(selection: $selectedDate, displayedComponents: .date, label: { Text("Date") })
                     
                     if (getMidnightOnDayBefore(date: Date()) == getMidnightOnDayBefore(date: selectedDate))
                     {

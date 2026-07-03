@@ -67,7 +67,7 @@ struct TodayFoodList: View {
     private func mealSection(for meal: Meal, entries: [CalorieEntry]) -> some View {
         FoodHeaderView(name: meal.name, calsText: "CALORIES")
         ForEach(entries) { entry in
-            CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
+            CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories")
         }
         if !entries.isEmpty {
             HStack {
@@ -88,7 +88,7 @@ struct TodayFoodList: View {
             Spacer()
             FoodHeaderView(name: "FROM OTHER APPS", calsText: "CALORIES")
             // "Date" doesn't matter too much because it doesn't display where "realEntry" is false so we can pass whatever we want.
-            CalorieEntryView(calories: dataLump.healthKitCalories, narrative: "Calories from Apple Health", realEntry: false, date: dataLump.lastUpdate)
+            CalorieEntryView(calories: dataLump.healthKitCalories, narrative: "Calories from Apple Health")
             Spacer()
         }
     }

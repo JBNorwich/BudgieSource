@@ -79,7 +79,7 @@ struct FoodHub: View {
                                             .environmentObject(todayLump)
                                             .onDisappear { Task { await doUpdates() } }
                                     ) {
-                                        CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
+                                        CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories")
                                     }
                                 }
                                 .onDelete { offsets in delete(offsets, from: entries) }
@@ -92,7 +92,7 @@ struct FoodHub: View {
                 
                 if hkCalories != 0  {
                     Section(header: Text("Calories from other apps"), footer: Text("These are calories logged in Health by other apps. You'll need to go to the app that logged them to change or delete them.")) {
-                        CalorieEntryView(calories: hkCalories, narrative: "Calories from other apps", realEntry: false, date: curDate)
+                        CalorieEntryView(calories: hkCalories, narrative: "Calories from other apps")
                             .deleteDisabled(true)
                     }
                 }
@@ -143,23 +143,15 @@ struct FoodHub: View {
 struct CalorieEntryView: View {
     var calories: Int
     var narrative: String
-    var realEntry: Bool
-    var date: Date
     
     var body: some View {
-        HStack {
-            if realEntry {
-                Text(date.formatted(date: .omitted, time:.shortened))
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 50)
-                    .multilineTextAlignment(.leading)
-            }
-            Text(narrative)
-            Spacer()
-            Text(calories.formatted())
-                .contentTransition(.numericText())
-        }
-    }
+       HStack {
+           Text(narrative)
+           Spacer()
+           Text(calories.formatted())
+               .contentTransition(.numericText())
+       }
+   }
 }
 
 #Preview {
