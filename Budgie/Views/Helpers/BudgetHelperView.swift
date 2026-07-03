@@ -122,7 +122,7 @@ struct BudgetHelperView: View {
                 }
             }
             if settingsObj.whalesEverywhere != true {
-                Section(footer: Text("You should only choose this if you have a lot of weight to lose (i.e. a body mass index of more than 40). Virtually everyone else will struggle to eat enough to get enough energy and vital nutrients.")) {
+                Section(footer: Text("This level of deficit is really only appropriate for people with a significant amount of weight to lose, and even then might make it hard to get enough energy and nutrients. If you're not sure if this applies to you, discuss this with your doctor before choosing this option.")) {
                     Button("Very hard - 1,000kcal per day")
                     {
                         displaying1000kcalWarning = true
