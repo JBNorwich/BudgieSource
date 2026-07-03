@@ -56,21 +56,22 @@ struct WeightDetailsSheet: View {
         let unit: String
         let subtitle: String
         let description: String
+        let last: Bool
 
         var body: some View {
-            HStack {
+            GridRow {
                 VStack {
                     Text(title).font(.caption)
                     !value.isNaN
-                        ? Text("\(value.formatted())\(unit)").font(.largeTitle)
-                        : Text("0"+unit).font(.largeTitle)
+                    ? Text("\(value.formatted())\(unit)").font(.largeTitle)
+                    : Text("0"+unit).font(.largeTitle)
                     Text(subtitle).font(.caption).foregroundStyle(.secondary)
                 }.frame(minWidth: 0, maxWidth: .infinity)
-                Divider()
                 Text(description)
                     .frame(minWidth: 0, maxWidth: .infinity)
             }
-        }
+            if !last { Divider() }
+       }
     }
     
     var body: some View {
@@ -86,12 +87,12 @@ struct WeightDetailsSheet: View {
                      }
                  }
                  GroupBox(label: Label("Predictions", systemImage: "chart.bar.xaxis.descending")) {
-                     VStack {
-                            PredictionRow(title: "RECORDED DAILY DEFICIT", value: Double(todayLump.averageDeficit), unit: "kcal", subtitle: "OVER LAST WEEK", description: "This is your daily deficit, based on the data available.")
-                            PredictionRow(title: "EXPECTED LOSS", value: todayLump.expectedWeightLossAtRealDeficit, unit: "kg", subtitle: "AT THIS DEFICIT", description: "This is how much weight you'd expect to lose at that deficit.")
-                            PredictionRow(title: "ACTUAL LOSS", value: todayLump.weightTrend, unit: "kg", subtitle: "OVER LAST WEEK", description: "This is your actual weight loss trend.")
-                            PredictionRow(title: "REAL DEFICIT", value: Double(todayLump.realDeficit), unit: "kcal", subtitle: "PER DAY", description: "This is the deficit your progress suggests you're actually at.")
-                        }
+                     Grid {
+                         PredictionRow(title: "RECORDED DAILY DEFICIT", value: Double(todayLump.averageDeficit), unit: "kcal", subtitle: "OVER LAST WEEK", description: "This is your daily deficit, based on the data available.", last: false)
+                         PredictionRow(title: "EXPECTED LOSS", value: todayLump.expectedWeightLossAtRealDeficit, unit: "kg", subtitle: "AT THIS DEFICIT", description: "This is how much weight you'd expect to lose at that deficit.", last: false)
+                         PredictionRow(title: "ACTUAL LOSS", value: todayLump.weightTrend, unit: "kg", subtitle: "OVER LAST WEEK", description: "This is your actual weight loss trend.", last: false)
+                         PredictionRow(title: "REAL DEFICIT", value: Double(todayLump.realDeficit), unit: "kcal", subtitle: "PER DAY", description: "This is the deficit your progress suggests you're actually at.", last: true)
+                        }.padding()
                  }
              }
         }
