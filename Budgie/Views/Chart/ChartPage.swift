@@ -40,15 +40,7 @@ struct ChartPage: View {
                     }
                     
                 }.padding()
-                
-                    .navigationTitle("History")
-                    .toolbar {
-                        ToolbarItemGroup(placement: .topBarTrailing) {
-                            Button("Refresh", systemImage: "arrow.clockwise") {
-                                dateChanged = true
-                            }
-                        }
-                    }
+                .navigationTitle("History")
             } else {
                 ProgressView(label: {
                     Text("Loading")
@@ -77,6 +69,12 @@ struct ChartPage: View {
                 Task {
                     await chartDataStore.pokeForUpdate()
                 }
+            }
+        }
+        
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                dateChanged = true
             }
         }
         
