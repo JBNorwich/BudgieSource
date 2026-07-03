@@ -175,12 +175,13 @@ struct SettingsView: View {
                 
             }
             
-            Section(header: Text("Weight units")) {
+            Section(header: Text("Weight tracking"), footer: Text("If you'd prefer to not see information about your weight, you can hide it here - you can turn it back on any time. Doing so won't erase any data you've already logged.")) {
                 Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit)) {
                     Text("Kilograms").tag(0)
                     Text("Pounds").tag(1)
                     Text("Stones & pounds").tag(2)
                 }
+                Toggle("Hide weight tracking features", isOn: settingBinding(\.disableWeightFeatures))
             }
             
             Section(header: Text("Surplus mode"), footer: Text("Turn this on to aim for a caloric surplus, rather than a deficit.")) {

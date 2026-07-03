@@ -256,6 +256,11 @@ class CloudSettings {
         get { return defaults.object(forKey: "waterFromActivity") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "waterFromActivity") }
     }
+    
+    var disableWeightFeatures: Bool {
+        get { return defaults.object(forKey: "disableWeightFeatures") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "disableWeightFeatures") }
+    }
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.

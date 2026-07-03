@@ -135,13 +135,15 @@ struct BudgetView: View {
                                 .frame(minHeight: 100)
                         }
                         
-                        GroupBox(label: WeightLabelView(showingWeightGoalSheet: $showingWeightGoalSheet, showingLogWeightSheet: $showingWeightLogSheet)) {
-                            WeightView(showingWeightGoalSheet: $showingWeightGoalSheet).environmentObject(todayLump)
-                        }.backgroundStyle(.regularMaterial)
-                            .frame(minHeight: 100)
-                            .onTapGesture {
-                                showingWeightDetail = true
-                            }
+                        if !settingsObj.disableWeightFeatures {
+                            GroupBox(label: WeightLabelView(showingWeightGoalSheet: $showingWeightGoalSheet, showingLogWeightSheet: $showingWeightLogSheet)) {
+                                WeightView(showingWeightGoalSheet: $showingWeightGoalSheet).environmentObject(todayLump)
+                            }.backgroundStyle(.regularMaterial)
+                                .frame(minHeight: 100)
+                                .onTapGesture {
+                                    showingWeightDetail = true
+                                }
+                        }
                         
                         if settingsObj.hideTodayInDetail != true {
                             GroupBox(label: Label("Today in detail", systemImage:"sun.max")) {
@@ -194,9 +196,11 @@ struct BudgetView: View {
                             NavigationLink(destination: WaterPage(curDate: Date()).environmentObject(todayLump)) {
                                 Image(systemName: "drop.fill")
                             }.foregroundColor(backgroundGradient.buttonColour)
-                            NavigationLink(destination: WeightHistoryView().environmentObject(todayLump)) {
-                                Image(systemName: "scalemass.fill")
-                            }.foregroundColor(backgroundGradient.buttonColour)
+                            if !settingsObj.disableWeightFeatures {
+                                NavigationLink(destination: WeightHistoryView().environmentObject(todayLump)) {
+                                    Image(systemName: "scalemass.fill")
+                                }.foregroundColor(backgroundGradient.buttonColour)
+                            }
                             NavigationLink(destination: ChartPage().environmentObject(todayLump)) {
                                 Image(systemName: "chart.xyaxis.line")
                             }.foregroundColor(backgroundGradient.buttonColour)
