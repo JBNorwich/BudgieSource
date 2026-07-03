@@ -140,36 +140,56 @@ struct BudgetHelperView: View {
             }
         }
         
-        .sheet(isPresented: $displaying1000kcalWarning)
-        {
-            VStack {
-                Text("Seriously...")
-                    .font(.largeTitle)
-                    .multilineTextAlignment(.center)
-                Text("A 1,000kcal daily deficit poses **serious health risks** unless you have significant weight to lose. Most people can’t sustain this while getting enough nutrients.")
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Text("Budgie Diet is hard coded to not give you a budget below 1,200kcal under any circumstances, so for a great number of people, this will have no effect anyway.")
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Text("It is strongly recommended that you do not pursue this without medical supervision. The app maker is not responsible for any health issues caused by choosing too high a deficit.")
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Button("Choose a different deficit") {
-                    displaying1000kcalWarning = false
-                }
-                .font(.title)
-                .padding()
-                Button("Set deficit to 1,000") {
-                    settingsObj.desiredDeficit = 1000
-                    displaying1000kcalWarning = false
-                    isPresented = false
-                }
-                .foregroundStyle(.red)
-
-            }.padding()
+        .sheet(isPresented: $displaying1000kcalWarning) {
+            ThousandKcalWarningSheet(
+                displaying1000kcalWarning: $displaying1000kcalWarning,
+                isPresented: $isPresented
+            )
         }
-            .presentationDragIndicator(.visible)
+        .presentationDragIndicator(.visible)
+    }
+}
+
+private struct ThousandKcalWarningSheet: View {
+    @Binding var displaying1000kcalWarning: Bool
+    @Binding var isPresented: Bool
+
+    @State private var secondsRemaining = 5
+
+    var body: some View {
+        VStack {
+            Text("Seriously...")
+                .font(.largeTitle)
+                .multilineTextAlignment(.center)
+            Text("A 1,000kcal daily deficit poses **serious health risks** unless you have significant weight to lose. Most people can't sustain this while getting enough nutrients.")
+                .multilineTextAlignment(.center)
+                .padding()
+            Text("Budgie Diet is hard coded to not give you a budget below 1,200kcal under any circumstances, so for a great number of people, this will have no effect anyway.")
+                .multilineTextAlignment(.center)
+                .padding()
+            Text("It is strongly recommended that you do not pursue this without medical supervision.")
+                .multilineTextAlignment(.center)
+                .padding()
+            Button("Choose a different deficit") {
+                displaying1000kcalWarning = false
+            }
+            .font(.title)
+            .padding()
+            Button(secondsRemaining > 0 ? "Set deficit to 1,000 (\(secondsRemaining))" : "Set deficit to 1,000") {
+                settingsObj.desiredDeficit = 1000
+                displaying1000kcalWarning = false
+                isPresented = false
+            }
+            .foregroundStyle(secondsRemaining > 0 ? Color.gray : Color.red)
+            .disabled(secondsRemaining > 0)
+        }
+        .padding()
+        .task {
+            for _ in 0..<5 {
+                try? await Task.sleep(for: .seconds(1))
+                secondsRemaining -= 1
+            }
+        }
     }
 }
 
