@@ -27,11 +27,17 @@ struct AllocateBudgetView: View {
     private var othersTotal: Double { allocations.values.reduce(0, +) }
     private var snacksPercent: Double { max(0, 100 - othersTotal) }
     private var isOverAllocated: Bool { othersTotal > 100 }
+    
+    /// The highest this meal's slider may reach: 100% minus whatever is already allotted to the *other* meals.
+    private func maxAllowed(for meal: Meal) -> Double {
+        let others = othersTotal - (allocations[meal.mealUUID] ?? 0)
+        return max(0, 100 - others)
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section(footer: Text("When this is on, Budgie Diet shows a target for each meal based on the percentages below, and spreads your daily budget evenly across the day. “\(snacksName)” always gets whatever’s left over.")) {
+                Section(footer: Text("When this is on, Budgie Diet shows a target for each meal based on the percentages below, and spreads your daily budget evenly across the day. “\(snacksName)” always gets whatever’s left over. This will also replace your \"left to eat now\" figure in the meter on the main page with your remaining budget.\n\nThis setting won't work properly if you log food outside of Budgie Diet, since Apple Health doesn't track your calories logged by individual meal. It's best not to turn this on if you plan to log food with other apps.")) {
                     Toggle("Allocate budget by meal", isOn: $featureOn)
                 }
 
@@ -49,7 +55,7 @@ struct AllocateBudgetView: View {
                                 Slider(
                                     value: Binding(
                                         get: { allocations[meal.mealUUID] ?? 0 },
-                                        set: { allocations[meal.mealUUID] = $0.rounded() }
+                                        set: { allocations[meal.mealUUID] = min($0.rounded(), maxAllowed(for: meal)) }
                                     ),
                                     in: 0...100,
                                     step: 1

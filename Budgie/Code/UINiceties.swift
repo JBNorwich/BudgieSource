@@ -213,9 +213,12 @@ func budgetPathColour(diff: Double, budget: Int, projectedBasal: Int) -> Color {
 }
 
 /// Headline label above the meter.
-func budgetStatusLabel(leftToEat: Int, surplusMode: Bool = settingsObj.surplusMode) -> String {
+func budgetStatusLabel(leftToEat: Int, surplusMode: Bool = settingsObj.surplusMode, usingAllocations: Bool = settingsObj.useMealAllocations) -> String {
     if surplusMode {
         return leftToEat > -1 ? "Need to eat" : "Overeaten by"
+    } else if usingAllocations {
+        // Allocations pace by meal, so the blob shows the plain daily remainder — not a paced "can eat now".
+        return leftToEat > -1 ? "Left today" : "Over budget by"
     } else {
         return leftToEat > -1 ? "Can eat now" : "Over target by"
     }

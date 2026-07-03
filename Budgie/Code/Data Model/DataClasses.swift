@@ -87,13 +87,16 @@ class TodayLump: ObservableObject {
         return self.totalBudget - self.eatenCalories
     }
     
-    /// The amount that the user can eat now, as weighted against their last meal time.
+    /// The amount that the user can eat now, as weighted against their last meal time. Not meaningful in allocated budget mode, so in that mode, will return the user's remaining budget.
     var canEatNow: Int {
-        if self.totalBudget != 0 {
-            return weightCanEatNow(input: self.totalBudget) - self.eatenCalories
-        } else {
-            return 0
+        guard self.totalBudget != 0 else { return 0 }
+        // With meal allocations on, pacing is handled per-meal, so the blob shows the
+        // plain remaining daily budget rather than the time-weighted figure — keeping it
+        // consistent with, and never systematically below, the individual meal targets.
+        if settingsObj.useMealAllocations {
+            return self.totalBudgetRem
         }
+        return weightCanEatNow(input: self.totalBudget) - self.eatenCalories
     }
     
     var totalProjCalories: Int {
@@ -110,7 +113,11 @@ class TodayLump: ObservableObject {
     }
     
     /// The user's "target" calories - how much of their budget, in total, the app thinks the user can eat while keeping some aside for their final meal.
+    /// With meal allocations on, pacing is per-meal rather than by clock, so the target is simply the whole day's budget.
     var currentTarget: Int {
+        if settingsObj.useMealAllocations {
+            return self.totalBudget
+        }
         return weightCanEatNow(input: self.totalBudget)
     }
     
