@@ -45,7 +45,6 @@ struct BudgieApp: App {
             }
         }
     }
-    @State private var needsSetup = settingsObj.isFirstRun
 
     var body: some Scene {
            WindowGroup {
