@@ -166,7 +166,7 @@ struct LogFoodShortcuts: AppShortcutsProvider {
 
 struct LogWeightIntent: AppIntent {
     static var title: LocalizedStringResource = "Log weight"
-    static var description = IntentDescription("Logs a weight measurement to Apple Health via Budgie Diet.")
+    static var description = IntentDescription("Logs a weight measurement to Health via Budgie Diet.")
     static var openAppWhenRun: Bool = false
 
     @Parameter(title: "Weight (kg)", requestValueDialog: "What do you weigh, in kilograms?")
