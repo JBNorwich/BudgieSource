@@ -153,7 +153,7 @@ struct SettingsView: View {
                 }
             }
             
-            Section(header: Text("Water logging"))
+            Section(header: Text("Water logging"), footer: Text("When this is on, your daily water goal increases based on your activity, to replace hydration lost when exercising."))
             {
                 Picker("Show volumes in", selection: settingBinding(\.waterDisplayUnit)) {
                     Text(volumeUnits.millilitres.pickerLabel).tag(0)
@@ -166,6 +166,7 @@ struct SettingsView: View {
                         .keyboardType(.numberPad)
                         .focused($focusWater)
                 } label: { Text(waterGoalLabel) }
+                Toggle("Increase goal with activity", isOn: settingBinding(\.waterFromActivity))
             }
             
             Section(header: Text("Food logging")) {

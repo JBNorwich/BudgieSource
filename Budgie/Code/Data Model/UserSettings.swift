@@ -251,6 +251,11 @@ class CloudSettings {
         get { return defaults.object(forKey: "useMealAllocations") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "useMealAllocations") }
     }
+    
+    var waterFromActivity: Bool {
+        get { return defaults.object(forKey: "waterFromActivity") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "waterFromActivity") }
+    }
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.

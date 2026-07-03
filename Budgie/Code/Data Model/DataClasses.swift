@@ -137,7 +137,8 @@ class TodayLump: ObservableObject {
     }
     
     var waterGoalDone: Double {
-        let done = Double(self.waterToday) / Double(settingsObj.waterGoal)
+        let done = Double(self.waterToday) / Double(self.effectiveWaterGoal)
+
         if done > 1 {
             return 1
         } else if done < 0 {
@@ -148,7 +149,7 @@ class TodayLump: ObservableObject {
     }
     
     var waterGoalRem: Int {
-        let left = settingsObj.waterGoal - self.waterToday
+        let left = self.effectiveWaterGoal - self.waterToday
         if left < 0 {
             return 0
         } else {
@@ -280,6 +281,13 @@ class TodayLump: ObservableObject {
             targets[snacksUUID] = max(budget - allocated, 0)
         }
         return targets
+    }
+    
+    /// The user's water goal, topped up by 1 ml per active calorie burned today when
+    /// the "increase goal with activity" setting is on.
+    var effectiveWaterGoal: Int {
+        let base = settingsObj.waterGoal
+        return settingsObj.waterFromActivity ? base + max(activeCalories, 0) : base
     }
 }
 
