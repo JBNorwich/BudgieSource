@@ -188,12 +188,6 @@ struct AddCalsSheet: View {
         await dataStore.addCalories(calories: calories!, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
         await dataStore.updateLump(todayLump: todayLump)
     }
-    
-    func doUpdates() {
-        if !showAllFoods {
-            guard let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal }) else { return }
-        }
-    }
 }
 
 #Preview {
