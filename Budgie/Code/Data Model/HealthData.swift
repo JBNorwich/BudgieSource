@@ -150,7 +150,7 @@ final class HealthData {
         }
     }
     
-    func getAverageCalories(from: Date, to: Date, type: HKQuantityType) async -> (val: Int, estimate: Bool) {
+    func getAverageCalories(from: Date, to: Date, type: HKQuantityType) async -> (val: Int, estimate: Bool, realAverage: Int) {
         let everyDay = DateComponents(day:1)
         
         let timePredicate = HKQuery.predicateForSamples(withStart: from, end: to, options: HKQueryOptions.strictEndDate)
@@ -160,7 +160,7 @@ final class HealthData {
             
             statQuery.initialResultsHandler = { query, results, error in
                 guard let actCollection = results else {
-                    continuation.resume(returning:(val: 0, estimate: true))
+                    continuation.resume(returning:(val: 0, estimate: true, realAverage: 0))
                     return
                 }
                 
@@ -174,6 +174,10 @@ final class HealthData {
                         daysInSample = daysInSample + 1
                     }
                 }
+                
+                // Average across ONLY the days that actually had HealthKit data, with no manual
+                // figure blended in. 0 means "no real data at all" (or a genuine zero-burn week).
+                let realAverage = daysInSample > 0 ? totalCals / daysInSample : 0
                 
                 let totalDays = max(Calendar.current.dateComponents([.day], from: from, to: to).day ?? 7, 1)
                 
@@ -193,7 +197,7 @@ final class HealthData {
                 
                 let average = totalCals/totalDays
                 
-                continuation.resume(returning: (val: average, estimate: estimated))
+                continuation.resume(returning: (val: average, estimate: estimated, realAverage: realAverage))
             }
             
             healthStore.execute(statQuery)
@@ -214,11 +218,13 @@ final class HealthData {
             // Pull the arithmetic mean from HealthKit
             let result = await self.getAverageCalories(from: getWeekBeforeDate(date: endDate), to: endDate, type: activeQuantityType)
             
-            // If it's not an estimate, great, use that
-            if result.estimate == false {
-                averageBurn = result.val
-                
-            // If it is an estimate, use the user's manual calorie burn instead
+            // Only fall back to the manual figure when the past week has NO real active data at
+            // all (realAverage == 0). If even one day was recorded, project off the real average
+            // of the days that actually had data — never a manual blend, even if some days are
+            // missing. This lets a user who's just woken up (zero active *today*) still get a
+            // real-history projection while legitimately showing zero burned so far.
+            if result.realAverage > 0 {
+                averageBurn = result.realAverage
             } else {
                 averageBurn = settingsObj.manualActive
                 wasEstimate = true
