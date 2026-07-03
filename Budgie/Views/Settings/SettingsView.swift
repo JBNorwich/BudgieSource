@@ -22,7 +22,6 @@ struct SettingsView: View {
     @State private var showingBMRHelper: Bool = false
     @State var surplusMode: Bool = false
     @State var useFitnessGoal: Bool = false
-    @State private var isPresented = false
     @State var disclaimerDisplayed = false
     @State var deficitLabel: String = "0"
     @State var surpDefHeader: String = "Header goes here"

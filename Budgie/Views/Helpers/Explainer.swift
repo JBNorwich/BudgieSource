@@ -17,10 +17,6 @@ import SwiftUI
 
 struct Explainer: View {
     @Binding var showing: Bool
-    @State var averageActive: Int = Int()
-    @State var averageBasal: Int = Int()
-    @State var totalBurned: Int = Int()
-    @State var totalBudget: Int = Int()
     @State var dummyLump: TodayLump = TodayLump()
     
     var body: some View {
@@ -36,7 +32,7 @@ struct Explainer: View {
                     }.frame(maxWidth: 200)
                         .padding()
                     
-                    Text("The figure in the circle shows you how you're doing **against your target** - how much Budgie Diet thinks you can eat now without going over your budget later.\n\nThe bar around the outside shows you **how much of your total daily budget you've eaten**. If it's green, you've eaten less of your budget than you'd expect for this time of day; if it's red, you've eaten more.\n\nYou can also see the exact amount you have left overall in the \"Today in detail\" box on the Today screen.\n\nIn short - if you follow the \"Can eat now\" figure, you will stay within your budget and meet your calorie goal!").padding()
+                    Text("The figure in the circle shows you how you're doing **against your target** - how much Budgie Diet thinks you can eat now without going over your budget later.\n\nThe bar around the outside shows you **how much of your total daily budget you've eaten**. If it's green, you've eaten less of your budget than you'd expect for this time of day; if it's red, you've eaten more.\n\nYou can also see the exact amount you have left in your budget overall in the \"Your target\" box on the Today screen.\n\nIn short - if you follow the \"Can eat now\" figure, you will stay within your budget and meet your calorie goal!").padding()
                     
                     Button("Close") {
                         showing = false

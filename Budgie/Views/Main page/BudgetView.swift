@@ -389,15 +389,6 @@ struct WaterLabelView: View {
     }
 }
 
-struct ActivityLabelView: View {
-    var body: some View {
-        HStack{
-            Label("Activity", systemImage: "figure.run")
-            Spacer()
-        }
-    }
-}
-
 struct WeightLabelView: View {
     @Binding var showingWeightGoalSheet: Bool
     @Binding var showingLogWeightSheet: Bool

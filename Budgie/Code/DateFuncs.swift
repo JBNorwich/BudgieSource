@@ -45,20 +45,11 @@ func getMidnightOnDayAfter(date: Date) -> Date { midnight(daysOffset: 1, from: d
 /// Returns midnight on the date 7 days before the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 22nd June.
 func getWeekBeforeDate(date: Date) -> Date { midnight(daysOffset: -7, from: date) }
 
-/// Returns midnight on the date 7 days after the one passed. For example, if you passed this function 19:02 on the 29th June, it would return 00:00 on the 6th July.
-func getWeekAfterDate(date: Date) -> Date { midnight(daysOffset: 7, from: date) }
-
 /// Returns the number of minutes that have passed in the current day. Will return 0 at midnight.
 func minutesIntoDay() -> Int {
     let date = Date()
     let calendar = Calendar.current
     return (60 * calendar.component(.hour, from: date)) + calendar.component(.minute, from: date)
-}
-
-/// Returns the hour number of the current time. For example, if passed 19:02 on the 29th June, would return 19.
-func getHoursOfTime(date: Date) -> Int {
-    let calendar = Calendar.current
-    return calendar.component(.hour, from: date)
 }
 
 /// Returns a simple Double() percentage of the minutes out of the 1,440 that there are in a day.

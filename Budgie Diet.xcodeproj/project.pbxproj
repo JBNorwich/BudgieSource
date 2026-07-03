@@ -61,7 +61,6 @@
 		D89A95D72C84F782007796AB /* HealthData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831612C73C7EE00AAF555 /* HealthData.swift */; };
 		D89A95D82C84F782007796AB /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
 		D89A95D92C84F782007796AB /* CalorieModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */; };
-		D89A95DC2C84F7DA007796AB /* WatchMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89A95DB2C84F7DA007796AB /* WatchMeter.swift */; };
 		D89A95DD2C84F82B007796AB /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D89A95DE2C84FAC0007796AB /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
@@ -193,7 +192,6 @@
 		D89A95C92C84F753007796AB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D89A95CC2C84F753007796AB /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		D89A95D52C84F75B007796AB /* BudgieWatch Watch App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "BudgieWatch Watch App.entitlements"; sourceTree = "<group>"; };
-		D89A95DB2C84F7DA007796AB /* WatchMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMeter.swift; sourceTree = "<group>"; };
 		D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPredicates.swift; sourceTree = "<group>"; };
 		D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterModel.swift; sourceTree = "<group>"; };
 		D8B5AE072C7934B800C4533A /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
@@ -403,7 +401,6 @@
 				D89A95C72C84F752007796AB /* ContentView.swift */,
 				D89A95C92C84F753007796AB /* Assets.xcassets */,
 				D89A95CB2C84F753007796AB /* Preview Content */,
-				D89A95DB2C84F7DA007796AB /* WatchMeter.swift */,
 			);
 			path = "BudgieWatch Watch App";
 			sourceTree = "<group>";
@@ -714,7 +711,6 @@
 				D89A95DD2C84F82B007796AB /* UserSettings.swift in Sources */,
 				D89A95C82C84F752007796AB /* ContentView.swift in Sources */,
 				D89A95C62C84F752007796AB /* BudgieWatchApp.swift in Sources */,
-				D89A95DC2C84F7DA007796AB /* WatchMeter.swift in Sources */,
 				D89A95DE2C84FAC0007796AB /* SearchPredicates.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
