@@ -38,7 +38,7 @@ struct WeightHistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack {
-                ChartDatePicker(startDate: $startDate, endDate: $endDate, dateChanged: $dateChanged)
+                ChartDatePicker(startDate: $startDate, endDate: $endDate, dateChanged: $dateChanged, stepComponent: .month, stepValue: 1)
                 chart
             }
             .padding(.horizontal)

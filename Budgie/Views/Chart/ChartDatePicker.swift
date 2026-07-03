@@ -38,14 +38,27 @@ struct ChartDatePicker: View {
     @Binding var startDate: Date
     @Binding var endDate: Date
     @Binding var dateChanged: Bool
-    @State var calsSheetSize = PresentationDetent.medium
     
+    /// The unit each arrow steps by — and therefore the width the window keeps as you page.
+    /// Defaults to a week for the ChartPage, which is this picker's primary function.
+    var stepComponent: Calendar.Component = .day
+    var stepValue: Int = 7
+    
+    @State var calsSheetSize = PresentationDetent.medium
     @State var showingFullPicker: Bool = false
+    
+    /// Shifts a date by `times` whole steps, normalised to midnight to match the app's
+    /// half-open [start, midnight-after-end) date convention.
+    private func stepped(_ date: Date, times: Int) -> Date {
+        let cal = Calendar.current
+        let shifted = cal.date(byAdding: stepComponent, value: stepValue * times, to: date) ?? date
+        return cal.startOfDay(for: shifted)
+    }
 
-    var prevStartDate: Date { getWeekBeforeDate(date: startDate) }
-    var prevEndDate: Date { getWeekBeforeDate(date: endDate) }
-    var nextStartDate: Date { getWeekBeforeDate(date: nextEndDate) }
-    var nextEndDate: Date { min(getWeekAfterDate(date: endDate), getMidnightOnDayAfter(date: Date())) }
+    var prevStartDate: Date { stepped(startDate, times: -1) }
+    var prevEndDate: Date { stepped(endDate, times: -1) }
+    var nextStartDate: Date { stepped(nextEndDate, times: -1) }
+    var nextEndDate: Date { min(stepped(endDate, times: 1), getMidnightOnDayAfter(date: Date())) }
     var atMax: Bool { endDate >= getMidnightOnDayAfter(date: Date()) }
     
     var body: some View {
