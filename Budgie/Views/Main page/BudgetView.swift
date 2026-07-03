@@ -37,6 +37,8 @@ struct ColoredButton: ButtonStyle {
     }
 }
 
+private enum MainNavDestination: Hashable { case foodHub, waterPage }
+
 struct BudgetView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) var colorScheme
@@ -49,8 +51,6 @@ struct BudgetView: View {
     // state vars for various sheets
     @State var showingHelp: Bool = false
     @State var showingWhales: Bool = false
-    @State var openingFoodHub: Bool = false
-    @State var openingWaterPage: Bool = false
     @State var showAddCalsSheet: Bool = false
     @State var showWaterSheet: Bool = false
     @State var showingDetail: Bool = false
@@ -58,6 +58,7 @@ struct BudgetView: View {
     @State var showingWeightDetail: Bool = false
     @State var showingWeightLogSheet: Bool = false
     @State var backgroundGradient = CurrentGradient()
+    @State private var mainNavDestination: MainNavDestination?
     @State private var showStorageError = dataStore.storeFailedToLoad
     
     func updateGradient() {
@@ -129,7 +130,7 @@ struct BudgetView: View {
                             GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
                                 WaterView().environmentObject(todayLump)
                             }.onTapGesture {
-                                openingWaterPage = true
+                                mainNavDestination = .waterPage
                             }.backgroundStyle(.regularMaterial)
                                 .frame(minHeight: 100)
                         }
@@ -151,7 +152,7 @@ struct BudgetView: View {
                         {
                             TodayFoodList().environmentObject(todayLump)
                         }.onTapGesture {
-                            openingFoodHub = true
+                            mainNavDestination = .foodHub
                         }.backgroundStyle(.regularMaterial)
                         
                         HStack {
@@ -219,16 +220,15 @@ struct BudgetView: View {
             } message: {
                 Text("I couldn't open my database, so anything you log may not be saved. Please restart the app; if this keeps happening, restart your device.")
             }
-        }
-        
-        .navigationDestination(isPresented: $openingFoodHub)
-        {
-            FoodHub(curDate: Date()).environmentObject(todayLump)
-        }
-        
-        .navigationDestination(isPresented: $openingWaterPage)
-        {
-            WaterPage(curDate: Date()).environmentObject(todayLump)
+            
+            .navigationDestination(item: $mainNavDestination) { destination in
+                switch destination {
+                case .foodHub:
+                    FoodHub(curDate: Date()).environmentObject(todayLump)
+                case .waterPage:
+                    WaterPage(curDate: Date()).environmentObject(todayLump)
+                }
+            }
         }
         
         .onChange(of: scenePhase) {
