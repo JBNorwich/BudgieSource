@@ -580,6 +580,16 @@ final class HealthData {
 
         todayLump.lastUpdate = Date()
         if reloadWidgets {
+            // Mirror the numbers the widget needs into the shared app-group defaults.
+            // The widget can't reliably run HealthKit/SwiftData work or read iCloud
+            // key-value settings in its own process, so it renders from this snapshot.
+            if let group = UserDefaults(suiteName: "group.JoeBaldwin.Budgie") {
+                group.set(todayLump.totalBudget, forKey: "widgetTotalBudget")
+                group.set(todayLump.eatenCalories, forKey: "widgetEatenCalories")
+                group.set(todayLump.projectedBasal, forKey: "widgetProjectedBasal")
+                group.set(effectiveFinalMealTime(), forKey: "widgetFinalMealTime")
+                group.set(settingsObj.surplusMode, forKey: "widgetSurplusMode")
+            }
             WidgetCenter.shared.reloadAllTimelines()
         }
     }

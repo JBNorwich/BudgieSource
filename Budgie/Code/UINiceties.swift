@@ -188,11 +188,11 @@ func renderVolume(millilitres ml: Int, outputUnit: volumeUnits? = nil, includeSu
 
 // BLOB FUNCTIONS
 /// Colour of the central blob, based on how much the user can still eat.
-func budgetBlobColour(canEatNow: Int) -> Color {
+func budgetBlobColour(canEatNow: Int, surplusMode: Bool = settingsObj.surplusMode) -> Color {
     if canEatNow < -49 {
-        return settingsObj.surplusMode ? .green : .red
+        return surplusMode ? .green : .red
     } else if canEatNow < 50 {
-        return settingsObj.surplusMode ? .red : .green
+        return surplusMode ? .red : .green
     } else {
         return .teal
     }
@@ -213,8 +213,8 @@ func budgetPathColour(diff: Double, budget: Int, projectedBasal: Int) -> Color {
 }
 
 /// Headline label above the meter.
-func budgetStatusLabel(leftToEat: Int) -> String {
-    if settingsObj.surplusMode {
+func budgetStatusLabel(leftToEat: Int, surplusMode: Bool = settingsObj.surplusMode) -> String {
+    if surplusMode {
         return leftToEat > -1 ? "Need to eat" : "Overeaten by"
     } else {
         return leftToEat > -1 ? "Can eat now" : "Over target by"

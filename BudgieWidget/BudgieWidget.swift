@@ -26,17 +26,18 @@ struct TinyMeter: View {
     var progress: Double
     var totalBudg: Int
     var projBasal: Int
-    
+    var surplusMode: Bool = false
+
     private var pathDiff: Double {
         let d = progress / getPercentOfDayDone()
-        return d.isFinite ? d : 0          // ← the guard, relocated here
+        return d.isFinite ? d : 0
     }
-    
+
     var body: some View {
         ZStack {
             Circle()
                 .fill(.shadow(.drop(color: .black, radius: 4)))
-                .fill(budgetBlobColour(canEatNow: leftToEat))
+                .fill(budgetBlobColour(canEatNow: leftToEat, surplusMode: surplusMode))
             Circle()
                 .trim(from: 0, to: progress)
                 .rotation(Angle(degrees: -90))
@@ -59,27 +60,52 @@ struct TinyMeter: View {
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> BudgieEntry {
-        BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
+        BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (BudgieEntry) -> ()) {
-        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
+        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false)
         completion(entry)
     }
 
+    /// "Can eat now" at a given time, from the snapshot's raw numbers — the same
+    /// square-law ramp as weightCanEatNow(), but taking its inputs as parameters
+    /// because the widget can't trust settingsObj in its own process.
+    private func canEat(at date: Date, budget: Int, eaten: Int, finalMealTime: Int) -> Int {
+        let cal = Calendar.current
+        let mins = (60 * cal.component(.hour, from: date)) + cal.component(.minute, from: date)
+        var factor = Double(mins + 1) / Double(max(finalMealTime, 1))
+        if factor > 1 { factor = 1 } else { factor *= factor }
+        return Int(Double(budget) * factor) - eaten
+    }
+
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        Task {
-            let lump = TodayLump()
-            await dataStore.updateLump(todayLump: lump, reloadWidgets: false)
-            let date = Date()
-            let entry = BudgieEntry(date: date, leftToEat: lump.canEatNow, progressDbl: lump.progressToday, totalBudgRem: lump.totalBudgetRem, totalBudg: lump.totalBudget, projBasal: lump.projectedBasal)
-            
-            let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 30, to: date)!
-            
-            let timeline = Timeline(entries: [entry], policy: .after(nextUpdateDate))
-            
-            completion(timeline)
+        // Pure read of the snapshot the app wrote — no HealthKit, no SwiftData, so this
+        // completes instantly and can't hit the extension's memory or lock-state limits.
+        let group = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
+        let budget = group?.integer(forKey: "widgetTotalBudget") ?? 0
+        let eaten = group?.integer(forKey: "widgetEatenCalories") ?? 0
+        let projBasal = group?.integer(forKey: "widgetProjectedBasal") ?? 0
+        let finalMeal = (group?.object(forKey: "widgetFinalMealTime") as? Int) ?? 1080
+        let surplus = group?.bool(forKey: "widgetSurplusMode") ?? false
+        let progress = budget != 0 ? Double(eaten) / Double(budget) : 0
+
+        // The data only changes when the app updates, but "can eat now" ramps with the
+        // clock — so emit an entry every 15 minutes for the next 3 hours, then repeat.
+        var entries: [BudgieEntry] = []
+        let now = Date()
+        for i in 0..<12 {
+            let entryDate = now.addingTimeInterval(Double(i) * 15 * 60)
+            entries.append(BudgieEntry(date: entryDate,
+                                       leftToEat: canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal),
+                                       progressDbl: progress,
+                                       totalBudgRem: budget - eaten,
+                                       totalBudg: budget,
+                                       projBasal: projBasal,
+                                       surplusMode: surplus))
         }
+
+        completion(Timeline(entries: entries, policy: .atEnd))
     }
 }
 
@@ -90,8 +116,8 @@ struct BudgieEntry: TimelineEntry {
     let totalBudgRem: Int
     let totalBudg: Int
     let projBasal: Int
+    let surplusMode: Bool
 }
-
 struct BudgieWidgetEntryView : View {
     var entry: Provider.Entry
 
@@ -201,9 +227,9 @@ struct BudgieWidget: Widget {
         .supportedFamilies([.systemSmall, .accessoryCircular])
     }
 }
-
-#Preview(as: .systemSmall) {
-    BudgieWidget()
-} timeline: {
-    BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
-}
+//
+//#Preview(as: .systemSmall) {
+//    BudgieWidget()
+//} timeline: {
+//    BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
+//}
