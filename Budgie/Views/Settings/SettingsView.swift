@@ -48,6 +48,14 @@ struct SettingsView: View {
         )
     }
     
+    private func getMealTimeText() -> String {
+        if settingsObj.useMealAllocations {
+            return ""
+        } else {
+            return mealTimeText
+        }
+    }
+    
     private var deficitBinding: Binding<Double> {
         Binding(
             get: {
@@ -160,6 +168,20 @@ struct SettingsView: View {
                 } label: { Text(waterGoalLabel) }
             }
             
+            Section(header: Text("Food logging")) {
+                NavigationLink {
+                    AllocateBudgetView()
+                } label: {
+                    Text("Budget allocation")
+                }
+                NavigationLink {
+                    ManageMealsView()
+                } label: {
+                    Text("Manage meals")
+                }
+                
+            }
+            
             Section(header: Text("Weight units")) {
                 Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit)) {
                     Text("Kilograms").tag(0)
@@ -180,13 +202,7 @@ struct SettingsView: View {
                 Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
             }
 
-            Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
-                NavigationLink {
-                    ManageMealsView()
-                } label: {
-                    Text("Manage meals")
-                }
-                
+            Section(header: Text("Advanced"), footer: Text(getMealTimeText())) {
                 NavigationLink {
                     BudgetCap()
                 } label: {
@@ -199,7 +215,9 @@ struct SettingsView: View {
                     Text("Budget weighting options")
                 }
                 
-                DatePicker("Typical evening meal time", selection: weightTimeBinding, displayedComponents: .hourAndMinute)
+                if !settingsObj.useMealAllocations {
+                    DatePicker("Typical evening meal time", selection: weightTimeBinding, displayedComponents: .hourAndMinute)
+                }
             }
             
             Section(header: Text("Other settings")) {

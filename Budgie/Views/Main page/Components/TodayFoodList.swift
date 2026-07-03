@@ -17,15 +17,24 @@ import SwiftUI
 
 struct TodayFoodList: View {
     @EnvironmentObject var dataLump: TodayLump
-    
+
     var groupedByMeal: [UUID: [CalorieEntry]] {
         Dictionary(grouping: dataLump.foodList, by: \.meal)
     }
-    
+
+    private var allocationsOn: Bool { settingsObj.useMealAllocations }
+
+    /// Which meals to list: every meal (sorted) when planning by allocation, so the user can see empty meals and their targets; otherwise just the meals that have food logged today.
+    private var displayedMeals: [Meal] {
+        allocationsOn
+            ? dataLump.allMeals.sorted { $0.order < $1.order }
+            : dataLump.cleansedMealList
+    }
+
     struct FoodHeaderView: View {
         let name: String
         let calsText: String
-        
+
         var body: some View {
             HStack {
                 Text(name.uppercased())
@@ -38,46 +47,72 @@ struct TodayFoodList: View {
             }
         }
     }
-    
+
+    /// The per-meal footer: eaten calories, plus "/ target" when allocations are on.
+    @ViewBuilder
+    private func mealTotalRow(for meal: Meal) -> some View {
+        HStack {
+            Spacer()
+            let eaten = dataLump.mealTotalList[meal.mealUUID] ?? 0
+            if let target = dataLump.mealAllocationTargets[meal.mealUUID] {
+                Text("**\(eaten.formatted())** / \(target.formatted())")
+            } else {
+                Text("**\(eaten.formatted())**")
+            }
+        }
+    }
+
+    /// One meal's block: header, its entries (if any), a divider when there are entries, and the total row.
+    @ViewBuilder
+    private func mealSection(for meal: Meal, entries: [CalorieEntry]) -> some View {
+        FoodHeaderView(name: meal.name, calsText: "CALORIES")
+        ForEach(entries) { entry in
+            CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
+        }
+        if !entries.isEmpty {
+            HStack {
+                Spacer()
+                VStack {
+                    Divider()
+                        .frame(maxWidth: 50)
+                }
+            }
+        }
+        mealTotalRow(for: meal)
+        Spacer()
+    }
+
+    @ViewBuilder
+    private var healthKitSection: some View {
+        if dataLump.healthKitCalories != 0 {
+            Spacer()
+            FoodHeaderView(name: "FROM OTHER APPS", calsText: "CALORIES")
+            // "Date" doesn't matter too much because it doesn't display where "realEntry" is false so we can pass whatever we want.
+            CalorieEntryView(calories: dataLump.healthKitCalories, narrative: "Calories from Apple Health", realEntry: false, date: dataLump.lastUpdate)
+            Spacer()
+        }
+    }
+
     var body: some View {
-        if !dataLump.foodList.isEmpty || dataLump.healthKitCalories != 0 {
+        if allocationsOn {
+            // Planning view: show every meal with its target, even those with no food yet.
+            ForEach(displayedMeals) { meal in
+                mealSection(for: meal, entries: groupedByMeal[meal.mealUUID] ?? [])
+            }
+            healthKitSection
+        } else if !dataLump.foodList.isEmpty || dataLump.healthKitCalories != 0 {
+            // Original behaviour: only meals that actually have food.
             if !dataLump.foodList.isEmpty {
-                ForEach(dataLump.mealList) { meal in
+                ForEach(displayedMeals) { meal in
                     let entries = groupedByMeal[meal.mealUUID] ?? []
                     if !entries.isEmpty {
-                        FoodHeaderView(name: meal.name, calsText: "CALORIES")
-                        ForEach(entries) { entry in
-                            CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories", realEntry: entry.realEntry, date: entry.date)
-                        }
-                        HStack {
-                            Spacer()
-                            VStack {
-                                Divider()
-                                    .frame(maxWidth: 50)
-                            }
-                        }
-                        HStack {
-                            Spacer()
-                            Text("**\((dataLump.mealTotalList[meal.mealUUID] ?? 0).formatted())**")
-                        }
-                        Spacer()
+                        mealSection(for: meal, entries: entries)
                     }
                 }
             }
-            
-            if dataLump.healthKitCalories != 0 {
-                Spacer()
-                FoodHeaderView(name: "FROM OTHER APPS", calsText: "CALORIES")
-                // "Date" doesn't matter too much because it doesn't display where "realEntry" is false so we can pass whatever we want.
-                CalorieEntryView(calories: dataLump.healthKitCalories, narrative: "Calories from Apple Health", realEntry: false, date: dataLump.lastUpdate)
-                Spacer()
-            }
+            healthKitSection
         } else {
             Text("You have no eaten calories logged today.")
         }
     }
 }
-
-//#Preview {
-//    TodayFoodList()
-//}

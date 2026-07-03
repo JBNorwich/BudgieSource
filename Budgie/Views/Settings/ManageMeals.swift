@@ -146,11 +146,19 @@ private struct ReassignMealSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var targetUUID: UUID?
+    
+    private func getFooterText() -> String {
+        var baseString = "All entries currently logged under “\(mealToDelete.name)” will be moved to the meal you choose. This can’t be undone."
+        if settingsObj.useMealAllocations {
+            baseString += "\n\nDeleting this won't reapportion your allocations to different meals - you'll need to re-set the remaining allocations."
+        }
+        return baseString
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section(footer: Text("All entries currently logged under “\(mealToDelete.name)” will be moved to the meal you choose. This can’t be undone.")) {
+                Section(footer: Text(getFooterText())) {
                     Picker("Move entries to", selection: $targetUUID) {
                         ForEach(candidates) { meal in
                             Text(meal.name).tag(Optional(meal.mealUUID))

@@ -66,9 +66,14 @@ func getPercentOfDayDone() -> Double {
     return Double(minutesIntoDay()) / 1440
 }
 
+/// The minute-of-day the "can eat now" ramp aims at. Normally the user's final meal time, but when meal allocations are enabled that setting is irrelevant, so the budget is spread across the whole day — i.e. we treat the final meal time as midnight (1440).
+func effectiveFinalMealTime() -> Int {
+    return settingsObj.useMealAllocations ? 1440 : settingsObj.finalMealTime
+}
+
 /// Used to weight the user's "left to eat" figure based on the time into the day and the closeness to the user's set "final meal time". Weights more generously the closer to final meal time it is.
 func weightCanEatNow(input: Int) -> Int {
-    var factor = Double(minutesIntoDay() + 1)/Double(settingsObj.finalMealTime)
+    var factor = Double(minutesIntoDay() + 1) / Double(effectiveFinalMealTime())
     
     if factor > 1 { factor = 1 }
     else { factor = factor * factor }

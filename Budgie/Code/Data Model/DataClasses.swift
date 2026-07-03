@@ -40,7 +40,11 @@ class TodayLump: ObservableObject {
     @Published private(set) var budgetAtMin: Bool = false
     
     // food data
-    @Published var mealList: [Meal] = []
+    /// A list of Meal()s in the database that don't include any that don't have food logged today.
+    @Published var cleansedMealList: [Meal] = []
+    /// A list of all Meal()s in the database, whether they've got food in them or not.
+    @Published var allMeals: [Meal] = []
+    /// The total calories for each meal that has calories in it.
     @Published var mealTotalList: [UUID:Int] = [:]
     @Published var foodList: [CalorieEntry] = []
     @Published var healthKitCalories: Int = 0
@@ -257,6 +261,25 @@ class TodayLump: ObservableObject {
     var hasGoalTimeEstimate: Bool {
         if consistentlyLoggedFood && measuredGoalRate <= 0 { return false }
         return goalProjectionDeficit > 0
+    }
+    
+    /// Per-meal calorie targets when allocations are enabled. Non-Snacks meals get round(percent% × budget); Snacks/Other absorbs the remainder and any rounding.
+    /// Returns an empty dictionary when the feature is off.
+    var mealAllocationTargets: [UUID: Int] {
+        guard settingsObj.useMealAllocations else { return [:] }
+        let budget = self.totalBudget
+        let snacksUUID = settingsObj.snacksUUID
+        var targets: [UUID: Int] = [:]
+        var allocated = 0
+        for meal in allMeals where meal.mealUUID != snacksUUID {
+            let t = Int((meal.budgetPercent / 100 * Double(budget)).rounded())
+            targets[meal.mealUUID] = t
+            allocated += t
+        }
+        if let snacksUUID {
+            targets[snacksUUID] = max(budget - allocated, 0)
+        }
+        return targets
     }
 }
 

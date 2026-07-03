@@ -21,8 +21,12 @@ import AppIntents
 @Model final class Meal {
     private(set) var id: UUID = UUID()
     var mealUUID: UUID = UUID()
+    /// The title of the meal
     var name: String = "Meal"
+    /// Absolute order in the list of meals.
     var order: Int = 0
+    /// Percentage of the budget allocated to this meal, if that feature is turned on. 0 is unallocated.
+    var budgetPercent: Double = 0
     
     init(name: String, order: Int) {
         self.name = name.isEmpty ? "Unnamed meal" : name
@@ -223,5 +227,16 @@ actor CalorieActor {
         }
 
         do { try modelContext.save() } catch { print("Meal deletion error: \(error)") }
+    }
+    
+    /// Writes per-meal budget percentages. Values are clamped to 0...100.
+    func setMealAllocations(_ allocations: [UUID: Double]) {
+        let meals = getListOfMeals()
+        for meal in meals {
+            if let pct = allocations[meal.mealUUID] {
+                meal.budgetPercent = max(0, min(100, pct))
+            }
+        }
+        do { try modelContext.save() } catch { print("Allocation save error: \(error)") }
     }
 }

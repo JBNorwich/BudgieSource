@@ -515,10 +515,11 @@ final class HealthData {
         // Food list + meal breakdown (the meal list depends on the fetched food list)
         let foodList = await foodListTask
         todayLump.foodList = foodList
-        todayLump.mealList = await calorieActor.cleansedMealList(data: foodList)
+        todayLump.allMeals = await calorieActor.getListOfMeals()
+        todayLump.cleansedMealList = await calorieActor.cleansedMealList(data: foodList)
 
         todayLump.mealTotalList = [:]
-        for meal in todayLump.mealList {
+        for meal in todayLump.cleansedMealList {
             var sum = 0
             for food in foodList where food.meal == meal.mealUUID {
                 sum += food.calories

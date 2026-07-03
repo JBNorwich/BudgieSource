@@ -34,6 +34,7 @@
 		D868606D2C7BD0E900730373 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868606C2C7BD0E900730373 /* Tests.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
 		D88F918A2FF7AFE90070715B /* ManageMeals.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F91892FF7AFE50070715B /* ManageMeals.swift */; };
+		D88F918C2FF7B5880070715B /* AllocateBudgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F918B2FF7B5860070715B /* AllocateBudgets.swift */; };
 		D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A42C73C3FC00138B60 /* BudgieApp.swift */; };
 		D89461A72C73C3FC00138B60 /* BudgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A62C73C3FC00138B60 /* BudgetView.swift */; };
 		D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461A82C73C3FD00138B60 /* Assets.xcassets */; };
@@ -174,6 +175,7 @@
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		D88F91892FF7AFE50070715B /* ManageMeals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageMeals.swift; sourceTree = "<group>"; };
+		D88F918B2FF7B5860070715B /* AllocateBudgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllocateBudgets.swift; sourceTree = "<group>"; };
 		D89461A12C73C3FC00138B60 /* Budgie Diet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Budgie Diet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D89461A42C73C3FC00138B60 /* BudgieApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgieApp.swift; sourceTree = "<group>"; };
 		D89461A62C73C3FC00138B60 /* BudgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetView.swift; sourceTree = "<group>"; };
@@ -260,6 +262,7 @@
 		D829B0812C79B5950027841B /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				D88F918B2FF7B5860070715B /* AllocateBudgets.swift */,
 				D88F91892FF7AFE50070715B /* ManageMeals.swift */,
 				D8BDE7352C7B961200E07471 /* Donate.swift */,
 				D8BDE7332C7B8E8900E07471 /* Disclaimer.swift */,
@@ -638,6 +641,7 @@
 			files = (
 				D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */,
 				D8BDE7342C7B8E8900E07471 /* Disclaimer.swift in Sources */,
+				D88F918C2FF7B5880070715B /* AllocateBudgets.swift in Sources */,
 				D8E8316E2C74976300AAF555 /* MeterView.swift in Sources */,
 				D8E831852C77549200AAF555 /* ChartPage.swift in Sources */,
 				D88F918A2FF7AFE90070715B /* ManageMeals.swift in Sources */,
