@@ -60,11 +60,11 @@ struct TinyMeter: View {
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> BudgieEntry {
-        BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false)
+        BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false, useAllocations: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (BudgieEntry) -> ()) {
-        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false)
+        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false, useAllocations: false)
         completion(entry)
     }
 
@@ -88,21 +88,28 @@ struct Provider: TimelineProvider {
         let projBasal = group?.integer(forKey: "widgetProjectedBasal") ?? 0
         let finalMeal = (group?.object(forKey: "widgetFinalMealTime") as? Int) ?? 1080
         let surplus = group?.bool(forKey: "widgetSurplusMode") ?? false
+        let useAllocations = group?.bool(forKey: "widgetUseAllocations") ?? false
         let progress = budget != 0 ? Double(eaten) / Double(budget) : 0
 
         // The data only changes when the app updates, but "can eat now" ramps with the
         // clock — so emit an entry every 15 minutes for the next 3 hours, then repeat.
+        // With meal allocations on, pacing is per-meal, so there's no ramp to follow:
+        // show the plain daily remainder instead, matching the phone's meter.
         var entries: [BudgieEntry] = []
         let now = Date()
         for i in 0..<12 {
             let entryDate = now.addingTimeInterval(Double(i) * 15 * 60)
+            let leftToEat = useAllocations
+                ? budget - eaten
+                : canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal)
             entries.append(BudgieEntry(date: entryDate,
-                                       leftToEat: canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal),
+                                       leftToEat: leftToEat,
                                        progressDbl: progress,
                                        totalBudgRem: budget - eaten,
                                        totalBudg: budget,
                                        projBasal: projBasal,
-                                       surplusMode: surplus))
+                                       surplusMode: surplus,
+                                       useAllocations: useAllocations))
         }
 
         completion(Timeline(entries: entries, policy: .atEnd))
@@ -117,6 +124,7 @@ struct BudgieEntry: TimelineEntry {
     let totalBudg: Int
     let projBasal: Int
     let surplusMode: Bool
+    let useAllocations: Bool
 }
 struct BudgieWidgetEntryView : View {
     var entry: Provider.Entry
@@ -143,7 +151,7 @@ struct BudgieWidgetEntryView : View {
             VStack {
                 VStack {
                     HStack {
-                        Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode).uppercased())
+                        Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode, usingAllocations: entry.useAllocations).uppercased())
                             .font(.caption)
                         Spacer()
                     }

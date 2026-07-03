@@ -589,6 +589,7 @@ final class HealthData {
                 group.set(todayLump.projectedBasal, forKey: "widgetProjectedBasal")
                 group.set(settingsObj.finalMealTime, forKey: "widgetFinalMealTime")
                 group.set(settingsObj.surplusMode, forKey: "widgetSurplusMode")
+                group.set(settingsObj.useMealAllocations, forKey: "widgetUseAllocations")
             }
             WidgetCenter.shared.reloadAllTimelines()
         }
