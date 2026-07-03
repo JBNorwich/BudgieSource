@@ -96,6 +96,28 @@ actor CalorieActor {
         }
     }
     
+    func searchCals(term: String, meal: UUID?, limit: Int = 50) async -> [CalorieEntry] {
+        let predicate: Predicate<CalorieEntry>
+        if let meal {
+            predicate = #Predicate { $0.meal == meal && ($0.narrative?.localizedStandardContains(term) ?? false) }
+        } else {
+            predicate = #Predicate { $0.narrative?.localizedStandardContains(term) ?? false }
+        }
+        var descriptor = FetchDescriptor<CalorieEntry>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.fetchLimit = limit
+        guard let results = try? modelContext.fetch(descriptor) else { return [] }
+
+        // Same dedup as fetchCalsForMeal.
+        var seen = Set<String>()
+        return results.filter { entry in
+            guard let n = entry.narrative else { return true }
+            return seen.insert("\(n)|\(entry.calories)").inserted
+        }
+    }
+    
     func insertNewCals(object: CalorieEntry)
     {
 

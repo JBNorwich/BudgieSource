@@ -29,16 +29,22 @@ struct AddCalsSheet: View {
     @State private var showAllFoods: Bool = false
     @State private var searchText: String = ""
     
-    @State private var prevFoods: [CalorieEntry] = []
-    var displayedFoods: [CalorieEntry] {
-        guard !searchText.isEmpty else { return prevFoods }
-        return prevFoods.filter {
-            $0.narrative?.localizedCaseInsensitiveContains(searchText) ?? false
-        }
-    }
+    @State private var displayedFoods: [CalorieEntry] = []
+    @State private var reloadToken = UUID()
     
     var newCalsIn: Int { (calories ?? 0) + todayLump.eatenCalories }
     var newRemBudg: Int { todayLump.totalBudgetRem - (calories ?? 0) }
+    
+    private struct FoodQueryKey: Equatable {
+        var term: String
+        var meal: UUID?      // nil == searching across all meals
+        var reload: UUID     // manual refresh trigger (see below)
+    }
+    private var foodQueryKey: FoodQueryKey {
+        FoodQueryKey(term: searchText,
+                     meal: showAllFoods ? nil : selectedMeal,
+                     reload: reloadToken)
+    }
         
     var body: some View {
         NavigationStack {
@@ -94,7 +100,7 @@ struct AddCalsSheet: View {
                             }
                             Task {
                                 await saveEntry()
-                                doUpdates()
+                                reloadToken = UUID()
                                 calories = nil
                                 whatItIs = ""
                                 isFocused = true
@@ -148,20 +154,25 @@ struct AddCalsSheet: View {
                     }
                 }
             }
+            .task(id: foodQueryKey) {
+                if searchText.isEmpty {
+                    let scopeMeal = showAllFoods ? nil : mealList.first { $0.mealUUID == selectedMeal }
+                    displayedFoods = await dataStore.calorieActor.fetchCalsForMeal(scopeMeal)
+                } else {
+                    try? await Task.sleep(for: .milliseconds(200))   // debounce
+                    guard !Task.isCancelled else { return }
+                    displayedFoods = await dataStore.calorieActor.searchCals(
+                        term: searchText,
+                        meal: showAllFoods ? nil : selectedMeal
+                    )
+                }
+            }
             
             .navigationTitle("Add eaten calories")
         }
         
         .onChange(of: whatItIs) {
             self.whatItIs = String(whatItIs.prefix(30))
-        }
-        
-        .onChange(of: selectedMeal) {
-            doUpdates()
-        }
-        
-        .onChange(of: showAllFoods) {
-            doUpdates()
         }
         
         .alert("Calories can't be zero.", isPresented: $caloriesWereNil)
@@ -174,7 +185,6 @@ struct AddCalsSheet: View {
             // Use the pre-selected meal if it maps to a real meal, otherwise fall back to the first.
             guard let startingMeal = mealList.first(where: { $0.mealUUID == preSelectedMeal }) ?? mealList.first else { return }
             selectedMeal = startingMeal.mealUUID
-            prevFoods = await dataStore.calorieActor.fetchCalsForMeal(startingMeal)
         }
     }
     
@@ -184,15 +194,8 @@ struct AddCalsSheet: View {
     }
     
     func doUpdates() {
-        if showAllFoods == true {
-            Task {
-                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(nil)
-            }
-        } else {
+        if !showAllFoods {
             guard let mealWithUUID = mealList.first(where: { $0.mealUUID == selectedMeal }) else { return }
-            Task {
-                prevFoods = await dataStore.calorieActor.fetchCalsForMeal(mealWithUUID)
-            }
         }
     }
 }
