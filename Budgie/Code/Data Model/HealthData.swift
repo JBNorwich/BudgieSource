@@ -200,7 +200,7 @@ final class HealthData {
         }
     }
     
-    func getProjActiveCalories() async -> Int {
+    func getProjActiveCalories() async -> (value: Int, wasEstimate: Bool) {
         var averageBurn: Int = 0
         var wasEstimate: Bool = false
         var remainingFromAvg: Int = 0
@@ -240,7 +240,7 @@ final class HealthData {
         remainingFromAvg = averageBurn - curActive
         
         if remainingFromAvg < 0 {
-            return 0
+            return (value: 0, wasEstimate: wasEstimate)
         } else {
             if wasEstimate == false {
                 // Work out the user's Activity Quotient. This is the percentage of the user's averageBurn that is done, plus the percentage of the day that is left. This works this way to ensure that if the user does more exercise earlier in the day, they receive a greater credit for future projected calories than they would if it was late at night (simply because they have more time to reach their average, and thus are more likely to do so.)
@@ -248,9 +248,9 @@ final class HealthData {
                 actQuot = (Double(curActive) / Double(averageBurn)) + (1 - getPercentOfDayDone())
                 
                 // Pass this, plus the user's remaining from average, to the weighting function to get the final projection.
-                return weightActiveProjection(input: remainingFromAvg, actQuot: actQuot)
+                return (value: weightActiveProjection(input: remainingFromAvg, actQuot: actQuot), wasEstimate: wasEstimate)
             } else {
-                return Int(Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440))
+                return (value: Int(Double(1440 - minutesIntoDay()) * (Double(settingsObj.manualActive) / 1440)), wasEstimate: wasEstimate)
             }
         }
     }
@@ -522,7 +522,8 @@ final class HealthData {
 
         // Projected burn (needed before the estimated-fallback branches below)
         todayLump.projectedBasal = await projBasalTask
-        todayLump.projectedActive = await projActiveTask
+        todayLump.projectedActive = await projActiveTask.value
+        let projActiveEstimate = await projActiveTask.wasEstimate
 
         // Recorded basal — fall back to the manual figure if HealthKit has none
         let recBasalCalories = await recBasalTask
@@ -536,12 +537,12 @@ final class HealthData {
 
         // Recorded active — fall back to the manual figure if HealthKit has none
         let recActiveCalories = await recActiveTask
-        if recActiveCalories != 0 {
-            todayLump.activeEstimated = false
-            todayLump.activeCalories = recActiveCalories
-        } else {
+        if recActiveCalories == 0 && projActiveEstimate {
             todayLump.activeEstimated = true
             todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
+        } else {
+            todayLump.activeEstimated = false
+            todayLump.activeCalories = recActiveCalories
         }
 
         todayLump.recalculateBudget()
