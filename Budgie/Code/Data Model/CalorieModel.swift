@@ -177,4 +177,51 @@ actor CalorieActor {
             // Not recoverable.
         }
     }
+    
+    /// Adds a new meal, placed after the current highest-ordered meal.
+    func addMeal(name: String) {
+        let nextOrder = (getListOfMeals().map(\.order).max() ?? -1) + 1
+        let meal = Meal(name: name.trimmingCharacters(in: .whitespacesAndNewlines), order: nextOrder)
+        modelContext.insert(meal)
+        do { try modelContext.save() } catch { print("Meal insertion error: \(error)") }
+    }
+    
+    /// Renames the meal identified by `mealUUID`. Empty names fall back to "Unnamed meal".
+    func renameMeal(mealUUID: UUID, newName: String) {
+        let descriptor = FetchDescriptor<Meal>(predicate: #Predicate<Meal> { $0.mealUUID == mealUUID })
+        guard let meal = (try? modelContext.fetch(descriptor))?.first else { return }
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        meal.name = trimmed.isEmpty ? "Unnamed meal" : trimmed
+        do { try modelContext.save() } catch { print("Meal rename error: \(error)") }
+    }
+    
+    /// Persists a new display order. `orderedUUIDs` lists the meal UUIDs in the desired order.
+    func reorderMeals(orderedUUIDs: [UUID]) {
+        let meals = getListOfMeals()
+        for (index, uuid) in orderedUUIDs.enumerated() {
+            meals.first(where: { $0.mealUUID == uuid })?.order = index
+        }
+        do { try modelContext.save() } catch { print("Meal reorder error: \(error)") }
+    }
+    
+    /// Deletes a meal, first moving every CalorieEntry assigned to it onto `reassignTo`.
+    /// `protectedUUID` (the Snacks/Other meal) can never be deleted — the call is a no-op if it matches.
+    func deleteMeal(mealUUID: UUID, reassignTo: UUID, protectedUUID: UUID?) {
+        guard mealUUID != reassignTo else { return }
+        guard mealUUID != protectedUUID else { return }
+
+        // Move all entries off the doomed meal. Meal assignment is a Budgie Diet-only concept,
+        // so there is nothing to update in HealthKit here.
+        let entryDescriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate<CalorieEntry> { $0.meal == mealUUID })
+        let entries = (try? modelContext.fetch(entryDescriptor)) ?? []
+        for entry in entries { entry.meal = reassignTo }
+
+        // Delete the meal itself.
+        let mealDescriptor = FetchDescriptor<Meal>(predicate: #Predicate<Meal> { $0.mealUUID == mealUUID })
+        if let meal = (try? modelContext.fetch(mealDescriptor))?.first {
+            modelContext.delete(meal)
+        }
+
+        do { try modelContext.save() } catch { print("Meal deletion error: \(error)") }
+    }
 }

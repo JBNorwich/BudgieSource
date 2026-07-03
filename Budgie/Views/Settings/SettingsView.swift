@@ -182,6 +182,12 @@ struct SettingsView: View {
 
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
                 NavigationLink {
+                    ManageMealsView()
+                } label: {
+                    Text("Manage meals")
+                }
+                
+                NavigationLink {
                     BudgetCap()
                 } label: {
                     Text("Budget capping")
