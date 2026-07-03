@@ -35,6 +35,15 @@ struct AddCalsSheet: View {
     var newCalsIn: Int { (calories ?? 0) + todayLump.eatenCalories }
     var newRemBudg: Int { todayLump.totalBudgetRem - (calories ?? 0) }
     
+    // Per-meal figures — only meaningful when meal allocations are enabled.
+    var selectedMealName: String {
+       mealList.first(where: { $0.mealUUID == selectedMeal })?.name ?? "this meal"
+   }
+   var mealTarget: Int? { todayLump.mealAllocationTargets[selectedMeal] }
+   var newMealRem: Int {
+       (mealTarget ?? 0) - (todayLump.mealTotalList[selectedMeal] ?? 0) - (calories ?? 0)
+   }
+    
     private struct FoodQueryKey: Equatable {
         var term: String
         var meal: UUID?      // nil == searching across all meals
@@ -70,7 +79,9 @@ struct AddCalsSheet: View {
                     if (getMidnightOnDayBefore(date: Date()) == getMidnightOnDayBefore(date: selectedDate))
                     {
                         Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(abs(newRemBudg).formatted())** \(newRemBudg > 0 ? "in" : "over") your overall budget for the rest of the day.")
-
+                        if settingsObj.useMealAllocations, mealTarget != nil {
+                           Text("It'll also leave you **\(abs(newMealRem).formatted())** \(newMealRem > 0 ? "in" : "over") your allocation for \(selectedMealName).")
+                       }
                     }
                     
                     HStack {
