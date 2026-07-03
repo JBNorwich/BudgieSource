@@ -24,6 +24,7 @@ struct AddCalsSheet: View {
     @FocusState var isFocused: Bool
     @State private var mealList: [Meal] = []
     @State var selectedMeal: UUID = UUID()
+    var preSelectedMeal: UUID = settingsObj.snacksUUID ?? UUID()
     @State var selectedDate: Date
     @State private var showAllFoods: Bool = false
     @State private var searchText: String = ""
@@ -170,9 +171,10 @@ struct AddCalsSheet: View {
         
         .task {
             mealList = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
-            guard let firstMeal = mealList.first else { return }
-            selectedMeal = firstMeal.mealUUID
-            prevFoods = await dataStore.calorieActor.fetchCalsForMeal(firstMeal)
+            // Use the pre-selected meal if it maps to a real meal, otherwise fall back to the first.
+            guard let startingMeal = mealList.first(where: { $0.mealUUID == preSelectedMeal }) ?? mealList.first else { return }
+            selectedMeal = startingMeal.mealUUID
+            prevFoods = await dataStore.calorieActor.fetchCalsForMeal(startingMeal)
         }
     }
     
