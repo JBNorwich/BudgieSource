@@ -153,15 +153,19 @@ struct BudgieWidgetEntryView : View {
                             .font(.title)
                         Spacer()
                     }
-                    HStack {
-                        Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
-                            .font(.caption)
-                        Spacer()
-                    }
-                    HStack {
-                        Text(abs(entry.totalBudgRem).formatted())
-                            .font(.title)
-                        Spacer()
+                    
+                    // no value in showing left to eat if it's the same as the remaining budget
+                    if entry.totalBudgRem != entry.leftToEat {
+                        HStack {
+                            Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
+                                .font(.caption)
+                            Spacer()
+                        }
+                        HStack {
+                            Text(abs(entry.totalBudgRem).formatted())
+                                .font(.title)
+                            Spacer()
+                        }
                     }
                     Spacer()
                     
