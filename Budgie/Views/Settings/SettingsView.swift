@@ -48,14 +48,6 @@ struct SettingsView: View {
         )
     }
     
-    private func getMealTimeText() -> String {
-        if settingsObj.useMealAllocations {
-            return ""
-        } else {
-            return mealTimeText
-        }
-    }
-    
     private var deficitBinding: Binding<Double> {
         Binding(
             get: {
@@ -203,7 +195,7 @@ struct SettingsView: View {
                 Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
             }
 
-            Section(header: Text("Advanced"), footer: Text(getMealTimeText())) {
+            Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
                 NavigationLink {
                     BudgetCap()
                 } label: {
@@ -216,9 +208,7 @@ struct SettingsView: View {
                     Text("Budget weighting options")
                 }
                 
-                if !settingsObj.useMealAllocations {
-                    DatePicker("Typical evening meal time", selection: weightTimeBinding, displayedComponents: .hourAndMinute)
-                }
+                DatePicker("Typical evening meal time", selection: weightTimeBinding, displayedComponents: .hourAndMinute)
             }
             
             Section(header: Text("Other settings")) {
