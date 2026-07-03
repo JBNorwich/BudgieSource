@@ -261,4 +261,30 @@ actor CalorieActor {
         }
         do { try modelContext.save() } catch { print("Allocation save error: \(error)") }
     }
+    
+    /// Merges meals that share a name (e.g. duplicates created when two devices both seeded the defaults before CloudKit synced). Keeps one copy of each name - preferring `preferredSurvivor` (the stored Snacks/Other UUID), then the lowest order - moves the duplicates' entries across, and deletes the rest.
+    func dedupeMeals(preferredSurvivor: UUID?) {
+        let meals = getListOfMeals().sorted {
+            if $0.mealUUID == preferredSurvivor { return true }
+            if $1.mealUUID == preferredSurvivor { return false }
+            return $0.order < $1.order
+        }
+        var keptByName: [String: Meal] = [:]
+        var changed = false
+        for meal in meals {
+            if let survivor = keptByName[meal.name] {
+                let doomedUUID = meal.mealUUID
+                let survivorUUID = survivor.mealUUID
+                let descriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate<CalorieEntry> { $0.meal == doomedUUID })
+                for entry in (try? modelContext.fetch(descriptor)) ?? [] { entry.meal = survivorUUID }
+                modelContext.delete(meal)
+                changed = true
+            } else {
+                keptByName[meal.name] = meal
+            }
+        }
+        if changed {
+            do { try modelContext.save() } catch { print("Meal dedupe error: \(error)") }
+        }
+    }
 }

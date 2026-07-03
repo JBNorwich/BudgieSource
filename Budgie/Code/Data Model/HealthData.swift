@@ -24,8 +24,8 @@ import WidgetKit
 final class HealthData {
     static let shared = HealthData()
     
-    let calorieMealConfig = ModelConfiguration(schema: Schema([CalorieEntry.self,Meal.self]), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
-    let waterConfig = ModelConfiguration("waterDB", schema: Schema([WaterEntry.self]), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
+    let calorieMealConfig = ModelConfiguration(schema: Schema([CalorieEntry.self,Meal.self]), groupContainer: .identifier("group.JoeBaldwin.Budgie"), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
+    let waterConfig = ModelConfiguration("waterDB", schema: Schema([WaterEntry.self]), groupContainer: .identifier("group.JoeBaldwin.Budgie"), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
     let modelContainer: ModelContainer
     let calorieActor: CalorieActor
     let waterActor: WaterActor
@@ -52,59 +52,59 @@ final class HealthData {
         var calories: Double = 0
         let startDate = getStartOfDay(date: date)
         let endDate = getMidnightOnDayAfter(date: startDate)
-        
-        if type == eatenQuantityType && hkOnly == false {
-            var budgieCalories: Int = 0
-            let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
-            if !budgieResults.isEmpty {
-                for result in budgieResults {
-                    budgieCalories += result.calories
-                }
-            }
-            calories = Double(budgieCalories)
-        }
-        
+
         let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+        var subpredicates: [NSPredicate] = [notBudgiePredicate, timePredicate]
+
+        if type == eatenQuantityType {
+            // Exclude our mirrored samples by UUID as well as by source. HKSource.default()
+            // means "this process", so on the watch or in the widget the iPhone app's samples
+            // would otherwise be counted on top of the CloudKit-synced Budgie entries.
+            let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
+            let mirrored = Set(budgieResults.compactMap(\.healthKitUUID))
+            if !mirrored.isEmpty {
+                subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
+            }
+            if hkOnly == false {
+                calories = Double(budgieResults.reduce(0) { $0 + $1.calories })
+            }
+        }
+
+        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
         let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
         let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
         let kcals = (try? await sumActCalsQuery.result(for: healthStore))??.sumQuantity()
         calories += kcals?.doubleValue(for: .kilocalorie()) ?? 0
-        
-        calories = calories.rounded()
-        
-        return Int(calories)
+
+        return Int(calories.rounded())
     }
     
     /// Obtain the calories eaten from both Budgie Diet's internal storage and HealthKit. Returns a tuple of Ints that include HealthKit calories plus internal Budgie calories only.
     func pullEatenCalories(startDate: Date, endDate: Date) async -> (hk: Int, budgie: Int) {
-        var budgieCalories: Int = 0
-        var healthKitcalories: Double = 0
-        
-        // get HealthKit calories
-        let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, timePredicate])
-        let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: queryPredicate)], sortDescriptors: [])
-        do {
-            let results = try await descriptor.result(for: healthStore)
-            for result in results {
-                healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
+            // Budgie entries first — their mirrored HealthKit UUIDs are excluded from the HK
+            // query so entries logged on another device (or the watch) are never counted twice.
+            let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
+            let budgieCalories = budgieResults.reduce(0) { $0 + $1.calories }
+            let mirrored = Set(budgieResults.compactMap(\.healthKitUUID))
+
+            var healthKitcalories: Double = 0
+            let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
+            var subpredicates: [NSPredicate] = [notBudgiePredicate, timePredicate]
+            if !mirrored.isEmpty {
+                subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
             }
-        } catch {
-            healthKitcalories = 0
-        }
-        
-        // get Budgie Diet calories
-        let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
-        if budgieResults.count == 0 {
-            budgieCalories = 0
-        } else {
-            for result in budgieResults {
-                budgieCalories += result.calories
+            let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
+            let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: queryPredicate)], sortDescriptors: [])
+            do {
+                let results = try await descriptor.result(for: healthStore)
+                for result in results {
+                    healthKitcalories += result.quantity.doubleValue(for: HKUnit.kilocalorie())
+                }
+            } catch {
+                healthKitcalories = 0
             }
-        }
-        
-        return (hk: Int(healthKitcalories), budgie: budgieCalories)
+
+            return (hk: Int(healthKitcalories), budgie: budgieCalories)
     }
     
     func getProjBasalCalories() async -> Int {
@@ -392,26 +392,26 @@ final class HealthData {
     }
     
     func getWaterOnDate(date: Date) async -> (hk: Int, bd: Int) {
-        var waterTotalInHealthKit: Int = 0
-        var waterTotalInBudgie: Int = 0
-        
         let startDate = getStartOfDay(date: date)
         let endDate = getMidnightOnDayAfter(date: startDate)
-    
+
+        let budgieEntries = await waterActor.getEntriesOnDate(date: startDate)
+        let waterTotalInBudgie = budgieEntries.reduce(0) { $0 + $1.quantity }
+        let mirrored = Set(budgieEntries.compactMap(\.healthKitUUID))
+
         let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate,timePredicate])
+        var subpredicates: [NSPredicate] = [notBudgiePredicate, timePredicate]
+        if !mirrored.isEmpty {
+            subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
+        }
+        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
         let waterToday = HKSamplePredicate.quantitySample(type: waterQuantityType, predicate: queryPredicate)
         let sumWaterQuery = HKStatisticsQueryDescriptor(predicate: waterToday, options: .cumulativeSum)
-        do {
-            let queryResult = try await sumWaterQuery.result(for: healthStore)?.sumQuantity()
-            let ml = queryResult?.doubleValue(for: HKUnit.literUnit(with: .milli)) ?? 0
-            waterTotalInHealthKit = Int(ml)
-        } catch {
-            waterTotalInHealthKit = 0
+        var waterTotalInHealthKit = 0
+        if let queryResult = try? await sumWaterQuery.result(for: healthStore)?.sumQuantity() {
+            waterTotalInHealthKit = Int(queryResult.doubleValue(for: HKUnit.literUnit(with: .milli)))
         }
-        
-        waterTotalInBudgie = await waterActor.getTotalOnDate(date: date)
-        
+
         return (waterTotalInHealthKit, waterTotalInBudgie)
     }
 

@@ -21,6 +21,10 @@ struct FoodDatePicker: View {
     @State var prevDate: Date = Date()
     @State var nextDate: Date = Date()
     
+    private var atToday: Bool {
+        getStartOfDay(date: curDate) >= getStartOfDay(date: Date())
+    }
+    
     var body: some View {
         RoundedRectangle(cornerRadius: 10)
             .fill(.regularMaterial)
@@ -37,6 +41,7 @@ struct FoodDatePicker: View {
                         Spacer()
                         
                         DatePicker(selection: $curDate,
+                            in: ...Date(),
                             displayedComponents: .date,
                             label: { Text("Date")}).labelsHidden()
                         Spacer()
@@ -46,6 +51,7 @@ struct FoodDatePicker: View {
                     }
                         .labelStyle(.iconOnly)
                         .padding()
+                        .disabled(atToday)
                 }
             }
         

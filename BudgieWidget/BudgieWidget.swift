@@ -44,7 +44,7 @@ struct TinyMeter: View {
                 .fill(.clear)
                 .stroke(budgetPathColour(diff: pathDiff, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
                 .shadow(radius: 10)
-            Text(leftToEat.formatted())
+            Text(abs(leftToEat).formatted())
                 .fontWeight(.heavy)
                 .font(.system(size:14))
                 .minimumScaleFactor(0.01)
@@ -118,12 +118,12 @@ struct BudgieWidgetEntryView : View {
             VStack {
                 VStack {
                     HStack {
-                        Text("Can eat now".uppercased())
+                        Text(budgetStatusLabel(leftToEat: entry.leftToEat).uppercased())
                             .font(.caption)
                         Spacer()
                     }
                     HStack {
-                        Text(entry.leftToEat.formatted())
+                        Text(abs(entry.leftToEat).formatted())
                             .font(.title)
                         Spacer()
                     }

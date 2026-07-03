@@ -71,7 +71,7 @@ struct LogWeightSheet: View {
                             Text("lb").font(.largeTitle).foregroundStyle(.secondary)
                         }
                     }
-                    DatePicker("Date and time", selection: $date)
+                    DatePicker("Date and time", selection: $date, in: ...Date())
                 }
                 Section {
                     Button("Save") { save() }.buttonStyle(.borderedProminent)

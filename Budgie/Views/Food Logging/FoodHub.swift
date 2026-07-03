@@ -141,6 +141,7 @@ struct FoodHub: View {
         Task {
             await dataStore.calorieActor.deleteEntries(objects: toBin)
             await doUpdates()
+            await dataStore.updateLump(todayLump: todayLump)
         }
     }
 }

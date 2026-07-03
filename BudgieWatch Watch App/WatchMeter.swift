@@ -23,36 +23,36 @@ struct WatchMeter: View {
         let diff = pace > 0 ? todayLump.progressToday / pace : 0
         
         ZStack {
-                Circle()
-                    .fill(.shadow(.drop(color: .black, radius: 4)))
-                    .fill(budgetBlobColour(canEatNow: todayLump.canEatNow))
-                Circle()
-                    .trim(from: 0, to: todayLump.progressToday)
-                    .rotation(Angle(degrees: -90))
-                    // GOES CLOCKWISE FROM EAST
-                    .fill(.clear)
-                    .stroke(budgetPathColour(diff: diff, budget: todayLump.totalBudget, projectedBasal: todayLump.projectedBasal))
-                    .shadow(radius: 10)
+            Circle()
+                .fill(.shadow(.drop(color: .black, radius: 4)))
+                .fill(budgetBlobColour(canEatNow: todayLump.canEatNow))
+            Circle()
+                .trim(from: 0, to: todayLump.progressToday)
+                .rotation(Angle(degrees: -90))
+                // GOES CLOCKWISE FROM EAST
+                .fill(.clear)
+                .stroke(budgetPathColour(diff: diff, budget: todayLump.totalBudget, projectedBasal: todayLump.projectedBasal))
+                .shadow(radius: 10)
+                .shadow(radius: 5)
+            VStack {
+                Text(budgetStatusLabel(leftToEat: todayLump.canEatNow))
+                    .font(.headline)
+                    .minimumScaleFactor(0.01)
+                    .scaledToFill()
+                    .contentMargins(50)
+                    .foregroundColor(.white)
+                Text(abs(todayLump.canEatNow).formatted())
+                    .fontWeight(.heavy)
+                    .font(.system(size:40))
+                    .minimumScaleFactor(0.01)
+                    .scaledToFill()
+                    .contentMargins(50)
+                    .contentTransition(.numericText())
                     .shadow(radius: 5)
-                VStack {
-                    Text(budgetStatusLabel(leftToEat: todayLump.canEatNow))
-                        .font(.headline)
-                        .minimumScaleFactor(0.01)
-                        .scaledToFill()
-                        .contentMargins(50)
-                        .foregroundColor(.white)
-                    Text(todayLump.canEatNow.formatted())
-                        .fontWeight(.heavy)
-                        .font(.system(size:40))
-                        .minimumScaleFactor(0.01)
-                        .scaledToFill()
-                        .contentMargins(50)
-                        .contentTransition(.numericText())
-                        .shadow(radius: 5)
-                        .foregroundColor(.white)
-                }
+                    .foregroundColor(.white)
             }
         }
+    }
 }
 
 //#Preview {

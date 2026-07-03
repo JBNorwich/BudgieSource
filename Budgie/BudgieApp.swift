@@ -26,9 +26,14 @@ struct BudgieApp: App {
     init() {
         settingsObj.sync()
         Task {
-            if await dataStore.calorieActor.getListOfMeals() == [] {
+            // Seed the default meals only for a genuinely new account. On a second device
+            // the local store starts empty because CloudKit hasn't synced yet — seeding
+            // there would duplicate every meal once sync completes.
+            if settingsObj.isFirstRun, await dataStore.calorieActor.getListOfMeals() == [] {
                 await dataStore.calorieActor.setUpMeals()
             }
+            // Merge any duplicates that earlier builds may already have created.
+            await dataStore.calorieActor.dedupeMeals(preferredSurvivor: settingsObj.snacksUUID)
             if settingsObj.snacksUUID == nil {
                 settingsObj.snacksUUID = await dataStore.calorieActor.getMealUUIDbyName(name: "Snacks/Other")
             }

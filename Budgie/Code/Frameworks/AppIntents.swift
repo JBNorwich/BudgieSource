@@ -151,7 +151,46 @@ struct LogFoodShortcuts: AppShortcutsProvider {
                 shortTitle: "Log food",
                 systemImageName: "fork.knife"
             )
+            AppShortcut(
+                intent: LogWeightIntent(),
+                phrases: [
+                    "Log my weight with \(.applicationName)"
+                ],
+                shortTitle: "Log weight",
+                systemImageName: "scalemass.fill"
+            )
         }
+}
+
+struct LogWeightIntent: AppIntent {
+    static var title: LocalizedStringResource = "Log weight"
+    static var description = IntentDescription("Logs a weight measurement to Apple Health via Budgie Diet.")
+    static var openAppWhenRun: Bool = false
+
+    @Parameter(title: "Weight (kg)", requestValueDialog: "What do you weigh, in kilograms?")
+    var kilograms: Double!
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Log a weight of \(\.$kilograms)kg.")
+    }
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        var toLog: Double
+        if let kilograms {
+            toLog = kilograms
+        } else {
+            toLog = try await $kilograms.requestValue(.init(stringLiteral: "What do you weigh, in kilograms?"))
+        }
+        guard toLog > 0 else {
+            throw $kilograms.needsValueError("Weight must be above zero.")
+        }
+        let uuid = await dataStore.saveHKSample(value: toLog, unit: .gramUnit(with: .kilo), type: weightSampleType, date: Date())
+        guard uuid != nil else {
+            return .result(dialog: "I couldn't save that. Check that Budgie Diet is allowed to write weight data in the Health app.")
+        }
+        return .result(dialog: "Logged \(renderWeight(kilos: toLog)).")
+    }
 }
 
 struct MealEntity: AppEntity, Identifiable {

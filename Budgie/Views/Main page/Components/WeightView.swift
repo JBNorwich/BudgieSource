@@ -21,7 +21,18 @@ struct WeightView: View {
 
     let gradient = Gradient(colors: [.green, .blue])
 
+    /// Both weekly averages are needed before the trend means anything — otherwise a first-ever weigh-in reads as an enormous "change" from a nonexistent week.
+    private var haveTrendData: Bool {
+        todayLump.prevWeekAvgWeight != 0 && todayLump.lastWeekAvgWeight != 0
+    }
+
+    /// Whether the user has a deficit target to track against at all. A user whose express wish is to stay the same weight has nothing to be "on target" for.
+    private var hasDeficitTarget: Bool {
+        !settingsObj.surplusMode && settingsObj.desiredDeficit != 0
+    }
+
     private var trendLabel: (text: String, color: Color) {
+        guard haveTrendData else { return ("No trend yet", .secondary) }
         let downIsGood = !settingsObj.surplusMode
         if todayLump.weightTrend > 0.3 { return ("Trending down", downIsGood ? .green : .red) }
         if todayLump.weightTrend < -0.3 { return ("Trending up", downIsGood ? .red : .green) }
@@ -29,14 +40,15 @@ struct WeightView: View {
     }
 
     private var performanceLabel: (text: String, color: Color)? {
-        guard !settingsObj.surplusMode,
+        guard hasDeficitTarget,
+              haveTrendData,
               todayLump.consistentlyLoggedFood,
               let performance = todayLump.performanceAgainstWeightTrend else { return nil }
         if performance > 1.5 { return ("Exceeding target", .blue) }
         if performance < 0.5 { return ("Off target", .yellow) }
         return ("On target", .green)
     }
-
+    
     var body: some View {
         if todayLump.currentWeight == 0 {
             VStack(spacing: 8) {
@@ -95,7 +107,12 @@ struct WeightView: View {
                         VStack {
                             Text("**\(trendLabel.text)**").foregroundColor(trendLabel.color)
                             HStack {
-                                if todayLump.weightTrend > 0 {
+                                if !haveTrendData {
+                                    Text("Weigh in for a couple of weeks to see your weight trend.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+                                } else if todayLump.weightTrend > 0 {
                                     Text("\(renderWeight(kilos: todayLump.weightTrend)) down on the previous week")
                                         .foregroundColor(.secondary)
                                 } else if todayLump.weightTrend < 0 {
@@ -106,7 +123,7 @@ struct WeightView: View {
                                 }
                             }.padding(.leading)
                         }
-                        if !settingsObj.surplusMode {
+                        if hasDeficitTarget {
                             Divider()
                             VStack {
                                 if let performance = performanceLabel {

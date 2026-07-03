@@ -22,6 +22,7 @@ struct AllocateBudgetView: View {
     @State private var snacksName: String = "Snacks/Other"
     @State private var allocations: [UUID: Double] = [:]
     @State private var featureOn: Bool = settingsObj.useMealAllocations
+    @State private var cancelled = false
 
     private var othersTotal: Double { allocations.values.reduce(0, +) }
     private var snacksPercent: Double { max(0, 100 - othersTotal) }
@@ -84,11 +85,16 @@ struct AllocateBudgetView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
+                    Button("Cancel") { cancelled = true; dismiss() }
                         .disabled(isOverAllocated)
                 }
             }
             .task { await load() }
+            .onDisappear {
+                // Every other settings screen commits instantly; don't let a back-swipe
+                // silently discard changes. Explicit Cancel and invalid totals still discard.
+                if !cancelled && !isOverAllocated { persist() }
+            }
         }
     }
 
@@ -104,14 +110,18 @@ struct AllocateBudgetView: View {
         allocations = alloc
     }
 
-    private func save() {
+    private func persist() {
         let toSave = allocations
         let on = featureOn
         Task {
             await dataStore.calorieActor.setMealAllocations(toSave)
             settingsObj.useMealAllocations = on
             settingsObj.sync()
-            dismiss()
         }
+    }
+
+    private func save() {
+        persist()
+        dismiss()
     }
 }

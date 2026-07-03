@@ -39,11 +39,20 @@ struct FirstRunWizard: View {
     @State private var disclaimerOn = false
     @State private var weightUnit = settingsObj.weightDisplayUnit
     
+    @State private var stepsTaken: [Step] = []
+    @State private var hkFailed = false
+    
     @Environment(\.colorScheme) private var colorScheme
     @State private var backgroundGradient = CurrentGradient()
 
     private func go(to newStep: Step) {
+        stepsTaken.append(step)
         withAnimation(.easeInOut) { step = newStep }
+    }
+
+    private func goBack() {
+        guard let previous = stepsTaken.popLast() else { return }
+        withAnimation(.easeInOut) { step = previous }
     }
     
     // Mirrors BudgetView's gradient so the wizard matches light/dark mode.
@@ -132,7 +141,7 @@ struct FirstRunWizard: View {
                     }
                 }
             case .failure:
-                print("Failed for some reason")
+                hkFailed = true
             }
         }
     }
@@ -141,6 +150,14 @@ struct FirstRunWizard: View {
 
     private var progressBar: some View {
         HStack(spacing: 8) {
+            Button {
+                goBack()
+            } label: {
+                Image(systemName: "chevron.left")
+            }
+            .disabled(stepsTaken.isEmpty)
+            .opacity(stepsTaken.isEmpty ? 0 : 1)
+            .accessibilityLabel("Back")
             ForEach(Step.allCases, id: \.self) { s in
                 Capsule()
                     .frame(height: 4)
@@ -193,8 +210,17 @@ struct FirstRunWizard: View {
             Text("Connect Apple Health").font(.title2).bold()
             Text("You need to do this to use Budgie Diet, as it lets me assess your recent activity to decide your budgets, log your water and weight, and bring in your data from other apps. It's really important! Please make sure you grant permissions after hitting the button!")
                 .multilineTextAlignment(.center)
-            Button("Authorise Health access") { hkPermsToggle.toggle() }
-                .buttonStyle(.borderedProminent)
+            Button("Authorise Health access") {
+                hkFailed = false
+                hkPermsToggle.toggle()
+            }
+            .buttonStyle(.borderedProminent)
+            if hkFailed {
+                Text("I couldn't ask for Health access on this device. You can carry on, but your budgets will be based only on the figures you enter manually.")
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.red)
+                Button("Continue anyway") { go(to: .bmr) }
+            }
             Spacer()
         }
         .padding()
@@ -227,6 +253,9 @@ struct FirstRunWizard: View {
             LogWeightSheet(isDisplayed: logWeightCompletion)
                 .environmentObject(todayLump)
                 .scrollContentBackground(.hidden)
+            
+            Button("Skip for now") { go(to: .bmr) }
+                .padding(.bottom)
         }
         // LogWeightSheet brings its own NavigationStack/title, like WeightGoalSheet.
         .toolbar(.hidden, for: .navigationBar)

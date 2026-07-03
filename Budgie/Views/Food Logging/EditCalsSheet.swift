@@ -46,7 +46,7 @@ struct EditCalsSheet: View {
                         }
                     }.pickerStyle(.menu)
                     
-                    DatePicker(selection: $selectedDate, displayedComponents: .date, label: { Text("Date") })
+                    DatePicker(selection: $selectedDate, in: ...Date(), displayedComponents: .date, label: { Text("Date") })
                     
                     Button("Save") {
                         guard calories > 0 else

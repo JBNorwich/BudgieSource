@@ -111,9 +111,14 @@ class ChartData: ObservableObject {
     func fetchChartEaten() async -> (budgie: [CalsPacket], hk: [CalsPacket]) {
         let objArray = await dataStore.calorieActor.fetchCalsBetween(from: startDate, to: endDate)
         let budgiePackets = objArray.map { CalsPacket(date: getStartOfDay(date: $0.date), cals: $0.calories) }
+        let mirrored = Set(objArray.compactMap(\.healthKitUUID))
 
         let queryPeriod = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, queryPeriod])
+        var subpredicates: [NSPredicate] = [notBudgiePredicate, queryPeriod]
+        if !mirrored.isEmpty {
+            subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
+        }
+        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
         let hkPackets = await runCumulativeQuery(quantityType: eatenQuantityType, predicate: queryPredicate, anchorDate: startDate)
 
         return (budgie: budgiePackets, hk: hkPackets)

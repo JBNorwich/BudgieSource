@@ -347,6 +347,12 @@ struct BudgetView: View {
                     settingsObj.startWeight = todayLump.weightToday
                 }
             }
+            
+            // One-time tour for users who've just finished setup — the "Can eat now: 0" figure is baffling without it. Uses the previously-dormant flag.
+            if !settingsObj.isFirstRun && !settingsObj.shownExplainer {
+                settingsObj.shownExplainer = true
+                showingHelp = true
+            }
         }
     }
 }

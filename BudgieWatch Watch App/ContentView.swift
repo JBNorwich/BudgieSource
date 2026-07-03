@@ -14,11 +14,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import SwiftUI
+import HealthKitUI
 
 struct ContentView: View {
     @StateObject var todayLump: TodayLump = TodayLump()
     @Environment(\.scenePhase) private var scenePhase
-    
+    @State private var hkTrigger = false
+    @State private var quickCals: Int = 100
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -60,6 +63,22 @@ struct ContentView: View {
                         }
                     }
                     Divider()
+                    VStack {
+                        HStack {
+                            Text("Quick log")
+                                .font(.headline)
+                            Spacer()
+                        }
+                        HStack {
+                            Button("250ml", systemImage: "drop.fill") { logWater(250) }
+                            Button("500ml", systemImage: "drop.fill") { logWater(500) }
+                        }
+                        Stepper(value: $quickCals, in: 50...2000, step: 50) {
+                            Text("\(quickCals.formatted()) kcal")
+                        }
+                        Button("Log calories", systemImage: "fork.knife") { logCalories() }
+                    }
+                    Divider()
                     Text("To see more, open Budgie Diet on your iPhone.")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
@@ -69,7 +88,7 @@ struct ContentView: View {
             }
             .navigationTitle("Your target")
             .padding()
-            
+
             .onChange(of: scenePhase) {
                 guard scenePhase == .active else {
                    return
@@ -79,8 +98,34 @@ struct ContentView: View {
                 }
             }
             .task {
+                if HKHealthStore.isHealthDataAvailable() {
+                    hkTrigger.toggle()
+                }
                 await dataStore.updateLump(todayLump: todayLump)
             }
+            .healthDataAccessRequest(store: healthStore, shareTypes: writeTypes, readTypes: readTypes, trigger: hkTrigger) { _ in
+                Task { await dataStore.updateLump(todayLump: todayLump) }
+            }
+        }
+    }
+
+    private func logWater(_ ml: Int) {
+        Task {
+            await dataStore.addWater(amount: ml, datetime: Date())
+            await dataStore.updateLump(todayLump: todayLump)
+        }
+    }
+
+    private func logCalories() {
+        Task {
+            // `??`'s right-hand operand is an autoclosure, which can't contain `await`,
+            // so resolve the fallback meal in explicit steps instead.
+            var meal = settingsObj.snacksUUID
+            if meal == nil {
+                meal = await dataStore.calorieActor.getMealUUIDbyName(name: "Snacks/Other")
+            }
+            await dataStore.addCalories(calories: quickCals, narrative: nil, date: Date(), meal: meal ?? UUID())
+            await dataStore.updateLump(todayLump: todayLump)
         }
     }
 }

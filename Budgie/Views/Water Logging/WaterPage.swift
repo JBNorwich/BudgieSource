@@ -103,6 +103,7 @@ struct WaterPage: View {
         Task {
             await dataStore.waterActor.deleteEntries(objects: toBin)
             await doUpdates()
+            await dataStore.updateLump(todayLump: todayLump)
         }
     }
 }

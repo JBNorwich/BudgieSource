@@ -32,6 +32,10 @@ struct WeightDetailsSheet: View {
     private func weightDisplay(_ kilos: Double) -> String {
         renderWeight(kilos: kilos.isNaN ? 0 : kilos)
     }
+    
+    private var haveTrendData: Bool {
+        todayLump.prevWeekAvgWeight != 0 && todayLump.lastWeekAvgWeight != 0
+    }
 
     struct StatColumn: View {
         let title: String
@@ -92,44 +96,42 @@ struct WeightDetailsSheet: View {
     }
 
     var body: some View {
-         NavigationStack {
-             ScrollView {
-                GroupBox(label: Label("Progress", systemImage: "gauge.with.needle")) {
-                     HStack {
-                         StatColumn(title: "WEEK BEFORE", value: todayLump.prevWeekAvgWeight, subtitle: "AVERAGE")
-                         Divider()
-                         StatColumn(title: "LAST WEEK", value: todayLump.lastWeekAvgWeight, subtitle: "AVERAGE")
-                         Divider()
-                         StatColumn(title: "LAST WEIGH IN", value: todayLump.weightToday, subtitle: todayLump.lastWeightDate?.formatted(date: .abbreviated, time: .omitted).uppercased() ?? "NO DATA")
-                     }
-                 }
-                 GroupBox(label: Label("Predictions", systemImage: "chart.bar.xaxis.descending")) {
-                     Grid {
-                         PredictionRow(title: surplus ? "RECORDED DAILY SURPLUS" : "RECORDED DAILY DEFICIT",
-                                       display: kcalDisplay(recordedGoalRate),
-                                       subtitle: "OVER LAST WEEK",
-                                       description: "This is your daily \(surplus ? "surplus" : "deficit"), based on the data available.",
-                                       last: false)
-                         PredictionRow(title: surplus ? "EXPECTED GAIN" : "EXPECTED LOSS",
-                                       display: weightDisplay(expectedChange),
-                                       subtitle: surplus ? "AT THIS SURPLUS" : "AT THIS DEFICIT",
-                                       description: "This is how much weight you'd expect to \(surplus ? "gain at that surplus" : "lose at that deficit").",
-                                       last: false)
-                         PredictionRow(title: surplus ? "ACTUAL GAIN" : "ACTUAL LOSS",
-                                       display: weightDisplay(actualChange),
-                                       subtitle: "OVER LAST WEEK",
-                                       description: "This is your actual weight \(surplus ? "gain" : "loss") trend.",
-                                       last: false)
-                         PredictionRow(title: surplus ? "REAL SURPLUS" : "REAL DEFICIT",
-                                       display: kcalDisplay(todayLump.realDeficit),
-                                       subtitle: "PER DAY",
-                                       description: "This is the \(surplus ? "surplus" : "deficit") your progress suggests you're actually at.",
-                                       last: true)
-                        }.padding()
+         ScrollView {
+            GroupBox(label: Label("Progress", systemImage: "gauge.with.needle")) {
+                 HStack {
+                     StatColumn(title: "WEEK BEFORE", value: todayLump.prevWeekAvgWeight, subtitle: "AVERAGE")
+                     Divider()
+                     StatColumn(title: "LAST WEEK", value: todayLump.lastWeekAvgWeight, subtitle: "AVERAGE")
+                     Divider()
+                     StatColumn(title: "LAST WEIGH IN", value: todayLump.weightToday, subtitle: todayLump.lastWeightDate?.formatted(date: .abbreviated, time: .omitted).uppercased() ?? "NO DATA")
                  }
              }
-        }
+             GroupBox(label: Label("Predictions", systemImage: "chart.bar.xaxis.descending")) {
+                 Grid {
+                     PredictionRow(title: surplus ? "RECORDED DAILY SURPLUS" : "RECORDED DAILY DEFICIT",
+                                   display: kcalDisplay(recordedGoalRate),
+                                   subtitle: "OVER LAST WEEK",
+                                   description: "This is your daily \(surplus ? "surplus" : "deficit"), based on the data available.",
+                                   last: false)
+                     PredictionRow(title: surplus ? "EXPECTED GAIN" : "EXPECTED LOSS",
+                                   display: weightDisplay(expectedChange),
+                                   subtitle: surplus ? "AT THIS SURPLUS" : "AT THIS DEFICIT",
+                                   description: "This is how much weight you'd expect to \(surplus ? "gain at that surplus" : "lose at that deficit").",
+                                   last: false)
+                     PredictionRow(title: surplus ? "ACTUAL GAIN" : "ACTUAL LOSS",
+                                   display: haveTrendData ? weightDisplay(actualChange) : "–",
+                                   subtitle: haveTrendData ? "OVER LAST WEEK" : "NO DATA",
+                                   description: "This is your actual weight \(surplus ? "gain" : "loss") trend.",
+                                   last: false)
+                     PredictionRow(title: surplus ? "REAL SURPLUS" : "REAL DEFICIT",
+                                   display: todayLump.performanceAgainstWeightTrend != nil ? kcalDisplay(todayLump.realDeficit) : "–",
+                                   subtitle: todayLump.performanceAgainstWeightTrend != nil ? "PER DAY" : "NO DATA",
+                                   description: "This is the \(surplus ? "surplus" : "deficit") your progress suggests you're actually at.",
+                                   last: true)
+                    }.padding()
+             }
+         }
          .padding()
-        .navigationTitle("Weight details")
+         .navigationTitle("Weight details")
     }
 }
