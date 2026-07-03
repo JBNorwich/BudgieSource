@@ -38,7 +38,7 @@ struct ManageMealsView: View {
 
     var body: some View {
         List {
-            Section(footer: Text("The “Snacks/Other” meal can’t be removed, so there’s always somewhere for your entries to live. Tap a meal to rename it.")) {
+            Section(footer: Text("The “Snacks/Other” meal can’t be removed, so there’s always somewhere for your entries to live. Tap a meal to rename it, swipe left to delete.")) {
                 ForEach(meals) { meal in
                     HStack {
                         Text(meal.name)
@@ -54,13 +54,14 @@ struct ManageMealsView: View {
                         renameText = meal.name
                         mealBeingRenamed = meal
                     }
-                    .swipeActions(edge: .trailing) {
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if !isProtected(meal) {
-                            Button(role: .destructive) {
+                            Button {
                                 mealPendingDeletion = meal
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
+                            .tint(.red)
                         }
                     }
                 }
