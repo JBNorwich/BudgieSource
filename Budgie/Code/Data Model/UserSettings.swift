@@ -258,7 +258,7 @@ class CloudSettings {
     }
     
     var disableWeightFeatures: Bool {
-        get { return defaults.object(forKey: "disableWeightFeatures") as? Bool ?? true }
+        get { return defaults.object(forKey: "disableWeightFeatures") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "disableWeightFeatures") }
     }
 }

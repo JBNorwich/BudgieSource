@@ -101,6 +101,8 @@ struct SettingsView: View {
     }
     
     var body: some View {
+        let _ = refreshID   // observe to force redraw on setting change, without resetting scroll
+        
         Form {
             Section(header: Text(surpDefHeader), footer: Text(surpDefExplainer)) {
                 Slider(value: deficitBinding,
@@ -175,7 +177,7 @@ struct SettingsView: View {
                 
             }
             
-            Section(header: Text("Weight tracking"), footer: Text("If you'd prefer to not see information about your weight, you can hide it here - you can turn it back on any time. Doing so won't erase any data you've already logged.")) {
+            Section(header: Text("Weight tracking"), footer: Text("If you'd prefer to not see information about your weight, you can hide it here - you can turn it back on any time. This won't erase any data you've already logged.")) {
                 Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit)) {
                     Text("Kilograms").tag(0)
                     Text("Pounds").tag(1)
@@ -186,9 +188,6 @@ struct SettingsView: View {
             
             Section(header: Text("Surplus mode"), footer: Text("Turn this on to aim for a caloric surplus, rather than a deficit.")) {
                 Toggle("Aim to gain weight", isOn: $surplusMode)
-                if settingsObj.surplusMode {
-                    Text("Get them gains. 💪")
-                }
             }
             
             Section(header: Text("Move goal"), footer: Text("If this is turned on, Budgie Diet will use your Apple Fitness Move goal as the starting point for your budget, rather than your average calorie burn figures."))
@@ -260,10 +259,8 @@ struct SettingsView: View {
             Button("Frequently asked questions") {
                 openURL(URL(string: "https://joebaldwin.me.uk/apps/budgiediet/faq/")!)
             }
-        }.id(refreshID)
-        
+        }
 
-    
         .onAppear() {
             surplusMode = settingsObj.surplusMode
             useFitnessGoal = settingsObj.useFitnessGoal

@@ -88,10 +88,10 @@ struct AllocateBudgetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { cancelled = true; dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Cancel") { cancelled = true; dismiss() }
+                    Button("Save") { dismiss() }
                         .disabled(isOverAllocated)
                 }
             }
@@ -124,10 +124,5 @@ struct AllocateBudgetView: View {
             settingsObj.useMealAllocations = on
             settingsObj.sync()
         }
-    }
-
-    private func save() {
-        persist()
-        dismiss()
     }
 }
