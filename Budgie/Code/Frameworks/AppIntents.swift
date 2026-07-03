@@ -42,6 +42,7 @@ struct LogQuickCaloriesIntent: AppIntent {
             throw $calories.needsValueError("Budgie Diet hasn't finished setting up yet — please open the app first.")
         }
         await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: snacksUUID)
+        await dataStore.updateLump(todayLump: TodayLump())
         
         return .result()
     }
@@ -89,6 +90,7 @@ struct LogFoodIntent: AppIntent {
         }
         
         await dataStore.addCalories(calories: calsToLog, narrative: narrativeToLog, date: Date(), meal: meal.id)
+        await dataStore.updateLump(todayLump: TodayLump())
         
         return .result()
     }

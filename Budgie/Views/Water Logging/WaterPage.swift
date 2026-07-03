@@ -77,6 +77,7 @@ struct WaterPage: View {
                 .onDisappear() {
                     Task {
                         await doUpdates()
+                        await dataStore.updateLump(todayLump: todayLump)
                     }
                 }
         }

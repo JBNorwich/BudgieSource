@@ -137,14 +137,13 @@ struct BudgieWidgetEntryView : View {
                 Spacer()
                 HStack {
                     Spacer()
-                    TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal)
-                        .frame(maxWidth: 50, maxHeight: 50)
+                    TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode)
                 }
             }
             VStack {
                 VStack {
                     HStack {
-                        Text(budgetStatusLabel(leftToEat: entry.leftToEat).uppercased())
+                        Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode).uppercased())
                             .font(.caption)
                         Spacer()
                     }
