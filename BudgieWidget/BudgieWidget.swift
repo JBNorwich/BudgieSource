@@ -146,6 +146,7 @@ struct BudgieWidgetEntryView : View {
                 HStack {
                     Spacer()
                     TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode)
+                        .frame(maxWidth: 50, maxHeight: 50)
                 }
             }
             VStack {
