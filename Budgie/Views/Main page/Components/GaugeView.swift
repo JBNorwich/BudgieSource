@@ -24,9 +24,13 @@ struct GaugeView: View {
             VStack {
                 Gauge(value: todayLump.progressAgainstTarget, in: 0...2) {
                 } currentValueLabel: {
-                    todayLump.gaugeNumber > 0
-                        ? Text("+" + todayLump.gaugeNumber.formatted() + "%")
-                        : Text("-" + (-todayLump.gaugeNumber).formatted() + "%")
+                    if todayLump.gaugeNumber > 0 {
+                        Text("+" + todayLump.gaugeNumber.formatted() + "%")
+                    } else if todayLump.gaugeNumber < 0 {
+                        Text("-" + (-todayLump.gaugeNumber).formatted() + "%")
+                    } else {
+                        Text("0%")
+                    }
                 } minimumValueLabel: {
                     Text("")
                         .foregroundColor(.teal)
@@ -63,10 +67,10 @@ struct GaugeView: View {
                         : Text("**\((-todayLump.totalBudgetRem).formatted())** cals over budget")
                     Spacer()
                 }
-                if settingsObj.hideTodayInDetail == true && todayLump.activeEstimated == true {
+                if settingsObj.hideTodayInDetail == true && (todayLump.activeEstimated || todayLump.basalEstimated) {
                     Divider()
                     HStack {
-                        Text("Your active calories are estimated, so your budget doesn't reflect your real activity.")
+                        Text("Some of your calorie burn figures are estimated, so your budget doesn't reflect your real activity.")
                         Spacer()
                     }
                 }

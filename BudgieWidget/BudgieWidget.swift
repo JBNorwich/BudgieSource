@@ -34,25 +34,25 @@ struct TinyMeter: View {
     
     var body: some View {
         ZStack {
-                Circle()
-                    .fill(.shadow(.drop(color: .black, radius: 4)))
-                    .fill(budgetBlobColour(canEatNow: leftToEat))
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .rotation(Angle(degrees: -90))
-                    // GOES CLOCKWISE FROM EAST
-                    .fill(.clear)
-                    .stroke(budgetPathColour(diff: pathDiff, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
-                    .shadow(radius: 10)
-                Text(leftToEat.formatted())
-                    .fontWeight(.heavy)
-                    .font(.system(size:14))
-                    .minimumScaleFactor(0.01)
-                    .scaledToFit()
-                    .contentMargins(50)
-                    .contentTransition(.numericText())
-                    .shadow(radius: 5)
-                    .foregroundColor(.white)
+            Circle()
+                .fill(.shadow(.drop(color: .black, radius: 4)))
+                .fill(budgetBlobColour(canEatNow: leftToEat))
+            Circle()
+                .trim(from: 0, to: progress)
+                .rotation(Angle(degrees: -90))
+                // GOES CLOCKWISE FROM EAST
+                .fill(.clear)
+                .stroke(budgetPathColour(diff: pathDiff, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
+                .shadow(radius: 10)
+            Text(leftToEat.formatted())
+                .fontWeight(.heavy)
+                .font(.system(size:14))
+                .minimumScaleFactor(0.01)
+                .scaledToFit()
+                .contentMargins(50)
+                .contentTransition(.numericText())
+                .shadow(radius: 5)
+                .foregroundColor(.white)
             }
         }
     }
@@ -70,7 +70,7 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         Task {
             let lump = TodayLump()
-            await dataStore.updateLump(todayLump: lump)
+            await dataStore.updateLump(todayLump: lump, reloadWidgets: false)
             let date = Date()
             let entry = BudgieEntry(date: date, leftToEat: lump.canEatNow, progressDbl: lump.progressToday, totalBudgRem: lump.totalBudgetRem, totalBudg: lump.totalBudget, projBasal: lump.projectedBasal)
             
@@ -128,19 +128,13 @@ struct BudgieWidgetEntryView : View {
                         Spacer()
                     }
                     HStack {
-                        Text("Budget left".uppercased())
+                        Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
                             .font(.caption)
                         Spacer()
                     }
                     HStack {
-                        if entry.totalBudgRem > -1 {
-                            Text(entry.totalBudgRem.formatted())
-                                .font(.title)
-                        } else {
-                            Text((-entry.totalBudgRem).formatted())
-                                .font(.title)
-                        }
-                        
+                        Text(abs(entry.totalBudgRem).formatted())
+                            .font(.title)
                         Spacer()
                     }
                     Spacer()

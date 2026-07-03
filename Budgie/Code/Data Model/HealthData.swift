@@ -55,7 +55,7 @@ final class HealthData {
         
         if type == eatenQuantityType && hkOnly == false {
             var budgieCalories: Int = 0
-            let budgieResults = await calorieActor.fetchCalsBetween(from: date, to: endDate)
+            let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
             if !budgieResults.isEmpty {
                 for result in budgieResults {
                     budgieCalories += result.calories
@@ -140,9 +140,15 @@ final class HealthData {
                         daysInSample = daysInSample + 1
                     }
                 }
-                
+
+                // No samples in the window: report 0 ("no data") rather than dividing 0/0 into NaN.
+                guard daysInSample > 0 else {
+                    continuation.resume(returning: 0)
+                    return
+                }
+
                 let average: Double = (totalWeight/daysInSample)/1000
-                
+
                 continuation.resume(returning: roundDoubleWeight(input: average))
             }
             
@@ -464,7 +470,7 @@ final class HealthData {
     }
     
     /// Main function that updates the "todayLump" that contains up to the minute data and underpins the main screen.
-    @MainActor func updateLump(todayLump: TodayLump) async {
+    @MainActor func updateLump(todayLump: TodayLump, reloadWidgets: Bool = true) async {
         // If an update is already running, flag that another pass is needed once this one
         // finishes, rather than silently dropping this request.
         if todayLump.updateInProgress {
@@ -479,7 +485,7 @@ final class HealthData {
             todayLump.updateInProgress = false
             if todayLump.updateQueued {
                 todayLump.updateQueued = false
-                Task { await updateLump(todayLump: todayLump) }
+                Task { await updateLump(todayLump: todayLump, reloadWidgets: reloadWidgets) }
             }
         }
         
@@ -539,14 +545,14 @@ final class HealthData {
             todayLump.basalCalories = recBasalCalories
         } else {
             todayLump.basalEstimated = true
-            todayLump.basalCalories = settingsObj.manualBMR - todayLump.projectedBasal
+            todayLump.basalCalories = max(settingsObj.manualBMR - todayLump.projectedBasal, 0)
         }
 
         // Recorded active — fall back to the manual figure if HealthKit has none
         let recActiveCalories = await recActiveTask
         if recActiveCalories == 0 && projActiveEstimate {
             todayLump.activeEstimated = true
-            todayLump.activeCalories = settingsObj.manualActive - todayLump.projectedActive
+            todayLump.activeCalories = max(settingsObj.manualActive - todayLump.projectedActive, 0)
         } else {
             todayLump.activeEstimated = false
             todayLump.activeCalories = recActiveCalories
@@ -573,7 +579,9 @@ final class HealthData {
         todayLump.activitySummary = await activityTask
 
         todayLump.lastUpdate = Date()
-        WidgetCenter.shared.reloadAllTimelines()
+        if reloadWidgets {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
     
     /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, weight entries, or new water entries.

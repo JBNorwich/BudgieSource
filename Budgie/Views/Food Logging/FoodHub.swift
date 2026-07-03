@@ -28,8 +28,12 @@ struct FoodHub: View {
     @State var timeToAddOn: Date = Date()
     @State var hkCalories = 0
     @State var addSheetDisplayed: Bool = false
-    
     @State var loadingDone: Bool = false
+    
+    init(curDate: Date) {
+        // Normalise to midnight up front, so the first fetch is already day-aligned.
+        _curDate = State(initialValue: getStartOfDay(date: curDate))
+    }
     
     var groupedByMeal: [UUID: [CalorieEntry]] {
         Dictionary(grouping: budgieData, by: \.meal)
@@ -109,13 +113,15 @@ struct FoodHub: View {
             }
         }
         
-        .onAppear() {
-            curDate = getStartOfDay(date: curDate)
+        .task {
+            await doUpdates()
         }
-        
-        .onChange(of: dateChanged, initial: true) {
-            Task {
-                await doUpdates()
+
+        .onChange(of: dateChanged) {
+            // doUpdates() resets dateChanged to false when it finishes; only react to
+            // the true transition so each date change fetches exactly once.
+            if dateChanged {
+                Task { await doUpdates() }
             }
         }
               

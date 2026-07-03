@@ -49,9 +49,9 @@ struct ContentView: View {
                             Text(todayLump.eatenCalories.formatted())
                         }
                         HStack {
-                            Text("Left today")
+                            Text(todayLump.totalBudgetRem > -1 ? "Left today" : "Over budget by")
                             Spacer()
-                            Text(todayLump.totalBudgetRem.formatted())
+                            Text(abs(todayLump.totalBudgetRem).formatted())
                         }
                         if todayLump.activeEstimated == true || todayLump.basalEstimated == true {
                             Spacer()

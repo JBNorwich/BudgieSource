@@ -144,10 +144,13 @@ struct NewDataView: View {
                     : DataViewRow(imageName: "gauge.with.dots.needle.bottom.100percent", text: "Over total budget by", number: -dataLump.totalBudgetRem)
                 }
             }
-            if dataLump.activeEstimated == true || dataLump.budgetAtCap == true || dataLump.budgetAtMin == true {
+            if dataLump.activeEstimated || dataLump.basalEstimated || dataLump.budgetAtCap || dataLump.budgetAtMin {
                 Divider()
                 dataLump.activeEstimated
                 ? DataViewAlert(imageName: "info.circle",text: "Your active calorie burn figures are estimated, so your budget doesn't reflect your real activity today.")
+                : nil
+                dataLump.basalEstimated
+                ? DataViewAlert(imageName: "info.circle", text: "Your resting calorie burn figures are estimated, so your budget doesn't reflect your real resting burn today.")
                 : nil
                 dataLump.budgetAtCap
                 ? DataViewAlert(imageName: "info.circle", text: "Your budget for today has been capped at the amount chosen in Settings.")

@@ -156,15 +156,17 @@ struct WeightGoalSheet: View {
                         Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
                     }
                     if let goal = enteredKilos {
-                        if todayLump.weightToday != 0 {
-                            if settingsObj.desiredDeficit > 0 {
-                                goal < todayLump.weightToday
-                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.weightToday)), so you'll need to lose \(renderWeight(kilos: toLose)) to get to this goal.")
-                                : Text("This goal is above your current weight. Are you sure this is right?")
-                            } else {
+                        // If the user's target is 0 they've expressly said they don't want their
+                        // weight to change, so a lose/gain framing isn't meaningful — say nothing.
+                        if todayLump.weightToday != 0 && settingsObj.desiredDeficit != 0 {
+                            if settingsObj.surplusMode {
                                 goal > todayLump.weightToday
                                 ? Text("Your current weight is \(renderWeight(kilos: todayLump.weightToday)), so you'll need to gain \(renderWeight(kilos: -toLose)) to get to this goal.")
                                 : Text("This goal is below your current weight. Are you sure this is right?")
+                            } else {
+                                goal < todayLump.weightToday
+                                ? Text("Your current weight is \(renderWeight(kilos: todayLump.weightToday)), so you'll need to lose \(renderWeight(kilos: toLose)) to get to this goal.")
+                                : Text("This goal is above your current weight. Are you sure this is right?")
                             }
                         }
                         if daysToGo > 0 {
@@ -209,7 +211,7 @@ struct WeightGoalSheet: View {
                 case .kilograms:
                     kilosField = goal
                 case .pounds:
-                    poundsField = (goal / lbInKg).rounded()
+                    poundsField = ((goal / lbInKg) * 10).rounded() / 10
                 case .stonepounds:
                     let sp = StonePounds(kilos: goal)
                     stonesField = sp.stones

@@ -59,11 +59,14 @@ class TodayLump: ObservableObject {
     @Published var lastUpdate: Date = Date()
     
     func recalculateBudget() {
-        var budget = max(totalProjCalories - settingsObj.desiredDeficit, 1200)
+        let uncapped = totalProjCalories - settingsObj.desiredDeficit
+        var budget = max(uncapped, 1200)
         let atCap = settingsObj.capBudget && budget > settingsObj.capBudgetCals
         if atCap { budget = max(settingsObj.capBudgetCals, 1200) }
-        let atMin = budget <= 1200
-        
+        // Only flag the minimum when the 1,200 floor actually kicked in — not when the
+        // budget legitimately works out at exactly 1,200.
+        let atMin = uncapped < 1200 || (atCap && settingsObj.capBudgetCals < 1200)
+
         totalBudget = budget
         budgetAtCap = atCap
         budgetAtMin = atMin
@@ -74,7 +77,7 @@ class TodayLump: ObservableObject {
         return max(totalProjCalories - settingsObj.desiredDeficit, 1200)
     }
     
-    /// The amount that has been knocked off the user's budget because of the cap.
+    /// The ledger adjustment applied because of the cap: capBudgetCals minus the uncapped budget, so it is NEGATIVE while the cap is active. NewDataView displays it as a deduction row, like the target deficit.
     var budgetOverCap: Int {
         return settingsObj.capBudgetCals - self.realBudget
     }
@@ -223,6 +226,8 @@ class TodayLump: ObservableObject {
     /// How actual weight change compares to expectation. >1 better than expected, <1 worse.
     /// nil when there's no meaningful expectation to compare against (deficit ≈ 0).
     var performanceAgainstWeightTrend: Double? {
+        // Both weekly averages must exist for the trend to mean anything.
+        guard lastWeekAvgWeight != 0, prevWeekAvgWeight != 0 else { return nil }
         let expected = expectedWeeklyChangeExact
         guard abs(expected) > 0.001 else { return nil }
         return self.weightTrend / expected

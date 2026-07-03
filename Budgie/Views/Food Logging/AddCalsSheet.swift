@@ -78,9 +78,9 @@ struct AddCalsSheet: View {
                     
                     if (getMidnightOnDayBefore(date: Date()) == getMidnightOnDayBefore(date: selectedDate))
                     {
-                        Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(abs(newRemBudg).formatted())** \(newRemBudg > 0 ? "in" : "over") your overall budget for the rest of the day.")
+                        Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(abs(newRemBudg).formatted())** \(newRemBudg >= 0 ? "in" : "over") your overall budget for the rest of the day.")
                         if settingsObj.useMealAllocations, mealTarget != nil {
-                           Text("It'll also leave you **\(abs(newMealRem).formatted())** \(newMealRem > 0 ? "in" : "over") your allocation for \(selectedMealName).")
+                           Text("It'll also leave you **\(abs(newMealRem).formatted())** \(newMealRem >= 0 ? "in" : "over") your allocation for \(selectedMealName).")
                        }
                     }
                     
@@ -182,7 +182,7 @@ struct AddCalsSheet: View {
             self.whatItIs = String(whatItIs.prefix(30))
         }
         
-        .alert("Calories can't be zero.", isPresented: $caloriesWereNil)
+        .alert("Calories must be above zero.", isPresented: $caloriesWereNil)
         {
             Button("OK", role: .cancel) { }
         }

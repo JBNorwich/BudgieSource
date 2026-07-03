@@ -131,7 +131,7 @@ class CloudSettings {
         set { defaults.set(newValue, forKey: "whalesEverywhere")}
     }
     
-    /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all.
+    /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all. -2 is no weighting down. 3 is the old (pre-quotient) default.
     var weightingStyle: Int {
         get { return defaults.object(forKey: "weightingStyle") as? Int ?? 0 }
         set { defaults.set(newValue, forKey: "weightingStyle")}
@@ -268,8 +268,8 @@ class UserSettings {
     }
     
     var onCloud: Bool {
-        get { return defaults?.value(forKey: "firstRun") as? Bool ?? false }
-        set { defaults?.set(newValue, forKey: "firstRun")}
+        get { return defaults?.value(forKey: "onCloud") as? Bool ?? false }
+        set { defaults?.set(newValue, forKey: "onCloud")}
     }
     
     var desiredDeficit: Int {
@@ -332,7 +332,7 @@ class UserSettings {
         set { defaults?.set(newValue, forKey: "whalesEverywhere")}
     }
     
-    /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all.
+    /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all. -2 is no weighting down. 3 is the old (pre-quotient) default.
     var weightingStyle: Int {
         get { return defaults?.value(forKey: "weightingStyle") as? Int ?? 0 }
         set { defaults?.set(newValue, forKey: "weightingStyle")}

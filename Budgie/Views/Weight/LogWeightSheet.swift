@@ -92,7 +92,7 @@ struct LogWeightSheet: View {
 
     private func save() {
         guard let kg = enteredKilos, kg > 0 else {
-            alertText = "Weight can't be zero."
+            alertText = "Weight must be above zero."
             showAlert = true
             return
         }

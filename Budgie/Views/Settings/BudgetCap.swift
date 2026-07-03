@@ -51,6 +51,17 @@ struct BudgetCap: View {
             settingsObj.capBudget = capBudget
         }
         
+        // Persist the moment the field's binding commits (including when focus is lost by
+        // navigating back), so an edited cap can never be silently dropped. The 1,200 floor
+        // is normalised on focus loss / Done / submit via commitCap().
+        .onChange(of: capBudgetCals) {
+            settingsObj.capBudgetCals = max(capBudgetCals, 1200)
+        }
+
+        .onChange(of: focusCap) {
+            if !focusCap { commitCap() }
+        }
+        
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()

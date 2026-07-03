@@ -22,8 +22,9 @@ struct WeightView: View {
     let gradient = Gradient(colors: [.green, .blue])
 
     private var trendLabel: (text: String, color: Color) {
-        if todayLump.weightTrend > 0.3 { return ("Trending down", .green) }
-        if todayLump.weightTrend < -0.3 { return ("Trending up", .red) }
+        let downIsGood = !settingsObj.surplusMode
+        if todayLump.weightTrend > 0.3 { return ("Trending down", downIsGood ? .green : .red) }
+        if todayLump.weightTrend < -0.3 { return ("Trending up", downIsGood ? .red : .green) }
         return ("Static", .yellow)
     }
 

@@ -102,7 +102,7 @@ struct AddWaterSheet: View {
             }
             .navigationTitle("Add water")
         }
-        .alert("Amount can't be zero.", isPresented: $amountWasZero) {
+        .alert("Amount must be above zero.", isPresented: $amountWasZero) {
             Button("OK", role: .cancel) { }
         }
     }

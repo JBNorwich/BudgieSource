@@ -33,13 +33,22 @@ struct BudgieApp: App {
                 settingsObj.snacksUUID = await dataStore.calorieActor.getMealUUIDbyName(name: "Snacks/Other")
             }
         }
-        if settingsObj.onCloud == false {
-            // cloud sync not done
+        // `localSettings.onCloud` is a permanent, device-local latch. Once it is true, the
+        // one-time local→cloud migration can NEVER run again on this device — local settings
+        // must never overwrite cloud settings after the initial migration, even if the
+        // iCloud key-value store is later unavailable or comes back empty.
+        if settingsObj.onCloud {
+            // Cloud settings are live; make sure this device is latched.
+            if localSettings.onCloud == false {
+                localSettings.onCloud = true
+            }
+        } else if localSettings.onCloud == false {
             if localSettings.isFirstRun == false {
-                // user's settings need to be moved to cloud
+                // Legacy local settings exist and have never been copied up: migrate once.
+                // copyFromLocal() sets both latches when it finishes.
                 settingsObj.copyFromLocal(localObj: localSettings)
             } else {
-                // user's settings were never saved locally
+                // Nothing to migrate on this device.
                 localSettings.onCloud = true
                 settingsObj.onCloud = true
             }

@@ -80,7 +80,7 @@ struct EditCalsSheet: View {
             mealList = await dataStore.calorieActor.getListOfMeals()
         }
         
-        .alert("Calories can't be zero.", isPresented: $caloriesWereNil) {
+        .alert("Calories must be above zero.", isPresented: $caloriesWereNil) {
             Button("OK", role: .cancel) { }
         }
     }

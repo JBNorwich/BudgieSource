@@ -83,7 +83,8 @@ func getFullDayOfWeek(date: Date) -> String {
 struct ChartTableRow: View {
     private static let dayMonthFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "dd/MM"
+        // Locale-aware day+month (UK "03/07", US "7/3") instead of hardcoded dd/MM.
+        formatter.setLocalizedDateFormatFromTemplate("dM")
         return formatter
     }()
 

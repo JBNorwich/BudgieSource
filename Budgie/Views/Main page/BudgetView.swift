@@ -169,7 +169,14 @@ struct BudgetView: View {
                     
                     .toolbar {
                         ToolbarItemGroup(placement: .topBarLeading) {
-                            NavigationLink(destination: SettingsView().environmentObject(todayLump)) {
+                            NavigationLink(destination: SettingsView()
+                                .environmentObject(todayLump)
+                                .onDisappear {
+                                    // Settings (units, cap, deficit…) feed straight into the lump's
+                                    // calculations and display, so recompute on the way out.
+                                    Task { await dataStore.updateLump(todayLump: todayLump) }
+                                }
+                            ) {
                                 Image(systemName: "gear")
                             }.foregroundColor(backgroundGradient.buttonColour)
                             if settingsObj.whalesEverywhere == true {
@@ -203,9 +210,7 @@ struct BudgetView: View {
                 .padding(.horizontal)
                 .toolbarBackground(.clear, for: .automatic)
                 .refreshable {
-                    Task {
-                        await dataStore.updateLump(todayLump: todayLump)
-                    }
+                    await dataStore.updateLump(todayLump: todayLump)
                 }
 
             }
@@ -296,15 +301,17 @@ struct BudgetView: View {
         
         .sheet(isPresented: $showingDetail) {
             NavigationStack {
-                VStack {
-                    NewDataView().environmentObject(todayLump)
-                    Button("Close") {
-                        showingDetail = false
+                ScrollView {
+                    VStack {
+                        NewDataView().environmentObject(todayLump)
+                        Button("Close") {
+                            showingDetail = false
+                        }.padding()
+                        .buttonStyle(.borderedProminent)
                     }.padding()
-                    .buttonStyle(.borderedProminent)
-                    Spacer()
-                }.padding()
+                }
                 .navigationTitle("Today in detail")
+                .navigationBarTitleDisplayMode(.inline)
             }
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)

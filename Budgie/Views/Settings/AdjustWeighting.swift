@@ -92,53 +92,53 @@ struct AdjustWeighting: View {
     
     var body: some View {
         let object = WeightingChartObject()
-        let xdata = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
-                Form {
-                    Section(header: Text("Style of calorie weighting"), footer: Text(.init(weightingText))) {
-                        Chart(0..<xdata.count, id: \.self) { nr in
-                            LineMark(
-                                x: .value("Time", xdata[nr]),
-                                y: .value("Forgiving", object.forgiving[nr].percent),
-                                series: .value("Forgiving", "A")
-                            )
-                            .foregroundStyle(.blue)
-                            LineMark(
-                                x: .value("Time", xdata[nr]),
-                                y: .value("Default", object.regular[nr].percent),
-                                series: .value("Default", "B")
-                            )
-                            .foregroundStyle(.yellow)
-                            LineMark(
-                                x: .value("Time", xdata[nr]),
-                                y: .value("Harsh", object.harsh[nr].percent),
-                                series: .value("Harsh", "C"))
-                            .foregroundStyle(.red)
-                        }.chartXScale(domain: 0...24)
-                            .chartForegroundStyleScale(foregroundStyleDict)
-                            .chartLegend(.visible)
-                            .chartLegend(position: .bottom, alignment: .center)
-                            .padding()
-                            .frame(minHeight: 200)
-                        
-                        Toggle("Weight differently each day", isOn: settingBinding(\.differentWeights))
-                            .toggleStyle(SwitchToggleStyle())
-                        if !settingsObj.differentWeights {
-                            Picker("Weighting style", selection: settingBinding(\.weightingStyle)) {
-                                WeightOptions()
-                            }.pickerStyle(.menu)
-                        } else {
-                            Picker("Monday", selection: settingBinding(\.monWeight)) { WeightOptions() }.pickerStyle(.menu)
-                            Picker("Tuesday", selection: settingBinding(\.tuesWeight)) { WeightOptions() }.pickerStyle(.menu)
-                            Picker("Wednesday", selection: settingBinding(\.wedsWeight)) { WeightOptions() }.pickerStyle(.menu)
-                            Picker("Thursday", selection: settingBinding(\.thursWeight)) { WeightOptions() }.pickerStyle(.menu)
-                            Picker("Friday", selection: settingBinding(\.friWeight)) { WeightOptions() }.pickerStyle(.menu)
-                            Picker("Saturday", selection: settingBinding(\.satWeight)) { WeightOptions() }.pickerStyle(.menu)
-                            Picker("Sunday", selection: settingBinding(\.sunWeight)) { WeightOptions() }.pickerStyle(.menu)
-                        }
-                    }
-                }.frame(maxHeight: .infinity)
-                .navigationTitle("Calorie weighting options")
-                .id(refreshID)
+        let xdata = Array(0...23)   // sample nr is computed at nr*60 minutes, i.e. hour nr
+        Form {
+            Section(header: Text("Style of calorie weighting"), footer: Text(.init(weightingText))) {
+                Chart(0..<xdata.count, id: \.self) { nr in
+                    LineMark(
+                        x: .value("Time", xdata[nr]),
+                        y: .value("Forgiving", object.forgiving[nr].percent),
+                        series: .value("Forgiving", "A")
+                    )
+                    .foregroundStyle(.blue)
+                    LineMark(
+                        x: .value("Time", xdata[nr]),
+                        y: .value("Default", object.regular[nr].percent),
+                        series: .value("Default", "B")
+                    )
+                    .foregroundStyle(.yellow)
+                    LineMark(
+                        x: .value("Time", xdata[nr]),
+                        y: .value("Harsh", object.harsh[nr].percent),
+                        series: .value("Harsh", "C"))
+                    .foregroundStyle(.red)
+                }.chartXScale(domain: 0...24)
+                    .chartForegroundStyleScale(foregroundStyleDict)
+                    .chartLegend(.visible)
+                    .chartLegend(position: .bottom, alignment: .center)
+                    .padding()
+                    .frame(minHeight: 200)
+                
+                Toggle("Weight differently each day", isOn: settingBinding(\.differentWeights))
+                    .toggleStyle(SwitchToggleStyle())
+                if !settingsObj.differentWeights {
+                    Picker("Weighting style", selection: settingBinding(\.weightingStyle)) {
+                        WeightOptions()
+                    }.pickerStyle(.menu)
+                } else {
+                    Picker("Monday", selection: settingBinding(\.monWeight)) { WeightOptions() }.pickerStyle(.menu)
+                    Picker("Tuesday", selection: settingBinding(\.tuesWeight)) { WeightOptions() }.pickerStyle(.menu)
+                    Picker("Wednesday", selection: settingBinding(\.wedsWeight)) { WeightOptions() }.pickerStyle(.menu)
+                    Picker("Thursday", selection: settingBinding(\.thursWeight)) { WeightOptions() }.pickerStyle(.menu)
+                    Picker("Friday", selection: settingBinding(\.friWeight)) { WeightOptions() }.pickerStyle(.menu)
+                    Picker("Saturday", selection: settingBinding(\.satWeight)) { WeightOptions() }.pickerStyle(.menu)
+                    Picker("Sunday", selection: settingBinding(\.sunWeight)) { WeightOptions() }.pickerStyle(.menu)
+                }
+            }
+        }.frame(maxHeight: .infinity)
+        .navigationTitle("Calorie weighting options")
+        .id(refreshID)
     }
 }
 
