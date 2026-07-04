@@ -30,7 +30,7 @@ extension HealthData {
     }
 
     /// The Mac equivalent of `updateLump`: no HealthKit, so the budget comes from the iPhone's snapshot and everything else is read straight from the shared SwiftData store.
-    @MainActor func updateLump(todayLump: TodayLump) async {
+    @MainActor func updateLump(todayLump: TodayLump, publishSnapshot: Bool = true) async {
         let todayStart = getStartOfDay(date: Date())
         let todayEnd = getMidnightOnDayAfter(date: todayStart)
 

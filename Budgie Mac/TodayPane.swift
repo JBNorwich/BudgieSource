@@ -105,9 +105,14 @@ struct TodayPane: View {
             VStack(spacing: 14) {
                 MeterView(dummy: false)
                     .frame(width: 240, height: 240)
+
+                if let date = settingsObj.budgetSnapshotDate,
+                   Date().timeIntervalSince(date) > 30 * 60 {
+                    Text("Synced from your iPhone at \(date.formatted(date: .omitted, time: .shortened))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-        } else {
-            staleBudget
         }
     }
 

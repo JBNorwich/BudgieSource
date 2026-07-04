@@ -14,26 +14,21 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import SwiftUI
+import Combine
 
-struct MacDateNavigator: View {
-    @Binding var date: Date
+enum QuickAdd: Identifiable { case food, water; var id: Int { self == .food ? 0 : 1 } }
 
-    var body: some View {
-        HStack(spacing: 4) {
-            Button { shift(-1) } label: { Image(systemName: "chevron.left") }
-                .keyboardShortcut(.leftArrow, modifiers: .command)
-            DatePicker("", selection: $date, in: ...Date(), displayedComponents: .date)
-                .datePickerStyle(.field)      // plain field, no ugly up/down steppers
-                .labelsHidden()
-                .frame(width: 116)
-            Button { shift(1) } label: { Image(systemName: "chevron.right") }
-                .disabled(Calendar.current.isDateInToday(date))
-                .keyboardShortcut(.rightArrow, modifiers: .command)
-        }
-    }
+final class MacNavigation: ObservableObject {
+    @Published var section: MacSection { didSet {
+        UserDefaults.standard.set(section.rawValue, forKey: "macSelectedSection")
+    } }
+    /// One-shot request to present a logging sheet; MacRootView consumes it.
+    @Published var pendingAdd: QuickAdd?
 
-    private func shift(_ delta: Int) {
-        guard let d = Calendar.current.date(byAdding: .day, value: delta, to: date) else { return }
-        date = min(d, Date())     // never step past today
+    init() {
+        let saved = UserDefaults.standard.string(forKey: "macSelectedSection")
+        section = saved.flatMap(MacSection.init(rawValue:)) ?? .today
     }
 }
+
+let macNav = MacNavigation()   // a global, matching settingsObj / dataStore

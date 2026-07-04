@@ -473,7 +473,7 @@ final class HealthData {
     }
     
     /// Main function that updates the "todayLump" that contains up to the minute data and underpins the main screen.
-    @MainActor func updateLump(todayLump: TodayLump, reloadWidgets: Bool = true) async {
+    @MainActor func updateLump(todayLump: TodayLump, reloadWidgets: Bool = true, publishSnapshot: Bool = true) async {
         // If an update is already running, flag that another pass is needed once this one
         // finishes, rather than silently dropping this request.
         if todayLump.updateInProgress {
@@ -568,18 +568,20 @@ final class HealthData {
         todayLump.waterToday = waterDetails.bd + waterDetails.hk
         
         #if os(iOS)
-        // Publish the budget to iCloud KVS so the Mac companion can display it.
-        settingsObj.snapshotBudget = todayLump.totalBudget
-        settingsObj.snapshotAtCap = todayLump.budgetAtCap
-        settingsObj.snapshotAtMin = todayLump.budgetAtMin
-        settingsObj.snapshotTimestamp = Date().timeIntervalSince1970
-        settingsObj.snapshotActiveCalories = todayLump.activeCalories
-        settingsObj.snapshotBasalCalories = todayLump.basalCalories
-        settingsObj.snapShotHKCalories = todayLump.healthKitCalories
-        settingsObj.snapShotHKWater = waterDetails.hk
-        settingsObj.snapshotProjectedBasal = todayLump.projectedBasal
-        settingsObj.snapshotProjectedActive = todayLump.projectedActive
-        settingsObj.sync()
+        if publishSnapshot {
+            // Publish the budget to iCloud KVS so the Mac companion can display it.
+            settingsObj.snapshotBudget = todayLump.totalBudget
+            settingsObj.snapshotAtCap = todayLump.budgetAtCap
+            settingsObj.snapshotAtMin = todayLump.budgetAtMin
+            settingsObj.snapshotTimestamp = Date().timeIntervalSince1970
+            settingsObj.snapshotActiveCalories = todayLump.activeCalories
+            settingsObj.snapshotBasalCalories = todayLump.basalCalories
+            settingsObj.snapShotHKCalories = todayLump.healthKitCalories
+            settingsObj.snapShotHKWater = waterDetails.hk
+            settingsObj.snapshotProjectedBasal = todayLump.projectedBasal
+            settingsObj.snapshotProjectedActive = todayLump.projectedActive
+            settingsObj.sync()
+        }
         #endif // os(iOS)
 
         // Weight + deficit history

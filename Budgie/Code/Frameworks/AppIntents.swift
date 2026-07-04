@@ -42,7 +42,7 @@ struct LogQuickCaloriesIntent: AppIntent {
             throw $calories.needsValueError("Budgie Diet hasn't finished setting up yet — please open the app first.")
         }
         await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: snacksUUID)
-        await dataStore.updateLump(todayLump: TodayLump())
+        await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
         
         return .result()
     }
@@ -90,7 +90,7 @@ struct LogFoodIntent: AppIntent {
         }
         
         await dataStore.addCalories(calories: calsToLog, narrative: narrativeToLog, date: Date(), meal: meal.id)
-        await dataStore.updateLump(todayLump: TodayLump())
+        await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
         
         return .result()
     }
@@ -153,6 +153,7 @@ struct LogFoodShortcuts: AppShortcutsProvider {
                 shortTitle: "Log food",
                 systemImageName: "fork.knife"
             )
+            #if !os(macOS)
             AppShortcut(
                 intent: LogWeightIntent(),
                 phrases: [
@@ -161,9 +162,11 @@ struct LogFoodShortcuts: AppShortcutsProvider {
                 shortTitle: "Log weight",
                 systemImageName: "scalemass.fill"
             )
+            #endif
         }
 }
 
+#if !os(macOS)
 struct LogWeightIntent: AppIntent {
     static var title: LocalizedStringResource = "Log weight"
     static var description = IntentDescription("Logs a weight measurement to Health via Budgie Diet.")
@@ -194,6 +197,7 @@ struct LogWeightIntent: AppIntent {
         return .result(dialog: "Logged \(renderWeight(kilos: toLog)).")
     }
 }
+#endif
 
 struct MealEntity: AppEntity, Identifiable {
     var id: UUID

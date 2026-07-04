@@ -31,11 +31,12 @@ struct BudgieMacApp: App {          // ← keep whatever name Xcode gave this st
     }
     
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             MacRootView().environmentObject(todayLump).frame(minWidth: 760, minHeight: 500)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentMinSize)
+        .defaultSize(width: 900, height: 640)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About Budgie Diet") {
@@ -46,10 +47,30 @@ struct BudgieMacApp: App {          // ← keep whatever name Xcode gave this st
                     ])
                 }
             }
+            
+            CommandGroup(replacing: .newItem) {
+                Button("Log Food…")  { macNav.pendingAdd = .food }
+                    .keyboardShortcut("n", modifiers: .command)
+                Button("Log Water…") { macNav.pendingAdd = .water }
+                    .keyboardShortcut("n", modifiers: [.command, .shift])
+            }
+
+            CommandMenu("Go") {
+                Button("Today") { macNav.section = .today }.keyboardShortcut("1", modifiers: .command)
+                Button("Food")  { macNav.section = .food  }.keyboardShortcut("2", modifiers: .command)
+                Button("Water") { macNav.section = .water }.keyboardShortcut("3", modifiers: .command)
+            }
         }
         
         Settings {
             MacSettingsView()
         }
+        
+        MenuBarExtra {
+            MenuBarView().environmentObject(todayLump)
+        } label: {
+            Image(systemName: "bird")             // ideally a monochrome template asset; SF Symbol is a fine start
+        }
+        .menuBarExtraStyle(.window)
     }
 }

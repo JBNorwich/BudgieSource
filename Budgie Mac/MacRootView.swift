@@ -32,7 +32,7 @@ enum MacSection: String, CaseIterable, Identifiable, Hashable {
 struct MacRootView: View {
     @EnvironmentObject private var todayLump: TodayLump
     @Environment(\.colorScheme) private var colorScheme
-    @State private var selection: MacSection? = .today
+    @StateObject private var nav = macNav
     @State private var needsPhoneSetup = settingsObj.isFirstRun
 
     private var backgroundGradient: LinearGradient {
@@ -63,17 +63,23 @@ struct MacRootView: View {
             needsPhoneSetup = settingsObj.isFirstRun
             Task { @MainActor in await dataStore.updateLump(todayLump: todayLump) }
         }
+        .sheet(item: $nav.pendingAdd) { which in
+            switch which {
+            case .food:  MacAddFoodSheet(initialDate: Date()).environmentObject(todayLump)
+            case .water: MacAddWaterSheet(dateToAddOn: Date()).environmentObject(todayLump)
+            }
+        }
     }
 
     private var mainSplit: some View {
         NavigationSplitView {
-            List(MacSection.allCases, selection: $selection) { section in
+            List(MacSection.allCases, selection: Binding($nav.section)) { section in
                 Label(section.rawValue, systemImage: section.symbol).tag(section)
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 200, max: 260)
             .navigationTitle("Budgie Diet")
         } detail: {
-            switch selection ?? .today {
+            switch nav.section {
             case .today: TodayPane()
             case .food:  MacFoodPane()
             case .water: MacWaterPane()
