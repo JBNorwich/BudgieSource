@@ -35,3 +35,26 @@ let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? S
 let appBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
 let versionString = "Version \(appVersion) (Build \(appBuild))"
 let copyrightString = "Copyright 2024- Joe Baldwin"
+
+/// Bump this ONLY for releases with major new features (not bug-fix point releases). It drives the "What's New" sheet and is the value written to `settingsObj.lastOpenedVersion` once seen. Keep it "major.minor" so the numeric string comparison behaves.
+let whatsNewVersion = "3.1"
+
+struct WhatsNewItem: Identifiable {
+    let id = UUID()
+    let icon: String     // SF Symbol
+    let title: String
+    let detail: String
+}
+
+/// The items shown for `whatsNewVersion`. EDIT this list (and bump `whatsNewVersion`) each major release.
+let whatsNewItems: [WhatsNewItem] = [
+    WhatsNewItem(icon: "macbook",
+                 title: "Budgie Diet on your Mac",
+                 detail: "A companion app lets you check your budget and log food and water from your desk. Everything syncs through iCloud, just as it does on your iPhone!")
+]
+
+/// Whether the "What's New" sheet should appear: setup is finished and the user hasn't yet seen this version's sheet.
+func shouldShowWhatsNew() -> Bool {
+    guard !settingsObj.isFirstRun, !whatsNewItems.isEmpty else { return false }
+    return settingsObj.lastOpenedVersion.compare(whatsNewVersion, options: .numeric) == .orderedAscending
+}

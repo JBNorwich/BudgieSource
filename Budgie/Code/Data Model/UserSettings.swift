@@ -321,6 +321,12 @@ class CloudSettings {
         get { defaults.object(forKey: "snapshotProjectedActive") as? Int ?? 0 }
         set { defaults.set(newValue, forKey: "snapshotProjectedActive") }
     }
+    
+    /// The `whatsNewVersion` whose "What's New" sheet the user has already seen. Defaults to "2.0" so everyone upgrading from an older build sees the current sheet once. Holds thee *content* version, not the bundle version — it's shared via iCloud and the iOS/Mac apps carry different bundle versions.
+    var lastOpenedVersion: String {
+        get { defaults.string(forKey: "lastOpenedVersion") ?? "2.0" }
+        set { defaults.set(newValue, forKey: "lastOpenedVersion") }
+    }
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.

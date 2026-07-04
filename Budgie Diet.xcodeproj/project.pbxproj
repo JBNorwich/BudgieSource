@@ -92,6 +92,8 @@
 		D8CA2F182FF9931C00F63612 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461A82C73C3FD00138B60 /* Assets.xcassets */; };
 		D8CA2F192FF99D5D00F63612 /* BudgetHelperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831732C74CDC700AAF555 /* BudgetHelperView.swift */; };
 		D8CA2F1C2FF99F3B00F63612 /* NewDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6112C8075710083F3B3 /* NewDataView.swift */; };
+		D8CA2F292FF9BDBE00F63612 /* WhatsNewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8CA2F282FF9BDBE00F63612 /* WhatsNewSheet.swift */; };
+		D8CA2F2A2FF9BE5900F63612 /* WhatsNewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8CA2F282FF9BDBE00F63612 /* WhatsNewSheet.swift */; };
 		D8D4BF732C7CD04E0061A9A4 /* FoodDatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */; };
 		D8D4BF742C7CD04E0061A9A4 /* FoodHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BF722C7CD04E0061A9A4 /* FoodHub.swift */; };
 		D8D4BF762C7CD05B0061A9A4 /* AddCalsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */; };
@@ -221,6 +223,7 @@
 		D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieModel.swift; sourceTree = "<group>"; };
 		D8CA2EDE2FF95BF000F63612 /* Budgie Diet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Budgie Diet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8CA2F012FF9682A00F63612 /* CalorieEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieEntryView.swift; sourceTree = "<group>"; };
+		D8CA2F282FF9BDBE00F63612 /* WhatsNewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewSheet.swift; sourceTree = "<group>"; };
 		D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FoodDatePicker.swift; sourceTree = "<group>"; };
 		D8D4BF722C7CD04E0061A9A4 /* FoodHub.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FoodHub.swift; sourceTree = "<group>"; };
 		D8D4BF752C7CD05B0061A9A4 /* AddCalsSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddCalsSheet.swift; sourceTree = "<group>"; };
@@ -313,6 +316,7 @@
 		D829B0822C79B59D0027841B /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				D8CA2F282FF9BDBE00F63612 /* WhatsNewSheet.swift */,
 				D8DE2B412FF6DD5200513101 /* FirstRunWizard.swift */,
 				D8E831732C74CDC700AAF555 /* BudgetHelperView.swift */,
 				D8E8318A2C7797B200AAF555 /* BMRHelper.swift */,
@@ -726,6 +730,7 @@
 				D8D4BF732C7CD04E0061A9A4 /* FoodDatePicker.swift in Sources */,
 				D8BDE7362C7B961200E07471 /* Donate.swift in Sources */,
 				D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */,
+				D8CA2F292FF9BDBE00F63612 /* WhatsNewSheet.swift in Sources */,
 				D8BDE73A2C7BAF7900E07471 /* CalorieModel.swift in Sources */,
 				D868606D2C7BD0E900730373 /* Tests.swift in Sources */,
 				D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */,
@@ -797,6 +802,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D8CA2F062FF96A8600F63612 /* MeterView.swift in Sources */,
+				D8CA2F2A2FF9BE5900F63612 /* WhatsNewSheet.swift in Sources */,
 				D8CA2F042FF9689500F63612 /* TodayFoodList.swift in Sources */,
 				D8CA2EEC2FF95D0300F63612 /* SearchPredicates.swift in Sources */,
 				D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */,

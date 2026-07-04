@@ -390,6 +390,7 @@ struct FirstRunWizard: View {
             Spacer()
             Button("Start using Budgie Diet") {
                 settingsObj.isFirstRun = false
+                settingsObj.lastOpenedVersion = whatsNewVersion
                 Task { await dataStore.updateLump(todayLump: todayLump) }
                 withAnimation(.easeInOut(duration: 0.5)) { needsSetup = false }
             }

@@ -60,6 +60,7 @@ struct BudgetView: View {
     @State var backgroundGradient = CurrentGradient()
     @State private var mainNavDestination: MainNavDestination?
     @State private var showStorageError = dataStore.storeFailedToLoad
+    @State private var showWhatsNew = false
     
     func updateGradient() {
         switch colorScheme {
@@ -319,6 +320,12 @@ struct BudgetView: View {
             .presentationDragIndicator(.visible)
         }
         
+        .sheet(isPresented: $showWhatsNew,
+               onDismiss: { settingsObj.lastOpenedVersion = whatsNewVersion }) {
+            WhatsNewSheet(isDisplayed: $showWhatsNew)
+                .presentationDetents([.large])
+        }
+        
         .sheet(isPresented: $showingWeightGoalSheet, onDismiss: { Task { await dataStore.updateLump(todayLump: todayLump)}}) {
             NavigationStack {
                 WeightGoalSheet(isDisplayed: $showingWeightGoalSheet)
@@ -354,6 +361,11 @@ struct BudgetView: View {
             if !settingsObj.isFirstRun && !settingsObj.shownExplainer {
                 settingsObj.shownExplainer = true
                 showingHelp = true
+            }
+            
+            // Show the "What's New" sheet once per major version, but never on top of the first-run tour above.
+            if !showingHelp && shouldShowWhatsNew() {
+                showWhatsNew = true
             }
             
             await dataStore.reconcileHealthKit()

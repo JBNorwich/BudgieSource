@@ -34,6 +34,7 @@ struct MacRootView: View {
     @Environment(\.colorScheme) private var colorScheme
     @StateObject private var nav = macNav
     @State private var needsPhoneSetup = settingsObj.isFirstRun
+    @State private var showWhatsNew = false
 
     private var backgroundGradient: LinearGradient {
         LinearGradient(colors: colorScheme == .dark ? [.black, .blue] : [.cyan, .blue],
@@ -68,6 +69,13 @@ struct MacRootView: View {
             case .food:  MacAddFoodSheet(initialDate: Date()).environmentObject(todayLump)
             case .water: MacAddWaterSheet(dateToAddOn: Date()).environmentObject(todayLump)
             }
+        }
+        .onAppear {
+            if shouldShowWhatsNew() { showWhatsNew = true }
+        }
+        .sheet(isPresented: $showWhatsNew,
+               onDismiss: { settingsObj.lastOpenedVersion = whatsNewVersion }) {
+            WhatsNewSheet(isDisplayed: $showWhatsNew)
         }
     }
 
