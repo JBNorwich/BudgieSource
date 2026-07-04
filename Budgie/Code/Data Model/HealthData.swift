@@ -562,6 +562,25 @@ final class HealthData {
         }
 
         todayLump.recalculateBudget()
+        
+        // Water
+        let waterDetails = await waterTask
+        todayLump.waterToday = waterDetails.bd + waterDetails.hk
+        
+        #if os(iOS)
+        // Publish the budget to iCloud KVS so the Mac companion can display it.
+        settingsObj.snapshotBudget = todayLump.totalBudget
+        settingsObj.snapshotAtCap = todayLump.budgetAtCap
+        settingsObj.snapshotAtMin = todayLump.budgetAtMin
+        settingsObj.snapshotTimestamp = Date().timeIntervalSince1970
+        settingsObj.snapshotActiveCalories = todayLump.activeCalories
+        settingsObj.snapshotBasalCalories = todayLump.basalCalories
+        settingsObj.snapShotHKCalories = todayLump.healthKitCalories
+        settingsObj.snapShotHKWater = waterDetails.hk
+        settingsObj.snapshotProjectedBasal = todayLump.projectedBasal
+        settingsObj.snapshotProjectedActive = todayLump.projectedActive
+        settingsObj.sync()
+        #endif // os(iOS)
 
         // Weight + deficit history
         let weightsToday = await weightsTask
@@ -573,10 +592,6 @@ final class HealthData {
         todayLump.lastWeekAvgWeight = await lastWeekAvgTask
         todayLump.prevWeekAvgWeight = await prevWeekAvgTask
         todayLump.foodDaysLoggedFortnight = await foodDaysTask
-
-        // Water
-        let waterDetails = await waterTask
-        todayLump.waterToday = waterDetails.bd + waterDetails.hk
 
         // Activity rings
         todayLump.activitySummary = await activityTask
@@ -622,8 +637,131 @@ final class HealthData {
     
     func setUpRemoteChangeObserver(todayLump: TodayLump) {
         NotificationCenter.default.addObserver(forName: .NSPersistentStoreRemoteChange, object: nil, queue: .main) { _ in
-            Task { await self.updateLump(todayLump: todayLump) }
+            Task {
+                await self.updateLump(todayLump: todayLump)
+                await self.reconcileHealthKit()
+            }
         }
+    }
+    
+    private var reconcileInProgress = false
+
+    /// Reconciles the phone's own HealthKit samples with Budgie Diet's SwiftData store (the source of truth), fixing the three cases created by logging on a device without HealthKit (the Mac): entries with no sample yet, entries whose sample went stale after a Mac edit, and samples orphaned when their entry was deleted on the Mac.
+    @MainActor
+    func reconcileHealthKit() async {
+        guard !reconcileInProgress else { return }
+        reconcileInProgress = true
+        defer { reconcileInProgress = false }
+        await reconcileCalories()
+        await reconcileWater()
+    }
+
+    private func reconcileCalories() async {
+        guard healthStore.authorizationStatus(for: eatenQuantityType) == .sharingAuthorized else { return }
+        let to = Date()
+        let from = Calendar.current.date(byAdding: .day, value: -180, to: to) ?? to
+
+        let entries = await calorieActor.fetchCalsBetween(from: from, to: to)
+        let ownSamples = await fetchOwnSamples(type: eatenQuantityType, from: from, to: to)
+        var samplesByUUID = Dictionary(ownSamples.map { ($0.uuid, $0) }, uniquingKeysWith: { a, _ in a })
+
+        // 1. ADD — entries logged on the Mac have no sample yet.
+        for entry in entries where entry.healthKitUUID == nil {
+            if let uuid = await saveHKSample(value: Double(entry.calories), unit: .kilocalorie(),
+                                             type: eatenQuantityType, date: entry.date) {
+                await calorieActor.markCalorieMirrored(entryID: entry.id, healthKitUUID: uuid)
+            }
+        }
+
+        // 2. FIX STALE — a Mac edit changed an entry whose sample still holds the old value/date.
+        for entry in entries {
+            guard let uuid = entry.healthKitUUID, let sample = samplesByUUID[uuid] else { continue }
+            let sameCals = Int(sample.quantity.doubleValue(for: .kilocalorie()).rounded()) == entry.calories
+            let sameDate = abs(sample.startDate.timeIntervalSince(entry.date)) < 1
+            if !(sameCals && sameDate) {
+                await deleteHKSample(uuid: uuid, type: eatenQuantityType)
+                samplesByUUID[uuid] = nil
+                if let newUUID = await saveHKSample(value: Double(entry.calories), unit: .kilocalorie(),
+                                                    type: eatenQuantityType, date: entry.date) {
+                    await calorieActor.markCalorieMirrored(entryID: entry.id, healthKitUUID: newUUID)
+                }
+            }
+        }
+
+        // 3. DELETE ORPHANS — our sample with no current entry (deleted on the Mac).
+        let referenced = Set(entries.compactMap(\.healthKitUUID))
+        await deleteConfirmedOrphans(ownSamples: ownSamples, referenced: referenced,
+                                     type: eatenQuantityType, defaultsKey: "reconcileOrphans.eaten")
+    }
+
+    private func reconcileWater() async {
+        guard healthStore.authorizationStatus(for: waterQuantityType) == .sharingAuthorized else { return }
+        let to = Date()
+        let from = Calendar.current.date(byAdding: .day, value: -180, to: to) ?? to
+        let unit = HKUnit.literUnit(with: .milli)
+
+        let entries = await waterActor.fetchWaterBetween(from: from, to: to)
+        let ownSamples = await fetchOwnSamples(type: waterQuantityType, from: from, to: to)
+        var samplesByUUID = Dictionary(ownSamples.map { ($0.uuid, $0) }, uniquingKeysWith: { a, _ in a })
+
+        for entry in entries where entry.healthKitUUID == nil {
+            if let uuid = await saveHKSample(value: Double(entry.quantity), unit: unit,
+                                             type: waterQuantityType, date: entry.date) {
+                await waterActor.markWaterMirrored(entryID: entry.id, healthKitUUID: uuid)
+            }
+        }
+        for entry in entries {
+            guard let uuid = entry.healthKitUUID, let sample = samplesByUUID[uuid] else { continue }
+            let sameAmount = Int(sample.quantity.doubleValue(for: unit).rounded()) == entry.quantity
+            let sameDate = abs(sample.startDate.timeIntervalSince(entry.date)) < 1
+            if !(sameAmount && sameDate) {
+                await deleteHKSample(uuid: uuid, type: waterQuantityType)
+                samplesByUUID[uuid] = nil
+                if let newUUID = await saveHKSample(value: Double(entry.quantity), unit: unit,
+                                                    type: waterQuantityType, date: entry.date) {
+                    await waterActor.markWaterMirrored(entryID: entry.id, healthKitUUID: newUUID)
+                }
+            }
+        }
+        let referenced = Set(entries.compactMap(\.healthKitUUID))
+        await deleteConfirmedOrphans(ownSamples: ownSamples, referenced: referenced,
+                                     type: waterQuantityType, defaultsKey: "reconcileOrphans.water")
+    }
+
+    /// Samples written by this app (its own HKSource) of the given type in the window.
+    private func fetchOwnSamples(type: HKQuantityType, from: Date, to: Date) async -> [HKQuantitySample] {
+        let ownSource = HKQuery.predicateForObjects(from: HKSource.default())
+        let time = HKQuery.predicateForSamples(withStart: from, end: to, options: .strictEndDate)
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [ownSource, time])
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: type, predicate: predicate)], sortDescriptors: [])
+        return (try? await descriptor.result(for: healthStore)) ?? []
+    }
+    
+    /// Deletes orphaned own-samples, but only those seen unreferenced for at least the grace period. This protects samples the Watch just wrote: on the first pass its CloudKit entry may not have arrived yet, so the sample is only *recorded* as a candidate; by the next pass the entry has usually synced in and the sample is spared. Candidates persist across launches.
+    private func deleteConfirmedOrphans(ownSamples: [HKQuantitySample], referenced: Set<UUID>,
+                                        type: HKQuantityType, defaultsKey: String) async {
+        let grace: TimeInterval = 30 * 60     // tune to taste; longer = safer, slower cleanup
+        let now = Date().timeIntervalSince1970
+
+        let raw = UserDefaults.standard.dictionary(forKey: defaultsKey) ?? [:]
+        var candidates = raw.compactMapValues { ($0 as? NSNumber)?.doubleValue }
+
+        let orphanIDs = Set(ownSamples.map(\.uuid).filter { !referenced.contains($0) }.map(\.uuidString))
+        // Forget anyone who is no longer an orphan — their entry finally synced in.
+        candidates = candidates.filter { orphanIDs.contains($0.key) }
+
+        for id in orphanIDs {
+            if let firstSeen = candidates[id] {
+                if now - firstSeen > grace, let uuid = UUID(uuidString: id) {
+                    await deleteHKSample(uuid: uuid, type: type)
+                    candidates[id] = nil
+                }
+            } else {
+                candidates[id] = now      // first sighting — start the clock, don't delete yet
+            }
+        }
+        UserDefaults.standard.set(candidates, forKey: defaultsKey)
     }
     #endif
 }

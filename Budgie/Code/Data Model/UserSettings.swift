@@ -261,6 +261,66 @@ class CloudSettings {
         get { return defaults.object(forKey: "disableWeightFeatures") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "disableWeightFeatures") }
     }
+    
+    // MARK: - Budget snapshot (published by the iPhone for platforms without HealthKit)
+
+    /// The most recent total daily budget the iPhone calculated. Not live — always show it alongside `budgetSnapshotDate` so the user knows how current it is.
+    var snapshotBudget: Int {
+        get { defaults.object(forKey: "snapshotBudget") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotBudget") }
+    }
+    var snapshotAtCap: Bool {
+        get { defaults.object(forKey: "snapshotAtCap") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "snapshotAtCap") }
+    }
+    var snapshotAtMin: Bool {
+        get { defaults.object(forKey: "snapshotAtMin") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "snapshotAtMin") }
+    }
+    /// When the iPhone last published the snapshot (seconds since 1970). 0 means never.
+    var snapshotTimestamp: Double {
+        get { defaults.object(forKey: "snapshotTimestamp") as? Double ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotTimestamp") }
+    }
+    /// The snapshot's publish time, or nil if nothing has been published yet.
+    var budgetSnapshotDate: Date? {
+        snapshotTimestamp > 0 ? Date(timeIntervalSince1970: snapshotTimestamp) : nil
+    }
+    /// Whether the snapshot is recent enough to derive a live "left to eat" figure from: published today AND within the last four hours. (The budget resets at midnight, so a pre-midnight snapshot is stale regardless of clock age.)
+    var budgetSnapshotIsFresh: Bool {
+        guard let date = budgetSnapshotDate, Calendar.current.isDateInToday(date) else { return false }
+        return Date().timeIntervalSince(date) < 4 * 60 * 60
+    }
+
+    var snapshotActiveCalories: Int {
+        get { defaults.object(forKey: "snapshotActiveCalories") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotActiveCalories") }
+    }
+    
+    var snapshotBasalCalories: Int {
+        get { defaults.object(forKey: "snapshotBasalCalories") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotBasalCalories") }
+    }
+    
+    var snapShotHKCalories: Int {
+        get { defaults.object(forKey: "snapshotHKCalories") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotHKCalories") }
+    }
+    
+    var snapShotHKWater: Int {
+        get { defaults.object(forKey: "snapshotHKWater") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotHKWater") }
+    }
+    
+    var snapshotProjectedBasal: Int {
+        get { defaults.object(forKey: "snapshotProjectedBasal") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotProjectedBasal") }
+    }
+    
+    var snapshotProjectedActive: Int {
+        get { defaults.object(forKey: "snapshotProjectedActive") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotProjectedActive") }
+    }
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.

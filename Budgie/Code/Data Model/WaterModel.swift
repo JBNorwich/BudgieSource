@@ -79,4 +79,16 @@ import HealthKit
         let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > start && $0.date < end })
         return (try? modelContext.fetch(descriptor)) ?? []
     }
+    
+    func fetchWaterBetween(from: Date, to: Date) async -> [WaterEntry] {
+        let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > from && $0.date < to })
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    func markWaterMirrored(entryID: UUID, healthKitUUID: UUID) {
+        let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.id == entryID })
+        guard let entry = (try? modelContext.fetch(descriptor))?.first else { return }
+        entry.healthKitUUID = healthKitUUID
+        try? modelContext.save()
+    }
 }

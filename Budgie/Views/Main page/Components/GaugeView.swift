@@ -77,6 +77,13 @@ struct GaugeView: View {
                         : Text("**\((-todayLump.totalBudgetRem).formatted())** cals over budget")
                     Spacer()
                 }
+                #if os(macOS)
+                HStack {
+                    Text("Total budget **\((todayLump.totalBudget).formatted())** cals")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                #endif
                 if settingsObj.hideTodayInDetail == true && (todayLump.activeEstimated || todayLump.basalEstimated) {
                     Divider()
                     HStack {

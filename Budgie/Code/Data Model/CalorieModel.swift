@@ -296,4 +296,13 @@ actor CalorieActor {
             do { try modelContext.save() } catch { print("Meal dedupe error: \(error)") }
         }
     }
+    
+    /// Records the HealthKit sample UUID for an entry mirrored during reconciliation.
+    func markCalorieMirrored(entryID: UUID, healthKitUUID: UUID) {
+        let descriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.id == entryID })
+        guard let entry = (try? modelContext.fetch(descriptor))?.first else { return }
+        entry.healthKitUUID = healthKitUUID
+        entry.isInHK = true
+        try? modelContext.save()
+    }
 }

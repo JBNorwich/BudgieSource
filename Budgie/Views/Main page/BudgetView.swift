@@ -94,11 +94,6 @@ struct BudgetView: View {
                             MeterView(dummy: false)
                                 .environmentObject(todayLump)
                                 .padding()
-                                .onTapGesture {
-                                    Task {
-                                        await dataStore.updateLump(todayLump: todayLump)
-                                    }
-                                }
                             
                         }.frame(maxHeight: 275)
                             .overlay {
@@ -238,7 +233,10 @@ struct BudgetView: View {
         .onChange(of: scenePhase) {
             guard scenePhase == .active else { return }
             updateGradient()
-            Task { await dataStore.updateLump(todayLump: todayLump) }
+            Task {
+                await dataStore.updateLump(todayLump: todayLump)
+                await dataStore.reconcileHealthKit()
+            }
             
             // Ask for a review on the user's 3rd distinct day (only once, never during setup).
             if !settingsObj.isFirstRun, ReviewPrompt.registerUseAndShouldPrompt() {
@@ -357,6 +355,8 @@ struct BudgetView: View {
                 settingsObj.shownExplainer = true
                 showingHelp = true
             }
+            
+            await dataStore.reconcileHealthKit()
         }
     }
 }

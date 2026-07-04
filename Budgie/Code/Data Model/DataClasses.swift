@@ -307,6 +307,13 @@ class TodayLump: ObservableObject {
         let base = settingsObj.waterGoal
         return settingsObj.waterFromActivity ? base + max(activeCalories, 0) : base
     }
+    
+    /// Applies a budget computed on another device (the iPhone). Used on platforms without HealthKit, where `recalculateBudget()` can't run because there's no activity data.
+    func applyBudgetSnapshot(budget: Int, atCap: Bool, atMin: Bool) {
+        totalBudget = budget
+        budgetAtCap = atCap
+        budgetAtMin = atMin
+    }
 }
 
 struct CalsPacket {

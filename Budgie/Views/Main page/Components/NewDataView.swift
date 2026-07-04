@@ -105,7 +105,7 @@ struct NewDataView: View {
         }
     }
     
-    var body: some View {
+    var body: some View {       
         VStack {
             VStack {
                 DataViewHeader(imageName: "figure.walk", leftText: "Active calories", rightText: "Calories")
@@ -160,6 +160,7 @@ struct NewDataView: View {
                 : nil
             }
         }
+        .padding()
     }
 }
 
