@@ -146,21 +146,6 @@ struct FoodHub: View {
     }
 }
 
-
-struct CalorieEntryView: View {
-    var calories: Int
-    var narrative: String
-    
-    var body: some View {
-       HStack {
-           Text(narrative)
-           Spacer()
-           Text(calories.formatted())
-               .contentTransition(.numericText())
-       }
-   }
-}
-
 #Preview {
     struct Preview: View {
         @State var dummyData = TodayLump()
