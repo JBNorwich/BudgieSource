@@ -372,6 +372,11 @@ struct FirstRunWizard: View {
     private var doneScreen: some View {
         VStack(spacing: 20) {
             Spacer()
+            Image("Happy bird")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+                .shadow(radius: 8)
             Text("You're all done! If you want to tweak anything, head to the Settings page by tapping the gear icon in the top left of the budget screen.")
                 .multilineTextAlignment(.center)
             Text(.init(healthDisclaimer))
