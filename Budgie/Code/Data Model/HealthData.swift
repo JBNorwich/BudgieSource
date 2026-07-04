@@ -14,7 +14,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import Foundation
+#if !os(macOS)
 import HealthKitUI
+#endif
 import Observation
 import SwiftUI
 import SwiftData
@@ -47,6 +49,7 @@ final class HealthData {
         waterActor = WaterActor(modelContainer: modelContainer)
     }
     
+    #if !os(macOS)
     ///Grabs the calorie total for a given date and type from HealthKit and (for eaten) Budgie Diet. Will pull the total of entries from the start of the date passed to the start of the following day. Set hkOnly to true if you only care about HealthKit calories.
     func pullCalorieTotalForDate(date: Date, type: HKQuantityType, hkOnly: Bool) async -> Int {
         var calories: Double = 0
@@ -622,6 +625,7 @@ final class HealthData {
             Task { await self.updateLump(todayLump: todayLump) }
         }
     }
+    #endif
 }
 
 

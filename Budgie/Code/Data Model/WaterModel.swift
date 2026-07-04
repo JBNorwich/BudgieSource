@@ -15,7 +15,9 @@
 
 import SwiftUI
 import SwiftData
+#if !os(macOS)
 import HealthKit
+#endif
 
 @Model final class WaterEntry {
     // Class used by the model for a single entry of hydration into the app
@@ -38,18 +40,22 @@ import HealthKit
         do {
             try modelContext.save()
         } catch {
+            #if !os(macOS)
             if let hkUUID = object.healthKitUUID {
                 await dataStore.deleteHKSample(uuid: hkUUID, type: waterQuantityType)
             }
+            #endif
             print("Water insertion error: \(error)")
         }
     }
     
     func deleteEntries(objects: [WaterEntry]) async {
         for object in objects {
+            #if !os(macOS)
             if let hkUUID = object.healthKitUUID {
                 await dataStore.deleteHKSample(uuid: hkUUID, type: waterQuantityType)
             }
+            #endif
             modelContext.delete(object)
         }
         do {

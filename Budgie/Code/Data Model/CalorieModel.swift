@@ -15,7 +15,9 @@
 
 import Foundation
 import SwiftData
+#if !os(macOS)
 import HealthKit
+#endif
 import AppIntents
 
 @Model final class Meal {
@@ -169,20 +171,25 @@ actor CalorieActor {
     }
     
     func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID) async {
+        #if !os(macOS)
         // HK can't be updated in place — delete the old sample, then write a fresh one.
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
             await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
         }
         let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
-
+        #endif
+        
         // SwiftData, unlike HK, can just be mutated — this preserves the entry's identity.
         entry.calories = calories
         entry.narrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         entry.date = date
         entry.meal = meal
+        
+        #if !os(macOS)
         entry.isInHK = newUUID != nil
         entry.healthKitUUID = newUUID
-
+        #endif
+        
         do {
             try modelContext.save()
         } catch {
@@ -192,9 +199,11 @@ actor CalorieActor {
     
     func deleteEntries(objects: [CalorieEntry]) async {
         for object in objects {
+            #if !os(macOS)
             if object.isInHK, let hkUUID = object.healthKitUUID {
                 await dataStore.deleteHKSample(uuid: hkUUID, type: eatenQuantityType)
             }
+            #endif
             modelContext.delete(object)
         }
         do {

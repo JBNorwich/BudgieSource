@@ -15,7 +15,10 @@
 
 import Foundation
 import SwiftUI
+import Combine
+#if !os(macOS)
 import HealthKit
+#endif
 
 class TodayLump: ObservableObject {
     // Variables that need to be updated upon creation
@@ -25,7 +28,6 @@ class TodayLump: ObservableObject {
     @Published var projectedActive: Int = 0
     @Published var projectedBasal: Int = 0
     @Published var waterToday: Int = 0
-    @Published var activitySummary: HKActivitySummary = HKActivitySummary()
     @Published var weightToday: Double = 0
     @Published var weightYesterday: Double = 0
     @Published var lastWeightDate: Date? = nil
@@ -34,6 +36,10 @@ class TodayLump: ObservableObject {
     @Published var lastWeekAvgWeight: Double = 0
     @Published var prevWeekAvgWeight: Double = 0
     @Published var foodDaysLoggedFortnight: Int = 0
+    
+    #if !os(macOS)
+    @Published var activitySummary: HKActivitySummary = HKActivitySummary()
+    #endif
     
     @Published private(set) var totalBudget: Int = 1200
     @Published private(set) var budgetAtCap: Bool = false

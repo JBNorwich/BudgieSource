@@ -14,6 +14,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import Foundation
+
+#if !os(macOS)
 import HealthKitUI
 
 /// Predicate that returns only data not logged by Budgie Diet.
@@ -54,5 +56,5 @@ let readTypes: Set = [
     fitnessGoalType,
     weightSampleType
 ]
-
+#endif
 
