@@ -130,8 +130,6 @@ struct WeightView: View {
                                     Text("**\(performance.text)**").foregroundColor(performance.color)
                                     Text("Expected \(renderWeight(kilos: todayLump.expectedWeightLossAtRealDeficit))")
                                         .foregroundColor(.secondary)
-                                    Text("Real deficit: \(todayLump.realDeficit.formatted())")
-                                        .foregroundColor(.secondary)
                                 } else {
                                     Text("Log your food regularly to see how you're tracking against your target.")
                                         .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center)
