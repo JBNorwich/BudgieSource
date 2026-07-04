@@ -19,6 +19,13 @@ struct GaugeView: View {
     @EnvironmentObject var todayLump: TodayLump
     let gradient = Gradient(colors: [.blue, .green, .yellow, .red])
     
+    private var gaugePercentPhrase: String {
+        let n = todayLump.gaugeNumber
+        if n > 0 { return "\(n) percent above target" }
+        if n < 0 { return "\(-n) percent below target" }
+        return "On target"
+    }
+    
     var body: some View {
         HStack {
             VStack {
@@ -42,6 +49,9 @@ struct GaugeView: View {
                     .padding()
                     .animation(.easeInOut, value: todayLump.progressToday)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Eaten against target")
+            .accessibilityValue(gaugePercentPhrase)
             Divider()
             VStack {
                 HStack {
