@@ -26,6 +26,8 @@ struct SettingsView: View {
     @State var deficitLabel: String = "0"
     @State var surpDefHeader: String = "Header goes here"
     @State var surpDefExplainer: String = "Explainer goes here"
+    @State private var showing1000Warning = false
+    @State private var deficitBeforeWarning = 0
     
     @FocusState private var focusResting: Bool
     @FocusState private var focusActive: Bool
@@ -107,11 +109,33 @@ struct SettingsView: View {
                 Slider(value: deficitBinding,
                        in: 0...1000,
                        step: 50,
-                       onEditingChanged: { _ in refreshState() },
+                       onEditingChanged: { editing in
+                           if editing {
+                               // Remember where they started, so we can revert if they back out of a 1,000 deficit.
+                               deficitBeforeWarning = settingsObj.desiredDeficit
+                           } else {
+                               // A 1,000kcal+ deficit is an extreme choice — route it through the same warning
+                               // gate as the deficit chooser, rather than letting the slider set it silently.
+                               if !settingsObj.surplusMode && settingsObj.desiredDeficit >= 1000 {
+                                   showing1000Warning = true
+                               }
+                               refreshState()
+                           }
+                       },
                        minimumValueLabel: Text(""),
                        maximumValueLabel: Text(deficitLabel),
                        label: { Text("Deficit") }
                 )
+                .sheet(isPresented: $showing1000Warning) {
+                    ThousandKcalWarningSheet(
+                        isDisplayed: $showing1000Warning,
+                        onConfirm: { refreshState() },
+                        onCancel: {
+                            settingsObj.desiredDeficit = deficitBeforeWarning
+                            refreshState()
+                        }
+                    )
+                }
                 if !settingsObj.surplusMode {
                 Button("Help me choose a goal") {
                         showingSheet = true

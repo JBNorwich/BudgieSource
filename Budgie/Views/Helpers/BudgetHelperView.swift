@@ -142,17 +142,23 @@ struct BudgetHelperView: View {
         
         .sheet(isPresented: $displaying1000kcalWarning) {
             ThousandKcalWarningSheet(
-                displaying1000kcalWarning: $displaying1000kcalWarning,
-                isPresented: $isPresented
+                isDisplayed: $displaying1000kcalWarning,
+                onConfirm: {
+                    settingsObj.desiredDeficit = 1000
+                    isPresented = false
+                }
             )
         }
         .presentationDragIndicator(.visible)
     }
 }
 
-private struct ThousandKcalWarningSheet: View {
-    @Binding var displaying1000kcalWarning: Bool
-    @Binding var isPresented: Bool
+struct ThousandKcalWarningSheet: View {
+    @Binding var isDisplayed: Bool
+    /// Called when the user confirms they want the 1,000 kcal deficit.
+    var onConfirm: () -> Void
+    /// Called when the user backs out; the caller should restore the prior deficit.
+    var onCancel: () -> Void = {}
 
     @State private var secondsRemaining = 5
 
@@ -171,14 +177,14 @@ private struct ThousandKcalWarningSheet: View {
                 .multilineTextAlignment(.center)
                 .padding()
             Button("Choose a different deficit") {
-                displaying1000kcalWarning = false
+                onCancel()
+                isDisplayed = false
             }
             .font(.title)
             .padding()
             Button(secondsRemaining > 0 ? "Set deficit to 1,000 (\(secondsRemaining))" : "Set deficit to 1,000") {
-                settingsObj.desiredDeficit = 1000
-                displaying1000kcalWarning = false
-                isPresented = false
+                onConfirm()
+                isDisplayed = false
             }
             .foregroundStyle(secondsRemaining > 0 ? Color.gray : Color.red)
             .disabled(secondsRemaining > 0)
