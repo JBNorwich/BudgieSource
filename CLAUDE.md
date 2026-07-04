@@ -73,14 +73,35 @@ This file is *not* licenced under the Expat licence. It is licenced under the NO
 - A secondary risk is of the user pursuing a goal that is likely to cause harm.
 - A tertiary risk is of the app contributing to or reinforcing body image issues, although this is unlikely with its current feature set.
 - The app must not act in any way that would encourage or reinforce disordered eating patterns, or that increase the risk of the user developing them.
-- The user's goals and/or their achieiving them must not ever be discussed in a context of body image or appearance.
+- The user's goals and/or their achieving them must not ever be discussed in a context of body image or appearance.
 - The app should *attempt to dissuade* the user from making extreme choices that would be harmful to most people, such as a very large 1,000kcal+ deficit or an underweight weight goal.
 - The app must *actively prevent* the user from setting goals that are wildly unrealistic or would be harmful in virtually all cases, such as a daily calorie budget below 1,200kcal.
 - The user must be told at any point at which the app is refusing to act on their instructions, and signposted to support resources if appropriate.
 - The user must not be allowed, at any point, to turn off safeguards.
 - Information about the user's budget or activity status must be presented neutrally and without judgment. The user MUST NEVER UNDER ANY CIRCUMSTANCES be directly told to eat more or less food, or do more or less exercise.
 - Hard safety limits belong in the model layer, not the UI.
+- The user must not be proactively nudged to log food, to check their budget, or to do anything at all. Interaction with Budgie Diet must be entirely unprompted and voluntary.
+- The user must not be encouraged or incentivised by way of a deliberate app mechanic to interact with Budgie Diet on a regular basis
+    - It is acceptable to warn the user of an absence of data that legitimately prevents a feature from working (e.g. "log your weight for two weeks to see your performance against trend")
+- Wording or language must not express disappointment or encourage shame in the user for not logging food, not exercising or otherwise not using the app
+    - Similarly, the app must not assume that under-engagement with it is a sign of a disorder (e.g. the user is not logging much food, therefore they are at risk)
+- Any wording or language that displays or compares statistics must never make a qualitative, rather than quantitative, judgment of the user's progress
+- Any goals that the app allows the user to set must not be based on any aesthetic or body composition considerations (e.g. body size/muscle mass). Weight is exempted purely due to its functional requirement within the app.
+- The user must be able to turn off features that surface weight information and not see them at all.
+    - It is acceptable for these features to be on by default, or to prompt for the user's weight to calculate their BMI.
 - If a feature implementation conflicts with these principles, this should be flagged with a clear rationale for *why* the feature may be problematic.
+- While these safety principles are intended, insofar as it is possible, to prevent Budgie Diet from encouraging or reinforcing unhealthy patterns of behaviour, Budgie Diet cannot, and cannot be expected to, prevent harmful decisions on the user's part that are independent of the app. It is not for Budgie Diet to police the user's real world behaviour.
+
+# Forbidden features
+In line with the above safety principles, the following are not and never will be implemented in Budgie Diet:
+
+- Push notifications - whether voluntarily set by the user or not
+- Any other facility or mechanic that prompts the user to open the app
+    - It is acceptable for the user to have a passive widget that displays (e.g.) their current budget, or *allows* them to log food, provided it does not directly encourage them to do so.
+- Streaks/awards, points or other "gamification" mechanics
+    - It is acceptable to tell the user that they have achieved a goal that they set themselves, e.g. their weight goal, and congratulate them for doing so.
+- Suggestions of a goal weight (beyond strongly encouraging the user to not aim to be underweight, and then only if they try to set such a goal)
+- Tracking of body measurements such as waist measurements
 
 # Tone of voice/messaging
 - Some whimsy is fine (e.g. the optional whale feature, the bird image and phrase at the bottom of BudgetView). Too much is bad and makes the app look unserious.
