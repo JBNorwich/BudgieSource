@@ -60,7 +60,7 @@ struct MacSettingsView: View {
                             }
                         })
                     Text("\(abs(settingsObj.desiredDeficit)) kcal").monospacedDigit().frame(width: 80, alignment: .trailing)
-                }
+                }.labelsHidden()
                 if !surplusMode { Button("Help me choose a goal…") { showingHelper = true } }
             } header: { Text(surplusMode ? "Calorie surplus" : "Calorie deficit") }
               footer: { Text("The net \(surplusMode ? "surplus" : "deficit") you'd like Budgie Diet to help you land at.") }

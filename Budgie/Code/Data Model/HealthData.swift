@@ -488,7 +488,7 @@ final class HealthData {
             todayLump.updateInProgress = false
             if todayLump.updateQueued {
                 todayLump.updateQueued = false
-                Task { await updateLump(todayLump: todayLump, reloadWidgets: reloadWidgets) }
+                Task { await updateLump(todayLump: todayLump, reloadWidgets: reloadWidgets, publishSnapshot: publishSnapshot) }
             }
         }
         
@@ -629,7 +629,7 @@ final class HealthData {
                     return
                 }
                 Task {
-                    await self.updateLump(todayLump: todayLump)   // ends with reloadAllTimelines()
+                    await self.updateLump(todayLump: todayLump, publishSnapshot: false)   // ends with reloadAllTimelines()
                     completionHandler()          // tell HealthKit we've handled it
                 }
             }
@@ -640,7 +640,7 @@ final class HealthData {
     func setUpRemoteChangeObserver(todayLump: TodayLump) {
         NotificationCenter.default.addObserver(forName: .NSPersistentStoreRemoteChange, object: nil, queue: .main) { _ in
             Task {
-                await self.updateLump(todayLump: todayLump)
+                await self.updateLump(todayLump: todayLump, publishSnapshot: false)
                 await self.reconcileHealthKit()
             }
         }

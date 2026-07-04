@@ -100,8 +100,10 @@ struct MacAddFoodSheet: View {
                 Button("Cancel") { dismiss() }
                 Spacer()
                 Button("Save and add more") { save(keepOpen: true) }
+                    .keyboardShortcut(.return, modifiers: [.command, .option])
                 Button("Save") { save(keepOpen: false) }
-                    .keyboardShortcut(.defaultAction).buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.return, modifiers: .command)
+                    .buttonStyle(.borderedProminent)
             }
             .padding()
         }
