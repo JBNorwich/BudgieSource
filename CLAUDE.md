@@ -91,7 +91,7 @@ This file is *not* licenced under the Expat licence. It is licenced under the NO
 - Don't overstate risks or be alarmist. NEVER *accuse* the user of trying to do something wrong, or tell them that they have or might have an eating disorder.
 - Text should be sensitive to the individuality of users (e.g. someone who wants to gain weight may not be trying to gain muscle, but may be underweight.)
 - While the app logo is a bird and the name is Budgie Diet, generally text shouldn't refer to birds or be bird-centric.
-- Don't refer to the user by name, or in the second person. The user is "you".
+- Don't refer to the user by name, or in the first or third person. The user is "you".
 - Don't be overfamiliar with the user.
 - The user's gender is only collected for the purpose of calculating their body mass index. It must not be surfaced, discussed or used in any other context.
 - Where spelling differs between American English and British English, use the British spelling.
