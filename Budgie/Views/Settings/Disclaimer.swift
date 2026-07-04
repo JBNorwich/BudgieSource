@@ -32,8 +32,8 @@ struct Disclaimer: View {
                     Text("This app estimates your daily calorie budget using Apple Health data, manual calculations, and various formulae. Any of these could be inaccurate or even completely wrong.")
                 }
                 
-                Section (header: Text("You may not lose weight")) {
-                    Text("Everyone’s metabolism and lifestyle are unique. Weight changes can result from fat, muscle, or water fluctuations. Calorie counts on food may be inaccurate, and you might forget or mislog food. As such, your weight loss may not match expectations.\n\nThe \"Expected weight loss\" figures that the app provides are guidelines only.")
+                Section (header: Text("You may not achieve the progress you want")) {
+                    Text("Everyone’s metabolism and lifestyle are unique. Weight changes can result from fat, muscle, or water fluctuations. Calorie counts on food may be inaccurate, and you might forget or mislog food. As such, your results may not match expectations.\n\nAny weight projections that the app provides are guidelines only.")
                 }
                 
                 Section(header: Text("You are responsible for your choices")) {
@@ -45,6 +45,11 @@ struct Disclaimer: View {
                     Link("Beat Eating Disorders (UK)", destination: URL(string: "https://www.beateatingdisorders.org.uk")!)
                     Link("National Eating Disorders Association (USA)", destination: URL(string: "https://www.nationaleatingdisorders.org")!)
                     Link("NHS guidance on eating disorders", destination: URL(string: "https://www.nhs.uk/mental-health/feelings-symptoms-behaviours/behaviours/eating-disorders/overview/")!)
+                    Text("(The above organisations are not affiliated with, and do not endorse, this app.)")
+                }
+                
+                Section() {
+                    Link("Read about user safety in Budgie Diet", destination: URL(string: "https://joebaldwin.me.uk/apps/budgiediet/safety/")!)
                 }
             }
             .navigationTitle("Disclaimer")
