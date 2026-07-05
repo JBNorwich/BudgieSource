@@ -44,9 +44,6 @@ struct WeightView: View {
               haveTrendData,
               todayLump.consistentlyLoggedFood,
               let performance = todayLump.performanceAgainstWeightTrend else { return nil }
-        // Magnitude so the "Expected" range reads sensibly whether the user is losing
-        // (positive expected change) or gaining (negative).
-        let magnitude = abs(todayLump.expectedWeightLossAtRealDeficit)
         let min = todayLump.expectedWeightLossAtRealDeficit * 0.5
         let max = todayLump.expectedWeightLossAtRealDeficit * 1.5
         if performance > 1.5 { return ("Exceeding target", .blue, min, max) }

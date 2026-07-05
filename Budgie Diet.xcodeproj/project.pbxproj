@@ -628,7 +628,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2660;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					D89461A02C73C3FC00138B60 = {
 						CreatedOnToolsVersion = 15.4;
@@ -1195,6 +1195,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 260704.1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -1242,6 +1243,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 260704.1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
