@@ -20,6 +20,7 @@ struct TodayPane: View {
     @State private var showAddFood = false
     @State private var showAddWater = false
     @State private var showDataView = false
+    @State private var greeting = getBudgieGreeting()
 
     var body: some View {
         ScrollView {
@@ -62,7 +63,7 @@ struct TodayPane: View {
                         .interpolation(.high)
                         .resizable()
                         .frame(maxWidth: 116,maxHeight: 100)
-                    Text(getBudgieGreeting())
+                    Text(greeting)
                     Spacer()
                 }.offset(x: 0, y: 0)
             }

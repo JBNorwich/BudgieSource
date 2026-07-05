@@ -61,6 +61,7 @@ struct BudgetView: View {
     @State private var mainNavDestination: MainNavDestination?
     @State private var showStorageError = dataStore.storeFailedToLoad
     @State private var showWhatsNew = false
+    @State private var greeting = getBudgieGreeting()
     
     func updateGradient() {
         switch colorScheme {
@@ -83,7 +84,7 @@ struct BudgetView: View {
                             Image("Budgie")
                                 .resizable()
                                 .frame(maxWidth: 116,maxHeight: 100)
-                            Text(getBudgieGreeting())
+                            Text(greeting)
                             Spacer()
                         }.offset(x: 0, y: 50)
                     }
@@ -234,6 +235,7 @@ struct BudgetView: View {
         .onChange(of: scenePhase) {
             guard scenePhase == .active else { return }
             updateGradient()
+            greeting = getBudgieGreeting()
             Task {
                 await dataStore.updateLump(todayLump: todayLump)
                 await dataStore.reconcileHealthKit()
