@@ -249,7 +249,7 @@ struct WeightGoalSheet: View {
         if settingsObj.surplusMode {
             daysToGo = getDaysToGain(weight: magnitude, surplus: -settingsObj.desiredDeficit)
         } else {
-            daysToGo = getDaysToLose(weight: magnitude, deficit: todayLump.goalProjectionDeficit)
+            daysToGo = getDaysToLose(weight: magnitude, deficit: settingsObj.desiredDeficit)
         }
         friendlyDuration = formatDuration(days: daysToGo)
     }
