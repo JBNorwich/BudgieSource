@@ -253,7 +253,7 @@ class CloudSettings {
     }
     
     var waterFromActivity: Bool {
-        get { return defaults.object(forKey: "waterFromActivity") as? Bool ?? true }
+        get { return defaults.object(forKey: "waterFromActivity") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "waterFromActivity") }
     }
     

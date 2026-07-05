@@ -36,9 +36,26 @@ struct WaterView: View {
                 .padding(.top, 10)
                 .animation(.easeInOut, value: todayLump.waterGoalDone)
             Spacer()
-            todayLump.waterGoalRem != 0
-                ? Text("\(renderVolume(millilitres: todayLump.waterGoalRem)) to go")
-                : Text("Goal met!")
+            if todayLump.waterGoalRem != 0 {
+                Text("\(renderVolume(millilitres: todayLump.waterGoalRem)) to go")
+                    .font(.caption2)
+                    .fixedSize()
+            } else {
+                Text("Goal met!")
+                    .font(.caption2)
+                    .fixedSize()
+            }
+            if todayLump.effectiveWaterGoal != settingsObj.waterGoal {
+                Text("Goal: \(renderVolume(millilitres: settingsObj.waterGoal)) + \(Image(systemName: "flame")) \(renderVolume(millilitres: todayLump.effectiveWaterGoal - settingsObj.waterGoal))")
+                    .font(.caption2)
+                    .fixedSize()
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Goal: \(renderVolume(millilitres: settingsObj.waterGoal))")
+                    .font(.caption2)
+                    .fixedSize()
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
