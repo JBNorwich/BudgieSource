@@ -6,6 +6,10 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>fitnessapp</string>
+    </array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIImageName</key>
