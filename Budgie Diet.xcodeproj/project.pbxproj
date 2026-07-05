@@ -11,6 +11,9 @@
 		D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
 		D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
 		D81987E92E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
+		D825E2AF2FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
+		D825E2B02FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
+		D825E2B12FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
 		D829B0852C79B5C50027841B /* ChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0842C79B5C50027841B /* ChartView.swift */; };
 		D829B0872C79BAA80027841B /* ChartTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0862C79BAA80027841B /* ChartTableView.swift */; };
 		D829B0892C7A0F880027841B /* ChartDatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0882C7A0F880027841B /* ChartDatePicker.swift */; };
@@ -173,6 +176,7 @@
 		D80CB9992F70290C0036EB8E /* WeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightView.swift; sourceTree = "<group>"; };
 		D81987E62E4FA1F400ED81A4 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		D81EAB0C2CA049C000A7F302 /* Budgie-DietWatch-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Budgie-DietWatch-Watch-App-Info.plist"; sourceTree = "<group>"; };
+		D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ARCHITECTURE.md; sourceTree = "<group>"; };
 		D829B0842C79B5C50027841B /* ChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartView.swift; sourceTree = "<group>"; };
 		D829B0862C79BAA80027841B /* ChartTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartTableView.swift; sourceTree = "<group>"; };
 		D829B0882C7A0F880027841B /* ChartDatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartDatePicker.swift; sourceTree = "<group>"; };
@@ -375,6 +379,7 @@
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
+				D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */,
 				D8DE2B452FF70E6B00513101 /* README.md */,
 				D80D1DBB2FF3CDB500D01B51 /* .claude */,
 				D86806F02FF2D288007D6231 /* .gitignore */,
@@ -663,6 +668,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D825E2B02FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
 				D89461AC2C73C3FD00138B60 /* Preview Assets.xcassets in Resources */,
 				D86806F22FF2D28E007D6231 /* .gitignore in Resources */,
 				D86806EC2FF2CC7F007D6231 /* LICENCE.md in Resources */,
@@ -684,6 +690,7 @@
 				D89A95BE2C84CD4E007796AB /* Assets.xcassets in Resources */,
 				D86806ED2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
+				D825E2B12FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -697,6 +704,7 @@
 				D89A95CD2C84F753007796AB /* Preview Assets.xcassets in Resources */,
 				D86806EB2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */,
+				D825E2AF2FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
