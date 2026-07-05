@@ -245,6 +245,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D89A988C2FFA77200028857A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppIntents.swift,
+			);
+			target = D89A95942C84BB53007796AB /* Budgie DietWidgetExtension */;
+		};
 		D8CA2F272FF9B61600F63612 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -256,7 +263,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D80D1DBB2FF3CDB500D01B51 /* .claude */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = .claude; sourceTree = "<group>"; };
-		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (D8CA2F272FF9B61600F63612 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
+		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (D89A988C2FFA77200028857A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, D8CA2F272FF9B61600F63612 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
 		D8B3F3012D8F11C500DDA41D /* Water Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Water Logging"; sourceTree = "<group>"; };
 		D8CA2EDF2FF95BF000F63612 /* Budgie Mac */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Budgie Mac"; sourceTree = "<group>"; };
 		D8DE2B382FF6864500513101 /* Weight */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Weight; sourceTree = "<group>"; };

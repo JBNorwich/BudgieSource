@@ -29,7 +29,7 @@ struct LogQuickCaloriesIntent: AppIntent {
         }
     
     @MainActor
-    func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult & ProvidesDialog {
         var calsToLog: Int
         
         if let calories = calories {
@@ -44,7 +44,7 @@ struct LogQuickCaloriesIntent: AppIntent {
         await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: snacksUUID)
         await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
         
-        return .result()
+        return .result(dialog: "Logged \(calsToLog.formatted()) kcal.")
     }
 }
 
@@ -69,7 +69,7 @@ struct LogFoodIntent: AppIntent {
         }
     }
     
-    @MainActor func perform() async throws -> some IntentResult {
+    @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
         var calsToLog: Int
         var narrativeToLog: String
         
@@ -92,7 +92,7 @@ struct LogFoodIntent: AppIntent {
         await dataStore.addCalories(calories: calsToLog, narrative: narrativeToLog, date: Date(), meal: meal.id)
         await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
         
-        return .result()
+        return .result(dialog: "Logged \(calsToLog.formatted()) kcal for \(narrativeToLog) to \(meal.name).")
     }
 }
 
@@ -111,7 +111,7 @@ struct LogWaterIntent: AppIntent {
     }
     
     @MainActor
-    func perform() async throws -> some IntentResult {
+    func perform() async throws -> some IntentResult & ProvidesDialog {
         var mlsToLog: Int
         
         if let millilitres = millilitres {
@@ -122,7 +122,7 @@ struct LogWaterIntent: AppIntent {
         
         await dataStore.addWater(amount: mlsToLog, datetime: Date())
         
-        return .result()
+        return .result(dialog: "Logged \(renderVolume(millilitres: mlsToLog)).")
     }
 }
 

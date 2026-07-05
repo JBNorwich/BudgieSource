@@ -69,7 +69,11 @@ struct BudgieMacApp: App {          // ← keep whatever name Xcode gave this st
         MenuBarExtra {
             MenuBarView().environmentObject(todayLump)
         } label: {
-            Image(systemName: "bird")             // ideally a monochrome template asset; SF Symbol is a fine start
+            Image("Bird menu bar")
+                .renderingMode(.template)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 18, height: 18)
         }
         .menuBarExtraStyle(.window)
     }
