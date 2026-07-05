@@ -111,8 +111,11 @@ struct TodayPane: View {
                     Text("Synced from your iPhone at \(date.formatted(date: .omitted, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .padding()
                 }
             }
+        } else {
+            staleBudget
         }
     }
 
@@ -135,7 +138,6 @@ struct TodayPane: View {
             Text("kcal").foregroundStyle(.secondary)
             Text("You've logged \(todayLump.eatenCalories.formatted()) kcal so far today.")
                 .font(.callout).foregroundStyle(.secondary)
-            budgetFootnote
         }
         .padding(24)
         .frame(maxWidth: .infinity)
