@@ -89,6 +89,7 @@ struct FitnessView: View {
                 todayLump.activitySummary.standHoursGoal != nil
                     ? FitnessStat(title: "Stand", value: todayLump.activitySummary.appleStandHours.doubleValue(for: .count()), goal: todayLump.activitySummary.standHoursGoal?.doubleValue(for: .count()) ?? 0, unit: "hrs", colour: standColour)
                     : nil
+                Spacer()
             }
         }
     }

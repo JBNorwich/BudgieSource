@@ -118,12 +118,13 @@ struct BudgetView: View {
                                 showingDetail = true
                             }
                         HStack {
-                            GroupBox(label: Label("Activity", systemImage:"figure.run")) {
+                            GroupBox(label: ActivityLabelView()) {
                                 FitnessView().environmentObject(todayLump)
                             }.onTapGesture {
                                 UIApplication.shared.open(URL(string: "fitnessapp://")!)
                             }.backgroundStyle(.regularMaterial)
                                 .frame(minHeight: 100)
+                            
                             GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
                                 WaterView().environmentObject(todayLump)
                             }.onTapGesture {
@@ -399,6 +400,20 @@ struct WaterLabelView: View {
             Button ("Add", systemImage: "plus") {
                 showingWaterSheet = true
             }.buttonStyle(.plain)
+        }
+    }
+}
+
+struct ActivityLabelView: View {
+    var body: some View {
+        HStack{
+            Label("Activity", systemImage: "figure.run")
+            Spacer()
+            if UIApplication.shared.canOpenURL(URL(string: "fitnessapp://")!) {
+                Image(systemName: "chevron.forward.circle.fill")
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
         }
     }
 }
