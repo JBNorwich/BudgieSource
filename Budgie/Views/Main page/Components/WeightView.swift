@@ -26,9 +26,9 @@ struct WeightView: View {
         todayLump.prevWeekAvgWeight != 0 && todayLump.lastWeekAvgWeight != 0
     }
 
-    /// Whether the user has a deficit target to track against at all. A user whose express wish is to stay the same weight has nothing to be "on target" for.
+    /// Whether the user has a target to track against at all. A user whose express wish is to stay the same weight has nothing to be "on target" for.
     private var hasDeficitTarget: Bool {
-        !settingsObj.surplusMode && settingsObj.desiredDeficit != 0
+        settingsObj.desiredDeficit != 0
     }
 
     private var trendLabel: (text: String, color: Color) {
@@ -44,6 +44,9 @@ struct WeightView: View {
               haveTrendData,
               todayLump.consistentlyLoggedFood,
               let performance = todayLump.performanceAgainstWeightTrend else { return nil }
+        // Magnitude so the "Expected" range reads sensibly whether the user is losing
+        // (positive expected change) or gaining (negative).
+        let magnitude = abs(todayLump.expectedWeightLossAtRealDeficit)
         let min = todayLump.expectedWeightLossAtRealDeficit * 0.5
         let max = todayLump.expectedWeightLossAtRealDeficit * 1.5
         if performance > 1.5 { return ("Exceeding target", .blue, min, max) }
