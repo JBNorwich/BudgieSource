@@ -76,7 +76,7 @@ struct AddCalsSheet: View {
                     
                     DatePicker(selection: $selectedDate, in: ...Date(), displayedComponents: .date, label: { Text("Date") })
                     
-                    if (getMidnightOnDayBefore(date: Date()) == getMidnightOnDayBefore(date: selectedDate))
+                    if Calendar.current.isDate(selectedDate, inSameDayAs: Date())
                     {
                         Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(abs(newRemBudg).formatted())** \(newRemBudg >= 0 ? "in" : "over") your overall budget for the rest of the day.")
                         if settingsObj.useMealAllocations, mealTarget != nil {
