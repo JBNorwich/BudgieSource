@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "D8CA2EDD2FF95BF000F63612"
-               BuildableName = "Budgie Mac.app"
+               BuildableName = "Budgie Diet.app"
                BlueprintName = "Budgie Mac"
                ReferencedContainer = "container:Budgie Diet.xcodeproj">
             </BuildableReference>
@@ -46,7 +46,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D8CA2EDD2FF95BF000F63612"
-            BuildableName = "Budgie Mac.app"
+            BuildableName = "Budgie Diet.app"
             BlueprintName = "Budgie Mac"
             ReferencedContainer = "container:Budgie Diet.xcodeproj">
          </BuildableReference>
@@ -63,7 +63,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D8CA2EDD2FF95BF000F63612"
-            BuildableName = "Budgie Mac.app"
+            BuildableName = "Budgie Diet.app"
             BlueprintName = "Budgie Mac"
             ReferencedContainer = "container:Budgie Diet.xcodeproj">
          </BuildableReference>

@@ -39,14 +39,16 @@ struct WeightView: View {
         return ("Static", .yellow)
     }
 
-    private var performanceLabel: (text: String, color: Color)? {
+    private var performanceLabel: (text: String, color: Color, min: Double, max: Double)? {
         guard hasDeficitTarget,
               haveTrendData,
               todayLump.consistentlyLoggedFood,
               let performance = todayLump.performanceAgainstWeightTrend else { return nil }
-        if performance > 1.5 { return ("Exceeding target", .blue) }
-        if performance < 0.5 { return ("Off target", .yellow) }
-        return ("On target", .green)
+        let min = todayLump.expectedWeightLossAtRealDeficit * 0.5
+        let max = todayLump.expectedWeightLossAtRealDeficit * 1.5
+        if performance > 1.5 { return ("Exceeding target", .blue, min, max) }
+        if performance < 0.5 { return ("Off target", .yellow, min, max) }
+        return ("On target", .green, min, max)
     }
     
     var body: some View {
@@ -102,16 +104,16 @@ struct WeightView: View {
                     }
                 }
                 Divider()
-                VStack {
+                VStack(alignment: .leading) {
                     HStack {
-                        VStack {
+                        VStack(alignment: .leading) {
                             Text("**\(trendLabel.text)**").foregroundColor(trendLabel.color)
                             HStack {
                                 if !haveTrendData {
                                     Text("Weigh in for a couple of weeks to see your weight trend.")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
+                                        .multilineTextAlignment(.leading)
                                 } else if todayLump.weightTrend > 0 {
                                     Text("\(renderWeight(kilos: todayLump.weightTrend)) down on the previous week")
                                         .foregroundColor(.secondary)
@@ -121,18 +123,20 @@ struct WeightView: View {
                                 } else {
                                     Text("No change from the previous week")
                                 }
-                            }.padding(.leading)
-                        }
+                            }
+                        }.padding(.leading)
                         if hasDeficitTarget {
                             Divider()
-                            VStack {
+                            VStack(alignment: .leading) {
                                 if let performance = performanceLabel {
                                     Text("**\(performance.text)**").foregroundColor(performance.color)
-                                    Text("Expected \(renderWeight(kilos: todayLump.expectedWeightLossAtRealDeficit))")
+                                    Text("Expected\n\(renderWeight(kilos: performance.min)) - \(renderWeight(kilos: performance.max))")
                                         .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.leading)
                                 } else {
                                     Text("Log your food regularly to see how you're tracking against your target.")
                                         .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center)
+                                        .multilineTextAlignment(.leading)
                                 }
                             }
                         }
