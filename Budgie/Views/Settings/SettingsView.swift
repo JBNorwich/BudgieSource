@@ -78,7 +78,10 @@ struct SettingsView: View {
             },
             set: { newValue in
                 let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
-                settingsObj.waterGoal = millilitres(from: Double(newValue), in: unit)
+                // Never allow a zero/blank goal: it makes effectiveWaterGoal 0 and the water
+                // gauge divides by it (0/0 -> NaN). Floor at one unit of the chosen measure.
+                let flooredDisplayValue = max(newValue, 1)
+                settingsObj.waterGoal = millilitres(from: Double(flooredDisplayValue), in: unit)
                 refreshID = UUID()
             }
         )
