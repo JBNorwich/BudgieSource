@@ -329,8 +329,9 @@ class TodayLump: ObservableObject {
     /// The user's water goal, topped up by 1 ml per active calorie burned today when
     /// the "increase goal with activity" setting is on.
     var effectiveWaterGoal: Int {
-        let base = settingsObj.waterGoal
-        return settingsObj.waterFromActivity ? base + max(activeCalories, 0) : base
+        let base = settingsObj.waterFromActivity ? settingsObj.waterGoal + max(activeCalories, 0)
+                                                 : settingsObj.waterGoal
+        return max(base, 1)
     }
     
     /// Applies a budget computed on another device (the iPhone). Used on platforms without HealthKit, where `recalculateBudget()` can't run because there's no activity data.
