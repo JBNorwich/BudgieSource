@@ -64,6 +64,9 @@ class TodayLump: ObservableObject {
     @Published var updateQueued: Bool = false
     @Published var lastUpdate: Date = Date()
     
+    /// Whether a request that queued behind an in-flight update wanted to publish the snapshot. OR-combined so a foreground publish isn't lost when it queues behind a background pass.
+    var queuedPublishSnapshot: Bool = false
+    
     func recalculateBudget() {
         let uncapped = totalProjCalories - settingsObj.desiredDeficit
         var budget = max(uncapped, 1200)
@@ -245,6 +248,28 @@ class TodayLump: ObservableObject {
         guard abs(expected) > 0.001 else { return nil }
         return self.weightTrend / expected
     }
+    
+    /// Absolute floor (kg) for the on-target tolerance half-width. Week-to-week noise on the weight trend is roughly constant in kg regardless of deficit size, so a purely proportional ±50% band becomes far tighter than the noise at gentle deficits — a user perfectly on plan would read as "off target" on water weight alone. The floor keeps the band physically realistic; ~0.35kg is roughly one SD of the difference between two adjacent weekly averages.
+    static let onTargetHalfWidthFloor: Double = 0.35
+
+    /// Where actual weekly progress sits relative to expectation.
+    enum TrendStanding { case behind, onTarget, ahead }
+
+    /// Actual progress classified against a tolerance band that is the wider of ±50% of the
+    /// expected change and `onTargetHalfWidthFloor`. Returns the standing plus the band as
+    /// magnitudes in the goal direction (kg), with `lower` clamped at 0 for display. nil when
+    /// there's no meaningful expectation to compare against.
+    var trendStanding: (standing: TrendStanding, lower: Double, upper: Double)? {
+        guard performanceAgainstWeightTrend != nil else { return nil }
+        // Magnitudes in the goal direction: a deficit expects loss, a surplus expects gain.
+        let expected = abs(expectedWeeklyChangeExact)
+        let actual = settingsObj.surplusMode ? -weightTrend : weightTrend
+        let halfWidth = max(0.5 * expected, Self.onTargetHalfWidthFloor)
+        let standing: TrendStanding =
+            actual > expected + halfWidth ? .ahead :
+            actual < expected - halfWidth ? .behind : .onTarget
+        return (standing, max(0, expected - halfWidth), expected + halfWidth)
+    }
 
     /// Measured daily energy imbalance in the direction of the user's goal: a deficit when
     /// losing, a surplus when gaining. Positive means they're moving toward their goal.
@@ -304,8 +329,9 @@ class TodayLump: ObservableObject {
     /// The user's water goal, topped up by 1 ml per active calorie burned today when
     /// the "increase goal with activity" setting is on.
     var effectiveWaterGoal: Int {
-        let base = settingsObj.waterGoal
-        return settingsObj.waterFromActivity ? base + max(activeCalories, 0) : base
+        let base = settingsObj.waterFromActivity ? settingsObj.waterGoal + max(activeCalories, 0)
+                                                 : settingsObj.waterGoal
+        return max(base, 1)
     }
     
     /// Applies a budget computed on another device (the iPhone). Used on platforms without HealthKit, where `recalculateBudget()` can't run because there's no activity data.

@@ -39,7 +39,8 @@ struct MacSettingsView: View {
     private var waterGoalBinding: Binding<Int> {
         Binding(get: { waterUnit == .millilitres ? settingsObj.waterGoal
                        : Int((Double(settingsObj.waterGoal) / waterUnit.millilitresPerUnit).rounded()) },
-                set: { settingsObj.waterGoal = millilitres(from: Double($0), in: waterUnit); refreshID = UUID() })
+                // Floor at one unit so the goal can't be 0 (which makes the water gauge divide 0/0 -> NaN).
+                set: { settingsObj.waterGoal = millilitres(from: Double(max($0, 1)), in: waterUnit); refreshID = UUID() })
     }
 
     var body: some View {

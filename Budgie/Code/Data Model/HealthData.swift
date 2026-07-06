@@ -478,6 +478,7 @@ final class HealthData {
         // finishes, rather than silently dropping this request.
         if todayLump.updateInProgress {
             todayLump.updateQueued = true
+            todayLump.queuedPublishSnapshot = todayLump.queuedPublishSnapshot || publishSnapshot
             return
         }
         
@@ -488,7 +489,9 @@ final class HealthData {
             todayLump.updateInProgress = false
             if todayLump.updateQueued {
                 todayLump.updateQueued = false
-                Task { await updateLump(todayLump: todayLump, reloadWidgets: reloadWidgets, publishSnapshot: publishSnapshot) }
+                let pub = todayLump.queuedPublishSnapshot
+                todayLump.queuedPublishSnapshot = false
+                Task { await updateLump(todayLump: todayLump, reloadWidgets: reloadWidgets, publishSnapshot: pub) }
             }
         }
         
@@ -569,20 +572,27 @@ final class HealthData {
         
         #if os(iOS)
         if publishSnapshot {
-            // Publish the budget to iCloud KVS so the Mac companion can display it.
-            settingsObj.snapshotBudget = todayLump.totalBudget
-            settingsObj.snapshotAtCap = todayLump.budgetAtCap
-            settingsObj.snapshotAtMin = todayLump.budgetAtMin
-            settingsObj.snapshotTimestamp = Date().timeIntervalSince1970
-            settingsObj.snapshotActiveCalories = todayLump.activeCalories
-            settingsObj.snapshotBasalCalories = todayLump.basalCalories
-            settingsObj.snapShotHKCalories = todayLump.healthKitCalories
-            settingsObj.snapShotHKWater = waterDetails.hk
-            settingsObj.snapshotProjectedBasal = todayLump.projectedBasal
-            settingsObj.snapshotProjectedActive = todayLump.projectedActive
-            settingsObj.sync()
+            let isEstimated = todayLump.activeEstimated || todayLump.basalEstimated
+            let haveRealToday = !settingsObj.snapshotEstimated
+                && Calendar.current.isDateInToday(settingsObj.budgetSnapshotDate ?? .distantPast)
+            // Never let a background estimated recompute (no HealthKit while locked) overwrite a
+            // real snapshot already published today from the foreground.
+            if !(isEstimated && haveRealToday) {
+                settingsObj.snapshotBudget = todayLump.totalBudget
+                settingsObj.snapshotAtCap = todayLump.budgetAtCap
+                settingsObj.snapshotAtMin = todayLump.budgetAtMin
+                settingsObj.snapshotActiveCalories = todayLump.activeCalories
+                settingsObj.snapshotBasalCalories = todayLump.basalCalories
+                settingsObj.snapShotHKCalories = todayLump.healthKitCalories
+                settingsObj.snapShotHKWater = waterDetails.hk
+                settingsObj.snapshotProjectedBasal = todayLump.projectedBasal
+                settingsObj.snapshotProjectedActive = todayLump.projectedActive
+                settingsObj.snapshotTimestamp = Date().timeIntervalSince1970
+                settingsObj.snapshotEstimated = isEstimated
+                settingsObj.sync()
+            }
         }
-        #endif // os(iOS)
+        #endif
 
         // Weight + deficit history
         let weightsToday = await weightsTask

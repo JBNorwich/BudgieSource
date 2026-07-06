@@ -20,52 +20,60 @@ struct TodayPane: View {
     @State private var showAddFood = false
     @State private var showAddWater = false
     @State private var showDataView = false
+    @State private var greeting = getBudgieGreeting()
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                budgetSection
-
-                if settingsObj.snapshotTimestamp != 0 {
-                    if settingsObj.budgetSnapshotIsFresh {
+            VStack {
+                HStack {
+                    VStack(spacing: 24) {
+                        budgetSection
+                            .scaledToFill()
+                        
+                        if settingsObj.snapshotTimestamp != 0 {
+                            if settingsObj.budgetSnapshotIsFresh {
+                                GroupBox {
+                                    GaugeView()
+                                } label: {
+                                    Label("Your target", systemImage: "gauge.with.needle")
+                                }
+                                .backgroundStyle(.regularMaterial)
+                                .onTapGesture {
+                                    showDataView = true
+                                }
+                            }
+                            
+                            waterTodaySection
+                            
+                            
+                        }
+                    }
+                    VStack(spacing: 24) {
                         GroupBox {
-                            GaugeView()
+                            VStack {
+                                TodayFoodList()
+                            }.padding()
                         } label: {
-                            Label("Your target", systemImage: "gauge.with.needle")
+                            Label("Eaten today", systemImage: "fork.knife")
                         }
                         .backgroundStyle(.regularMaterial)
-                        .onTapGesture {
-                            showDataView = true
-                        }
                     }
-
-                    GroupBox {
-                        VStack {
-                            TodayFoodList()
-                        }.padding()
-                    } label: {
-                        Label("Eaten today", systemImage: "fork.knife")
-                    }
-                    .backgroundStyle(.regularMaterial)
-
-                    waterTodaySection
-                    
-                    budgetFootnote
                 }
+                budgetFootnote
             }
             .padding(28)
-            .frame(maxWidth: 620)
+            .frame(maxWidth: 800)
             .frame(maxWidth: .infinity)
-            .safeAreaInset(edge: .bottom) {
+
+            }            .safeAreaInset(edge: .bottom) {
                 HStack {
                     Image("Budgie")
                         .interpolation(.high)
                         .resizable()
                         .frame(maxWidth: 116,maxHeight: 100)
-                    Text(getBudgieGreeting())
+                    Text(greeting)
                     Spacer()
                 }.offset(x: 0, y: 0)
-            }
         }
         .navigationTitle("Today")
         .toolbar {
@@ -111,8 +119,11 @@ struct TodayPane: View {
                     Text("Synced from your iPhone at \(date.formatted(date: .omitted, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .padding()
                 }
             }
+        } else {
+            staleBudget
         }
     }
 
@@ -135,7 +146,6 @@ struct TodayPane: View {
             Text("kcal").foregroundStyle(.secondary)
             Text("You've logged \(todayLump.eatenCalories.formatted()) kcal so far today.")
                 .font(.callout).foregroundStyle(.secondary)
-            budgetFootnote
         }
         .padding(24)
         .frame(maxWidth: .infinity)
@@ -145,7 +155,7 @@ struct TodayPane: View {
     @ViewBuilder private var budgetFootnote: some View {
         if let date = settingsObj.budgetSnapshotDate {
             Label(settingsObj.budgetSnapshotIsFresh
-                  ? "Your calories out, as well as any calories or water in from Apple Health, are based on data synced from your iPhone. This was last synced at \(date.formatted(date: .omitted, time: .shortened))."
+                  ? "Your calories out and total budget, as well as any calories or water in from Apple Health, are based on data synced from your iPhone. This was last synced at \(date.formatted(date: .omitted, time: .shortened)). To refresh it, open the iPhone app."
                   : "Your iPhone was last synced at \(date.formatted(date: .abbreviated, time: .shortened)), so your budget is based on old calorie data. It'll refresh the next time Budgie Diet runs there.",
                   systemImage: "info.circle")
         }

@@ -61,6 +61,7 @@ struct BudgetView: View {
     @State private var mainNavDestination: MainNavDestination?
     @State private var showStorageError = dataStore.storeFailedToLoad
     @State private var showWhatsNew = false
+    @State private var greeting = getBudgieGreeting()
     
     func updateGradient() {
         switch colorScheme {
@@ -83,7 +84,7 @@ struct BudgetView: View {
                             Image("Budgie")
                                 .resizable()
                                 .frame(maxWidth: 116,maxHeight: 100)
-                            Text(getBudgieGreeting())
+                            Text(greeting)
                             Spacer()
                         }.offset(x: 0, y: 50)
                     }
@@ -117,12 +118,13 @@ struct BudgetView: View {
                                 showingDetail = true
                             }
                         HStack {
-                            GroupBox(label: Label("Activity", systemImage:"figure.run")) {
+                            GroupBox(label: ActivityLabelView()) {
                                 FitnessView().environmentObject(todayLump)
                             }.onTapGesture {
                                 UIApplication.shared.open(URL(string: "fitnessapp://")!)
                             }.backgroundStyle(.regularMaterial)
                                 .frame(minHeight: 100)
+                            
                             GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
                                 WaterView().environmentObject(todayLump)
                             }.onTapGesture {
@@ -234,6 +236,7 @@ struct BudgetView: View {
         .onChange(of: scenePhase) {
             guard scenePhase == .active else { return }
             updateGradient()
+            greeting = getBudgieGreeting()
             Task {
                 await dataStore.updateLump(todayLump: todayLump)
                 await dataStore.reconcileHealthKit()
@@ -397,6 +400,20 @@ struct WaterLabelView: View {
             Button ("Add", systemImage: "plus") {
                 showingWaterSheet = true
             }.buttonStyle(.plain)
+        }
+    }
+}
+
+struct ActivityLabelView: View {
+    var body: some View {
+        HStack{
+            Label("Activity", systemImage: "figure.run")
+            Spacer()
+            if UIApplication.shared.canOpenURL(URL(string: "fitnessapp://")!) {
+                Image(systemName: "chevron.forward.circle.fill")
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
         }
     }
 }

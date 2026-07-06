@@ -253,7 +253,7 @@ class CloudSettings {
     }
     
     var waterFromActivity: Bool {
-        get { return defaults.object(forKey: "waterFromActivity") as? Bool ?? true }
+        get { return defaults.object(forKey: "waterFromActivity") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "waterFromActivity") }
     }
     
@@ -326,6 +326,12 @@ class CloudSettings {
     var lastOpenedVersion: String {
         get { defaults.string(forKey: "lastOpenedVersion") ?? "2.0" }
         set { defaults.set(newValue, forKey: "lastOpenedVersion") }
+    }
+    
+    /// Whether the last published snapshot was computed from estimated (manual) activity rather than real HealthKit data. Lets publishers avoid downgrading a real snapshot with a background estimated one (e.g. a locked-phone recompute with no HK access).
+    var snapshotEstimated: Bool {
+        get { defaults.object(forKey: "snapshotEstimated") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "snapshotEstimated") }
     }
 }
 

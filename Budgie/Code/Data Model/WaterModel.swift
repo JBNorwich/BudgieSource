@@ -66,6 +66,9 @@ import HealthKit
     }
     
     func getTotalOnDate(date: Date) async -> Int {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
         let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > start && $0.date < end })
@@ -74,6 +77,9 @@ import HealthKit
     }
 
     func getEntriesOnDate(date: Date) async -> [WaterEntry] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
         let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > start && $0.date < end })
@@ -81,6 +87,9 @@ import HealthKit
     }
     
     func fetchWaterBetween(from: Date, to: Date) async -> [WaterEntry] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > from && $0.date < to })
         return (try? modelContext.fetch(descriptor)) ?? []
     }

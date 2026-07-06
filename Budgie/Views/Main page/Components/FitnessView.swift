@@ -57,6 +57,7 @@ struct FitnessView: View {
                     .foregroundColor(colour)
                     .multilineTextAlignment(.leading)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 Text(unit.uppercased())
                     .font(.caption)
                     .foregroundColor(colour)
@@ -89,6 +90,7 @@ struct FitnessView: View {
                 todayLump.activitySummary.standHoursGoal != nil
                     ? FitnessStat(title: "Stand", value: todayLump.activitySummary.appleStandHours.doubleValue(for: .count()), goal: todayLump.activitySummary.standHoursGoal?.doubleValue(for: .count()) ?? 0, unit: "hrs", colour: standColour)
                     : nil
+                Spacer()
             }
         }
     }
