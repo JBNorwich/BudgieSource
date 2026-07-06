@@ -64,6 +64,9 @@ class TodayLump: ObservableObject {
     @Published var updateQueued: Bool = false
     @Published var lastUpdate: Date = Date()
     
+    /// Whether a request that queued behind an in-flight update wanted to publish the snapshot. OR-combined so a foreground publish isn't lost when it queues behind a background pass.
+    var queuedPublishSnapshot: Bool = false
+    
     func recalculateBudget() {
         let uncapped = totalProjCalories - settingsObj.desiredDeficit
         var budget = max(uncapped, 1200)

@@ -478,6 +478,7 @@ final class HealthData {
         // finishes, rather than silently dropping this request.
         if todayLump.updateInProgress {
             todayLump.updateQueued = true
+            todayLump.queuedPublishSnapshot = todayLump.queuedPublishSnapshot || publishSnapshot
             return
         }
         
@@ -488,7 +489,9 @@ final class HealthData {
             todayLump.updateInProgress = false
             if todayLump.updateQueued {
                 todayLump.updateQueued = false
-                Task { await updateLump(todayLump: todayLump, reloadWidgets: reloadWidgets, publishSnapshot: publishSnapshot) }
+                let pub = todayLump.queuedPublishSnapshot
+                todayLump.queuedPublishSnapshot = false
+                Task { await updateLump(todayLump: todayLump, reloadWidgets: reloadWidgets, publishSnapshot: pub) }
             }
         }
         
