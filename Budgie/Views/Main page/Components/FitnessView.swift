@@ -57,6 +57,7 @@ struct FitnessView: View {
                     .foregroundColor(colour)
                     .multilineTextAlignment(.leading)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 Text(unit.uppercased())
                     .font(.caption)
                     .foregroundColor(colour)
