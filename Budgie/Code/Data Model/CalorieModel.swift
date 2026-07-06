@@ -71,6 +71,9 @@ final class CalorieEntry {
 @ModelActor
 actor CalorieActor {
     func fetchCalsBetween(from: Date, to: Date) async -> [CalorieEntry] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         let descriptor = FetchDescriptor<CalorieEntry>(
             predicate: #Predicate<CalorieEntry> { $0.date > from && $0.date < to }
         )
@@ -78,6 +81,9 @@ actor CalorieActor {
     }
     
     func fetchCalsForMeal(_ meal: Meal?) async -> [CalorieEntry] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         var searchPredicate: Predicate<CalorieEntry>
         if meal != nil {
             let mealUUID = meal!.mealUUID
@@ -99,6 +105,9 @@ actor CalorieActor {
     }
     
     func searchCals(term: String, meal: UUID?, limit: Int = 50) async -> [CalorieEntry] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         let predicate: Predicate<CalorieEntry>
         if let meal {
             predicate = #Predicate { $0.meal == meal && ($0.narrative?.localizedStandardContains(term) ?? false) }
@@ -132,6 +141,9 @@ actor CalorieActor {
     }
     
     func getListOfMeals() -> [Meal] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         do {
             let returns = try modelContext.fetch(FetchDescriptor<Meal>())
             return returns
@@ -165,6 +177,9 @@ actor CalorieActor {
     }
     
     func getMealUUIDbyName(name: String) async -> UUID? {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
         let descriptor = FetchDescriptor<Meal>(predicate: #Predicate<Meal> { $0.name == name })
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.first?.mealUUID
