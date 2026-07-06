@@ -43,12 +43,12 @@ struct WeightView: View {
         guard hasDeficitTarget,
               haveTrendData,
               todayLump.consistentlyLoggedFood,
-              let performance = todayLump.performanceAgainstWeightTrend else { return nil }
-        let min = todayLump.expectedWeightLossAtRealDeficit * 0.5
-        let max = todayLump.expectedWeightLossAtRealDeficit * 1.5
-        if performance > 1.5 { return ("Exceeding target", .blue, min, max) }
-        if performance < 0.5 { return ("Off target", .yellow, min, max) }
-        return ("On target", .green, min, max)
+              let standing = todayLump.trendStanding else { return nil }
+        switch standing.standing {
+        case .ahead:    return ("Exceeding target", .blue, standing.lower, standing.upper)
+        case .behind:   return ("Off target", .yellow, standing.lower, standing.upper)
+        case .onTarget: return ("On target", .green, standing.lower, standing.upper)
+        }
     }
     
     var body: some View {

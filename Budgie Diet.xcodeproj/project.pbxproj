@@ -339,10 +339,10 @@
 		D829B0832C79B5B30027841B /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				D8DE2B432FF700F000513101 /* ReviewPrompt.swift */,
 				D80CB9992F70290C0036EB8E /* WeightView.swift */,
 				D85CF18E2D8C48B900340EE1 /* FitnessView.swift */,
 				D838A6112C8075710083F3B3 /* NewDataView.swift */,
+				D8DE2B432FF700F000513101 /* ReviewPrompt.swift */,
 				D829B08A2C7A6BC00027841B /* WhaleFacts.swift */,
 				D8E8316D2C74976300AAF555 /* MeterView.swift */,
 				D8BCE50A2C7FBBC8001EA005 /* TodayFoodList.swift */,
