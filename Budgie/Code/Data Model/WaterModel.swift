@@ -32,6 +32,8 @@ import HealthKit
         self.quantity = quantity
         self.healthKitUUID = healthKitUUID
     }
+    
+    var syncNonce: Int = 0
 }
 
 @ModelActor actor WaterActor {

@@ -34,6 +34,8 @@ import AppIntents
         self.name = name.isEmpty ? "Unnamed meal" : name
         self.order = order
     }
+    
+    var syncNonce: Int = 0
 }
 
 /// SwiftData class for individual food entries.
@@ -65,6 +67,8 @@ final class CalorieEntry {
         self.healthKitUUID = isInHK ? healthKitUUID : nil
         self.isInHK = self.healthKitUUID != nil
     }
+    
+    var syncNonce: Int = 0
 }
 
 /// Actor to act on the CalorieEntry database.
