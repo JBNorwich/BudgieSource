@@ -15,6 +15,7 @@
 
 import SwiftUI
 import SwiftUI
+import Combine
 
 struct MacFoodPane: View {
     @EnvironmentObject private var todayLump: TodayLump
@@ -24,6 +25,7 @@ struct MacFoodPane: View {
     @State private var reloadToken = UUID()
     @State private var showAdd = false
     @State private var editing: CalorieEntry?
+    @ObservedObject private var syncMonitor = CloudSyncMonitor.shared
 
     private enum Row: Identifiable {
         case header(Meal)
@@ -62,8 +64,12 @@ struct MacFoodPane: View {
     var body: some View {
         Group {
             if entries.isEmpty {
-                ContentUnavailableView("Nothing logged in Budgie Diet", systemImage: "fork.knife",
-                    description: Text(selectedDate.formatted(date: .abbreviated, time: .omitted)))
+                if syncMonitor.isImporting {
+                    SyncingUnavailableView()
+                } else {
+                    ContentUnavailableView("Nothing logged in Budgie Diet", systemImage: "fork.knife",
+                        description: Text(selectedDate.formatted(date: .abbreviated, time: .omitted)))
+                }
             } else {
                 List {
                     ForEach(rows) { row in
@@ -153,6 +159,10 @@ struct MacFoodPane: View {
             MacEditFoodSheet(entry: entry) { await reload() }.environmentObject(todayLump)
         }
         .padding()
+        
+        .onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange).receive(on: RunLoop.main)) { _ in
+            Task { await reload() }
+        }
     }
 
     private func reload() async {

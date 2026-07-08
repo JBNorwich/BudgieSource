@@ -21,6 +21,7 @@ struct TodayPane: View {
     @State private var showAddWater = false
     @State private var showDataView = false
     @State private var greeting = getBudgieGreeting()
+    @ObservedObject private var syncMonitor = CloudSyncMonitor.shared
 
     var body: some View {
         ScrollView {
@@ -171,6 +172,11 @@ struct TodayPane: View {
                         .foregroundStyle(.secondary)
                 }
                 ProgressView(value: todayLump.waterGoalDone)
+                if syncMonitor.isImporting && todayLump.waterToday == 0 {
+                    Label("Syncing from iCloud…", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             .padding()
         } label: {

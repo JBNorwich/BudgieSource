@@ -77,6 +77,11 @@
 		D8BDE7342C7B8E8900E07471 /* Disclaimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7332C7B8E8900E07471 /* Disclaimer.swift */; };
 		D8BDE7362C7B961200E07471 /* Donate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7352C7B961200E07471 /* Donate.swift */; };
 		D8BDE73A2C7BAF7900E07471 /* CalorieModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */; };
+		D8C302642FFEB28A009B7419 /* CLAUDE.local.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302632FFEB285009B7419 /* CLAUDE.local.md */; };
+		D8C302652FFEB28A009B7419 /* CLAUDE.local.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302632FFEB285009B7419 /* CLAUDE.local.md */; };
+		D8C302662FFEB28A009B7419 /* CLAUDE.local.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302632FFEB285009B7419 /* CLAUDE.local.md */; };
+		D8C302A12FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8C302A02FFECC28009B7419 /* CloudSyncMonitor.swift */; };
+		D8C302A22FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8C302A02FFECC28009B7419 /* CloudSyncMonitor.swift */; };
 		D8CA2EEC2FF95D0300F63612 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831662C74835900AAF555 /* UINiceties.swift */; };
 		D8CA2EEE2FF95D0300F63612 /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
@@ -225,6 +230,8 @@
 		D8BDE7332C7B8E8900E07471 /* Disclaimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Disclaimer.swift; sourceTree = "<group>"; };
 		D8BDE7352C7B961200E07471 /* Donate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Donate.swift; sourceTree = "<group>"; };
 		D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieModel.swift; sourceTree = "<group>"; };
+		D8C302632FFEB285009B7419 /* CLAUDE.local.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.local.md; sourceTree = "<group>"; };
+		D8C302A02FFECC28009B7419 /* CloudSyncMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncMonitor.swift; sourceTree = "<group>"; };
 		D8CA2EDE2FF95BF000F63612 /* Budgie Diet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Budgie Diet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8CA2F012FF9682A00F63612 /* CalorieEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieEntryView.swift; sourceTree = "<group>"; };
 		D8CA2F282FF9BDBE00F63612 /* WhatsNewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewSheet.swift; sourceTree = "<group>"; };
@@ -386,6 +393,7 @@
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
+				D8C302632FFEB285009B7419 /* CLAUDE.local.md */,
 				D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */,
 				D8DE2B452FF70E6B00513101 /* README.md */,
 				D80D1DBB2FF3CDB500D01B51 /* .claude */,
@@ -484,6 +492,7 @@
 		D8BCE50C2C805486001EA005 /* Data Model */ = {
 			isa = PBXGroup;
 			children = (
+				D8C302A02FFECC28009B7419 /* CloudSyncMonitor.swift */,
 				D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */,
 				D8E831612C73C7EE00AAF555 /* HealthData.swift */,
 				D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */,
@@ -684,6 +693,7 @@
 				D83398582C83A0CF00A09CDB /* LaunchScreen.storyboard in Resources */,
 				D8DE2B472FF70E6F00513101 /* README.md in Resources */,
 				D89461A92C73C3FD00138B60 /* Assets.xcassets in Resources */,
+				D8C302662FFEB28A009B7419 /* CLAUDE.local.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -698,6 +708,7 @@
 				D86806ED2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
 				D825E2B12FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
+				D8C302642FFEB28A009B7419 /* CLAUDE.local.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -712,6 +723,7 @@
 				D86806EB2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */,
 				D825E2AF2FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
+				D8C302652FFEB28A009B7419 /* CLAUDE.local.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -756,6 +768,7 @@
 				D8BDE7322C7B4CDA00E07471 /* Strings.swift in Sources */,
 				D8DE2B422FF6DD5400513101 /* FirstRunWizard.swift in Sources */,
 				D8B3F2FF2D8F0EED00DDA41D /* WaterModel.swift in Sources */,
+				D8C302A12FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */,
 				D8D4BF742C7CD04E0061A9A4 /* FoodHub.swift in Sources */,
 				D8D4BF762C7CD05B0061A9A4 /* AddCalsSheet.swift in Sources */,
 				D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */,
@@ -821,6 +834,7 @@
 				D8CA2F042FF9689500F63612 /* TodayFoodList.swift in Sources */,
 				D8CA2EEC2FF95D0300F63612 /* SearchPredicates.swift in Sources */,
 				D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */,
+				D8C302A22FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */,
 				D8CA2EEE2FF95D0300F63612 /* DateFuncs.swift in Sources */,
 				D8CA2EEF2FF95D0300F63612 /* Strings.swift in Sources */,
 				D8CA2EF02FF95D0300F63612 /* CalorieModel.swift in Sources */,

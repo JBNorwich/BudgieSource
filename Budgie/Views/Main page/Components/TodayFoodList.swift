@@ -17,6 +17,7 @@ import SwiftUI
 
 struct TodayFoodList: View {
     @EnvironmentObject var dataLump: TodayLump
+    @ObservedObject private var syncMonitor = CloudSyncMonitor.shared
 
     var groupedByMeal: [UUID: [CalorieEntry]] {
         Dictionary(grouping: dataLump.foodList, by: \.meal)
@@ -111,6 +112,9 @@ struct TodayFoodList: View {
                 }
             }
             healthKitSection
+        } else if syncMonitor.isImporting {
+            Label("Syncing from iCloud…", systemImage: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.secondary)
         } else {
             Text("You have no eaten calories logged today.")
         }
