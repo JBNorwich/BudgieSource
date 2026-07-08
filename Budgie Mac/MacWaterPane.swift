@@ -15,6 +15,7 @@
 
 import SwiftUI
 import SwiftUI
+import Combine
 
 struct MacWaterPane: View {
     @EnvironmentObject private var todayLump: TodayLump
@@ -22,6 +23,7 @@ struct MacWaterPane: View {
     @State private var entries: [WaterEntry] = []
     @State private var reloadToken = UUID()
     @State private var showAdd = false
+    @ObservedObject private var syncMonitor = CloudSyncMonitor.shared
 
     private var total: Int { entries.reduce(0) { $0 + $1.quantity } }
     private var sortedEntries: [WaterEntry] { entries.sorted { $0.date < $1.date } }
@@ -37,8 +39,12 @@ struct MacWaterPane: View {
 
             if entries.isEmpty {
                 Spacer()
-                ContentUnavailableView("No water logged", systemImage: "drop",
-                    description: Text(selectedDate.formatted(date: .abbreviated, time: .omitted)))
+                if syncMonitor.isImporting {
+                    SyncingUnavailableView()
+                } else {
+                    ContentUnavailableView("No water logged", systemImage: "drop",
+                        description: Text(selectedDate.formatted(date: .abbreviated, time: .omitted)))
+                }
                 Spacer()
             } else {
                 List {
@@ -103,6 +109,10 @@ struct MacWaterPane: View {
                 .environmentObject(todayLump)
         }
         .padding()
+        
+        .onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange).receive(on: RunLoop.main)) { _ in
+            Task { await reload() }
+        }
     }
 
     private func reload() async {
