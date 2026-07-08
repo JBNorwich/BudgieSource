@@ -82,6 +82,9 @@
 		D8C302662FFEB28A009B7419 /* CLAUDE.local.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302632FFEB285009B7419 /* CLAUDE.local.md */; };
 		D8C302A12FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8C302A02FFECC28009B7419 /* CloudSyncMonitor.swift */; };
 		D8C302A22FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8C302A02FFECC28009B7419 /* CloudSyncMonitor.swift */; };
+		D8C302A82FFECFB4009B7419 /* GEMINI.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302A72FFECFB4009B7419 /* GEMINI.md */; };
+		D8C302A92FFECFB4009B7419 /* GEMINI.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302A72FFECFB4009B7419 /* GEMINI.md */; };
+		D8C302AA2FFECFB4009B7419 /* GEMINI.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302A72FFECFB4009B7419 /* GEMINI.md */; };
 		D8CA2EEC2FF95D0300F63612 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831662C74835900AAF555 /* UINiceties.swift */; };
 		D8CA2EEE2FF95D0300F63612 /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
@@ -232,6 +235,7 @@
 		D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieModel.swift; sourceTree = "<group>"; };
 		D8C302632FFEB285009B7419 /* CLAUDE.local.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.local.md; sourceTree = "<group>"; };
 		D8C302A02FFECC28009B7419 /* CloudSyncMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncMonitor.swift; sourceTree = "<group>"; };
+		D8C302A72FFECFB4009B7419 /* GEMINI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = GEMINI.md; sourceTree = "<group>"; };
 		D8CA2EDE2FF95BF000F63612 /* Budgie Diet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Budgie Diet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8CA2F012FF9682A00F63612 /* CalorieEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieEntryView.swift; sourceTree = "<group>"; };
 		D8CA2F282FF9BDBE00F63612 /* WhatsNewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewSheet.swift; sourceTree = "<group>"; };
@@ -276,6 +280,7 @@
 		D80D1DBB2FF3CDB500D01B51 /* .claude */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = .claude; sourceTree = "<group>"; };
 		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (D89A988C2FFA77200028857A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, D8CA2F272FF9B61600F63612 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
 		D8B3F3012D8F11C500DDA41D /* Water Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Water Logging"; sourceTree = "<group>"; };
+		D8C302AB2FFED043009B7419 /* .github */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = .github; sourceTree = "<group>"; };
 		D8CA2EDF2FF95BF000F63612 /* Budgie Mac */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Budgie Mac"; sourceTree = "<group>"; };
 		D8DE2B382FF6864500513101 /* Weight */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Weight; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -393,6 +398,8 @@
 		D89461982C73C3FC00138B60 = {
 			isa = PBXGroup;
 			children = (
+				D8C302AB2FFED043009B7419 /* .github */,
+				D8C302A72FFECFB4009B7419 /* GEMINI.md */,
 				D8C302632FFEB285009B7419 /* CLAUDE.local.md */,
 				D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */,
 				D8DE2B452FF70E6B00513101 /* README.md */,
@@ -563,6 +570,7 @@
 				D80D1DBB2FF3CDB500D01B51 /* .claude */,
 				D827ACB62D8E033D006413F1 /* Frameworks */,
 				D8B3F3012D8F11C500DDA41D /* Water Logging */,
+				D8C302AB2FFED043009B7419 /* .github */,
 				D8DE2B382FF6864500513101 /* Weight */,
 			);
 			name = "Budgie Diet";
@@ -585,6 +593,7 @@
 			fileSystemSynchronizedGroups = (
 				D80D1DBB2FF3CDB500D01B51 /* .claude */,
 				D827ACB62D8E033D006413F1 /* Frameworks */,
+				D8C302AB2FFED043009B7419 /* .github */,
 			);
 			name = "Budgie DietWidgetExtension";
 			productName = BudgieWidgetExtension;
@@ -606,6 +615,7 @@
 			fileSystemSynchronizedGroups = (
 				D80D1DBB2FF3CDB500D01B51 /* .claude */,
 				D827ACB62D8E033D006413F1 /* Frameworks */,
+				D8C302AB2FFED043009B7419 /* .github */,
 			);
 			name = "Budgie DietWatch Watch App";
 			productName = "BudgieWatch Watch App";
@@ -684,6 +694,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8C302A82FFECFB4009B7419 /* GEMINI.md in Resources */,
 				D825E2B02FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
 				D89461AC2C73C3FD00138B60 /* Preview Assets.xcassets in Resources */,
 				D86806F22FF2D28E007D6231 /* .gitignore in Resources */,
@@ -708,6 +719,7 @@
 				D86806ED2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */,
 				D825E2B12FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
+				D8C302A92FFECFB4009B7419 /* GEMINI.md in Resources */,
 				D8C302642FFEB28A009B7419 /* CLAUDE.local.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -723,6 +735,7 @@
 				D86806EB2FF2CC7F007D6231 /* LICENCE.md in Resources */,
 				D89A95CA2C84F753007796AB /* Assets.xcassets in Resources */,
 				D825E2AF2FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */,
+				D8C302AA2FFECFB4009B7419 /* GEMINI.md in Resources */,
 				D8C302652FFEB28A009B7419 /* CLAUDE.local.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
