@@ -30,4 +30,4 @@ Carthage/
 *.lock
 
 .claude/settings.local
-CLAUDE.local.md
+*CLAUDE.local.md*
