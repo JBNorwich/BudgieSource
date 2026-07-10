@@ -26,15 +26,16 @@ import WidgetKit
 final class HealthData {
     static let shared = HealthData()
     
-    let calorieMealConfig = ModelConfiguration(schema: Schema([CalorieEntry.self,Meal.self]), groupContainer: .identifier("group.JoeBaldwin.Budgie"), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
+    let calorieMealConfig = ModelConfiguration(schema: Schema([CalorieEntry.self,Meal.self,FoodItem.self]), groupContainer: .identifier("group.JoeBaldwin.Budgie"), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
     let waterConfig = ModelConfiguration("waterDB", schema: Schema([WaterEntry.self]), groupContainer: .identifier("group.JoeBaldwin.Budgie"), cloudKitDatabase: .private("iCloud.com.JoeBaldwin.Budgie.data"))
     let modelContainer: ModelContainer
     let calorieActor: CalorieActor
     let waterActor: WaterActor
+    let foodItemActor: FoodItemActor
     private(set) var storeFailedToLoad = false
     
     private init() {
-        let realContainer = try? ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: calorieMealConfig, waterConfig)
+        let realContainer = try? ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, FoodItem.self, configurations: calorieMealConfig, waterConfig)
         
         if let realContainer {
             modelContainer = realContainer
@@ -43,10 +44,11 @@ final class HealthData {
             // In-memory fallback: keeps the app running rather than crashing on launch.
             // Data won't persist for this session, but the user gets a working app instead of a crash.
             let fallbackConfig = ModelConfiguration(isStoredInMemoryOnly: true)
-            modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, configurations: fallbackConfig)
+            modelContainer = try! ModelContainer(for: CalorieEntry.self, Meal.self, WaterEntry.self, FoodItem.self, configurations: fallbackConfig)
         }
         calorieActor = CalorieActor(modelContainer: modelContainer)
         waterActor = WaterActor(modelContainer: modelContainer)
+        foodItemActor = FoodItemActor(modelContainer: modelContainer)
     }
     
 #if !os(macOS)
@@ -316,6 +318,26 @@ final class HealthData {
         let hkUUID = await saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID)
+        await calorieActor.insertNewCals(object: newEntry)
+    }
+    
+    func addFoodEntry(foodItemID: UUID, name: String, manufacturer: String? = nil, quantity: FoodQuantity, servings: Double, date: Date, meal: UUID) async {
+        guard servings > 0 else { return }
+        let totals = quantity.totals(servings: servings)
+        let hkUUID = await saveHKSample(value: Double(totals.calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
+        let newEntry = CalorieEntry(date: date,
+                                    calories: totals.calories,
+                                    narrative: name,
+                                    mealUUID: meal,
+                                    isInHK: hkUUID != nil,
+                                    healthKitUUID: hkUUID,
+                                    item: foodItemID,
+                                    manufacturer: manufacturer,
+                                    unit: quantity.type,
+                                    servings: totals.amount,
+                                    protein: totals.protein,
+                                    fat: totals.fat,
+                                    carbs: totals.carbs)
         await calorieActor.insertNewCals(object: newEntry)
     }
     

@@ -56,8 +56,25 @@ final class CalorieEntry {
     var realEntry: Bool = true
     /// The mealUUID of the meal which this food is allocated to.
     var meal: UUID = UUID()
+    /// Synchronisation lever, in case of any sync issues.
+    var syncNonce: Int = 0
+    /// The UUID of the food item in the database.
+    var foodItem: UUID?
+    /// The manufacturer of the food, stamped at log time for display.
+    var manufacturer: String?
+    /// The serving this entry was logged with
+    var servingUnit: FoodQuantityType?
+    /// The serving quantity this entry was logged with
+    var servingAmount: Double?
+    /// The amount of protein in this serving.
+    var protein: Double?
+    /// The amount of fat in this serving.
+    var fat: Double?
+    /// The amount of carbs in this serving.
+    var carbs: Double?
+
     
-    init(date: Date, calories: Int, narrative: String?, mealUUID: UUID, isInHK: Bool, healthKitUUID: UUID?) {
+    init(date: Date, calories: Int, narrative: String?, mealUUID: UUID, isInHK: Bool, healthKitUUID: UUID?, item: UUID? = nil, manufacturer: String? = nil, unit: FoodQuantityType? = nil, servings: Double? = nil, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) {
         self.date = date
         self.calories = calories
         self.narrative = narrative
@@ -66,9 +83,34 @@ final class CalorieEntry {
         self.meal = mealUUID
         self.healthKitUUID = isInHK ? healthKitUUID : nil
         self.isInHK = self.healthKitUUID != nil
+        self.foodItem = item
+        self.servingUnit = unit
+        self.servingAmount = servings
+        self.protein = protein
+        self.fat = fat
+        self.carbs = carbs
+        self.manufacturer = manufacturer
     }
-    
-    var syncNonce: Int = 0
+}
+
+extension CalorieEntry {
+    /// Whether this entry came from a saved food, so it has a serving to rescale.
+    var isFoodEntry: Bool {
+        foodItem != nil && servingUnit != nil && (servingAmount ?? 0) > 0
+    }
+
+    /// Rescales the stamped calories/macros to a new serving amount, kept proportional to the
+    /// original stamp. nil when there's no serving to scale from (a quick / legacy entry).
+    func rescaled(toAmount newAmount: Double) -> (calories: Int, protein: Double?, fat: Double?, carbs: Double?)? {
+        guard let oldAmount = servingAmount, oldAmount > 0 else { return nil }
+        let factor = newAmount / oldAmount
+        return (
+            calories: Int((Double(calories) * factor).rounded()),
+            protein: protein.map { $0 * factor },
+            fat: fat.map { $0 * factor },
+            carbs: carbs.map { $0 * factor }
+        )
+    }
 }
 
 /// Actor to act on the CalorieEntry database.
@@ -209,6 +251,37 @@ actor CalorieActor {
         entry.healthKitUUID = newUUID
         #endif
         
+        do {
+            try modelContext.save()
+        } catch {
+            // Not recoverable.
+        }
+    }
+    
+    /// Updates a food-linked entry, writing recomputed calories/macros (and possibly a new serving unit)
+    /// so the entry stays internally consistent. HealthKit's calorie sample is rewritten, as in updateCalories.
+    func updateFoodEntry(entry: CalorieEntry, calories: Int, servingUnit: FoodQuantityType?, servingAmount: Double, protein: Double?, fat: Double?, carbs: Double?, date: Date, meal: UUID) async {
+        #if !os(macOS)
+        if entry.isInHK, let oldUUID = entry.healthKitUUID {
+            await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
+        }
+        let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
+        #endif
+
+        entry.calories = calories
+        entry.servingUnit = servingUnit
+        entry.servingAmount = servingAmount
+        entry.protein = protein
+        entry.fat = fat
+        entry.carbs = carbs
+        entry.date = date
+        entry.meal = meal
+
+        #if !os(macOS)
+        entry.isInHK = newUUID != nil
+        entry.healthKitUUID = newUUID
+        #endif
+
         do {
             try modelContext.save()
         } catch {

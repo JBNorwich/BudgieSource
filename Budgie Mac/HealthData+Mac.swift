@@ -23,6 +23,26 @@ extension HealthData {
         let entry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: false, healthKitUUID: nil)
         await calorieActor.insertNewCals(object: entry)
     }
+    
+    /// Mac equivalent of `addFoodEntry` — SwiftData only, no HealthKit. The iPhone mirrors it later.
+    func addFoodEntry(foodItemID: UUID, name: String, manufacturer: String? = nil, quantity: FoodQuantity, servings: Double, date: Date, meal: UUID) async {
+        guard servings > 0 else { return }
+        let totals = quantity.totals(servings: servings)
+        let entry = CalorieEntry(date: date,
+                                 calories: totals.calories,
+                                 narrative: name,
+                                 mealUUID: meal,
+                                 isInHK: false,
+                                 healthKitUUID: nil,
+                                 item: foodItemID,
+                                 manufacturer: manufacturer,
+                                 unit: quantity.type,
+                                 servings: totals.amount,
+                                 protein: totals.protein,
+                                 fat: totals.fat,
+                                 carbs: totals.carbs)
+        await calorieActor.insertNewCals(object: entry)
+    }
 
     /// Logs water on the Mac, SwiftData-only, for the iPhone to mirror later.
     func addWater(amount: Int, datetime: Date) async {

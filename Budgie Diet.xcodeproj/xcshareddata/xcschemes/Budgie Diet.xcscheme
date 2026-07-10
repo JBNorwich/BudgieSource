@@ -30,7 +30,10 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:TestPlan.xctestplan"
+            reference = "container:TestPlan.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Budgie DietTests/TestPlan.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>
@@ -46,12 +49,23 @@
                ReferencedContainer = "container:Budgie Diet.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D8AAC98730017A09008A3640"
+               BuildableName = "Budgie DietTests.xctest"
+               BlueprintName = "Budgie DietTests"
+               ReferencedContainer = "container:Budgie Diet.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
-      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
-      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      buildConfiguration = "Release"
+      selectedDebuggerIdentifier = ""
+      selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"

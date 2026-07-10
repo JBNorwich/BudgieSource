@@ -83,7 +83,13 @@ struct FoodHub: View {
                                             .environmentObject(todayLump)
                                             .onDisappear { Task { await doUpdates() } }
                                     ) {
-                                        CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories")
+                                        CalorieEntryView(calories: entry.calories,
+                                                         narrative: entry.narrative ?? "Quick calories",
+                                                         manufacturer: entry.manufacturer,
+                                                         protein: entry.protein,
+                                                         carbs: entry.carbs,
+                                                         fat: entry.fat,
+                                                         detailed: true)
                                     }
                                 }
                                 .onDelete { offsets in delete(offsets, from: entries) }
@@ -106,6 +112,11 @@ struct FoodHub: View {
         
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                NavigationLink {
+                    FoodLibraryView()
+                } label: {
+                    Label("Your foods", systemImage: "carrot")
+                }
                 Button("Add eaten calories", systemImage: "plus") {
                     timeToAddOn = getCurrentTimeonDate(date: curDate)
                     addSheetDisplayed = true

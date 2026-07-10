@@ -1,18 +1,46 @@
-//
-//  Budgie_DietTests.swift
-//  Budgie DietTests
-//
-//  Created by Joe Baldwin on 10/07/2026.
-//
-
 import Testing
+import SwiftUI
+@testable import Budgie_Diet
 
-struct Budgie_DietTests {
+struct FoodQuantityTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-        // Swift Testing Documentation
-        // https://developer.apple.com/documentation/testing
+    @Test func totalsScaleCaloriesMacrosAndAmount() {
+        let quantity = FoodQuantity(type: .grams, count: 100, calories: 650,
+                                    protein: 30, carbs: 40, fat: 20)
+        let totals = quantity.totals(servings: 2.5)
+
+        #expect(totals.calories == 1625)   // 650 × 2.5
+        #expect(totals.amount == 250)      // 100 g × 2.5 = 250 g
+        #expect(totals.protein == 75)
+        #expect(totals.carbs == 100)
+        #expect(totals.fat == 50)
     }
 
+    @Test func totalsLeaveMissingMacrosNil() {
+        let quantity = FoodQuantity(type: .portion, count: 1, calories: 200,
+                                    protein: nil, carbs: nil, fat: nil)
+        let totals = quantity.totals(servings: 3)
+
+        #expect(totals.calories == 600)
+        #expect(totals.amount == 3)
+        #expect(totals.protein == nil)   // a missing macro stays missing, not zero
+    }
+    
+    @Test func rescalingKeepsCaloriesAndMacrosProportional() {
+        let entry = CalorieEntry(date: .now, calories: 1625, narrative: "Claude Kibble",
+                                 mealUUID: UUID(), isInHK: false, healthKitUUID: nil,
+                                 item: UUID(), unit: .grams, servings: 250,
+                                 protein: 75, fat: 50, carbs: 100)
+        let r = entry.rescaled(toAmount: 100)!   // 250 g → 100 g, ×0.4
+        #expect(r.calories == 650)
+        #expect(r.protein == 30)
+        #expect(r.fat == 20)
+        #expect(r.carbs == 40)
+    }
+
+    @Test func rescalingReturnsNilForNonFoodEntry() {
+        let entry = CalorieEntry(date: .now, calories: 300, narrative: "Quick",
+                                 mealUUID: UUID(), isInHK: false, healthKitUUID: nil)
+        #expect(entry.rescaled(toAmount: 2) == nil)
+    }
 }
