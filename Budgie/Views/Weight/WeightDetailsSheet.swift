@@ -36,6 +36,8 @@ struct WeightDetailsSheet: View {
     private var haveTrendData: Bool {
         todayLump.prevWeekAvgWeight != 0 && todayLump.lastWeekAvgWeight != 0
     }
+    
+    @State private var showingHelp: Bool = false
 
     struct StatColumn: View {
         let title: String
@@ -130,8 +132,70 @@ struct WeightDetailsSheet: View {
                                    last: true)
                     }.padding()
              }
+             HStack {
+                 Spacer()
+                 Button("Learn more") {
+                     showingHelp = true
+                 }.buttonStyle(.borderedProminent)
+                     .padding()
+                 Spacer()
+             }
          }
          .padding()
          .navigationTitle("Weight details")
+         .sheet(isPresented: $showingHelp) {
+             WeightExplainerSheet(isDisplayed: $showingHelp)
+                 .presentationDragIndicator(.visible)
+         }
     }
+}
+
+struct WeightExplainerSheet: View {
+    @Binding var isDisplayed: Bool
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                GroupBox {
+                    Text("**Recorded daily deficit/surplus** is your average daily deficit (or surplus) over the past week. This is used to calculate your expected weight trend, and is based on the data that Budgie Diet has available to it (including your logged food).")
+                }
+                GroupBox {
+                    Text("**Expected loss/gain** is how much weight would be expected to be lost (or gained) over a week at that level. As a rule of thumb, \(renderWeight(kilos: 1)) of fat contains 7,700kcal, so you'd need to burn that much to lose that much weight - but this isn't precise. (Bulking, i.e. gaining weight by building muscle, is different.)\n\nIt's generally best to take this figure with a pinch of salt, because your weight can fluctuate for reasons outside your control, such as water retention, menstrual cycles, and even your metabolism. It's also possible to gain weight without gaining fat (or lose weight without losing muscle), and the number is just an estimate. Budgie Diet shows a range on the Today screen that takes account of this, but the details screen shows the exact number.")
+                }
+                GroupBox {
+                    Text("**Actual gain/loss** is the difference between the past 7 days' average weight, and the average weight of the week before. This is shown, rather than just a straight difference between your weight today and your weight one week ago, for the reason given above; your weight can fluctuate from day to day due to various factors, and comparing averages smooths this out and gives you a clearer picture of your actual progress.")
+                }
+                GroupBox {
+                    Text("**Real deficit/surplus** is, using the same sort of formula as \"Expected loss/gain\", how much your weight trend suggests you've actually had as a deficit (or surplus). You shouldn't pay too much attention to this, since as above, your weight can change for many reasons outside of just the calories you eat, and you might be doing just fine - for instance, it's common for people who are exercising to build a little bit of muscle at the same time as they lose fat, rather than just losing weight as fat.")
+                }
+                
+            }
+            .navigationTitle("About weight details")
+            .navigationBarTitleDisplayMode(.inline)
+            
+        }.padding()
+    }
+}
+
+
+#Preview {
+    struct Preview: View {
+        @State var dummyData: TodayLump = {
+            let lump = TodayLump()
+            lump.prevWeekAvgWeight = 82.4
+            lump.lastWeekAvgWeight = 81.9
+            lump.weightToday = 81.7
+            lump.lastWeightDate = Date()
+            lump.averageDeficit = 450
+            return lump
+        }()
+
+        var body: some View {
+            NavigationStack {
+                WeightDetailsSheet().environmentObject(dummyData)
+            }
+        }
+    }
+
+    return Preview()
 }
