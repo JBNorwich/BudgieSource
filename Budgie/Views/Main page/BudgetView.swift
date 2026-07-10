@@ -276,7 +276,7 @@ struct BudgetView: View {
         
         .sheet(isPresented: $showAddCalsSheet) {
             NavigationStack {
-                AddCalsSheet(isDisplayed: $showAddCalsSheet, selectedDate: Date()).environmentObject(todayLump)
+                AddCalsSheet(selectedDate: Date()).environmentObject(todayLump)
             }
             .presentationDetents([.medium,.large])
         }

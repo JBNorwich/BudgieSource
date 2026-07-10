@@ -16,7 +16,7 @@
 import SwiftUI
 
 struct AddCalsSheet: View {
-    @Binding var isDisplayed: Bool
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var todayLump: TodayLump
     @State var calories: Int?
     @State var caloriesWereNil: Bool = false
@@ -56,127 +56,124 @@ struct AddCalsSheet: View {
     }
         
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Calories", value: $calories, format: .number)
-                        .font(.largeTitle)
-                        .keyboardType(.numberPad)
-                        .autocorrectionDisabled()
-                        .focused($isFocused)
-                    
-                    TextField("Narrative (optional)", text: $whatItIs)
-                    
-                    Picker("Meal", selection: $selectedMeal) {
-                        ForEach(mealList) { meal in
-                            Text(meal.name)
-                                .tag(meal.mealUUID)
-                        }
-                    }.pickerStyle(.menu)
-                    
-                    DatePicker(selection: $selectedDate, in: ...Date(), displayedComponents: .date, label: { Text("Date") })
-                    
-                    if Calendar.current.isDate(selectedDate, inSameDayAs: Date())
-                    {
-                        Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(abs(newRemBudg).formatted())** \(newRemBudg >= 0 ? "in" : "over") your overall budget for the rest of the day.")
-                        if settingsObj.useMealAllocations, mealTarget != nil {
-                           Text("It'll also leave you **\(abs(newMealRem).formatted())** \(newMealRem >= 0 ? "in" : "over") your allocation for \(selectedMealName).")
-                       }
+        Form {
+            Section {
+                TextField("Calories", value: $calories, format: .number)
+                    .font(.largeTitle)
+                    .keyboardType(.numberPad)
+                    .autocorrectionDisabled()
+                    .focused($isFocused)
+                
+                TextField("Narrative (optional)", text: $whatItIs)
+                
+                Picker("Meal", selection: $selectedMeal) {
+                    ForEach(mealList) { meal in
+                        Text(meal.name)
+                            .tag(meal.mealUUID)
                     }
-                    
-                    HStack {
-                        Button("Save") {
-                            guard (calories ?? 0) > 0 else
-                            {
-                                caloriesWereNil = true
-                                isFocused = true
-                                return
-                            }
-                            Task {
-                                await saveEntry()
-                                isDisplayed = false
-                            }
-                        }.buttonStyle(.borderedProminent)
-                        
-                        Button("Save and add more") {
-                            guard (calories ?? 0) > 0 else
-                            {
-                                caloriesWereNil = true
-                                isFocused = true
-                                return
-                            }
-                            Task {
-                                await saveEntry()
-                                reloadToken = UUID()
-                                calories = nil
-                                whatItIs = ""
-                                isFocused = true
-                            }
-                        }.buttonStyle(.borderedProminent)
-                    }
+                }.pickerStyle(.menu)
+                
+                DatePicker(selection: $selectedDate, in: ...Date(), displayedComponents: .date, label: { Text("Date") })
+                
+                if Calendar.current.isDate(selectedDate, inSameDayAs: Date())
+                {
+                    Text("This will take your total calories in today to **\(newCalsIn.formatted())** and leave you **\(abs(newRemBudg).formatted())** \(newRemBudg >= 0 ? "in" : "over") your overall budget for the rest of the day.")
+                    if settingsObj.useMealAllocations, mealTarget != nil {
+                       Text("It'll also leave you **\(abs(newMealRem).formatted())** \(newMealRem >= 0 ? "in" : "over") your allocation for \(selectedMealName).")
+                   }
                 }
                 
-                Section(header: Text("Previous entries")) {
-                    // Search box
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                        
-                        TextField("Search", text: $searchText)
-                            .foregroundColor(.primary)
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                        
-                        if !searchText.isEmpty {
-                            Button(action: { searchText = "" }) {
-                                Image(systemName: "xmark.circle.fill")
-                            }
+                HStack {
+                    Button("Save") {
+                        guard (calories ?? 0) > 0 else
+                        {
+                            caloriesWereNil = true
+                            isFocused = true
+                            return
                         }
-                    }
-                    Picker("Label", selection: $showAllFoods) {
-                            Text("Current meal").tag(false)
-                            Text("All meals").tag(true)
-                    }.pickerStyle(.segmented)
-                    
-                    List {
-                        ForEach(displayedFoods) { entry in
-                            HStack {
-                                Text(entry.narrative ?? "Quick calories")
-                                Spacer()
-                                Text(entry.calories.formatted())
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                whatItIs = entry.narrative ?? "Quick calories"
-                                calories = entry.calories
-                            }
+                        Task {
+                            await saveEntry()
+                            dismiss()
                         }
-                    }
-                }
+                    }.buttonStyle(.borderedProminent)
                     
-                if calories == 424242 && whatItIs.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("please help me joe") == .orderedSame {
-                    NavigationLink {
-                        Tests()
-                    } label: {
-                        Text("Debug screen")
-                    }
-                }
-            }
-            .task(id: foodQueryKey) {
-                if searchText.isEmpty {
-                    let scopeMeal = showAllFoods ? nil : mealList.first { $0.mealUUID == selectedMeal }
-                    displayedFoods = await dataStore.calorieActor.fetchCalsForMeal(scopeMeal)
-                } else {
-                    try? await Task.sleep(for: .milliseconds(200))   // debounce
-                    guard !Task.isCancelled else { return }
-                    displayedFoods = await dataStore.calorieActor.searchCals(
-                        term: searchText,
-                        meal: showAllFoods ? nil : selectedMeal
-                    )
+                    Button("Save and add more") {
+                        guard (calories ?? 0) > 0 else
+                        {
+                            caloriesWereNil = true
+                            isFocused = true
+                            return
+                        }
+                        Task {
+                            await saveEntry()
+                            reloadToken = UUID()
+                            calories = nil
+                            whatItIs = ""
+                            isFocused = true
+                        }
+                    }.buttonStyle(.borderedProminent)
                 }
             }
             
-            .navigationTitle("Add eaten calories")
+            Section(header: Text("Previous entries")) {
+                // Search box
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                    
+                    TextField("Search", text: $searchText)
+                        .foregroundColor(.primary)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                    
+                    if !searchText.isEmpty {
+                        Button(action: { searchText = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                    }
+                }
+                Picker("Label", selection: $showAllFoods) {
+                        Text("Current meal").tag(false)
+                        Text("All meals").tag(true)
+                }.pickerStyle(.segmented)
+                
+                List {
+                    ForEach(displayedFoods) { entry in
+                        HStack {
+                            Text(entry.narrative ?? "Quick calories")
+                            Spacer()
+                            Text(entry.calories.formatted())
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            whatItIs = entry.narrative ?? "Quick calories"
+                            calories = entry.calories
+                        }
+                    }
+                }
+            }
+                
+            if calories == 424242 && whatItIs.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("please help me joe") == .orderedSame {
+                NavigationLink {
+                    Tests()
+                } label: {
+                    Text("Debug screen")
+                }
+            }
         }
+        .task(id: foodQueryKey) {
+            if searchText.isEmpty {
+                let scopeMeal = showAllFoods ? nil : mealList.first { $0.mealUUID == selectedMeal }
+                displayedFoods = await dataStore.calorieActor.fetchCalsForMeal(scopeMeal)
+            } else {
+                try? await Task.sleep(for: .milliseconds(200))   // debounce
+                guard !Task.isCancelled else { return }
+                displayedFoods = await dataStore.calorieActor.searchCals(
+                    term: searchText,
+                    meal: showAllFoods ? nil : selectedMeal
+                )
+            }
+        }
+        .navigationTitle("Add eaten calories")
         
         .onChange(of: whatItIs) {
             self.whatItIs = String(whatItIs.prefix(30))
@@ -202,12 +199,7 @@ struct AddCalsSheet: View {
 }
 
 #Preview {
-    struct Preview: View {
-        @State var presented = true
-        
-        var body: some View {
-            AddCalsSheet(isDisplayed:$presented, selectedDate: Date()).environmentObject(TodayLump())
-        }
+    NavigationStack {
+        AddCalsSheet(selectedDate: Date()).environmentObject(TodayLump())
     }
-    return Preview()
 }

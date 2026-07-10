@@ -126,12 +126,14 @@ struct FoodHub: View {
         }
               
         .sheet(isPresented: $addSheetDisplayed) {
-            AddCalsSheet(isDisplayed: $addSheetDisplayed, selectedDate: timeToAddOn).environmentObject(todayLump)
-                .onDisappear() {
-                    Task {
-                        await doUpdates()
-                    }
+            NavigationStack {
+                AddCalsSheet(selectedDate: timeToAddOn).environmentObject(todayLump)
+            }
+            .onDisappear {
+                Task {
+                    await doUpdates()
                 }
+            }
         }
     }
     
