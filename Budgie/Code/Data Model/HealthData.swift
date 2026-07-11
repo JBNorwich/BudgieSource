@@ -314,10 +314,10 @@ final class HealthData {
         }
     }
     
-    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
+    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
         let hkUUID = await saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
-        let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID)
+        let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID, protein: protein, fat: fat, carbs: carbs)
         await calorieActor.insertNewCals(object: newEntry)
     }
     

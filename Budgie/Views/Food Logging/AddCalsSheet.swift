@@ -28,6 +28,9 @@ struct AddCalsSheet: View {
     @State var calories: Int?
     @State var whatItIs: String = ""
     @FocusState var isFocused: Bool
+    @State private var protein: Double?
+    @State private var carbs: Double?
+    @State private var fat: Double?
 
     // Saved-food inputs
     @State private var selectedFoodItem: FoodItem?
@@ -44,6 +47,8 @@ struct AddCalsSheet: View {
     @State private var searchText: String = ""
     @State private var displayedFoods: [CalorieEntry] = []
     @State private var reloadToken = UUID()
+    @State private var reAddClone: CalorieEntry?
+    
 
     // The calorie value that will actually be logged, whichever mode we're in.
     var effectiveCalories: Int {
@@ -121,6 +126,10 @@ struct AddCalsSheet: View {
                         .focused($isFocused)
 
                     TextField("Narrative (optional)", text: $whatItIs)
+
+                    DisclosureGroup("Nutrition (optional)") {
+                        MacroEntryFields(protein: $protein, carbs: $carbs, fat: $fat)
+                    }
                 }
             } else {
                 Section { savedFoodContent }
@@ -143,7 +152,7 @@ struct AddCalsSheet: View {
                 }
 
                 HStack {
-                    Button("Save") {
+                    Button("Log") {
                         Task {
                             await saveEntry()
                             dismiss()
@@ -152,7 +161,7 @@ struct AddCalsSheet: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(!canSave)
 
-                    Button("Save and add more") {
+                    Button("Log and add more") {
                         Task {
                             await saveEntry()
                             reloadToken = UUID()
@@ -213,6 +222,7 @@ struct AddCalsSheet: View {
         }
         .onChange(of: logMode) {
             if logMode == .quick { selectedFoodItem = nil }
+            reAddClone = nil
         }
         .onChange(of: selectedFoodItem?.id) {
             selectedQuantityIndex = 0
@@ -350,6 +360,7 @@ struct AddCalsSheet: View {
                     .onTapGesture {
                         whatItIs = entry.narrative ?? "Quick calories"
                         calories = entry.calories
+                        reAddClone = entry.isFoodEntry ? entry : nil
                     }
                 }
             }
@@ -364,9 +375,13 @@ struct AddCalsSheet: View {
                                          manufacturer: item.manufacturer,
                                          quantity: q, servings: effectiveServings,
                                          date: selectedDate, meal: selectedMeal)
+        } else if let clone = reAddClone, (calories ?? 0) == clone.calories {
+            // Re-adding a previous food entry, untouched — keep its serving, macros and food link.
+            await dataStore.calorieActor.reAddEntry(from: clone, date: selectedDate, meal: selectedMeal)
         } else {
             await dataStore.addCalories(calories: calories!, narrative: whatItIs,
-                                        date: selectedDate, meal: selectedMeal)
+                                        date: selectedDate, meal: selectedMeal,
+                                        protein: protein, fat: fat, carbs: carbs)
         }
         await dataStore.updateLump(todayLump: todayLump)
     }
@@ -374,9 +389,13 @@ struct AddCalsSheet: View {
     func resetInputs() {
         calories = nil
         whatItIs = ""
+        protein = nil
+        carbs = nil
+        fat = nil
         selectedFoodItem = nil
         selectedQuantityIndex = 0
         amount = 0
+        reAddClone = nil
     }
 }
 

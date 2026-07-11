@@ -231,7 +231,7 @@ actor CalorieActor {
         return results.first?.mealUUID
     }
     
-    func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID) async {
+    func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
         #if !os(macOS)
         // HK can't be updated in place — delete the old sample, then write a fresh one.
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
@@ -245,6 +245,9 @@ actor CalorieActor {
         entry.narrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         entry.date = date
         entry.meal = meal
+        entry.protein = protein
+        entry.fat = fat
+        entry.carbs = carbs
         
         #if !os(macOS)
         entry.isInHK = newUUID != nil
@@ -396,5 +399,36 @@ actor CalorieActor {
         entry.healthKitUUID = healthKitUUID
         entry.isInHK = true
         try? modelContext.save()
+    }
+    
+    /// Re-logs a faithful copy of an existing entry — keeping any food link, serving unit, amount and
+    /// macros — at a new date and meal. Lets the "previous entries" shortcut re-add a food without
+    /// degrading it to a plain calorie entry.
+    func reAddEntry(from source: CalorieEntry, date: Date, meal: UUID) async {
+        #if !os(macOS)
+        let hkUUID = await dataStore.saveHKSample(value: Double(source.calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
+        #else
+        let hkUUID: UUID? = nil
+        #endif
+
+        let newEntry = CalorieEntry(date: date,
+                                    calories: source.calories,
+                                    narrative: source.narrative,
+                                    mealUUID: meal,
+                                    isInHK: hkUUID != nil,
+                                    healthKitUUID: hkUUID,
+                                    item: source.foodItem,
+                                    manufacturer: source.manufacturer,
+                                    unit: source.servingUnit,
+                                    servings: source.servingAmount,
+                                    protein: source.protein,
+                                    fat: source.fat,
+                                    carbs: source.carbs)
+        modelContext.insert(newEntry)
+        do {
+            try modelContext.save()
+        } catch {
+            print("Re-add error: \(error)")
+        }
     }
 }

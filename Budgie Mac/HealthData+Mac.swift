@@ -18,9 +18,9 @@ import Foundation
 
 extension HealthData {
     /// Logs food on the Mac — no HealthKit. The entry is written SwiftData-only with `isInHK == false`; the iPhone mirrors it into HealthKit when it next reconciles.
-    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
+    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
-        let entry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: false, healthKitUUID: nil)
+        let entry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: false, healthKitUUID: nil, protein: protein, fat: fat, carbs: carbs)
         await calorieActor.insertNewCals(object: entry)
     }
     

@@ -29,6 +29,9 @@ struct EditCalsSheet: View {
     @State private var selectedDate: Date = Date()
     @State private var showValueAlert: Bool = false
     @State private var mealList: [Meal] = []
+    @State private var protein: Double?
+    @State private var carbs: Double?
+    @State private var fat: Double?
 
     private var isFoodEntry: Bool { entryToEdit.isFoodEntry }
     private var canPickQuantity: Bool { isFoodEntry && !quantities.isEmpty }
@@ -115,6 +118,10 @@ struct EditCalsSheet: View {
                             .focused($isFocused)
 
                         TextField("Narrative (optional)", text: $whatItIs)
+                        
+                        DisclosureGroup("Nutrition (optional)") {
+                            MacroEntryFields(protein: $protein, carbs: $carbs, fat: $fat)
+                        }
                     }
 
                     Picker("Meal", selection: $selectedMeal) {
@@ -125,7 +132,7 @@ struct EditCalsSheet: View {
 
                     DatePicker(selection: $selectedDate, in: ...Date(), displayedComponents: .date, label: { Text("Date") })
 
-                    Button("Save") {
+                    Button("Save changes") {
                         guard canSave else {
                             showValueAlert = true
                             isFocused = true
@@ -146,6 +153,9 @@ struct EditCalsSheet: View {
             amount = entryToEdit.servingAmount ?? 0
             selectedDate = entryToEdit.date
             selectedMeal = entryToEdit.meal
+            protein = entryToEdit.protein
+            carbs = entryToEdit.carbs
+            fat = entryToEdit.fat
         }
         .onChange(of: whatItIs) {
             whatItIs = String(whatItIs.prefix(30))
@@ -184,7 +194,8 @@ struct EditCalsSheet: View {
                                                         calories: calories,
                                                         narrative: whatItIs,
                                                         date: selectedDate,
-                                                        meal: selectedMeal)
+                                                        meal: selectedMeal,
+                                                        protein: protein, fat: fat, carbs: carbs)
         }
         await dataStore.updateLump(todayLump: todayLump)
     }
