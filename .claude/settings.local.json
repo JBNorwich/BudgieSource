@@ -6,7 +6,8 @@
       "WebSearch",
       "WebFetch(domain:www.nationalarchives.gov.uk)",
       "WebFetch(domain:www.gov.uk)",
-      "WebFetch(domain:openfoodfacts.github.io)"
+      "WebFetch(domain:openfoodfacts.github.io)",
+      "WebFetch(domain:search.openfoodfacts.org)"
     ]
   }
 }

@@ -161,13 +161,22 @@ actor FoodItemActor {
         return (try? modelContext.fetch(descriptor))?.first
     }
 
-    /// Edits an existing item. Changes affect FUTURE logs only — past entries keep their stamped values.
+    /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent.
     func update(id: UUID, name: String, manufacturer: String?, quantities: [FoodQuantity]) {
         let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
         guard let item = (try? modelContext.fetch(descriptor))?.first else { return }
         item.name = name
         item.manufacturer = manufacturer
         item.quantities = quantities
+
+        // Re-label past entries linked to this food. Calories and macros are the entry's own stamped
+        // source of truth and are deliberately left untouched.
+        let entryDescriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.foodItem == id })
+        for entry in (try? modelContext.fetch(entryDescriptor)) ?? [] {
+            entry.narrative = name
+            entry.manufacturer = manufacturer
+        }
+
         do { try modelContext.save() } catch { print("FoodItem update error: \(error)") }
     }
 

@@ -33,6 +33,12 @@ struct LicencesScreen: View {
                     Link("OGL v3.0", destination: URL(string: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/")!)
                 }
                 
+                Section(header: Text("Food search")) {
+                    Text("Food search results come from OpenFoodFacts, made available under the Open Database Licence (ODbL). Individual products are © their respective contributors.")
+                    Link("OpenFoodFacts", destination: URL(string: "https://world.openfoodfacts.org")!)
+                    Link("Open Database Licence", destination: URL(string: "https://opendatacommons.org/licenses/odbl/1-0/")!)
+                }
+                
                 Section (header: Text("Branding")) {
                     Text("The name \"Budgie Diet\" and the green bird logo, and all intellectual property, trade mark rights and copyrights associated with them, are the property of Joseph Baldwin. They may not be used for, in or in connection with any other application without permission, nor may you use them for a commercial purpose (including for a fork or separate distribution of Budgie Diet, whether you charge money for it or not). However, you may redistribute unamended copies of the branding alongside the software's source code.")
                 }

@@ -29,6 +29,10 @@ struct OpenFoodFactsSheet: View {
     @State private var showingConsent: Bool
     /// Called when the user picks an OFF result — imports it and hands it back to the add form. (Wired in step 2.)
     var onImport: (PickedFood) -> Void
+    
+    @State private var results: [OFFProduct] = []
+    @State private var isSearching = false
+    @State private var errorMessage: String?
 
     init(term: String, onImport: @escaping (PickedFood) -> Void) {
         _searchTerm = State(initialValue: term)
@@ -67,7 +71,7 @@ struct OpenFoodFactsSheet: View {
             Text("Search OpenFoodFacts?")
                 .font(.title2).bold()
 
-            Text("Searching sends what you type to OpenFoodFacts, an external food database, over the internet. Like any web request, it reaches their servers directly, and what they do with it is covered by their privacy policy. Budgie Diet never sees or keeps your searches, and this stays off unless you turn it on.")
+            Text("Searching sends what you type to OpenFoodFacts, an external food database, over the internet. Like any web request, it reaches their servers directly, and what they do with it is covered by their privacy policy. Budgie Diet never sees or keeps your searches, and this feature stays off unless you turn it on. You'll only be asked this the first time you choose to search with OpenFoodFacts.\n\nOpenFoodFacts' data was contributed by many different people around the world, and it may not be accurate, correct or up to date.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
 
@@ -99,14 +103,67 @@ struct OpenFoodFactsSheet: View {
         .padding()
     }
 
-    // MARK: - Search (placeholder — network + results land in step 2)
-
     private var searchView: some View {
-        ContentUnavailableView(
-            "Search coming soon",
-            systemImage: "magnifyingglass",
-            description: Text("Searching “\(searchTerm)” on OpenFoodFacts isn't wired up yet.")
-        )
+        Group {
+            if isSearching {
+                ProgressView("Searching…")
+            } else if let errorMessage {
+                ContentUnavailableView("Couldn't search", systemImage: "wifi.slash",
+                                       description: Text(errorMessage))
+            } else if results.isEmpty {
+                ContentUnavailableView.search(text: searchTerm)
+            } else {
+                List(results) { product in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(product.name)
+                            if let brand = product.brand {
+                                Text(brand).font(.caption).foregroundStyle(.secondary)
+                            }
+                            if let first = product.quantities.first {
+                                Text(first.label).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        if let first = product.quantities.first {
+                            Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { importProduct(product) }
+                }
+            }
+        }
         .searchable(text: $searchTerm, prompt: "Search OpenFoodFacts")
+        .onSubmit(of: .search) { Task { await runSearch() } }
+        .task { await runSearch() }   // initial search with the carried-over term
+    }
+
+    private func runSearch() async {
+        let term = searchTerm.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !term.isEmpty else { results = []; return }
+        isSearching = true
+        errorMessage = nil
+        do {
+            results = try await OpenFoodFacts.search(term: term)
+        } catch OpenFoodFacts.SearchError.rateLimited {
+            errorMessage = "Too many searches just now — wait a moment and try again."
+        } catch {
+            print("OFF search error: \(error)")
+            errorMessage = "Couldn't reach OpenFoodFacts. Check your connection and try again."
+        }
+        isSearching = false
+    }
+
+    private func importProduct(_ product: OFFProduct) {
+        let food = product.toFoodItem()
+        let picked = food.asPicked          // read values before handing the model to the actor
+        Task {
+            await dataStore.foodItemActor.insert(food)
+            await MainActor.run {
+                onImport(picked)            // → AddCalsSheet.selectFood, drops you into the form in scaling mode
+                dismiss()
+            }
+        }
     }
 }

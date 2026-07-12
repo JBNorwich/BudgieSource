@@ -36,9 +36,6 @@ struct AddCalsSheet: View {
     @State private var selectedQuantityIndex: Int = 0
     @State private var amount: Double = 0
 
-    // MARK: Re-add of a past entry (preserves link/macros if logged unchanged)
-    @State private var reAddClone: CalorieEntry?
-
     // MARK: Search
     @State private var searchText: String = ""
     @State private var foodResults: [PickedFood] = []
@@ -133,7 +130,7 @@ struct AddCalsSheet: View {
                 let generic = FoodCatalogue.shared.search(searchText)
                 foodResults = mine.map(\.asPicked) + generic.map(\.asPicked)
                 let entries = await dataStore.calorieActor.searchCals(term: searchText, meal: nil)
-                entryResults = entries.filter { $0.foodItem == nil }   // only unlinked → "Quick entries"
+                entryResults = entries.filter { $0.foodItem == nil && $0.servingUnit == nil }
             }
         }
         .onChange(of: whatItIs) { whatItIs = String(whatItIs.prefix(30)) }
@@ -239,7 +236,13 @@ struct AddCalsSheet: View {
         }
 
         if food.quantities.count > 1 {
-            Picker("Serving", selection: $selectedQuantityIndex) {
+            Picker("Serving", selection: Binding(
+                get: { selectedQuantityIndex },
+                set: { newIndex in
+                    selectedQuantityIndex = newIndex
+                    if food.quantities.indices.contains(newIndex) { amount = food.quantities[newIndex].count }
+                }
+            )) {
                 ForEach(food.quantities.indices, id: \.self) { i in
                     Text(food.quantities[i].label).tag(i)
                 }
@@ -304,7 +307,7 @@ struct AddCalsSheet: View {
                                          isGeneric: entry.isGenericFood,
                                          detailed: true)
                             .contentShape(Rectangle())
-                            .onTapGesture { prefill(from: entry) }
+                            .onTapGesture { Task { await prefill(from: entry) } }
                     }
                 }
             }
@@ -348,7 +351,7 @@ struct AddCalsSheet: View {
                                      isGeneric: entry.isGenericFood,
                                      detailed: true)
                         .contentShape(Rectangle())
-                        .onTapGesture { prefill(from: entry) }
+                        .onTapGesture { Task { await prefill(from: entry) } }
                 }
             }
         }
@@ -360,20 +363,46 @@ struct AddCalsSheet: View {
         selectedFood = food
         selectedQuantityIndex = 0
         amount = food.quantities.first?.count ?? 0
-        reAddClone = nil
         searchText = ""   // dismiss search → return to the form in scaling mode
     }
 
-    private func prefill(from entry: CalorieEntry) {
-        whatItIs = entry.narrative ?? "Quick calories"
-        calories = entry.calories
-        manufacturer = entry.manufacturer ?? ""
-        protein = entry.protein; carbs = entry.carbs; fat = entry.fat
-        alsoSave = false
-        selectedFood = nil
-        reAddClone = entry.isFoodEntry ? entry : nil
-        searchText = ""   // dismiss search → return to the form, prefilled
+    private func prefill(from entry: CalorieEntry) async {
+        if let picked = await resolveFood(for: entry) {
+            // A logged food or generic → scaling mode, prefilled from the past entry.
+            selectedFood = picked
+            selectedQuantityIndex = picked.quantities.firstIndex(where: { $0.type == entry.servingUnit }) ?? 0
+            amount = entry.servingAmount ?? (picked.quantities.first?.count ?? 1)
+            alsoSave = false
+            searchText = ""
+        } else {
+            // A genuine quick entry → manual prefill.
+            whatItIs = entry.narrative ?? "Quick calories"
+            calories = entry.calories
+            manufacturer = entry.manufacturer ?? ""
+            protein = entry.protein; carbs = entry.carbs; fat = entry.fat
+            alsoSave = false
+            selectedFood = nil
+            searchText = ""
+        }
     }
+    
+    /// Resolves the food behind a logged entry so re-adding behaves like a fresh log: the saved FoodItem,
+    /// the bundled generic (by name), or a one-serving reconstruction from the entry's own stamp.
+    private func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
+        if let id = entry.foodItem, let food = await dataStore.foodItemActor.fetch(id: id) {
+            return food.asPicked
+        }
+        guard let unit = entry.servingUnit else { return nil }   // no serving stamp → genuine quick entry
+        let name = entry.narrative ?? ""
+        if let match = FoodCatalogue.shared.search(name).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+            return match.asPicked
+        }
+        let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,
+                             protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
+        return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
+                          manufacturer: entry.manufacturer, quantities: [q])
+    }
+
 
     // MARK: Persistence
 
@@ -384,20 +413,21 @@ struct AddCalsSheet: View {
                                          manufacturer: food.manufacturer,
                                          quantity: q, servings: effectiveServings,
                                          date: selectedDate, meal: selectedMeal)
-        } else if let clone = reAddClone, (calories ?? 0) == clone.calories {
-            // Re-adding a past food entry, untouched — keep its serving/macros/link.
-            await dataStore.calorieActor.reAddEntry(from: clone, date: selectedDate, meal: selectedMeal)
         } else if alsoSave {
-            // New entry the user wants to keep: build a food from it and log linked.
             let mfr = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
             let quantity = FoodQuantity(type: saveServingUnit, count: saveServingCount,
                                         calories: calories!, protein: protein, carbs: carbs, fat: fat)
             let food = FoodItem(name: whatItIs.trimmingCharacters(in: .whitespacesAndNewlines),
                                 manufacturer: mfr.isEmpty ? nil : mfr,
                                 quantities: [quantity], source: .userInput)
+            let newFoodID = food.id
+            let newFoodName = food.name
+            let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
-            await dataStore.addFoodEntry(foodItemID: food.id, name: food.name,
-                                         manufacturer: food.manufacturer,
+            await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
+                                                           manufacturer: newFoodMfr, calories: calories!)
+            await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,
+                                         manufacturer: mfr.isEmpty ? nil : mfr,
                                          quantity: quantity, servings: 1,
                                          date: selectedDate, meal: selectedMeal)
         } else {
@@ -422,7 +452,6 @@ struct AddCalsSheet: View {
         selectedFood = nil
         selectedQuantityIndex = 0
         amount = 0
-        reAddClone = nil
     }
 }
 

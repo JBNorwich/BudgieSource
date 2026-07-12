@@ -408,34 +408,23 @@ actor CalorieActor {
         try? modelContext.save()
     }
     
-    /// Re-logs a faithful copy of an existing entry — keeping any food link, serving unit, amount and
-    /// macros — at a new date and meal. Lets the "previous entries" shortcut re-add a food without
-    /// degrading it to a plain calorie entry.
-    func reAddEntry(from source: CalorieEntry, date: Date, meal: UUID) async {
-        #if !os(macOS)
-        let hkUUID = await dataStore.saveHKSample(value: Double(source.calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
-        #else
-        let hkUUID: UUID? = nil
-        #endif
-
-        let newEntry = CalorieEntry(date: date,
-                                    calories: source.calories,
-                                    narrative: source.narrative,
-                                    mealUUID: meal,
-                                    isInHK: hkUUID != nil,
-                                    healthKitUUID: hkUUID,
-                                    item: source.foodItem,
-                                    manufacturer: source.manufacturer,
-                                    unit: source.servingUnit,
-                                    servings: source.servingAmount,
-                                    protein: source.protein,
-                                    fat: source.fat,
-                                    carbs: source.carbs)
-        modelContext.insert(newEntry)
-        do {
-            try modelContext.save()
-        } catch {
-            print("Re-add error: \(error)")
+    /// Links existing quick entries matching a newly-saved food (case-insensitive narrative + exact calories, not already linked) to it, stamping a 1-serving portion and the food's manufacturer — same rule as the migration, so saving a food retroactively groups past matching entries under it.
+    func linkQuickEntries(toFood foodID: UUID, name: String, manufacturer: String?, calories: Int) {
+        let descriptor = FetchDescriptor<CalorieEntry>(
+            predicate: #Predicate { $0.foodItem == nil && $0.calories == calories && $0.realEntry == true }
+        )
+        let lowerName = name.lowercased()
+        var changed = false
+        for entry in (try? modelContext.fetch(descriptor)) ?? []
+        where entry.servingUnit == nil && (entry.narrative ?? "").lowercased() == lowerName {
+            entry.foodItem = foodID
+            entry.servingUnit = .portion
+            entry.servingAmount = 1
+            entry.manufacturer = manufacturer
+            changed = true
+        }
+        if changed {
+            do { try modelContext.save() } catch { print("Link quick entries error: \(error)") }
         }
     }
     
