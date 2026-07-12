@@ -22,10 +22,12 @@ struct FoodEditorView: View {
     @State private var name: String
     @State private var manufacturer: String
     @State private var quantities: [FoodQuantity]
+    private let isModal: Bool
 
     /// Pass an existing item to edit it, or nothing to create a new one.
-    init(existing: FoodItem? = nil) {
+    init(existing: FoodItem? = nil, isModal: Bool = false) {
         self.existingID = existing?.id
+        self.isModal = isModal
         _name = State(initialValue: existing?.name ?? "")
         _manufacturer = State(initialValue: existing?.manufacturer ?? "")
         let qs = existing?.quantities ?? []
@@ -60,8 +62,10 @@ struct FoodEditorView: View {
         }
         .navigationTitle(existingID == nil ? "New food" : "Edit food")
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+            if isModal {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {

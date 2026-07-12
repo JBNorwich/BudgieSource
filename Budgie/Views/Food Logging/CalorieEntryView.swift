@@ -22,6 +22,7 @@ struct CalorieEntryView: View {
     var protein: Double? = nil
     var carbs: Double? = nil
     var fat: Double? = nil
+    var isGeneric: Bool = false
     /// When true (the Food hub's food rows), show the manufacturer/placeholder caption and macro line.
     /// Left false elsewhere (Today screen, Health aggregate rows) to keep those plain.
     var detailed: Bool = false
@@ -41,6 +42,10 @@ struct CalorieEntryView: View {
                 if detailed {
                     if let manufacturer, !manufacturer.isEmpty {
                         Text(manufacturer)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if isGeneric {
+                        Text("Generic")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {

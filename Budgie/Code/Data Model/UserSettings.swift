@@ -333,6 +333,21 @@ class CloudSettings {
         get { defaults.object(forKey: "snapshotEstimated") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "snapshotEstimated") }
     }
+    
+    var hasDoneFoodItemMigration: Bool {
+        get { defaults.object(forKey: "hasDoneFoodItemMigration") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "hasDoneFoodItemMigration") }
+    }
+    
+    var offSearchDisabled: Bool {
+        get { defaults.object(forKey: "offSearchDisabled") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "offSearchDisabled") }
+    }
+    
+    var offSearchConsented: Bool {
+        get { defaults.object(forKey: "offSearchConsented") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "offSearchConsented") }
+    }
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.

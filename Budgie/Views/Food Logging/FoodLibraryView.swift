@@ -45,11 +45,6 @@ struct FoodLibraryView: View {
                         foodRow(food)
                     }
                     .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task { await delete(food) }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
                         Button {
                             Task { await setArchived(food, archived: !food.archived) }
                         } label: {
@@ -83,7 +78,7 @@ struct FoodLibraryView: View {
             }
         }
         .sheet(isPresented: $showingNewFood) {
-            NavigationStack { FoodEditorView() }
+            NavigationStack { FoodEditorView(isModal: true) }
                 .onDisappear { reloadToken = UUID() }
         }
     }
@@ -104,11 +99,6 @@ struct FoodLibraryView: View {
                 Text("Archived").font(.caption2).italic().foregroundStyle(.secondary)
             }
         }
-    }
-
-    private func delete(_ food: FoodItem) async {
-        await dataStore.foodItemActor.delete(id: food.id)
-        reloadToken = UUID()
     }
 
     private func setArchived(_ food: FoodItem, archived: Bool) async {

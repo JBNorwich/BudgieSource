@@ -32,6 +32,11 @@ struct BudgieApp: App {
             if settingsObj.isFirstRun, await dataStore.calorieActor.getListOfMeals() == [] {
                 await dataStore.calorieActor.setUpMeals()
             }
+            if !settingsObj.hasDoneFoodItemMigration {
+                await dataStore.calorieActor.migrateLegacyEntries()
+                await MainActor.run { settingsObj.hasDoneFoodItemMigration = true }
+            }
+            await dataStore.calorieActor.dedupeFoods()
             // Merge any duplicates that earlier builds may already have created.
             await dataStore.calorieActor.dedupeMeals(preferredSurvivor: settingsObj.snacksUUID)
             if settingsObj.snacksUUID == nil {

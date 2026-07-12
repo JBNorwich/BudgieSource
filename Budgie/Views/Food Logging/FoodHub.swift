@@ -89,6 +89,7 @@ struct FoodHub: View {
                                                          protein: entry.protein,
                                                          carbs: entry.carbs,
                                                          fat: entry.fat,
+                                                         isGeneric: entry.isGenericFood,
                                                          detailed: true)
                                     }
                                 }

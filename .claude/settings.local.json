@@ -5,7 +5,8 @@
       "mcp__visualize__show_widget",
       "WebSearch",
       "WebFetch(domain:www.nationalarchives.gov.uk)",
-      "WebFetch(domain:www.gov.uk)"
+      "WebFetch(domain:www.gov.uk)",
+      "WebFetch(domain:openfoodfacts.github.io)"
     ]
   }
 }

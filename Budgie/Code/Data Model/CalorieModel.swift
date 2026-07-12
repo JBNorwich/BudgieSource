@@ -94,9 +94,16 @@ final class CalorieEntry {
 }
 
 extension CalorieEntry {
-    /// Whether this entry came from a saved food, so it has a serving to rescale.
+    /// Whether this entry has a stamped serving to rescale — i.e. it was logged from a saved food
+    /// OR a bundled generic (which has no `foodItem` link). Quick calorie entries have no serving.
     var isFoodEntry: Bool {
-        foodItem != nil && servingUnit != nil && (servingAmount ?? 0) > 0
+        servingUnit != nil && (servingAmount ?? 0) > 0
+    }
+    
+    /// Whether this entry was logged from a bundled generic (a stamped serving but no saved-food link),
+    /// as opposed to a user-created saved food or a plain quick entry.
+    var isGenericFood: Bool {
+        foodItem == nil && isFoodEntry
     }
 
     /// Rescales the stamped calories/macros to a new serving amount, kept proportional to the
@@ -430,5 +437,88 @@ actor CalorieActor {
         } catch {
             print("Re-add error: \(error)")
         }
+    }
+    
+    /// One-time migration for users coming from before 3.3: turns legacy quick-calorie entries into searchable FoodItems, linking each entry to its new food and stamping a "1 serving" portion. Entries keep their own calories/macros (the stamped source of truth). Idempotent: only touches real entries with no food link and no stamped serving, and reuses a matching FoodItem if one already exists, so a re-run or a second device won't duplicate.
+    func migrateLegacyEntries() {
+        // Predicate stays on simple types; the serving-unit (a Codable enum) is filtered in Swift.
+        let descriptor = FetchDescriptor<CalorieEntry>(
+            predicate: #Predicate { $0.foodItem == nil && $0.realEntry == true }
+        )
+        guard let candidates = try? modelContext.fetch(descriptor) else { return }
+        let entries = candidates.filter { $0.servingUnit == nil }
+        guard !entries.isEmpty else { return }
+
+        // Reuse existing single-portion foods (from a partial prior run or another device) rather than
+        // duplicating. Keyed on name + calories, so distinct calorie amounts stay distinct foods.
+        var foodByKey: [String: FoodItem] = [:]
+        for f in (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? [] where f.quantities.count == 1 {
+            if let cal = f.quantities.first?.calories {
+                foodByKey[Self.migrationKey(name: f.name, calories: cal)] = f
+            }
+        }
+
+        for entry in entries {
+            // Leave genuinely unlabeled quick entries alone — they stay quick calories.
+            let narrative = entry.narrative?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if narrative.isEmpty || narrative.caseInsensitiveCompare("Quick calories") == .orderedSame {
+                continue
+            }
+
+            let key = Self.migrationKey(name: narrative, calories: entry.calories)
+            let food: FoodItem
+            if let existing = foodByKey[key] {
+                food = existing
+            } else {
+                let quantity = FoodQuantity(type: .portion, count: 1, calories: entry.calories,
+                                            servingName: "1 serving")
+                food = FoodItem(name: narrative, manufacturer: nil, quantities: [quantity], source: .migration)
+                modelContext.insert(food)
+                foodByKey[key] = food
+            }
+
+            entry.foodItem = food.id
+            entry.servingUnit = .portion
+            entry.servingAmount = 1
+        }
+
+        do { try modelContext.save() } catch { print("Legacy migration error: \(error)") }
+    }
+
+    private static func migrationKey(name: String, calories: Int) -> String {
+        "\(name.lowercased())|\(calories)"
+    }
+
+    /// Merges structurally-identical FoodItems (same name, manufacturer and servings), moving any linked entries onto one survivor and deleting the rest. Catches duplicates from two devices migrating or creating the same food before CloudKit reconciles. Distinct-calorie "same name" variants have a different signature and are deliberately NOT merged.
+    func dedupeFoods() {
+        let foods = (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []
+        var survivors: [String: FoodItem] = [:]
+        var changed = false
+
+        for food in foods {
+            let key = Self.foodSignature(food)
+            if let survivor = survivors[key] {
+                let doomedID = food.id
+                let survivorID = survivor.id
+                let entryDescriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.foodItem == doomedID })
+                for entry in (try? modelContext.fetch(entryDescriptor)) ?? [] { entry.foodItem = survivorID }
+                modelContext.delete(food)
+                changed = true
+            } else {
+                survivors[key] = food
+            }
+        }
+
+        if changed {
+            do { try modelContext.save() } catch { print("Food dedupe error: \(error)") }
+        }
+    }
+
+    private static func foodSignature(_ food: FoodItem) -> String {
+        let base = "\(food.name.lowercased())|\(food.manufacturer?.lowercased() ?? "")"
+        let servings = food.quantities
+            .map { "\($0.type.unitName)-\($0.count)-\($0.calories)" }
+            .joined(separator: ",")
+        return "\(base)|\(servings)"
     }
 }

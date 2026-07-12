@@ -314,14 +314,14 @@ final class HealthData {
         }
     }
     
-    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
+    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID, manufacturer: String? = nil, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
         let hkUUID = await saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
-        let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID, protein: protein, fat: fat, carbs: carbs)
+        let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID, manufacturer: manufacturer, protein: protein, fat: fat, carbs: carbs)
         await calorieActor.insertNewCals(object: newEntry)
     }
     
-    func addFoodEntry(foodItemID: UUID, name: String, manufacturer: String? = nil, quantity: FoodQuantity, servings: Double, date: Date, meal: UUID) async {
+    func addFoodEntry(foodItemID: UUID?, name: String, manufacturer: String? = nil, quantity: FoodQuantity, servings: Double, date: Date, meal: UUID) async {
         guard servings > 0 else { return }
         let totals = quantity.totals(servings: servings)
         let hkUUID = await saveHKSample(value: Double(totals.calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)

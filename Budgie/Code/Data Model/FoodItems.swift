@@ -41,6 +41,8 @@ struct FoodQuantity: Codable {
     var carbs: Double?
     /// The fat quantity, in grams
     var fat: Double?
+    /// Friendly label for a portion.
+    var servingName: String?
 }
 
 extension FoodQuantity {
@@ -69,8 +71,8 @@ extension FoodQuantityType {
 }
 
 extension FoodQuantity {
-    /// A human-readable description of one unit of this quantity, e.g. "100 g" or "1 portion".
     var label: String {
+        if let servingName, !servingName.isEmpty { return servingName }
         switch type {
         case .portion: return count == 1 ? "1 portion" : "\(count.formatted()) portions"
         case .grams: return "\(count.formatted()) g"
@@ -177,15 +179,6 @@ actor FoodItemActor {
         do { try modelContext.save() } catch { print("FoodItem archive error: \(error)") }
     }
 
-    /// Hard-deletes an item. Safe for history: entries snapshot their own nutritionals, so a dangling
-    /// `foodItem` link is simply treated like a quick entry.
-    func delete(id: UUID) {
-        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
-        guard let item = (try? modelContext.fetch(descriptor))?.first else { return }
-        modelContext.delete(item)
-        do { try modelContext.save() } catch { print("FoodItem deletion error: \(error)") }
-    }
-    
     /// The serving options for a food, by id — used when editing an entry so the user can switch
     /// serving kind. Returns [] if the food no longer exists.
     func quantities(id: UUID) -> [FoodQuantity] {
