@@ -223,6 +223,11 @@ struct SettingsView: View {
             
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
                 NavigationLink {
+                    DataManagementView()
+                } label: {
+                    Text("Backup and restore")
+                }
+                NavigationLink {
                     BudgetCap()
                 } label: {
                     Text("Budget capping")
@@ -240,6 +245,7 @@ struct SettingsView: View {
             Section(header: Text("Other settings")) {
                 Toggle("Hide \"Today in detail\"", isOn: settingBinding(\.hideTodayInDetail))
                 Toggle("Put whales in various places", isOn: settingBinding(\.whalesEverywhere))
+                
             }
             
             Section(header: Text("About")) {
