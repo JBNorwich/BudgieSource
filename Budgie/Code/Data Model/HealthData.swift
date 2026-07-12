@@ -292,6 +292,64 @@ final class HealthData {
         return activitySummaries.first ?? HKActivitySummary()
     }
     
+    /// Macros eaten today (grams) from Budgie's own entries plus other apps' HealthKit dietary samples. Mirrors pullEatenCalories: Budgie's own contribution is summed from its entries so it stays consistent with the calorie figure, and only *other* sources are read from HealthKit (excluded by source), so Budgie's own macro writes are never double-counted.
+    func pullEatenMacros(startDate: Date, endDate: Date) async -> (protein: Int, fat: Int, carbs: Int) {
+        let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
+        var protein = budgieResults.reduce(0.0) { $0 + ($1.protein ?? 0) }
+        var fat     = budgieResults.reduce(0.0) { $0 + ($1.fat ?? 0) }
+        var carbs   = budgieResults.reduce(0.0) { $0 + ($1.carbs ?? 0) }
+
+        let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, timePredicate])
+        protein += await sumSamples(type: proteinQuantityType, predicate: predicate)
+        fat     += await sumSamples(type: fatQuantityType, predicate: predicate)
+        carbs   += await sumSamples(type: carbsQuantityType, predicate: predicate)
+
+        return (Int(protein.rounded()), Int(fat.rounded()), Int(carbs.rounded()))
+    }
+
+    /// Sum of a dietary quantity type in grams over a predicate. 0 on failure or no access.
+    private func sumSamples(type: HKQuantityType, predicate: NSPredicate) async -> Double {
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: type, predicate: predicate)], sortDescriptors: [])
+        do {
+            return try await descriptor.result(for: healthStore)
+                .reduce(0.0) { $0 + $1.quantity.doubleValue(for: .gram()) }
+        } catch {
+            return 0
+        }
+    }
+
+    /// Writes protein/fat/carbs samples (grams) tagged with a food's energy-sample UUID, so they travel with it. Nil or non-positive macros are skipped. Internal so the calorie actor can call it on edit.
+    func writeMacroSamples(groupUUID: UUID, protein: Double?, fat: Double?, carbs: Double?, date: Date) async {
+        let metadata = [macroGroupKey: groupUUID.uuidString]
+        await saveMacroSample(value: protein, type: proteinQuantityType, date: date, metadata: metadata)
+        await saveMacroSample(value: fat,     type: fatQuantityType,     date: date, metadata: metadata)
+        await saveMacroSample(value: carbs,   type: carbsQuantityType,   date: date, metadata: metadata)
+    }
+
+    private func saveMacroSample(value: Double?, type: HKQuantityType, date: Date, metadata: [String: Any]) async {
+        guard let value, value > 0,
+              healthStore.authorizationStatus(for: type) == .sharingAuthorized else { return }
+        let sample = HKQuantitySample(type: type, quantity: HKQuantity(unit: .gram(), doubleValue: value),
+                                      start: date, end: date, metadata: metadata)
+        try? await healthStore.save(sample)
+    }
+
+    /// Removes the macro samples tagged with a given energy-sample UUID (on edit or delete of its entry). Internal so the calorie actor can call it.
+    func deleteMacroSamples(groupUUID: UUID) async {
+        let predicate = HKQuery.predicateForObjects(withMetadataKey: macroGroupKey,
+                                                    operatorType: .equalTo, value: groupUUID.uuidString)
+        for type in [proteinQuantityType, fatQuantityType, carbsQuantityType] {
+            guard healthStore.authorizationStatus(for: type) == .sharingAuthorized else { continue }
+            do {
+                try await healthStore.deleteObjects(of: type, predicate: predicate)
+            } catch {
+                // Not recoverable.
+            }
+        }
+    }
+    
     func saveHKSample(value: Double, unit: HKUnit, type: HKQuantityType, date: Date) async -> UUID? {
         guard healthStore.authorizationStatus(for: type) == .sharingAuthorized else { return nil }
         let quantity = HKQuantity(unit: unit, doubleValue: value)
@@ -316,6 +374,7 @@ final class HealthData {
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID, manufacturer: String? = nil, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
         let hkUUID = await saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
+        if let hkUUID { await writeMacroSamples(groupUUID: hkUUID, protein: protein, fat: fat, carbs: carbs, date: date) }
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID, manufacturer: manufacturer, protein: protein, fat: fat, carbs: carbs)
         await calorieActor.insertNewCals(object: newEntry)
@@ -325,6 +384,7 @@ final class HealthData {
         guard servings > 0 else { return }
         let totals = quantity.totals(servings: servings)
         let hkUUID = await saveHKSample(value: Double(totals.calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
+        if let hkUUID { await writeMacroSamples(groupUUID: hkUUID, protein: totals.protein, fat: totals.fat, carbs: totals.carbs, date: date) }
         let newEntry = CalorieEntry(date: date,
                                     calories: totals.calories,
                                     narrative: name,
@@ -528,6 +588,7 @@ final class HealthData {
         // Kick every independent query off concurrently. These fan out across HealthKit and the
         // calorie actor: the HK queries run in parallel, and the actor serialises its own work safely.
         async let eatenTask        = pullEatenCalories(startDate: todayStart, endDate: todayEnd)
+        async let eatenMacrosTask  = pullEatenMacros(startDate: todayStart, endDate: todayEnd)
         async let foodListTask     = calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
         async let projBasalTask    = getProjBasalCalories()
         async let projActiveTask   = getProjActiveCalories()
@@ -545,6 +606,12 @@ final class HealthData {
         let eatenCalories = await eatenTask
         todayLump.eatenCalories = eatenCalories.hk + eatenCalories.budgie
         todayLump.healthKitCalories = eatenCalories.hk
+        
+        // Macros eaten today (own entries + other apps' HealthKit samples, same as calories)
+        let eatenMacros = await eatenMacrosTask
+        todayLump.eatenProtein = eatenMacros.protein
+        todayLump.eatenFat = eatenMacros.fat
+        todayLump.eatenCarbs = eatenMacros.carbs
         
         // Food list + meal breakdown (the meal list depends on the fetched food list)
         let foodList = await foodListTask
@@ -703,6 +770,7 @@ final class HealthData {
         for entry in entries where entry.healthKitUUID == nil {
             if let uuid = await saveHKSample(value: Double(entry.calories), unit: .kilocalorie(),
                                              type: eatenQuantityType, date: entry.date) {
+                await writeMacroSamples(groupUUID: uuid, protein: entry.protein, fat: entry.fat, carbs: entry.carbs, date: entry.date)
                 await calorieActor.markCalorieMirrored(entryID: entry.id, healthKitUUID: uuid)
             }
         }
@@ -714,9 +782,11 @@ final class HealthData {
             let sameDate = abs(sample.startDate.timeIntervalSince(entry.date)) < 1
             if !(sameCals && sameDate) {
                 await deleteHKSample(uuid: uuid, type: eatenQuantityType)
+                await deleteMacroSamples(groupUUID: uuid)
                 samplesByUUID[uuid] = nil
                 if let newUUID = await saveHKSample(value: Double(entry.calories), unit: .kilocalorie(),
                                                     type: eatenQuantityType, date: entry.date) {
+                    await writeMacroSamples(groupUUID: newUUID, protein: entry.protein, fat: entry.fat, carbs: entry.carbs, date: entry.date)
                     await calorieActor.markCalorieMirrored(entryID: entry.id, healthKitUUID: newUUID)
                 }
             }

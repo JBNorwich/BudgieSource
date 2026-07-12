@@ -54,6 +54,9 @@ class TodayLump: ObservableObject {
     @Published var mealTotalList: [UUID:Int] = [:]
     @Published var foodList: [CalorieEntry] = []
     @Published var healthKitCalories: Int = 0
+    @Published var eatenProtein: Int = 0
+    @Published var eatenFat: Int = 0
+    @Published var eatenCarbs: Int = 0
     
     // flags for estimation of data
     @Published var basalEstimated: Bool = false

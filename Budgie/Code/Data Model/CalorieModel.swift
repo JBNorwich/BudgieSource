@@ -255,8 +255,10 @@ actor CalorieActor {
         // HK can't be updated in place — delete the old sample, then write a fresh one.
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
             await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
+            await dataStore.deleteMacroSamples(groupUUID: oldUUID)
         }
         let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
+        if let newUUID { await dataStore.writeMacroSamples(groupUUID: newUUID, protein: protein, fat: fat, carbs: carbs, date: date) }
         #endif
         
         // SwiftData, unlike HK, can just be mutated — this preserves the entry's identity.
@@ -286,8 +288,10 @@ actor CalorieActor {
         #if !os(macOS)
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
             await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
+            await dataStore.deleteMacroSamples(groupUUID: oldUUID)
         }
         let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
+        if let newUUID { await dataStore.writeMacroSamples(groupUUID: newUUID, protein: protein, fat: fat, carbs: carbs, date: date) }
         #endif
 
         entry.calories = calories
@@ -316,6 +320,7 @@ actor CalorieActor {
             #if !os(macOS)
             if object.isInHK, let hkUUID = object.healthKitUUID {
                 await dataStore.deleteHKSample(uuid: hkUUID, type: eatenQuantityType)
+                await dataStore.deleteMacroSamples(groupUUID: hkUUID)
             }
             #endif
             modelContext.delete(object)

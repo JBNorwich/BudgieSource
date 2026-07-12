@@ -45,6 +45,7 @@
 		D86806F22FF2D28E007D6231 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = D86806F02FF2D288007D6231 /* .gitignore */; };
 		D86806F32FF2D28E007D6231 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = D86806F02FF2D288007D6231 /* .gitignore */; };
 		D868606D2C7BD0E900730373 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868606C2C7BD0E900730373 /* Tests.swift */; };
+		D88358103004019200141AF6 /* MacroSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D883580F3004019200141AF6 /* MacroSummaryView.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
 		D88F918A2FF7AFE90070715B /* ManageMeals.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F91892FF7AFE50070715B /* ManageMeals.swift */; };
 		D88F918C2FF7B5880070715B /* AllocateBudgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F918B2FF7B5860070715B /* AllocateBudgets.swift */; };
@@ -237,6 +238,7 @@
 		D86806F02FF2D288007D6231 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		D883580F3004019200141AF6 /* MacroSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroSummaryView.swift; sourceTree = "<group>"; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		D88F91892FF7AFE50070715B /* ManageMeals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageMeals.swift; sourceTree = "<group>"; };
 		D88F918B2FF7B5860070715B /* AllocateBudgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllocateBudgets.swift; sourceTree = "<group>"; };
@@ -402,6 +404,7 @@
 		D829B0832C79B5B30027841B /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				D883580F3004019200141AF6 /* MacroSummaryView.swift */,
 				D80CB9992F70290C0036EB8E /* WeightView.swift */,
 				D85CF18E2D8C48B900340EE1 /* FitnessView.swift */,
 				D838A6112C8075710083F3B3 /* NewDataView.swift */,
@@ -868,6 +871,7 @@
 				D8E831622C73C7EE00AAF555 /* HealthData.swift in Sources */,
 				D8E831722C74CAED00AAF555 /* SettingsView.swift in Sources */,
 				D8D4BF732C7CD04E0061A9A4 /* FoodDatePicker.swift in Sources */,
+				D88358103004019200141AF6 /* MacroSummaryView.swift in Sources */,
 				D8BDE7362C7B961200E07471 /* Donate.swift in Sources */,
 				D868027A30039B8C00D8871F /* OpenFoodFacts.swift in Sources */,
 				D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */,

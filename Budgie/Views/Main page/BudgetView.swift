@@ -148,6 +148,13 @@ struct BudgetView: View {
                                 NewDataView().environmentObject(todayLump)
                             }.backgroundStyle(.regularMaterial)
                         }
+                        
+                        if !settingsObj.disableMacros {
+                            GroupBox(label: Label("Macros", systemImage: "chart.pie")) {
+                                MacroSummaryView().environmentObject(todayLump)
+                            }.backgroundStyle(.regularMaterial)
+                        }
+                        
                         GroupBox(label: FoodListLabelView(showingAddCalsSheet: $showAddCalsSheet))
                         {
                             TodayFoodList().environmentObject(todayLump)

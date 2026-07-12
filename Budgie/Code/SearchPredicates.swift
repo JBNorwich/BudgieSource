@@ -40,12 +40,25 @@ let fitnessGoalType = HKSampleType.activitySummaryType()
 /// HKQuantityType for body weight.
 let weightSampleType = HKQuantityType(.bodyMass)
 
+///HKQuantityType for dietary protein.
+let proteinQuantityType = HKQuantityType(.dietaryProtein)
+///HKQuantityType for dietary fat.
+let fatQuantityType = HKQuantityType(.dietaryFatTotal)
+///HKQuantityType for dietary carbohydrates.
+let carbsQuantityType = HKQuantityType(.dietaryCarbohydrates)
+
+/// Metadata key tagging each macro sample with its energy sample's UUID, so a food's macros can be found and removed alongside it on edit/delete.
+let macroGroupKey = "budgieMacroGroup"
+
 let fitnessGoalSet: Set = [fitnessGoalType]
 
 let writeTypes: Set = [
     eatenQuantityType,
     waterQuantityType,
-    weightSampleType
+    weightSampleType,
+    proteinQuantityType,
+    fatQuantityType,
+    carbsQuantityType
 ]
 
 let readTypes: Set = [
@@ -54,7 +67,10 @@ let readTypes: Set = [
     activeQuantityType,
     waterQuantityType,
     fitnessGoalType,
-    weightSampleType
+    weightSampleType,
+    proteinQuantityType,
+    fatQuantityType,
+    carbsQuantityType
 ]
 #endif
 
