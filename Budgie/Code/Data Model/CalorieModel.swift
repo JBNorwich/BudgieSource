@@ -556,6 +556,23 @@ actor CalorieActor {
         do { try modelContext.save() } catch { print("Backup import error: \(error)") }
         return (mealCount, foodCount, entryCount)
     }
+    
+    /// Re-labels the entries logged from a food after it's renamed/re-manufacturered. Kept on
+    /// CalorieActor (not FoodItemActor) so the change lands in the same context the app reads entries
+    /// through — otherwise the Today screen shows stale names. Calories/macros are the entry's own
+    /// stamped source of truth and are left untouched.
+    func relabelEntries(forFood id: UUID, name: String, manufacturer: String?) {
+        let descriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.foodItem == id })
+        var changed = false
+        for entry in (try? modelContext.fetch(descriptor)) ?? [] {
+            entry.narrative = name
+            entry.manufacturer = manufacturer
+            changed = true
+        }
+        if changed {
+            do { try modelContext.save() } catch { print("Relabel entries error: \(error)") }
+        }
+    }
 }
 
 extension CalorieEntry {

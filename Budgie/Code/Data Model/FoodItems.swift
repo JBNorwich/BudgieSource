@@ -180,15 +180,6 @@ actor FoodItemActor {
         item.name = name
         item.manufacturer = manufacturer
         item.quantities = quantities
-
-        // Re-label past entries linked to this food. Calories and macros are the entry's own stamped
-        // source of truth and are deliberately left untouched.
-        let entryDescriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.foodItem == id })
-        for entry in (try? modelContext.fetch(entryDescriptor)) ?? [] {
-            entry.narrative = name
-            entry.manufacturer = manufacturer
-        }
-
         do { try modelContext.save() } catch { print("FoodItem update error: \(error)") }
     }
 

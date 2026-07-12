@@ -41,7 +41,7 @@ struct AddCalsSheet: View {
     @State private var foodResults: [PickedFood] = []
     @State private var entryResults: [CalorieEntry] = []
     @State private var showAllFoods: Bool = false
-    @State private var displayedFoods: [CalorieEntry] = []
+    @State private var displayedItems: [RecentItem] = []
     @State private var showingOFFSheet = false
 
     // MARK: Shared
@@ -95,6 +95,14 @@ struct AddCalsSheet: View {
         var meal: UUID
         var reload: UUID
     }
+    
+    /// A recent entry resolved to what it should offer *now*: a live food's current recipe when it resolves to one, else the entry's own values (a quick calorie log).
+    private struct RecentItem: Identifiable {
+        let id: UUID
+        let entry: CalorieEntry
+        let food: PickedFood?
+    }
+    
     private var searchKey: SearchKey {
         SearchKey(term: searchText, allMeals: showAllFoods, meal: selectedMeal, reload: reloadToken)
     }
@@ -120,7 +128,8 @@ struct AddCalsSheet: View {
         .task(id: searchKey) {
             if searchText.isEmpty {
                 let scope = showAllFoods ? nil : mealList.first { $0.mealUUID == selectedMeal }
-                displayedFoods = await dataStore.calorieActor.fetchCalsForMeal(scope)
+                let recents = await dataStore.calorieActor.fetchCalsForMeal(scope)
+                displayedItems = await resolveRecents(recents)
                 foodResults = []
                 entryResults = []
             } else {
@@ -230,6 +239,9 @@ struct AddCalsSheet: View {
                 if let m = food.manufacturer, !m.isEmpty {
                     Text(m).font(.caption).foregroundStyle(.secondary)
                 }
+                if food.quantities.count == 1, let q = food.quantities.first {
+                    Text(q.label).font(.caption).foregroundStyle(.secondary)   // e.g. “1 medium banana”
+                }
             }
             Spacer()
             Button("Change") { selectedFood = nil }.buttonStyle(.borderless)
@@ -269,28 +281,7 @@ struct AddCalsSheet: View {
             if !foodResults.isEmpty {
                 Section("Foods") {
                     ForEach(foodResults) { food in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 6) {
-                                    Text(food.name)
-                                    if food.isGeneric {
-                                        Text("Generic").font(.caption2)
-                                            .padding(.horizontal, 6).padding(.vertical, 2)
-                                            .background(.secondary.opacity(0.15), in: Capsule())
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                if let first = food.quantities.first {
-                                    Text(first.label).font(.caption).foregroundStyle(.secondary)   // e.g. "100 g"
-                                }
-                            }
-                            Spacer()
-                            if let first = food.quantities.first {
-                                Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture { selectFood(food) }
+                        pickedFoodRow(food) { selectFood(food) }
                     }
                 }
             }
@@ -338,23 +329,55 @@ struct AddCalsSheet: View {
                 Text("All meals").tag(true)
             }.pickerStyle(.segmented)
 
-            if displayedFoods.isEmpty {
+            if displayedItems.isEmpty {
                 Text("Nothing logged recently.").foregroundStyle(.secondary)
             } else {
-                ForEach(displayedFoods) { entry in
-                    CalorieEntryView(calories: entry.calories,
-                                     narrative: entry.narrative ?? "Quick calories",
-                                     manufacturer: entry.manufacturer,
-                                     protein: entry.protein,
-                                     carbs: entry.carbs,
-                                     fat: entry.fat,
-                                     isGeneric: entry.isGenericFood,
-                                     detailed: true)
-                        .contentShape(Rectangle())
-                        .onTapGesture { Task { await prefill(from: entry) } }
+                ForEach(displayedItems) { item in
+                    if let food = item.food {
+                        pickedFoodRow(food) { selectFood(food) }         // current recipe → scale fresh
+                    } else {
+                        CalorieEntryView(calories: item.entry.calories,
+                                         narrative: item.entry.narrative ?? "Quick calories",
+                                         manufacturer: item.entry.manufacturer,
+                                         protein: item.entry.protein,
+                                         carbs: item.entry.carbs,
+                                         fat: item.entry.fat,
+                                         isGeneric: item.entry.isGenericFood,
+                                         detailed: true)
+                            .contentShape(Rectangle())
+                            .onTapGesture { Task { await prefill(from: item.entry) } }
+                    }
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func pickedFoodRow(_ food: PickedFood, onTap: @escaping () -> Void) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(food.name)
+                    if food.isGeneric {
+                        Text("Generic").font(.caption2)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(.secondary.opacity(0.15), in: Capsule())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                let caption = [food.manufacturer, food.quantities.first?.label]
+                    .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+                if !caption.isEmpty {
+                    Text(caption).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            if let first = food.quantities.first {
+                Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
     }
     
     // MARK: Selection handlers
@@ -403,6 +426,28 @@ struct AddCalsSheet: View {
                           manufacturer: entry.manufacturer, quantities: [q])
     }
 
+    /// For the recent list: entries linked to a live food show that food's current recipe (and re-add it fresh); archived or deleted foods are dropped so we don't suggest something you've retired; genuine quick entries keep their own values. One row per food, batched to one lookup per food.
+    private func resolveRecents(_ entries: [CalorieEntry]) async -> [RecentItem] {
+        var foodCache: [UUID: FoodItem?] = [:]
+        var seenFoods = Set<UUID>()
+        var items: [RecentItem] = []
+        for entry in entries {
+            if let id = entry.foodItem {
+                if !foodCache.keys.contains(id) { foodCache[id] = await dataStore.foodItemActor.fetch(id: id) }
+                guard let food = foodCache[id] ?? nil, !food.archived else { continue }   // gone or archived
+                guard seenFoods.insert(food.id).inserted else { continue }                 // dedupe by food
+                items.append(RecentItem(id: entry.id, entry: entry, food: food.asPicked))
+            } else if entry.servingUnit != nil {
+                let name = entry.narrative ?? ""
+                let generic = FoodCatalogue.shared.search(name)
+                    .first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.asPicked
+                items.append(RecentItem(id: entry.id, entry: entry, food: generic))
+            } else {
+                items.append(RecentItem(id: entry.id, entry: entry, food: nil))            // quick entry
+            }
+        }
+        return items
+    }
 
     // MARK: Persistence
 

@@ -88,6 +88,10 @@ struct FoodEditorView: View {
             }
             .pickerStyle(.menu)
 
+            TextField("Serving name (optional), e.g. “1 medium banana”",
+                      text: Binding(get: { quantities[i].servingName ?? "" },
+                                    set: { quantities[i].servingName = $0.isEmpty ? nil : $0 }))
+            
             HStack {
                 Text(quantities[i].type == .portion ? "Portions" : "Amount")
                 Spacer()
@@ -154,6 +158,8 @@ struct FoodEditorView: View {
         if let existingID {
             await dataStore.foodItemActor.update(id: existingID, name: trimmedName,
                                                  manufacturer: cleanMfr, quantities: quantities)
+            await dataStore.calorieActor.relabelEntries(forFood: existingID, name: trimmedName,
+                                                        manufacturer: cleanMfr)
         } else {
             let item = FoodItem(name: trimmedName, manufacturer: cleanMfr,
                                 quantities: quantities, source: .userInput)

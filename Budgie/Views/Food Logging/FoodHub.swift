@@ -115,6 +115,12 @@ struct FoodHub: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 NavigationLink {
                     FoodLibraryView()
+                        .onDisappear {
+                            Task {
+                                await doUpdates()                                  // refresh this screen
+                                await dataStore.updateLump(todayLump: todayLump)   // refresh the Today cache
+                            }
+                        }
                 } label: {
                     Label("Your foods", systemImage: "carrot")
                 }

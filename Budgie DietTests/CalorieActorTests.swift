@@ -14,26 +14,20 @@ struct CalorieActorTests {
         )
     }
 
-    @Test func editingFoodRelabelsPastEntriesButKeepsStampedCalories() async throws {
+    @Test func relabelEntriesUpdatesNarrativeAndManufacturerButNotCalories() async throws {
         let store = try makeStore()
         let ctx = ModelContext(store)
-        let food = FoodItem(name: "Old", manufacturer: nil,
-                            quantities: [FoodQuantity(type: .portion, count: 1, calories: 100)],
-                            source: .userInput)
-        ctx.insert(food)
-        let fid = food.id
+        let foodID = UUID()
         ctx.insert(CalorieEntry(date: .now, calories: 100, narrative: "Old", mealUUID: UUID(),
-                                isInHK: false, healthKitUUID: nil, item: fid, unit: .portion, servings: 1))
+                                isInHK: false, healthKitUUID: nil, item: foodID, unit: .portion, servings: 1))
         try ctx.save()
 
-        await FoodItemActor(modelContainer: store).update(
-            id: fid, name: "New", manufacturer: "Brand",
-            quantities: [FoodQuantity(type: .portion, count: 1, calories: 500)])
+        await CalorieActor(modelContainer: store).relabelEntries(forFood: foodID, name: "New", manufacturer: "Brand")
 
         let entry = try ModelContext(store).fetch(FetchDescriptor<CalorieEntry>()).first
-        #expect(entry?.narrative == "New")       // relabelled
-        #expect(entry?.manufacturer == "Brand")  // manufacturer backfilled
-        #expect(entry?.calories == 100)          // but calories NOT rewritten to 500
+        #expect(entry?.narrative == "New")
+        #expect(entry?.manufacturer == "Brand")
+        #expect(entry?.calories == 100)          // snapshot preserved
     }
     
     @Test func migrationConvertsLabelledEntriesAndIsIdempotent() async throws {

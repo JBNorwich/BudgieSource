@@ -223,7 +223,7 @@ struct SettingsView: View {
             
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
                 NavigationLink {
-                    DataManagementView()
+                    DataManagementView().environmentObject(todayLump)
                 } label: {
                     Text("Backup and restore")
                 }
