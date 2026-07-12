@@ -131,6 +131,14 @@ struct SettingsDTO: Codable {
     var waterFromActivity: Bool?
     var disableWeightFeatures: Bool?
     var offSearchDisabled: Bool?
+    var disableMacros: Bool?
+    var macroGoalMode: Int?
+    var proteinGoalGrams: Int?
+    var fatGoalGrams: Int?
+    var carbsGoalGrams: Int?
+    var proteinPercent: Int?
+    var fatPercent: Int?
+    var carbsPercent: Int?
     var snacksUUID: String?
 
     init(from s: CloudSettings) {
@@ -170,6 +178,14 @@ struct SettingsDTO: Codable {
         waterFromActivity = s.waterFromActivity
         disableWeightFeatures = s.disableWeightFeatures
         offSearchDisabled = s.offSearchDisabled
+        disableMacros = s.disableMacros
+        macroGoalMode = s.macroGoalMode
+        proteinGoalGrams = s.proteinGoalGrams
+        fatGoalGrams = s.fatGoalGrams
+        carbsGoalGrams = s.carbsGoalGrams
+        proteinPercent = s.proteinPercent
+        fatPercent = s.fatPercent
+        carbsPercent = s.carbsPercent
         snacksUUID = s.snacksUUID?.uuidString
     }
 
@@ -211,6 +227,14 @@ struct SettingsDTO: Codable {
         if let v = waterFromActivity { s.waterFromActivity = v }
         if let v = disableWeightFeatures { s.disableWeightFeatures = v }
         if let v = offSearchDisabled { s.offSearchDisabled = v }
+        if let v = disableMacros { s.disableMacros = v }
+        if let v = macroGoalMode { s.macroGoalMode = v }
+        if let v = proteinGoalGrams { s.proteinGoalGrams = v }
+        if let v = fatGoalGrams { s.fatGoalGrams = v }
+        if let v = carbsGoalGrams { s.carbsGoalGrams = v }
+        if let v = proteinPercent { s.proteinPercent = v }
+        if let v = fatPercent { s.fatPercent = v }
+        if let v = carbsPercent { s.carbsPercent = v }
         if let str = snacksUUID { s.snacksUUID = UUID(uuidString: str) }
         s.sync()
     }

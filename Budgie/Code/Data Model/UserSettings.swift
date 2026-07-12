@@ -348,6 +348,66 @@ class CloudSettings {
         get { defaults.object(forKey: "offSearchConsented") as? Bool ?? false }
         set { defaults.set(newValue, forKey: "offSearchConsented") }
     }
+    
+    // MARK: - Macros
+
+    /// Master switch for the whole macro feature. Default off = macros ON, matching disableWeightFeatures / offSearchDisabled.
+    var disableMacros: Bool {
+        get { return defaults.object(forKey: "disableMacros") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "disableMacros") }
+    }
+
+    /// 0 = no goal, 1 = fixed grams, 2 = percentage of the daily budget.
+    var macroGoalMode: Int {
+        get { return defaults.object(forKey: "macroGoalMode") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "macroGoalMode") }
+    }
+
+    /// Fixed gram targets (macroGoalMode == 1). 0 means "not set" — that macro shows its total only, no ring.
+    var proteinGoalGrams: Int {
+        get { return defaults.object(forKey: "proteinGoalGrams") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "proteinGoalGrams") }
+    }
+    var fatGoalGrams: Int {
+        get { return defaults.object(forKey: "fatGoalGrams") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "fatGoalGrams") }
+    }
+    var carbsGoalGrams: Int {
+        get { return defaults.object(forKey: "carbsGoalGrams") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "carbsGoalGrams") }
+    }
+
+    /// Percentage-of-budget split (macroGoalMode == 2). Defaults 30/30/40 — a balanced starting point, not attributed to any authority. Kept summing to 100 by the settings UI.
+    var proteinPercent: Int {
+        get { return defaults.object(forKey: "proteinPercent") as? Int ?? 30 }
+        set { defaults.set(newValue, forKey: "proteinPercent") }
+    }
+    var fatPercent: Int {
+        get { return defaults.object(forKey: "fatPercent") as? Int ?? 30 }
+        set { defaults.set(newValue, forKey: "fatPercent") }
+    }
+    var carbsPercent: Int {
+        get { return defaults.object(forKey: "carbsPercent") as? Int ?? 40 }
+        set { defaults.set(newValue, forKey: "carbsPercent") }
+    }
+
+    /// The effective per-macro gram goals for the day, or nil where no goal applies (mode off, or a grams-mode value left at 0). Percentage mode derives grams from `budget` at 4 kcal/g (protein, carbs) and 9 kcal/g (fat). Central so the rings and any preview all read the same figures.
+    func macroGoalGrams(budget: Int) -> (protein: Int?, fat: Int?, carbs: Int?) {
+        switch macroGoalMode {
+        case 1:
+            return (proteinGoalGrams > 0 ? proteinGoalGrams : nil,
+                    fatGoalGrams    > 0 ? fatGoalGrams    : nil,
+                    carbsGoalGrams  > 0 ? carbsGoalGrams  : nil)
+        case 2:
+            guard budget > 0 else { return (nil, nil, nil) }
+            let grams: (Int, Double) -> Int = { pct, kcalPerGram in
+                Int((Double(budget) * Double(pct) / 100.0 / kcalPerGram).rounded())
+            }
+            return (grams(proteinPercent, 4), grams(fatPercent, 9), grams(carbsPercent, 4))
+        default:
+            return (nil, nil, nil)
+        }
+    }
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.
