@@ -337,7 +337,7 @@ class CloudSettings {
     
     /// The `whatsNewVersion` whose "What's New" sheet the user has already seen. Defaults to "2.0" so everyone upgrading from an older build sees the current sheet once. Holds thee *content* version, not the bundle version — it's shared via iCloud and the iOS/Mac apps carry different bundle versions.
     var lastOpenedVersion: String {
-        get { defaults.string(forKey: "lastOpenedVersion") ?? "2.0" }
+        get { defaults.string(forKey: "lastOpenedVersion") ?? "3.2" }
         set { defaults.set(newValue, forKey: "lastOpenedVersion") }
     }
     

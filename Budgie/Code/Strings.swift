@@ -37,7 +37,7 @@ let versionString = "Version \(appVersion) (Build \(appBuild))"
 let copyrightString = "Copyright 2024- Joe Baldwin"
 
 /// Bump this ONLY for releases with major new features (not bug-fix point releases). It drives the "What's New" sheet and is the value written to `settingsObj.lastOpenedVersion` once seen. Keep it "major.minor" so the numeric string comparison behaves.
-let whatsNewVersion = "3.1"
+let whatsNewVersion = "3.3"
 
 struct WhatsNewItem: Identifiable {
     let id = UUID()
@@ -48,9 +48,18 @@ struct WhatsNewItem: Identifiable {
 
 /// The items shown for `whatsNewVersion`. EDIT this list (and bump `whatsNewVersion`) each major release.
 let whatsNewItems: [WhatsNewItem] = [
-    WhatsNewItem(icon: "macbook",
-                 title: "Budgie Diet on your Mac",
-                 detail: "A companion app lets you check your budget and log food and water from your desk. Everything syncs through iCloud, just as it does on your iPhone!")
+    WhatsNewItem(icon: "carrot.fill",
+                 title: "Food logging, improved!",
+                 detail: "Log and track individual food items with varying portion sizes! All your food entries have been moved across too - you can edit them however you like, just go to \"Food\" and tap the carrot icon!"),
+    WhatsNewItem(icon: "chart.pie",
+                 title: "Track your macros!",
+                 detail: "Optionally track your macros, and set a goal for yourself based on either percentages of your budget or grams! If you don't want to, turn it off in Settings!"),
+    WhatsNewItem(icon: "globe",
+                 title: "Search for food items!",
+                 detail: "You can now search OpenFoodFacts for calorie and macro information! Completely optional and with no registration needed!"),
+    WhatsNewItem(icon: "clock",
+                 title: "Still like quick calories? No problem!",
+                 detail: "All of this is optional - you can still enter quick calories just as you did before!")
 ]
 
 /// Whether the "What's New" sheet should appear: setup is finished and the user hasn't yet seen this version's sheet.
