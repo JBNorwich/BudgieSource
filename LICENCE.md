@@ -12,7 +12,7 @@ The below licence, the Expat licence, applies to all files except any called CLA
 # Licence for generic food list
 The generic foods list and its associated nutritional values (Budgie/Data/generic_foods.json) is adapted from the UK CoFID (McCance & Widdowson's "Composition of Foods Integrated Dataset": https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid). Contains public sector information licensed under the Open Government Licence v3.0. https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
 
-# Licence for CLAUDE.md and .claude/settings.json
+# Licence for CLAUDE.md, GEMINI.md and .github/copilot-instructions.md
 These files are *not* licenced under the Expat licence. These are under a different licence, the Non-enforceable Overtly, Violently Indisposed to Bot Engineering (NO-VIBE) licence. The text of this is as below:
 
 > Copyright 2026 Joseph Baldwin
