@@ -46,6 +46,7 @@
 		D86806F32FF2D28E007D6231 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = D86806F02FF2D288007D6231 /* .gitignore */; };
 		D868606D2C7BD0E900730373 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868606C2C7BD0E900730373 /* Tests.swift */; };
 		D88358103004019200141AF6 /* MacroSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D883580F3004019200141AF6 /* MacroSummaryView.swift */; };
+		D88358123004037C00141AF6 /* MacroSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88358113004037C00141AF6 /* MacroSettingsView.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
 		D88F918A2FF7AFE90070715B /* ManageMeals.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F91892FF7AFE50070715B /* ManageMeals.swift */; };
 		D88F918C2FF7B5880070715B /* AllocateBudgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F918B2FF7B5860070715B /* AllocateBudgets.swift */; };
@@ -239,6 +240,7 @@
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D883580F3004019200141AF6 /* MacroSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroSummaryView.swift; sourceTree = "<group>"; };
+		D88358113004037C00141AF6 /* MacroSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroSettingsView.swift; sourceTree = "<group>"; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		D88F91892FF7AFE50070715B /* ManageMeals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageMeals.swift; sourceTree = "<group>"; };
 		D88F918B2FF7B5860070715B /* AllocateBudgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllocateBudgets.swift; sourceTree = "<group>"; };
@@ -375,6 +377,7 @@
 		D829B0812C79B5950027841B /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				D88358113004037C00141AF6 /* MacroSettingsView.swift */,
 				D86802833003BBB000D8871F /* DataManagementView.swift */,
 				D897F1C23002D8AF00581386 /* Licences.swift */,
 				D88F918B2FF7B5860070715B /* AllocateBudgets.swift */,
@@ -858,6 +861,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */,
+				D88358123004037C00141AF6 /* MacroSettingsView.swift in Sources */,
 				D8BDE7342C7B8E8900E07471 /* Disclaimer.swift in Sources */,
 				D86802803003BADA00D8871F /* DataPortability.swift in Sources */,
 				D88F918C2FF7B5880070715B /* AllocateBudgets.swift in Sources */,

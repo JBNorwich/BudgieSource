@@ -58,6 +58,7 @@ struct BudgetView: View {
     @State var showingWeightDetail: Bool = false
     @State var showingWeightLogSheet: Bool = false
     @State var backgroundGradient = CurrentGradient()
+    @State private var showingMacroSettings = false
     @State private var mainNavDestination: MainNavDestination?
     @State private var showStorageError = dataStore.storeFailedToLoad
     @State private var showWhatsNew = false
@@ -152,7 +153,22 @@ struct BudgetView: View {
                         if !settingsObj.disableMacros {
                             GroupBox(label: Label("Macros", systemImage: "chart.pie")) {
                                 MacroSummaryView().environmentObject(todayLump)
-                            }.backgroundStyle(.regularMaterial)
+                            }
+                            .backgroundStyle(.regularMaterial)
+                            .onTapGesture { showingMacroSettings = true }
+                            .sheet(isPresented: $showingMacroSettings, onDismiss: {
+                                Task { await dataStore.updateLump(todayLump: todayLump) }
+                            }) {
+                                NavigationStack {
+                                    MacroSettingsView()
+                                        .environmentObject(todayLump)
+                                        .toolbar {
+                                            ToolbarItem(placement: .confirmationAction) {
+                                                Button("Done") { showingMacroSettings = false }
+                                            }
+                                        }
+                                }
+                            }
                         }
                         
                         GroupBox(label: FoodListLabelView(showingAddCalsSheet: $showAddCalsSheet))

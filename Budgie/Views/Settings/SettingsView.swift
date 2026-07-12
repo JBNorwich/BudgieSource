@@ -191,6 +191,11 @@ struct SettingsView: View {
             
             Section(header: Text("Food logging"), footer: Text("If this is turned on, Budgie Diet's ability to search OpenFoodFacts for nutritional information will be disabled completely. You can still manually enter food items.")) {
                 NavigationLink {
+                    MacroSettingsView().environmentObject(todayLump)
+                } label: {
+                    Text("Macro tracking and goals")
+                }
+                NavigationLink {
                     AllocateBudgetView()
                 } label: {
                     Text("Budget allocation")
