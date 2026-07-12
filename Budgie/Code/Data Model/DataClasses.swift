@@ -356,3 +356,12 @@ struct WeightPoint: Identifiable {
     let date: Date
     let kilos: Double
 }
+
+/// Macros eaten today, split by source so the HealthKit (other-app) portion can be snapshotted for the Mac, mirroring how eaten calories carry an `hk` part.
+struct EatenMacros {
+    var hkProtein = 0, hkFat = 0, hkCarbs = 0
+    var ownProtein = 0, ownFat = 0, ownCarbs = 0
+    var protein: Int { hkProtein + ownProtein }
+    var fat: Int { hkFat + ownFat }
+    var carbs: Int { hkCarbs + ownCarbs }
+}

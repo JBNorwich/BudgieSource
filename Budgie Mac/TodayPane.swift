@@ -50,6 +50,14 @@ struct TodayPane: View {
                         }
                     }
                     VStack(spacing: 24) {
+                        if !settingsObj.disableMacros {
+                            GroupBox {
+                                MacroSummaryView().environmentObject(todayLump).padding()
+                            } label: {
+                                Label("Macros", systemImage: "chart.pie")
+                            }
+                            .backgroundStyle(.regularMaterial)
+                        }
                         GroupBox {
                             VStack {
                                 TodayFoodList()

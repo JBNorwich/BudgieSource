@@ -42,6 +42,35 @@ struct MacSettingsView: View {
                 // Floor at one unit so the goal can't be 0 (which makes the water gauge divide 0/0 -> NaN).
                 set: { settingsObj.waterGoal = millilitres(from: Double(max($0, 1)), in: waterUnit); refreshID = UUID() })
     }
+    
+    private var macroEnabledBinding: Binding<Bool> {
+        Binding(get: { !settingsObj.disableMacros },
+                set: { settingsObj.disableMacros = !$0; refreshID = UUID() })
+    }
+    @ViewBuilder private func macroGramsField(_ label: String, _ kp: ReferenceWritableKeyPath<CloudSettings, Int>) -> some View {
+        LabeledContent("\(label) (g)") {
+            TextField("", value: bind(kp), format: .number).frame(width: 90).multilineTextAlignment(.trailing)
+        }
+    }
+    @ViewBuilder private func macroPercentField(_ label: String, _ kp: ReferenceWritableKeyPath<CloudSettings, Int>) -> some View {
+        LabeledContent(label) {
+            HStack(spacing: 2) {
+                TextField("", value: bind(kp), format: .number).frame(width: 60).multilineTextAlignment(.trailing)
+                Text("%").foregroundStyle(.secondary)
+            }
+        }
+    }
+    private var macroFooter: String {
+        switch settingsObj.macroGoalMode {
+        case 1: return "A fixed daily target in grams for each macro. Leave one at 0 to just see its total."
+        case 2:
+            let total = settingsObj.proteinPercent + settingsObj.carbsPercent + settingsObj.fatPercent
+            return total == 100
+                ? "Each macro as a share of your daily calorie budget."
+                : "Each macro as a share of your daily calorie budget. These currently add up to \(total)%; they work best totalling 100%."
+        default: return "Protein, carbohydrate and fat in what you log, shown above your food list. Turn off to hide them."
+        }
+    }
 
     var body: some View {
         let _ = refreshID
@@ -97,6 +126,33 @@ struct MacSettingsView: View {
                 }
                 Toggle("Increase goal with activity", isOn: bind(\.waterFromActivity))
             }
+            
+            Section {
+                Toggle("Track macros", isOn: macroEnabledBinding)
+                if !settingsObj.disableMacros {
+                    Picker("Daily goal", selection: bind(\.macroGoalMode)) {
+                        Text("None").tag(0)
+                        Text("By grams").tag(1)
+                        Text("By percentage").tag(2)
+                    }
+                    if settingsObj.macroGoalMode == 1 {
+                        macroGramsField("Protein", \.proteinGoalGrams)
+                        macroGramsField("Carbs", \.carbsGoalGrams)
+                        macroGramsField("Fat", \.fatGoalGrams)
+                    } else if settingsObj.macroGoalMode == 2 {
+                        macroPercentField("Protein", \.proteinPercent)
+                        macroPercentField("Carbs", \.carbsPercent)
+                        macroPercentField("Fat", \.fatPercent)
+                        Button("Reset to default split") {
+                            settingsObj.proteinPercent = 30
+                            settingsObj.carbsPercent = 40
+                            settingsObj.fatPercent = 30
+                            refreshID = UUID()
+                        }
+                    }
+                }
+            } header: { Text("Macros") }
+              footer: { Text(macroFooter) }
 
             Section() {
                 DatePicker("Typical evening meal time", selection: mealTimeBinding, displayedComponents: .hourAndMinute)

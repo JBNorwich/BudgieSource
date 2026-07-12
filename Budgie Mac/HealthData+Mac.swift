@@ -60,6 +60,10 @@ extension HealthData {
         todayLump.foodList = foodList
         todayLump.healthKitCalories = settingsObj.snapShotHKCalories
         todayLump.eatenCalories = foodList.reduce(0) { $0 + $1.calories } + settingsObj.snapShotHKCalories
+        // Macros today — own entries plus the iPhone's snapshot of other-app macros (no HealthKit here).
+        todayLump.eatenProtein = Int(foodList.reduce(0.0) { $0 + ($1.protein ?? 0) }.rounded()) + settingsObj.snapShotHKProtein
+        todayLump.eatenFat     = Int(foodList.reduce(0.0) { $0 + ($1.fat ?? 0) }.rounded()) + settingsObj.snapShotHKFat
+        todayLump.eatenCarbs   = Int(foodList.reduce(0.0) { $0 + ($1.carbs ?? 0) }.rounded()) + settingsObj.snapShotHKCarbs
         todayLump.allMeals = await calorieActor.getListOfMeals()
         todayLump.cleansedMealList = await calorieActor.cleansedMealList(data: foodList)
         todayLump.mealTotalList = [:]

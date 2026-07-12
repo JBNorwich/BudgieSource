@@ -292,20 +292,20 @@ final class HealthData {
         return activitySummaries.first ?? HKActivitySummary()
     }
     
-    /// Macros eaten today (grams) from Budgie's own entries plus other apps' HealthKit dietary samples. Mirrors pullEatenCalories: Budgie's own contribution is summed from its entries so it stays consistent with the calorie figure, and only *other* sources are read from HealthKit (excluded by source), so Budgie's own macro writes are never double-counted.
-    func pullEatenMacros(startDate: Date, endDate: Date) async -> (protein: Int, fat: Int, carbs: Int) {
+    /// Macros eaten today (grams) from Budgie's own entries plus other apps' HealthKit dietary samples, kept split by source. Own contribution is summed from entries (consistent with the calorie figure); only *other* sources are read from HealthKit (excluded by source), so Budgie's own writes never double-count.
+    func pullEatenMacros(startDate: Date, endDate: Date) async -> EatenMacros {
         let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
-        var protein = budgieResults.reduce(0.0) { $0 + ($1.protein ?? 0) }
-        var fat     = budgieResults.reduce(0.0) { $0 + ($1.fat ?? 0) }
-        var carbs   = budgieResults.reduce(0.0) { $0 + ($1.carbs ?? 0) }
+        var m = EatenMacros()
+        m.ownProtein = Int(budgieResults.reduce(0.0) { $0 + ($1.protein ?? 0) }.rounded())
+        m.ownFat     = Int(budgieResults.reduce(0.0) { $0 + ($1.fat ?? 0) }.rounded())
+        m.ownCarbs   = Int(budgieResults.reduce(0.0) { $0 + ($1.carbs ?? 0) }.rounded())
 
         let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
         let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [notBudgiePredicate, timePredicate])
-        protein += await sumSamples(type: proteinQuantityType, predicate: predicate)
-        fat     += await sumSamples(type: fatQuantityType, predicate: predicate)
-        carbs   += await sumSamples(type: carbsQuantityType, predicate: predicate)
-
-        return (Int(protein.rounded()), Int(fat.rounded()), Int(carbs.rounded()))
+        m.hkProtein = Int((await sumSamples(type: proteinQuantityType, predicate: predicate)).rounded())
+        m.hkFat     = Int((await sumSamples(type: fatQuantityType, predicate: predicate)).rounded())
+        m.hkCarbs   = Int((await sumSamples(type: carbsQuantityType, predicate: predicate)).rounded())
+        return m
     }
 
     /// Sum of a dietary quantity type in grams over a predicate. 0 on failure or no access.
@@ -673,6 +673,9 @@ final class HealthData {
                 settingsObj.snapshotActiveCalories = todayLump.activeCalories
                 settingsObj.snapshotBasalCalories = todayLump.basalCalories
                 settingsObj.snapShotHKCalories = todayLump.healthKitCalories
+                settingsObj.snapShotHKProtein = eatenMacros.hkProtein
+                settingsObj.snapShotHKFat = eatenMacros.hkFat
+                settingsObj.snapShotHKCarbs = eatenMacros.hkCarbs
                 settingsObj.snapShotHKWater = waterDetails.hk
                 settingsObj.snapshotProjectedBasal = todayLump.projectedBasal
                 settingsObj.snapshotProjectedActive = todayLump.projectedActive

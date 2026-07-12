@@ -322,6 +322,19 @@ class CloudSettings {
         set { defaults.set(newValue, forKey: "snapshotProjectedActive") }
     }
     
+    var snapShotHKProtein: Int {
+        get { defaults.object(forKey: "snapshotHKProtein") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotHKProtein") }
+    }
+    var snapShotHKFat: Int {
+        get { defaults.object(forKey: "snapshotHKFat") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotHKFat") }
+    }
+    var snapShotHKCarbs: Int {
+        get { defaults.object(forKey: "snapshotHKCarbs") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "snapshotHKCarbs") }
+    }
+    
     /// The `whatsNewVersion` whose "What's New" sheet the user has already seen. Defaults to "2.0" so everyone upgrading from an older build sees the current sheet once. Holds thee *content* version, not the bundle version — it's shared via iCloud and the iOS/Mac apps carry different bundle versions.
     var lastOpenedVersion: String {
         get { defaults.string(forKey: "lastOpenedVersion") ?? "2.0" }
