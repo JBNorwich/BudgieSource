@@ -1,5 +1,5 @@
 import Testing
-import SwiftUI
+import Foundation
 @testable import Budgie_Diet
 
 struct FoodQuantityTests {
@@ -42,5 +42,27 @@ struct FoodQuantityTests {
         let entry = CalorieEntry(date: .now, calories: 300, narrative: "Quick",
                                  mealUUID: UUID(), isInHK: false, healthKitUUID: nil)
         #expect(entry.rescaled(toAmount: 2) == nil)
+    }
+    
+    @Test func totalsScaleLinearly() {
+        let q = FoodQuantity(type: .grams, count: 100, calories: 200, protein: 10, carbs: 20, fat: 5)
+        let t = q.totals(servings: 1.5)
+        #expect(t.calories == 300)
+        #expect(t.amount == 150)
+        #expect(t.protein == 15)
+    }
+
+    @Test func rescaledKeepsProportionAndReturnsNilForQuickEntries() {
+        let food = CalorieEntry(date: .now, calories: 200, narrative: "X", mealUUID: UUID(),
+                                isInHK: false, healthKitUUID: nil, unit: .grams, servings: 100, protein: 10)
+        let r = food.rescaled(toAmount: 50)
+        #expect(r?.calories == 100)
+        #expect(r?.protein == 5)
+
+        let quick = CalorieEntry(date: .now, calories: 100, narrative: "Snack", mealUUID: UUID(),
+                                 isInHK: false, healthKitUUID: nil)
+        #expect(quick.rescaled(toAmount: 2) == nil)
+        #expect(quick.isFoodEntry == false)
+        #expect(quick.isGenericFood == false)
     }
 }
