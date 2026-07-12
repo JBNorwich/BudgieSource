@@ -36,6 +36,14 @@ import HealthKit
     var syncNonce: Int = 0
 }
 
+extension WaterEntry {
+    convenience init(restoring dto: WaterEntryDTO) {
+        self.init(quantity: dto.quantity, healthKitUUID: dto.healthKitUUID, date: dto.date)
+        self.id = dto.id
+        self.syncNonce = dto.syncNonce
+    }
+}
+
 @ModelActor actor WaterActor {
     func addWater(object: WaterEntry) async {
         modelContext.insert(object)
@@ -101,5 +109,25 @@ import HealthKit
         guard let entry = (try? modelContext.fetch(descriptor))?.first else { return }
         entry.healthKitUUID = healthKitUUID
         try? modelContext.save()
+    }
+
+    // MARK: - Backup / restore
+
+    func exportWater() -> [WaterEntryDTO] {
+        ((try? modelContext.fetch(FetchDescriptor<WaterEntry>())) ?? []).map(WaterEntryDTO.init)
+    }
+
+    func wipeWater() {
+        for e in (try? modelContext.fetch(FetchDescriptor<WaterEntry>())) ?? [] { modelContext.delete(e) }
+        do { try modelContext.save() } catch { print("Water wipe error: \(error)") }
+    }
+
+    @discardableResult
+    func importWater(_ dtos: [WaterEntryDTO], merge: Bool) -> Int {
+        let existing = merge ? Set(((try? modelContext.fetch(FetchDescriptor<WaterEntry>())) ?? []).map(\.id)) : []
+        var count = 0
+        for dto in dtos where !existing.contains(dto.id) { modelContext.insert(WaterEntry(restoring: dto)); count += 1 }
+        do { try modelContext.save() } catch { print("Water import error: \(error)") }
+        return count
     }
 }

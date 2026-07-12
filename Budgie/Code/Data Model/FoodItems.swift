@@ -110,6 +110,18 @@ final class FoodItem {
     }
 }
 
+extension FoodItem {
+    /// Rebuilds a saved food from a backup, keeping its id so linked entries and re-imports stay stable.
+    convenience init(restoring dto: FoodItemDTO) {
+        self.init(name: dto.name, manufacturer: dto.manufacturer, quantities: dto.quantities, source: dto.source)
+        self.id = dto.id
+        self.archived = dto.archived
+        self.barcode = dto.barcode
+        self.dateCreated = dto.dateCreated
+        self.syncNonce = dto.syncNonce
+    }
+}
+
 /// Actor to act on the FoodItem database.
 @ModelActor
 actor FoodItemActor {

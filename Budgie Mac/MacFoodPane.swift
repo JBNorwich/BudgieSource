@@ -81,11 +81,12 @@ struct MacFoodPane: View {
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                         case .entry(let entry, let isFirst):
-                            HStack {
-                                Text(entry.narrative ?? "Quick calories")
-                                Spacer()
-                                Text("\(entry.calories) kcal").monospacedDigit().foregroundStyle(.secondary)
-                            }
+                            CalorieEntryView(calories: entry.calories,
+                                             narrative: entry.narrative ?? "Quick calories",
+                                             manufacturer: entry.manufacturer,
+                                             protein: entry.protein, carbs: entry.carbs, fat: entry.fat,
+                                             isGeneric: entry.isGenericFood,
+                                             detailed: true)
                             .padding(.vertical, 7)
                             .contentShape(Rectangle())
                             .onTapGesture { editing = entry }

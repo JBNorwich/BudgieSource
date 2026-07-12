@@ -38,6 +38,18 @@ import AppIntents
     var syncNonce: Int = 0
 }
 
+
+extension Meal {
+    /// Rebuilds a meal from a backup, keeping its identity so entry links and re-imports stay stable.
+    convenience init(restoring dto: MealDTO) {
+        self.init(name: dto.name, order: dto.order)
+        self.id = dto.id
+        self.mealUUID = dto.mealUUID
+        self.budgetPercent = dto.budgetPercent
+        self.syncNonce = dto.syncNonce
+    }
+}
+
 /// SwiftData class for individual food entries.
 @Model
 final class CalorieEntry {
@@ -509,5 +521,56 @@ actor CalorieActor {
             .map { "\($0.type.unitName)-\($0.count)-\($0.calories)" }
             .joined(separator: ",")
         return "\(base)|\(servings)"
+    }
+
+    // MARK: - Backup / restore
+
+    /// Snapshots the food domain (meals, foods and real entries) as Sendable DTOs for export.
+    func exportFoodDomain() -> (meals: [MealDTO], foods: [FoodItemDTO], entries: [CalorieEntryDTO]) {
+        let meals = (try? modelContext.fetch(FetchDescriptor<Meal>())) ?? []
+        let foods = (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []
+        let entries = ((try? modelContext.fetch(FetchDescriptor<CalorieEntry>())) ?? []).filter(\.realEntry)
+        return (meals.map(MealDTO.init), foods.map(FoodItemDTO.init), entries.map(CalorieEntryDTO.init))
+    }
+
+    /// Deletes every meal, food and calorie entry for a Replace import. HealthKit samples are left in place: restored entries keep their sample UUIDs and re-link via the reconciler, so clearing HK here would only strand data Apple Health legitimately owns.
+    func wipeFoodDomain() {
+        for entry in (try? modelContext.fetch(FetchDescriptor<CalorieEntry>())) ?? [] { modelContext.delete(entry) }
+        for meal in (try? modelContext.fetch(FetchDescriptor<Meal>())) ?? [] { modelContext.delete(meal) }
+        for food in (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? [] { modelContext.delete(food) }
+        do { try modelContext.save() } catch { print("Backup wipe error: \(error)") }
+    }
+
+    /// Inserts backed-up meals, foods and entries. In merge mode, rows whose identifier already exists are skipped so re-importing the same file is idempotent; a Replace has wiped first, so nothing collides. Returns how many of each were actually inserted.
+    @discardableResult
+    func importFoodDomain(meals: [MealDTO], foods: [FoodItemDTO], entries: [CalorieEntryDTO], merge: Bool)
+    -> (meals: Int, foods: Int, entries: Int) {
+        let mealUUIDs = merge ? Set(((try? modelContext.fetch(FetchDescriptor<Meal>())) ?? []).map(\.mealUUID)) : []
+        let foodIDs = merge ? Set(((try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []).map(\.id)) : []
+        let entryIDs = merge ? Set(((try? modelContext.fetch(FetchDescriptor<CalorieEntry>())) ?? []).map(\.id)) : []
+
+        var mealCount = 0, foodCount = 0, entryCount = 0
+        for dto in meals where !mealUUIDs.contains(dto.mealUUID) { modelContext.insert(Meal(restoring: dto)); mealCount += 1 }
+        for dto in foods where !foodIDs.contains(dto.id) { modelContext.insert(FoodItem(restoring: dto)); foodCount += 1 }
+        for dto in entries where !entryIDs.contains(dto.id) { modelContext.insert(CalorieEntry(restoring: dto)); entryCount += 1 }
+        do { try modelContext.save() } catch { print("Backup import error: \(error)") }
+        return (mealCount, foodCount, entryCount)
+    }
+}
+
+extension CalorieEntry {
+    /// Rebuilds an entry from a backup. The HealthKit link is preserved deliberately: on a device
+    /// whose Health data survived it re-attaches, and where it didn't the reconciler leaves the
+    /// dangling UUID alone rather than pushing a duplicate sample.
+    convenience init(restoring dto: CalorieEntryDTO) {
+        self.init(date: dto.date, calories: dto.calories, narrative: dto.narrative,
+                  mealUUID: dto.meal, isInHK: false, healthKitUUID: nil,
+                  item: dto.foodItem, manufacturer: dto.manufacturer,
+                  unit: dto.servingUnit, servings: dto.servingAmount,
+                  protein: dto.protein, fat: dto.fat, carbs: dto.carbs)
+        self.id = dto.id
+        self.healthKitUUID = dto.healthKitUUID
+        self.isInHK = dto.isInHK
+        self.syncNonce = dto.syncNonce
     }
 }
