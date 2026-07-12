@@ -70,29 +70,60 @@ struct LogFoodIntent: AppIntent {
     }
     
     @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
-        var calsToLog: Int
-        var narrativeToLog: String
-        
-        if let calories = calories {
-            calsToLog = calories
-        } else {
-            calsToLog = try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?"))
-        }
-        
-        if let narrative = narrative {
-            narrativeToLog = narrative
-        } else {
-            narrativeToLog = try await $narrative.requestValue(.init(stringLiteral: "What did you eat?"))
-        }
-        
+        // Narrative first, so we can resolve a saved food before deciding whether we even need a number.
+        let narrativeToLog: String
+        if let narrative { narrativeToLog = narrative }
+        else { narrativeToLog = try await $narrative.requestValue(.init(stringLiteral: "What did you eat?")) }
+
         if meal == nil {
             meal = try await $meal.requestValue(.init(stringLiteral: "What meal should this be logged to?"))
         }
-        
-        await dataStore.addCalories(calories: calsToLog, narrative: narrativeToLog, date: Date(), meal: meal.id)
+
+        // Resolve to a saved food (unique, non-archived exact-name match); else a bundled generic of the same name.
+        let named = await dataStore.foodItemActor.picked(named: narrativeToLog)
+        let food: PickedFood?
+        if named.count == 1 {
+            food = named.first
+        } else if named.isEmpty {
+            food = FoodCatalogue.shared.foods
+                .first { $0.name.caseInsensitiveCompare(narrativeToLog) == .orderedSame }?.asPicked
+        } else {
+            food = nil   // ambiguous saved-name match → quick calories
+        }
+
+        if let provided = calories {
+            // A number was given: link to the food only if the name AND a serving's calories both match;
+            // otherwise it's quick calories at the number they gave.
+            if let food, let q = food.quantities.first(where: { $0.calories == provided }) {
+                await logServing(food, q)
+                await refreshBudget()
+                return .result(dialog: "Logged \(provided.formatted()) kcal of \(food.name) to \(meal.name).")
+            }
+            await dataStore.addCalories(calories: provided, narrative: narrativeToLog, date: Date(), meal: meal.id)
+            await refreshBudget()
+            return .result(dialog: "Logged \(provided.formatted()) kcal for \(narrativeToLog) to \(meal.name).")
+        } else if let food, let q = food.quantities.first, q.calories > 0 {
+            // No number, but the name matches a saved food → one serving at its own calories.
+            await logServing(food, q)
+            await refreshBudget()
+            return .result(dialog: "Logged \(q.calories.formatted()) kcal of \(food.name) to \(meal.name).")
+        } else {
+            // No number and no matching food → ask, then quick calories.
+            let asked = try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?"))
+            await dataStore.addCalories(calories: asked, narrative: narrativeToLog, date: Date(), meal: meal.id)
+            await refreshBudget()
+            return .result(dialog: "Logged \(asked.formatted()) kcal for \(narrativeToLog) to \(meal.name).")
+        }
+    }
+
+    private func logServing(_ food: PickedFood, _ q: FoodQuantity) async {
+        await dataStore.addFoodEntry(foodItemID: food.persistedID, name: food.name,
+                                     manufacturer: food.manufacturer, quantity: q,
+                                     servings: 1, date: Date(), meal: meal.id)
+    }
+
+    private func refreshBudget() async {
         await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
-        
-        return .result(dialog: "Logged \(calsToLog.formatted()) kcal for \(narrativeToLog) to \(meal.name).")
     }
 }
 
@@ -153,6 +184,14 @@ struct LogFoodShortcuts: AppShortcutsProvider {
                 shortTitle: "Log food",
                 systemImageName: "fork.knife"
             )
+            AppShortcut(
+                intent: LogSavedFoodIntent(),
+                phrases: [
+                    "Log a saved food with \(.applicationName)"
+                ],
+                shortTitle: "Log a saved food",
+                systemImageName: "carrot"
+            )
             #if !os(macOS)
             AppShortcut(
                 intent: LogWeightIntent(),
@@ -164,6 +203,70 @@ struct LogFoodShortcuts: AppShortcutsProvider {
             )
             #endif
         }
+}
+
+struct LogSavedFoodIntent: AppIntent {
+    static var title: LocalizedStringResource = "Log a saved food"
+    static var description = IntentDescription("Logs a serving of one of your saved foods to a meal in Budgie Diet.")
+    static var openAppWhenRun: Bool = false
+
+    @Parameter(title: "Food", requestValueDialog: "Which saved food?")
+    var food: FoodEntity!
+
+    // Options depend on the chosen food (provider below); left unset → the food's primary serving.
+    @Parameter(title: "Serving", optionsProvider: ServingOptionsProvider())
+    var serving: FoodServingEntity?
+
+    @Parameter(title: "Servings", default: 1.0)
+    var servings: Double
+
+    @Parameter(title: "Meal", requestValueDialog: "Which meal?", optionsProvider: MealOptionsProvider())
+    var meal: MealEntity!
+
+    static var parameterSummary: some ParameterSummary {
+        Summary("Log \(\.$servings) × \(\.$serving) of \(\.$food) to \(\.$meal)")
+    }
+
+    private struct MealOptionsProvider: DynamicOptionsProvider {
+        func results() async throws -> [MealEntity] { try await StructMealQuery().suggestedEntities() }
+    }
+
+    private struct ServingOptionsProvider: DynamicOptionsProvider {
+        @IntentParameterDependency<LogSavedFoodIntent>(\.$food)
+        var input
+
+        func results() async throws -> [FoodServingEntity] {
+            guard let input,
+                  let picked = await dataStore.foodItemActor.picked(id: input.food.id) else { return [] }
+            return picked.quantities.enumerated().map { idx, q in
+                FoodServingEntity(foodID: input.food.id, index: idx, label: q.label)
+            }
+        }
+    }
+
+    @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
+        if food == nil { food = try await $food.requestValue() }
+        if meal == nil { meal = try await $meal.requestValue() }
+        guard servings > 0 else { throw $servings.needsValueError("Enter a number of servings above zero.") }
+
+        guard let item = await dataStore.foodItemActor.picked(id: food.id), !item.quantities.isEmpty else {
+            return .result(dialog: "I couldn't find that saved food any more — it may have been removed.")
+        }
+        // Resolve the chosen serving by its stable index, guarding it belongs to this food; else primary serving.
+        let q: FoodQuantity
+        if let s = serving, s.foodID == food.id, let idx = s.index, item.quantities.indices.contains(idx) {
+            q = item.quantities[idx]
+        } else {
+            q = item.quantities.first!
+        }
+
+        await dataStore.addFoodEntry(foodItemID: item.persistedID, name: item.name,
+                                     manufacturer: item.manufacturer, quantity: q,
+                                     servings: servings, date: Date(), meal: meal.id)
+        await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
+        let cals = q.totals(servings: servings).calories
+        return .result(dialog: "Logged \(servings.formatted()) × \(q.label) of \(item.name) — \(cals.formatted()) kcal — to \(meal.name).")
+    }
 }
 
 #if !os(macOS)
@@ -232,4 +335,80 @@ struct StructMealQuery: EntityQuery {
         let mealObjects = await dataStore.calorieActor.getListOfMeals()
         return mealObjects.map { MealEntity(mealUUID: $0.mealUUID, name: $0.name) }
     }
+}
+
+struct FoodEntity: AppEntity, Identifiable {
+    var id: UUID
+    @Property(title: "Food") var name: String
+    var manufacturer: String?
+    
+    init(id: UUID, name: String, manufacturer: String?) {
+        self.id = id
+        self.name = name
+        self.manufacturer = manufacturer
+    }
+
+    var displayRepresentation: DisplayRepresentation {
+        if let m = manufacturer, !m.isEmpty { return DisplayRepresentation(title: "\(name)", subtitle: "\(m)") }
+        return DisplayRepresentation(title: "\(name)")
+    }
+    static var defaultQuery = FoodQuery()
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Food"
+}
+
+struct FoodQuery: EntityQuery {
+    func entities(for identifiers: [FoodEntity.ID]) async throws -> [FoodEntity] {
+        let all = await dataStore.foodItemActor.allPicked()
+        return all.filter { identifiers.contains($0.persistedID ?? $0.id) }
+                  .map { FoodEntity(id: $0.persistedID ?? $0.id, name: $0.name, manufacturer: $0.manufacturer) }
+    }
+    func suggestedEntities() async throws -> [FoodEntity] {
+        (await dataStore.foodItemActor.allPicked())
+            .map { FoodEntity(id: $0.persistedID ?? $0.id, name: $0.name, manufacturer: $0.manufacturer) }
+    }
+}
+
+extension FoodQuery: EntityStringQuery {
+    // Lets Siri/Shortcuts match a spoken/typed food name to one of your foods.
+    func entities(matching string: String) async throws -> [FoodEntity] {
+        (await dataStore.foodItemActor.allPicked())
+            .filter { $0.name.localizedCaseInsensitiveContains(string) }
+            .map { FoodEntity(id: $0.persistedID ?? $0.id, name: $0.name, manufacturer: $0.manufacturer) }
+    }
+}
+
+/// One serving definition of a specific saved food. The id encodes "<foodUUID>#<serving index>", so a saved
+/// Shortcut resolves back to the exact serving by position — immune to that serving later being renamed.
+struct FoodServingEntity: AppEntity, Identifiable {
+    var id: String
+    @Property(title: "Serving") var label: String
+
+    var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(label)") }
+    static var defaultQuery = FoodServingQuery()
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Serving"
+
+    var foodID: UUID? { UUID(uuidString: id.components(separatedBy: "#").first ?? "") }
+    var index: Int? { Int(id.components(separatedBy: "#").last ?? "") }
+
+    init(foodID: UUID, index: Int, label: String) {
+        self.id = "\(foodID.uuidString)#\(index)"
+        self.label = label
+    }
+    init(id: String, label: String) { self.id = id; self.label = label }
+}
+
+struct FoodServingQuery: EntityQuery {
+    // Reconstructs a stored serving from its id, re-reading the current label (so a rename shows through).
+    func entities(for identifiers: [String]) async throws -> [FoodServingEntity] {
+        var out: [FoodServingEntity] = []
+        for idString in identifiers {
+            let probe = FoodServingEntity(id: idString, label: "")
+            guard let foodID = probe.foodID, let index = probe.index,
+                  let picked = await dataStore.foodItemActor.picked(id: foodID),
+                  picked.quantities.indices.contains(index) else { continue }
+            out.append(FoodServingEntity(foodID: foodID, index: index, label: picked.quantities[index].label))
+        }
+        return out
+    }
+    func suggestedEntities() async throws -> [FoodServingEntity] { [] }  // only meaningful once a food is chosen
 }

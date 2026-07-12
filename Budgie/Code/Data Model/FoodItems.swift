@@ -200,4 +200,22 @@ actor FoodItemActor {
         let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
         return (try? modelContext.fetch(descriptor))?.first?.quantities ?? []
     }
+    
+    /// Non-archived saved foods whose name matches exactly (case-insensitive). For the log-food intent.
+    func picked(named name: String) -> [PickedFood] {
+        let lower = name.lowercased()
+        let all = (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []
+        return all.filter { !$0.archived && $0.name.lowercased() == lower }.map(\.asPicked)
+    }
+
+    /// One saved food by its persistent id, as a value type. For the saved-food intent.
+    func picked(id: UUID) -> PickedFood? {
+        let d = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
+        return (try? modelContext.fetch(d))?.first?.asPicked
+    }
+
+    /// Every non-archived saved food, for the Shortcuts food picker.
+    func allPicked() -> [PickedFood] {
+        ((try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []).filter { !$0.archived }.map(\.asPicked)
+    }
 }
