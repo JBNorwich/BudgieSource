@@ -73,7 +73,9 @@ class TodayLump: ObservableObject {
     func recalculateBudget() {
         let uncapped = totalProjCalories - settingsObj.desiredDeficit
         var budget = max(uncapped, 1200)
-        let atCap = settingsObj.capBudget && budget > settingsObj.capBudgetCals
+        // Capping exists to stop a deficit budget ballooning when you burn more than expected;
+        // it makes no sense against a surplus, so it's ignored in surplus mode.
+        let atCap = settingsObj.capBudget && !settingsObj.surplusMode && budget > settingsObj.capBudgetCals
         if atCap { budget = max(settingsObj.capBudgetCals, 1200) }
         // Only flag the minimum when the 1,200 floor actually kicked in — not when the
         // budget legitimately works out at exactly 1,200.
