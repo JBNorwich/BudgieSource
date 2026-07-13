@@ -43,6 +43,11 @@ struct MacroSettingsView: View {
     var body: some View {
         let _ = refreshID   // observe so a setting change redraws the form
         Form {
+            Section(header: Text("What are macros?")) {
+                Text("Macros are the three nutrients that make up the calories in your food: **protein**, **carbohydrate** and **fat**.\n\nA goal is optional. You can set it in grams, or as a percentage of your daily budget — Budgie Diet then works out the grams for you (at 4 calories per gram for protein and carbs, and 9 for fat). Each ring on the Today screen fills as you log food and simply keeps counting if you go past a goal. If you'd rather not track them, you can turn macros off.")
+                    .multilineTextAlignment(.leading)
+            }
+            
             Section(footer: Text("Shows the protein, carbohydrate and fat in what you log, above your food list. Turn it off to hide this.")) {
                 Toggle("Track macros", isOn: enabledBinding)
             }

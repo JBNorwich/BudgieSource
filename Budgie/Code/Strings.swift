@@ -67,3 +67,6 @@ func shouldShowWhatsNew() -> Bool {
     guard !settingsObj.isFirstRun, !whatsNewItems.isEmpty else { return false }
     return settingsObj.lastOpenedVersion.compare(whatsNewVersion, options: .numeric) == .orderedAscending
 }
+
+// Help text for the macros feature (shown in the macro settings screen).
+let macrosHelp = "Macros are the three main nutrients that make up the calories in your food: **protein**, **carbohydrate** and **fat**.\n\nA goal is optional. You can set it in grams, or as a percentage of your daily budget — Budgie Diet then works out the grams for you (at 4 calories per gram for protein and carbs, and 9 for fat). Each ring on the Today screen fills as you log food and simply keeps counting if you go past a goal. If you'd rather not track them, you can turn macros off."
