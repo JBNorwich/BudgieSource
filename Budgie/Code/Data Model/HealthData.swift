@@ -260,10 +260,13 @@ final class HealthData {
             return (value: 0, wasEstimate: wasEstimate)
         } else {
             if wasEstimate == false {
+                // With no real average to divide by, the activity quotient would be 0/0 (NaN),
+                // which later traps in Int(). There's nothing to project against, so return zero.
+                guard averageBurn > 0 else { return (value: 0, wasEstimate: wasEstimate) }
                 // Work out the user's Activity Quotient. This is the percentage of the user's averageBurn that is done, plus the percentage of the day that is left. This works this way to ensure that if the user does more exercise earlier in the day, they receive a greater credit for future projected calories than they would if it was late at night (simply because they have more time to reach their average, and thus are more likely to do so.)
                 // I am writing this comment because I forgot what this was, but knew it was here for some purpose, but didn't want to remove it.
                 actQuot = (Double(curActive) / Double(averageBurn)) + (1 - getPercentOfDayDone())
-                
+
                 // Pass this, plus the user's remaining from average, to the weighting function to get the final projection.
                 return (value: weightActiveProjection(input: remainingFromAvg, actQuot: actQuot), wasEstimate: wasEstimate)
             } else {
