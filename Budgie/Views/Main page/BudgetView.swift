@@ -58,6 +58,7 @@ struct BudgetView: View {
     @State var showingWeightDetail: Bool = false
     @State var showingWeightLogSheet: Bool = false
     @State var backgroundGradient = CurrentGradient()
+    @State var showingGaugeHelp = false
     @State private var showingMacroSettings = false
     @State private var mainNavDestination: MainNavDestination?
     @State private var showStorageError = dataStore.storeFailedToLoad
@@ -112,7 +113,7 @@ struct BudgetView: View {
                                 .padding()
                             }.padding()
                         Spacer()
-                        GroupBox(label: Label("Your target", systemImage: "gauge.with.needle")) {
+                        GroupBox(label: GaugeLabelView(showingGaugeHelp: $showingGaugeHelp)) {
                             GaugeView().environmentObject(todayLump)
                         }.backgroundStyle(.regularMaterial)
                             .onTapGesture {
@@ -372,6 +373,10 @@ struct BudgetView: View {
                     .environmentObject(todayLump)
             }.presentationDetents([.medium])
         }
+        
+        .sheet(isPresented: $showingGaugeHelp) {
+            GaugeExplainer(showing: $showingGaugeHelp)
+        }
             
         .task() {
             dataStore.setUpObserverQueries(todayLump: todayLump)
@@ -395,6 +400,21 @@ struct BudgetView: View {
             }
             
             await dataStore.reconcileHealthKit()
+        }
+    }
+}
+
+struct GaugeLabelView: View {
+    @Binding var showingGaugeHelp: Bool
+    
+    var body: some View {
+        HStack{
+            Label("Your target", systemImage: "gauge.with.needle")
+            Spacer()
+            Button("", systemImage: "questionmark.circle") {
+                showingGaugeHelp = true
+            }
+            .buttonStyle(.plain)
         }
     }
 }

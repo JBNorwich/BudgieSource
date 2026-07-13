@@ -27,6 +27,8 @@
 		D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D840B0282D27F03100AFE471 /* BudgetCap.swift */; };
 		D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF18E2D8C48B900340EE1 /* FitnessView.swift */; };
 		D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1902D8C4F6B00340EE1 /* WaterView.swift */; };
+		D865F44830055BC7008DF256 /* GaugeExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D865F44730055BC4008DF256 /* GaugeExplainer.swift */; };
+		D865F44930055BC7008DF256 /* GaugeExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D865F44730055BC4008DF256 /* GaugeExplainer.swift */; };
 		D86802783003985800D8871F /* OpenFoodFactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86802773003985800D8871F /* OpenFoodFactsSheet.swift */; };
 		D868027A30039B8C00D8871F /* OpenFoodFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868027930039B8C00D8871F /* OpenFoodFacts.swift */; };
 		D868027B30039B8C00D8871F /* OpenFoodFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868027930039B8C00D8871F /* OpenFoodFacts.swift */; };
@@ -231,6 +233,7 @@
 		D840B0282D27F03100AFE471 /* BudgetCap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetCap.swift; sourceTree = "<group>"; };
 		D85CF18E2D8C48B900340EE1 /* FitnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessView.swift; sourceTree = "<group>"; };
 		D85CF1902D8C4F6B00340EE1 /* WaterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterView.swift; sourceTree = "<group>"; };
+		D865F44730055BC4008DF256 /* GaugeExplainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaugeExplainer.swift; sourceTree = "<group>"; };
 		D86802773003985800D8871F /* OpenFoodFactsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFoodFactsSheet.swift; sourceTree = "<group>"; };
 		D868027930039B8C00D8871F /* OpenFoodFacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenFoodFacts.swift; sourceTree = "<group>"; };
 		D868027E3003BADA00D8871F /* DataPortability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPortability.swift; sourceTree = "<group>"; };
@@ -408,6 +411,7 @@
 		D829B0832C79B5B30027841B /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				D865F44730055BC4008DF256 /* GaugeExplainer.swift */,
 				D883580F3004019200141AF6 /* MacroSummaryView.swift */,
 				D80CB9992F70290C0036EB8E /* WeightView.swift */,
 				D85CF18E2D8C48B900340EE1 /* FitnessView.swift */,
@@ -861,6 +865,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D865F44830055BC7008DF256 /* GaugeExplainer.swift in Sources */,
 				D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */,
 				D88358123004037C00141AF6 /* MacroSettingsView.swift in Sources */,
 				D8BDE7342C7B8E8900E07471 /* Disclaimer.swift in Sources */,
@@ -983,6 +988,7 @@
 				D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */,
 				D8C302A22FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */,
 				D8CA2EEE2FF95D0300F63612 /* DateFuncs.swift in Sources */,
+				D865F44930055BC7008DF256 /* GaugeExplainer.swift in Sources */,
 				D8AAC9803001687A008A3640 /* FoodItems.swift in Sources */,
 				D8CA2EEF2FF95D0300F63612 /* Strings.swift in Sources */,
 				D8CA2EF02FF95D0300F63612 /* CalorieModel.swift in Sources */,

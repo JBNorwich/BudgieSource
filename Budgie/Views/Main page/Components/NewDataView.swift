@@ -102,6 +102,7 @@ struct NewDataView: View {
             Label(text, systemImage: imageName)
                 .lineLimit(nil)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     
@@ -158,6 +159,23 @@ struct NewDataView: View {
                 dataLump.budgetAtMin
                 ? DataViewAlert(imageName: "exclamationmark.octagon", text: "Your budget was calculated as lower than the minimum of 1,200 calories, so it has been set at that amount.")
                 : nil
+            }
+            Divider()
+            DisclosureGroup("Explanation") {
+                VStack {
+                    Section {
+                        Text("**Burned so far today:** The actual calories you've burned so far today. Where data is available from Health, these are the calories you've burned from your Apple Watch. Otherwise, this is based on the estimated amounts shown in Settings.")
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    Section {
+                        Text("**Projected future:** An estimate of the calories you're still likely to burn before the end of the day, based on your recent activity. This is added to what you've actually burned when calculating your budget, so it reflects a whole day rather than just the day so far.")
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
             }
         }
         .padding()
