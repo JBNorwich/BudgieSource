@@ -59,7 +59,7 @@ func getPercentOfDayDone() -> Double {
 
 /// Used to weight the user's "left to eat" figure based on the time into the day and the closeness to the user's set "final meal time". Weights more generously the closer to final meal time it is.
 func weightCanEatNow(input: Int) -> Int {
-    var factor = Double(minutesIntoDay() + 1) / Double(settingsObj.finalMealTime)
+    var factor = Double(minutesIntoDay() + 1) / Double(max(settingsObj.finalMealTime, 1))
     
     if factor > 1 { factor = 1 }
     else { factor = factor * factor }
