@@ -23,8 +23,9 @@ struct CalorieEntryView: View {
     var carbs: Double? = nil
     var fat: Double? = nil
     var isGeneric: Bool = false
-    /// When true (the Food hub's food rows), show the manufacturer/placeholder caption and macro line.
-    /// Left false elsewhere (Today screen, Health aggregate rows) to keep those plain.
+    /// Whether the entry is linked to a saved FoodItem. Separates a saved-food entry (→ "Custom food entry" when it carries no manufacturer) from a plain quick-calorie entry (→ "Quick calories").
+    var hasFoodItem: Bool = false
+    /// When true (the Food hub's food rows), show the manufacturer/placeholder caption and macro line. Left false elsewhere (Today screen, Health aggregate rows) to keep those plain.
     var detailed: Bool = false
 
     /// A compact "P 30g · C 40g · F 20g" line, listing only the macros that were recorded.
@@ -48,8 +49,13 @@ struct CalorieEntryView: View {
                         Text("Generic")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                    } else {
+                    } else if hasFoodItem {
                         Text("Custom food entry")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if narrative.caseInsensitiveCompare("Quick calories") != .orderedSame {
+                        // Named quick entry: label the row; skip it when the title is already "Quick calories".
+                        Text("Quick calories")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

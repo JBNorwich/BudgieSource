@@ -189,7 +189,7 @@ struct SettingsView: View {
                 Toggle("Increase goal with activity", isOn: settingBinding(\.waterFromActivity))
             }
             
-            Section(header: Text("Food logging"), footer: Text("If this is turned on, Budgie Diet's ability to search OpenFoodFacts for nutritional information will be disabled completely. You can still manually enter food items.")) {
+            Section(header: Text("Food logging"), footer: Text("Disabling OpenFoodFacts search stops Budgie Diet from searching it for nutritional information completely. You can still add and save foods manually.")) {
                 NavigationLink {
                     MacroSettingsView().environmentObject(todayLump)
                 } label: {

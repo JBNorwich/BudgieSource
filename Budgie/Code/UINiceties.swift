@@ -223,3 +223,19 @@ func budgetStatusLabel(leftToEat: Int, surplusMode: Bool = settingsObj.surplusMo
         return leftToEat > -1 ? "Can eat now" : "Over target by"
     }
 }
+
+extension Binding where Value == Double? {
+    /// Bridges an optional Double to a text field: blank means "not recorded" (nil), not zero — so a macro left empty stays absent rather than logged as 0 g. Accepts a comma or a point as the decimal separator.
+    var optionalNumberText: Binding<String> {
+        Binding<String>(
+            get: {
+                guard let v = wrappedValue else { return "" }
+                return v.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(v)) : String(v)
+            },
+            set: { str in
+                let cleaned = str.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
+                wrappedValue = cleaned.isEmpty ? nil : Double(cleaned)
+            }
+        )
+    }
+}

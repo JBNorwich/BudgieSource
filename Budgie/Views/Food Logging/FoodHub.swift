@@ -90,6 +90,7 @@ struct FoodHub: View {
                                                          carbs: entry.carbs,
                                                          fat: entry.fat,
                                                          isGeneric: entry.isGenericFood,
+                                                         hasFoodItem: entry.foodItem != nil,
                                                          detailed: true)
                                     }
                                 }

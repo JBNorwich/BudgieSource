@@ -157,11 +157,10 @@ struct OpenFoodFactsSheet: View {
 
     private func importProduct(_ product: OFFProduct) {
         let food = product.toFoodItem()
-        let picked = food.asPicked          // read values before handing the model to the actor
         Task {
-            await dataStore.foodItemActor.insert(food)
+            let picked = await dataStore.foodItemActor.importOFF(food)   // reuses by barcode if already saved
             await MainActor.run {
-                onImport(picked)            // → AddCalsSheet.selectFood, drops you into the form in scaling mode
+                onImport(picked)            // → the add form in scaling mode
                 dismiss()
             }
         }

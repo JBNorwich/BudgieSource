@@ -470,7 +470,7 @@ struct AddCalsSheet: View {
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
-                                                           manufacturer: newFoodMfr, calories: calories!)
+                                                          manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,
                                          manufacturer: mfr.isEmpty ? nil : mfr,
                                          quantity: quantity, servings: 1,

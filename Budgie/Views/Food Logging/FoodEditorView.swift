@@ -126,28 +126,12 @@ struct FoodEditorView: View {
         HStack {
             Text(label)
             Spacer()
-            TextField("—", text: optionalNumberText(value))
+            TextField("—", text: value.optionalNumberText)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: 90)
             Text("g")
         }
-    }
-
-    /// Bridges an optional Double to a text field: blank means "not recorded" (nil), not zero —
-    /// so a macro the user leaves empty stays absent rather than being logged as 0 g.
-    private func optionalNumberText(_ value: Binding<Double?>) -> Binding<String> {
-        Binding(
-            get: {
-                guard let v = value.wrappedValue else { return "" }
-                return v.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(v)) : String(v)
-            },
-            set: { str in
-                let cleaned = str.replacingOccurrences(of: ",", with: ".")
-                    .trimmingCharacters(in: .whitespaces)
-                value.wrappedValue = cleaned.isEmpty ? nil : Double(cleaned)
-            }
-        )
     }
 
     private func save() async {

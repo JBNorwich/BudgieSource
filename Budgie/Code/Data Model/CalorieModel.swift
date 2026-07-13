@@ -395,7 +395,8 @@ actor CalorieActor {
         let meals = getListOfMeals().sorted {
             if $0.mealUUID == preferredSurvivor { return true }
             if $1.mealUUID == preferredSurvivor { return false }
-            return $0.order < $1.order
+            if $0.order != $1.order { return $0.order < $1.order }
+            return $0.mealUUID.uuidString < $1.mealUUID.uuidString   // stable tie-break across devices
         }
         var keptByName: [String: Meal] = [:]
         var changed = false
@@ -426,7 +427,8 @@ actor CalorieActor {
     }
     
     /// Links existing quick entries matching a newly-saved food (case-insensitive narrative + exact calories, not already linked) to it, stamping a 1-serving portion and the food's manufacturer — same rule as the migration, so saving a food retroactively groups past matching entries under it.
-    func linkQuickEntries(toFood foodID: UUID, name: String, manufacturer: String?, calories: Int) {
+    func linkQuickEntries(toFood foodID: UUID, name: String, manufacturer: String?, quantity: FoodQuantity) {
+        let calories = quantity.calories
         let descriptor = FetchDescriptor<CalorieEntry>(
             predicate: #Predicate { $0.foodItem == nil && $0.calories == calories && $0.realEntry == true }
         )
@@ -435,8 +437,8 @@ actor CalorieActor {
         for entry in (try? modelContext.fetch(descriptor)) ?? []
         where entry.servingUnit == nil && (entry.narrative ?? "").lowercased() == lowerName {
             entry.foodItem = foodID
-            entry.servingUnit = .portion
-            entry.servingAmount = 1
+            entry.servingUnit = quantity.type          // stamp the food's own unit, not always .portion
+            entry.servingAmount = quantity.count        // one serving == its reference count
             entry.manufacturer = manufacturer
             changed = true
         }
@@ -497,7 +499,11 @@ actor CalorieActor {
 
     /// Merges structurally-identical FoodItems (same name, manufacturer and servings), moving any linked entries onto one survivor and deleting the rest. Catches duplicates from two devices migrating or creating the same food before CloudKit reconciles. Distinct-calorie "same name" variants have a different signature and are deliberately NOT merged.
     func dedupeFoods() {
-        let foods = (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []
+        // Sort by a stable key so every device chooses the SAME survivor for a duplicate pair.
+        // Otherwise two devices can each keep a different copy and delete the other's; after CloudKit
+        // merges, both tombstones win and the food is lost (its entries survive on their own stamp).
+        let foods = ((try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? [])
+            .sorted { $0.id.uuidString < $1.id.uuidString }
         var survivors: [String: FoodItem] = [:]
         var changed = false
 

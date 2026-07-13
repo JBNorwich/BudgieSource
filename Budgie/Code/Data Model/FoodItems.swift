@@ -130,6 +130,18 @@ actor FoodItemActor {
         modelContext.insert(item)
         do { try modelContext.save() } catch { print("FoodItem insertion error: \(error)") }
     }
+    
+    /// Persists an OpenFoodFacts import, or reuses a non-archived saved food with the same barcode instead of creating a duplicate, and returns it as a value type to log against. Stops the same product piling up copies when it's imported more than once.
+    func importOFF(_ item: FoodItem) -> PickedFood {
+        if let barcode = item.barcode, !barcode.isEmpty {
+            let descriptor = FetchDescriptor<FoodItem>(
+                predicate: #Predicate { $0.barcode == barcode && $0.archived == false })
+            if let existing = (try? modelContext.fetch(descriptor))?.first { return existing.asPicked }
+        }
+        modelContext.insert(item)
+        do { try modelContext.save() } catch { print("FoodItem insertion error: \(error)") }
+        return item.asPicked
+    }
 
     /// All food items, newest first. Archived items are excluded unless asked for.
     func fetchAll(includeArchived: Bool = false) -> [FoodItem] {
@@ -146,13 +158,13 @@ actor FoodItemActor {
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
-    /// Searches non-archived items by name or manufacturer.
-    func search(term: String, limit: Int = 50) -> [FoodItem] {
+    /// Searches items by name or manufacturer. Archived items are excluded unless asked for.
+    func search(term: String, includeArchived: Bool = false, limit: Int = 50) -> [FoodItem] {
         #if os(macOS)
         modelContext.rollback()
         #endif
         let predicate = #Predicate<FoodItem> { item in
-            item.archived == false &&
+            (includeArchived || item.archived == false) &&
             (item.name.localizedStandardContains(term) ||
              (item.manufacturer?.localizedStandardContains(term) ?? false))
         }

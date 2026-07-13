@@ -413,7 +413,7 @@ struct MacAddFoodSheet: View {
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
-                                                          manufacturer: newFoodMfr, calories: calories!)
+                                                          manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,
                                          manufacturer: mfr.isEmpty ? nil : mfr,
                                          quantity: quantity, servings: 1,
@@ -460,24 +460,10 @@ struct MacMacroFields: View {
         HStack {
             Text(label)
             Spacer()
-            TextField("—", text: optionalNumberText(value))
+            TextField("—", text: value.optionalNumberText)
                 .multilineTextAlignment(.trailing).frame(maxWidth: 90)
             Text("g")
         }
-    }
-
-    /// Blank means "not recorded" (nil), not zero — so a macro left empty stays absent rather than logged as 0 g.
-    private func optionalNumberText(_ value: Binding<Double?>) -> Binding<String> {
-        Binding(
-            get: {
-                guard let v = value.wrappedValue else { return "" }
-                return v.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(v)) : String(v)
-            },
-            set: { str in
-                let cleaned = str.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
-                value.wrappedValue = cleaned.isEmpty ? nil : Double(cleaned)
-            }
-        )
     }
 }
 
@@ -601,9 +587,8 @@ struct MacOFFSheet: View {
 
     private func importProduct(_ product: OFFProduct) {
         let food = product.toFoodItem()
-        let picked = food.asPicked
         Task {
-            await dataStore.foodItemActor.insert(food)
+            let picked = await dataStore.foodItemActor.importOFF(food)
             await MainActor.run {
                 onImport(picked)
                 dismiss()

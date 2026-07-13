@@ -74,7 +74,7 @@ struct FoodLibraryView: View {
             if searchText.isEmpty {
                 foods = await dataStore.foodItemActor.fetchAll(includeArchived: showArchived)
             } else {
-                foods = await dataStore.foodItemActor.search(term: searchText)
+                foods = await dataStore.foodItemActor.search(term: searchText, includeArchived: showArchived)
             }
         }
         .sheet(isPresented: $showingNewFood) {

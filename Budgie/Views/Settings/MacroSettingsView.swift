@@ -43,7 +43,7 @@ struct MacroSettingsView: View {
     var body: some View {
         let _ = refreshID   // observe so a setting change redraws the form
         Form {
-            Section(footer: Text("Shows the protein, carbohydrate and fat in what you log, above your food list. Turn it off to hide macros entirely.")) {
+            Section(footer: Text("Shows the protein, carbohydrate and fat in what you log, above your food list. Turn it off to hide this.")) {
                 Toggle("Track macros", isOn: enabledBinding)
             }
 
