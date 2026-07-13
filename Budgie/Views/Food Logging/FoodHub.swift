@@ -29,6 +29,10 @@ struct FoodHub: View {
     @State var hkCalories = 0
     @State var addSheetDisplayed: Bool = false
     @State var loadingDone: Bool = false
+    @State var macros: EatenMacros = EatenMacros()
+    
+    @State private var foodSearch: String = ""
+    @State private var pendingSearch: String = ""
     
     init(curDate: Date) {
         // Normalise to midnight up front, so the first fetch is already day-aligned.
@@ -47,7 +51,9 @@ struct FoodHub: View {
         async let hkEatenTask = dataStore.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
         async let activeTask = dataStore.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
         async let basalTask = dataStore.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
+        async let macrosTask = dataStore.pullEatenMacros(startDate: curDate, endDate: getMidnightOnDayAfter(date: curDate))
         let (hkEaten, newActive, newBasal) = await (hkEatenTask, activeTask, basalTask)
+        macros = await macrosTask
         
         let newLump = ChartDataLump()
         newLump.eatenCals = hkEaten + budgieCalsOnDate
@@ -70,6 +76,14 @@ struct FoodHub: View {
             VStack {
                 FoodDatePicker(curDate: $curDate, dateChanged: $dateChanged)
                 ChartTableRow(dataLump: dataLump)
+                if macros.protein > 0 || macros.carbs > 0 || macros.fat > 0 {
+                    HStack(spacing: 0) {
+                        macroCell("Protein", macros.protein)
+                        macroCell("Carbs", macros.carbs)
+                        macroCell("Fat", macros.fat)
+                    }
+                    .padding(.top, 6)
+                }
             }
             .padding()
             List {
@@ -146,13 +160,36 @@ struct FoodHub: View {
               
         .sheet(isPresented: $addSheetDisplayed) {
             NavigationStack {
-                AddCalsSheet(selectedDate: timeToAddOn).environmentObject(todayLump)
+                AddCalsSheet(selectedDate: timeToAddOn, initialSearch: pendingSearch)
+                    .environmentObject(todayLump)
             }
             .onDisappear {
-                Task {
-                    await doUpdates()
+                pendingSearch = ""
+                foodSearch = ""
+                Task { await doUpdates() }
+            }
+        }
+        
+        .safeAreaInset(edge: .bottom) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField("Search foods to add", text: $foodSearch)
+                    .submitLabel(.search)
+                    .onSubmit { openSearch() }
+                if !foodSearch.isEmpty {
+                    Button {
+                        foodSearch = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .glassEffect(.regular.interactive(), in: .capsule)
+            .padding(.horizontal)
+            .padding(.bottom, 4)
         }
     }
     
@@ -164,6 +201,22 @@ struct FoodHub: View {
             await doUpdates()
             await dataStore.updateLump(todayLump: todayLump)
         }
+    }
+    
+    @ViewBuilder
+    private func macroCell(_ label: String, _ grams: Int) -> some View {
+        VStack(spacing: 1) {
+            Text("\(grams)g").font(.subheadline).fontWeight(.semibold)
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    private func openSearch() {
+        guard !foodSearch.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        pendingSearch = foodSearch
+        timeToAddOn = getCurrentTimeonDate(date: curDate)
+        addSheetDisplayed = true
     }
 }
 

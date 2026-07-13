@@ -43,6 +43,7 @@ struct AddCalsSheet: View {
     @State private var showAllFoods: Bool = false
     @State private var displayedItems: [RecentItem] = []
     @State private var showingOFFSheet = false
+    @State private var editingFood: FoodItem?
 
     // MARK: Shared
     @State private var mealList: [Meal] = []
@@ -106,6 +107,11 @@ struct AddCalsSheet: View {
     private var searchKey: SearchKey {
         SearchKey(term: searchText, allMeals: showAllFoods, meal: selectedMeal, reload: reloadToken)
     }
+    
+    init(selectedDate: Date, initialSearch: String = "") {
+        _selectedDate = State(initialValue: selectedDate)
+        _searchText = State(initialValue: initialSearch)
+    }
 
     // MARK: Body
 
@@ -123,6 +129,12 @@ struct AddCalsSheet: View {
                 selectFood(food)          // import → select into the form (step 2 fills this in)
                 showingOFFSheet = false
             }
+        }
+        .sheet(item: $editingFood) { food in
+            NavigationStack {
+                FoodEditorView(existing: food, isModal: true)
+            }
+            .onDisappear { reloadToken = UUID() }   // pick up any edits
         }
         .navigationTitle("Add food")
         .task(id: searchKey) {
@@ -282,6 +294,25 @@ struct AddCalsSheet: View {
                 Section("Foods") {
                     ForEach(foodResults) { food in
                         pickedFoodRow(food) { selectFood(food) }
+                            .swipeActions(edge: .leading) {           // swipe right → edit
+                                if !food.isGeneric, let id = food.persistedID {
+                                    Button {
+                                        Task { editingFood = await dataStore.foodItemActor.fetch(id: id) }
+                                    } label: { Label("Edit", systemImage: "pencil") }
+                                    .tint(.blue)
+                                }
+                            }
+                            .swipeActions(edge: .trailing) {          // swipe left → archive
+                                if !food.isGeneric, let id = food.persistedID {
+                                    Button {
+                                        Task {
+                                            await dataStore.foodItemActor.setArchived(id: id, archived: true)
+                                            reloadToken = UUID()       // re-runs the search; archived drops out
+                                        }
+                                    } label: { Label("Archive", systemImage: "archivebox") }
+                                    .tint(.orange)
+                                }
+                            }
                     }
                 }
             }
