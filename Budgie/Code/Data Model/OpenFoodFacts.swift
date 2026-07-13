@@ -39,7 +39,7 @@ struct OFFProduct: Identifiable {
 }
 
 enum OpenFoodFacts {
-    enum SearchError: Error { case rateLimited }
+    enum SearchError: Error { case rateLimited, serverUnavailable }
 
     /// Full-text product search. Sends only the search term. User-initiated, so low volume — but OFF caps search at 10 req/min/IP, which is why the UI only calls this on submit.
     static func search(term: String) async throws -> [OFFProduct] {
@@ -59,11 +59,24 @@ enum OpenFoodFacts {
         request.timeoutInterval = 15
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        if let http = response as? HTTPURLResponse, http.statusCode == 429 { throw SearchError.rateLimited }
 
-        let decoded = try JSONDecoder().decode(SearchResponse.self, from: data)
-        let products = decoded.products.compactMap { $0.product?.toProduct() }
-        return rank(products, for: term)
+        if let http = response as? HTTPURLResponse {
+            if http.statusCode == 429 { throw SearchError.rateLimited }
+            guard (200...299).contains(http.statusCode) else { throw SearchError.serverUnavailable }
+
+            // OFF's legacy endpoint serves an HTML error/maintenance page under load; treat a non-JSON body as a transient outage.
+            let contentType = http.value(forHTTPHeaderField: "Content-Type") ?? ""
+            guard contentType.contains("json") else { throw SearchError.serverUnavailable }
+        }
+
+        do {
+            let decoded = try JSONDecoder().decode(SearchResponse.self, from: data)
+            let products = decoded.products.compactMap { $0.product?.toProduct() }
+            return rank(products, for: term)
+        } catch is DecodingError {
+            // A 200 + JSON content-type but a malformed/HTML body still means OFF misbehaved.
+            throw SearchError.serverUnavailable
+        }
     }
     
     /// The legacy search matches loosely across all fields and doesn't rank. Keep only products whose

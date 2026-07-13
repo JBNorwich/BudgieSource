@@ -578,6 +578,8 @@ struct MacOFFSheet: View {
             results = try await OpenFoodFacts.search(term: term)
         } catch OpenFoodFacts.SearchError.rateLimited {
             errorMessage = "Too many searches just now — wait a moment and try again."
+        } catch OpenFoodFacts.SearchError.serverUnavailable {
+            errorMessage = "Food search is temporarily unavailable. Please try again in a moment."
         } catch {
             print("OFF search error: \(error)")
             errorMessage = "Couldn't reach OpenFoodFacts. Check your connection and try again."
