@@ -712,6 +712,9 @@ final class HealthData {
                 group.set(settingsObj.finalMealTime, forKey: "widgetFinalMealTime")
                 group.set(settingsObj.surplusMode, forKey: "widgetSurplusMode")
                 group.set(settingsObj.useMealAllocations, forKey: "widgetUseAllocations")
+                // The day this snapshot describes. The widget compares it against "today" so it never
+                // shows yesterday's budget/eaten as if the day hadn't rolled over.
+                group.set(getStartOfDay(date: Date()).timeIntervalSince1970, forKey: "widgetSnapshotDay")
             }
             WidgetCenter.shared.reloadAllTimelines()
         }
