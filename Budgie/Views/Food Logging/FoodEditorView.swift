@@ -14,6 +14,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import SwiftUI
+import UIKit
 
 struct FoodEditorView: View {
     @Environment(\.dismiss) private var dismiss
@@ -47,12 +48,18 @@ struct FoodEditorView: View {
                 TextField("Manufacturer (optional)", text: $manufacturer)
             }
 
-            Section("Servings") {
-                ForEach(quantities.indices, id: \.self) { i in
+            ForEach(quantities.indices, id: \.self) { i in
+                Section("Serving \(i + 1)") {
                     servingEditor(i)
+                    if quantities.count > 1 {
+                        Button("Remove serving", role: .destructive) {
+                            quantities.remove(at: i)
+                        }
+                    }
                 }
-                .onDelete { quantities.remove(atOffsets: $0) }
+            }
 
+            Section {
                 Button {
                     quantities.append(FoodQuantity(type: .grams, count: 100, calories: 0))
                 } label: {
@@ -76,49 +83,56 @@ struct FoodEditorView: View {
                 }.disabled(!canSave)
             }
         }
+        // For a brand-new food the amount (100) and calories (0) start pre-filled; select the value
+        // on focus so the user types straight over it. Empty fields (name, macros…) are unaffected,
+        // and editing an existing food is left alone so a partial edit isn't wiped.
+        .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { note in
+            guard existingID == nil, let field = note.object as? UITextField else { return }
+            DispatchQueue.main.async {
+                field.selectedTextRange = field.textRange(from: field.beginningOfDocument,
+                                                          to: field.endOfDocument)
+            }
+        }
     }
 
     @ViewBuilder
     private func servingEditor(_ i: Int) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Picker("Measured in", selection: $quantities[i].type) {
-                Text("Grams").tag(FoodQuantityType.grams)
-                Text("Millilitres").tag(FoodQuantityType.millilitres)
-                Text("Portion").tag(FoodQuantityType.portion)
-            }
-            .pickerStyle(.menu)
-
-            TextField("Serving name (optional), e.g. “1 medium banana”",
-                      text: Binding(get: { quantities[i].servingName ?? "" },
-                                    set: { quantities[i].servingName = $0.isEmpty ? nil : $0 }))
-            
-            HStack {
-                Text(quantities[i].type == .portion ? "Portions" : "Amount")
-                Spacer()
-                TextField("", value: $quantities[i].count, format: .number)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 90)
-                if quantities[i].type != .portion { Text(quantities[i].type.unitName) }
-            }
-
-            HStack {
-                Text("Calories")
-                Spacer()
-                TextField("", value: $quantities[i].calories, format: .number)
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 90)
-                Text("kcal")
-            }
-
-            DisclosureGroup("Nutrition (optional)") {
-                macroField("Protein", value: $quantities[i].protein)
-                macroField("Carbs", value: $quantities[i].carbs)
-                macroField("Fat", value: $quantities[i].fat)
-            }
+        Picker("Measured in", selection: $quantities[i].type) {
+            Text("Grams").tag(FoodQuantityType.grams)
+            Text("Millilitres").tag(FoodQuantityType.millilitres)
+            Text("Portion").tag(FoodQuantityType.portion)
         }
-        .padding(.vertical, 4)
+        .pickerStyle(.menu)
+
+        TextField("Serving name (optional), e.g. “1 medium banana”",
+                  text: Binding(get: { quantities[i].servingName ?? "" },
+                                set: { quantities[i].servingName = $0.isEmpty ? nil : $0 }))
+
+        HStack {
+            Text(quantities[i].type == .portion ? "Portions" : "Amount")
+            Spacer()
+            TextField("", value: $quantities[i].count, format: .number)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: 90)
+            if quantities[i].type != .portion { Text(quantities[i].type.unitName) }
+        }
+
+        HStack {
+            Text("Calories")
+            Spacer()
+            TextField("", value: $quantities[i].calories, format: .number)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: 90)
+            Text("kcal")
+        }
+
+        DisclosureGroup("Nutrition (optional)") {
+            macroField("Protein", value: $quantities[i].protein)
+            macroField("Carbs", value: $quantities[i].carbs)
+            macroField("Fat", value: $quantities[i].fat)
+        }
     }
 
     @ViewBuilder
