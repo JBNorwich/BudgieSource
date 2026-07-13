@@ -21,6 +21,10 @@ import Foundation
 
 // For purposes relating to UI, where no time is shown, a date is treated as midnight on that date.
 
+/// The slice of the daily budget kept aside for the final meal, as a fraction of the budget.
+/// A constant rather than a setting: a sensible default for the 90%, not worth another toggle.
+let mealReserveFraction = 0.35
+
 /// Returns midnight on a day offset from another day.
 private func midnight(daysOffset: Int, from date: Date) -> Date {
     let calendar = Calendar.current
@@ -59,11 +63,20 @@ func getPercentOfDayDone() -> Double {
 
 /// Used to weight the user's "left to eat" figure based on the time into the day and the closeness to the user's set "final meal time". Weights more generously the closer to final meal time it is.
 func weightCanEatNow(input: Int) -> Int {
-    var factor = Double(minutesIntoDay() + 1) / Double(max(settingsObj.finalMealTime, 1))
-    
-    if factor > 1 { factor = 1 }
-    else { factor = factor * factor }
-    return Int(Double(input) * factor)
+    let mealTime = max(settingsObj.finalMealTime, 1)
+    let minsNow  = minutesIntoDay() + 1
+    guard minsNow < mealTime else { return input }
+
+    var factor = Double(minsNow) / Double(mealTime)
+    factor = factor * factor
+
+    // Ease the reserved meal back into the budget over the final stretch before
+    // meal time, so it arrives gradually rather than all at once.
+    let releaseWindow = 45.0
+    let released = max(0, Double(minsNow) - (Double(mealTime) - releaseWindow)) / releaseWindow
+    let reserved = Double(input) * mealReserveFraction * (1 - released)
+
+    return Int(min(Double(input) * factor, Double(input) - reserved))
 }
 
 /// Return the weighting style to use based on the user's settings.
