@@ -168,7 +168,9 @@ struct WeightExplainerSheet: View {
                 GroupBox {
                     Text("**Real deficit/surplus** is, using the same sort of formula as \"Expected loss/gain\", how much your weight trend suggests you've actually had as a deficit (or surplus). You shouldn't pay too much attention to this, since as above, your weight can change for many reasons outside of just the calories you eat, and you might be doing just fine - for instance, it's common for people who are exercising to build a little bit of muscle at the same time as they lose fat, rather than just losing weight as fat.")
                 }
-                
+                GroupBox {
+                    Text("**On target**, **off target** and **exceeding target** on the Today screen compares your actual weekly change against the range Budgie Diet would expect from your recorded deficit/surplus. Because your weight fluctuates, being on target is a band rather than a single figure: land inside it and you're tracking as the numbers predict, while off target or exceeding target simply mean you're moving a little slower or faster than expected. It's only a guide — plenty of everyday things move the scale, so one week outside the band on its own doesn't tell you much.")
+                }
             }
             .navigationTitle("About weight details")
             .navigationBarTitleDisplayMode(.inline)
