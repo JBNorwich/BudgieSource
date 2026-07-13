@@ -91,12 +91,32 @@ struct Provider: TimelineProvider {
         let useAllocations = group?.bool(forKey: "widgetUseAllocations") ?? false
         let progress = budget != 0 ? Double(eaten) / Double(budget) : 0
 
+        let cal = Calendar.current
+        let now = Date()
+        let todayStart = cal.startOfDay(for: now)
+        let nextMidnight = cal.date(byAdding: .day, value: 1, to: todayStart) ?? now.addingTimeInterval(3 * 60 * 60)
+
+        // The snapshot only describes the day it was taken. Once the clock rolls past midnight the
+        // budget resets and yesterday's eaten total is meaningless, so show a neutral "stale" entry
+        // rather than a confidently wrong "can eat now" until the app next refreshes.
+        let snapshotDay = (group?.object(forKey: "widgetSnapshotDay") as? Double).map { Date(timeIntervalSince1970: $0) }
+        let isFresh = snapshotDay.map { cal.isDate($0, inSameDayAs: todayStart) } ?? false
+
+        guard isFresh else {
+            let entry = BudgieEntry(date: now, leftToEat: 0, progressDbl: 0, totalBudgRem: 0,
+                                    totalBudg: 0, projBasal: 0, surplusMode: surplus,
+                                    useAllocations: useAllocations, isStale: true)
+            // Check back soon — the app usually refreshes shortly after midnight.
+            let retry = cal.date(byAdding: .minute, value: 30, to: now) ?? now.addingTimeInterval(1800)
+            completion(Timeline(entries: [entry], policy: .after(retry)))
+            return
+        }
+
         // The data only changes when the app updates, but "can eat now" ramps with the
         // clock — so emit an entry every 15 minutes for the next 3 hours, then repeat.
         // With meal allocations on, pacing is per-meal, so there's no ramp to follow:
         // show the plain daily remainder instead, matching the phone's meter.
         var entries: [BudgieEntry] = []
-        let now = Date()
         for i in 0..<12 {
             let entryDate = now.addingTimeInterval(Double(i) * 15 * 60)
             let leftToEat = useAllocations
@@ -112,7 +132,10 @@ struct Provider: TimelineProvider {
                                        useAllocations: useAllocations))
         }
 
-        completion(Timeline(entries: entries, policy: .atEnd))
+        // Reload after the last entry as before, but never later than midnight, so the stale
+        // check trips promptly when the day rolls over even if the app hasn't refreshed.
+        let reload = min(entries.last?.date ?? now, nextMidnight)
+        completion(Timeline(entries: entries, policy: .after(reload)))
     }
 }
 
@@ -125,59 +148,75 @@ struct BudgieEntry: TimelineEntry {
     let projBasal: Int
     let surplusMode: Bool
     let useAllocations: Bool
+    var isStale: Bool = false
 }
+
 struct BudgieWidgetEntryView : View {
     var entry: Provider.Entry
 
+    private var staleView: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("BUDGET").font(.caption).foregroundStyle(.secondary)
+            Text("—").font(.title).fontWeight(.heavy)
+            Spacer()
+            Text("Open Budgie Diet to refresh")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
     var body: some View {
-        ZStack {
-            VStack {
-                Spacer()
-                HStack {
-                    Image("Budgie")
-                        .resizable()
-                        .frame(maxWidth: 58, maxHeight: 50)
-                        .offset(x: -25, y: 25)
-                    Spacer()
-                }
-            }
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode)
-                        .frame(maxWidth: 50, maxHeight: 50)
-                }
-            }
-            VStack {
+        if entry.isStale {
+            staleView
+        } else {
+            ZStack {
                 VStack {
+                    Spacer()
                     HStack {
-                        Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode, usingAllocations: entry.useAllocations).uppercased())
-                            .font(.caption)
+                        Image("Budgie")
+                            .resizable()
+                            .frame(maxWidth: 58, maxHeight: 50)
+                            .offset(x: -25, y: 25)
                         Spacer()
                     }
+                }
+                VStack {
+                    Spacer()
                     HStack {
-                        Text(abs(entry.leftToEat).formatted())
-                            .font(.title)
                         Spacer()
+                        TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode)
+                            .frame(maxWidth: 50, maxHeight: 50)
                     }
-                    
-                    // no value in showing left to eat if it's the same as the remaining budget
-                    if entry.totalBudgRem != entry.leftToEat {
+                }
+                VStack {
+                    VStack {
                         HStack {
-                            Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
+                            Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode, usingAllocations: entry.useAllocations).uppercased())
                                 .font(.caption)
                             Spacer()
                         }
                         HStack {
-                            Text(abs(entry.totalBudgRem).formatted())
+                            Text(abs(entry.leftToEat).formatted())
                                 .font(.title)
                             Spacer()
                         }
+
+                        // no value in showing left to eat if it's the same as the remaining budget
+                        if entry.totalBudgRem != entry.leftToEat {
+                            HStack {
+                                Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
+                                    .font(.caption)
+                                Spacer()
+                            }
+                            HStack {
+                                Text(abs(entry.totalBudgRem).formatted())
+                                    .font(.title)
+                                Spacer()
+                            }
+                        }
+                        Spacer()
                     }
-                    Spacer()
-                    
-                    
                 }
             }
         }
@@ -187,15 +226,20 @@ struct BudgieWidgetEntryView : View {
 /// Widget view for `accessoryCircular`
 struct CircularWidgetView: View {
     let entry: BudgieEntry
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 AccessoryWidgetBackground()
                 VStack {
-                    Gauge(value: entry.progressDbl) {
-                        Text(verbatim: entry.leftToEat.formatted())
-                    }.gaugeStyle(.accessoryCircularCapacity)
+                    if entry.isStale {
+                        Gauge(value: 0) { Text(verbatim: "—") }
+                            .gaugeStyle(.accessoryCircularCapacity)
+                    } else {
+                        Gauge(value: entry.progressDbl) {
+                            Text(verbatim: entry.leftToEat.formatted())
+                        }.gaugeStyle(.accessoryCircularCapacity)
+                    }
                 }
             }
             .containerBackground(for: .widget) { }

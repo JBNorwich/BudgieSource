@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "WebSearch",
+      "WebFetch(domain:www.nationalarchives.gov.uk)",
+      "WebFetch(domain:www.gov.uk)",
+      "WebFetch(domain:openfoodfacts.github.io)",
+      "WebFetch(domain:search.openfoodfacts.org)"
+    ]
+  }
+}

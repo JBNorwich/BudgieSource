@@ -30,7 +30,10 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:TestPlan.xctestplan"
+            reference = "container:TestPlan.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Budgie DietTests/TestPlan.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>
@@ -43,6 +46,17 @@
                BlueprintIdentifier = "D86A5BB52C88C5E40076BE41"
                BuildableName = "Budgie DietUITests.xctest"
                BlueprintName = "Budgie DietUITests"
+               ReferencedContainer = "container:Budgie Diet.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D8AAC98730017A09008A3640"
+               BuildableName = "Budgie DietTests.xctest"
+               BlueprintName = "Budgie DietTests"
                ReferencedContainer = "container:Budgie Diet.xcodeproj">
             </BuildableReference>
          </TestableReference>

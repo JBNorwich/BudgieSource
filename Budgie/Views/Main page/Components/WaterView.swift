@@ -17,6 +17,7 @@ import SwiftUI
 
 struct WaterView: View {
     @EnvironmentObject var todayLump: TodayLump
+    @ObservedObject private var syncMonitor = CloudSyncMonitor.shared
     
     let gradient = Gradient(colors: [.white, .blue])
     
@@ -36,7 +37,12 @@ struct WaterView: View {
                 .padding(.top, 10)
                 .animation(.easeInOut, value: todayLump.waterGoalDone)
             Spacer()
-            if todayLump.waterGoalRem != 0 {
+            if syncMonitor.isImporting && todayLump.waterToday == 0 {
+                Text("Syncing…")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+            } else if todayLump.waterGoalRem != 0 {
                 Text("\(renderVolume(millilitres: todayLump.waterGoalRem)) to go")
                     .font(.caption2)
                     .fixedSize()

@@ -113,18 +113,18 @@ struct SettingsView: View {
                        in: 0...1000,
                        step: 50,
                        onEditingChanged: { editing in
-                           if editing {
-                               // Remember where they started, so we can revert if they back out of a 1,000 deficit.
-                               deficitBeforeWarning = settingsObj.desiredDeficit
-                           } else {
-                               // A 1,000kcal+ deficit is an extreme choice — route it through the same warning
-                               // gate as the deficit chooser, rather than letting the slider set it silently.
-                               if !settingsObj.surplusMode && settingsObj.desiredDeficit >= 1000 {
-                                   showing1000Warning = true
-                               }
-                               refreshState()
-                           }
-                       },
+                    if editing {
+                        // Remember where they started, so we can revert if they back out of a 1,000 deficit.
+                        deficitBeforeWarning = settingsObj.desiredDeficit
+                    } else {
+                        // A 1,000kcal+ deficit is an extreme choice — route it through the same warning
+                        // gate as the deficit chooser, rather than letting the slider set it silently.
+                        if !settingsObj.surplusMode && settingsObj.desiredDeficit >= 1000 {
+                            showing1000Warning = true
+                        }
+                        refreshState()
+                    }
+                },
                        minimumValueLabel: Text(""),
                        maximumValueLabel: Text(deficitLabel),
                        label: { Text("Deficit") }
@@ -140,7 +140,7 @@ struct SettingsView: View {
                     )
                 }
                 if !settingsObj.surplusMode {
-                Button("Help me choose a goal") {
+                    Button("Help me choose a goal") {
                         showingSheet = true
                     }.sheet(isPresented: $showingSheet, onDismiss: { refreshState() }) {
                         BudgetHelperView(isPresented: $showingSheet)
@@ -189,7 +189,12 @@ struct SettingsView: View {
                 Toggle("Increase goal with activity", isOn: settingBinding(\.waterFromActivity))
             }
             
-            Section(header: Text("Food logging")) {
+            Section(header: Text("Food logging"), footer: Text("Disabling OpenFoodFacts search stops Budgie Diet from searching it for nutritional information completely. You can still add and save foods manually.")) {
+                NavigationLink {
+                    MacroSettingsView().environmentObject(todayLump)
+                } label: {
+                    Text("Macro tracking and goals")
+                }
                 NavigationLink {
                     AllocateBudgetView()
                 } label: {
@@ -200,7 +205,7 @@ struct SettingsView: View {
                 } label: {
                     Text("Manage meals")
                 }
-                
+                Toggle("Disable OpenFoodFacts search", isOn: settingBinding(\.offSearchDisabled))
             }
             
             Section(header: Text("Weight tracking"), footer: Text("If you'd prefer to not see information about your weight, you can hide it here - you can turn it back on any time. This won't erase any data you've already logged.")) {
@@ -220,8 +225,13 @@ struct SettingsView: View {
             {
                 Toggle("Use Move goal for budget", isOn: $useFitnessGoal)
             }
-
+            
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
+                NavigationLink {
+                    DataManagementView().environmentObject(todayLump)
+                } label: {
+                    Text("Backup and restore")
+                }
                 NavigationLink {
                     BudgetCap()
                 } label: {
@@ -240,6 +250,7 @@ struct SettingsView: View {
             Section(header: Text("Other settings")) {
                 Toggle("Hide \"Today in detail\"", isOn: settingBinding(\.hideTodayInDetail))
                 Toggle("Put whales in various places", isOn: settingBinding(\.whalesEverywhere))
+                
             }
             
             Section(header: Text("About")) {
@@ -265,7 +276,12 @@ struct SettingsView: View {
                     Text(copyrightString)
                 }
             }
-
+            
+            NavigationLink {
+                LicencesScreen()
+            } label: {
+                Text("Licences")
+            }
             NavigationLink {
                 Donate()
             } label: {

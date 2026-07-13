@@ -18,9 +18,29 @@ import Foundation
 
 extension HealthData {
     /// Logs food on the Mac — no HealthKit. The entry is written SwiftData-only with `isInHK == false`; the iPhone mirrors it into HealthKit when it next reconciles.
-    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID) async {
+    func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID, manufacturer: String? = nil, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
-        let entry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: false, healthKitUUID: nil)
+        let entry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: false, healthKitUUID: nil, manufacturer: manufacturer, protein: protein, fat: fat, carbs: carbs)
+        await calorieActor.insertNewCals(object: entry)
+    }
+    
+    /// Mac equivalent of `addFoodEntry` — SwiftData only, no HealthKit. The iPhone mirrors it later.
+    func addFoodEntry(foodItemID: UUID?, name: String, manufacturer: String? = nil, quantity: FoodQuantity, servings: Double, date: Date, meal: UUID) async {
+        guard servings > 0 else { return }
+        let totals = quantity.totals(servings: servings)
+        let entry = CalorieEntry(date: date,
+                                 calories: totals.calories,
+                                 narrative: name,
+                                 mealUUID: meal,
+                                 isInHK: false,
+                                 healthKitUUID: nil,
+                                 item: foodItemID,
+                                 manufacturer: manufacturer,
+                                 unit: quantity.type,
+                                 servings: totals.amount,
+                                 protein: totals.protein,
+                                 fat: totals.fat,
+                                 carbs: totals.carbs)
         await calorieActor.insertNewCals(object: entry)
     }
 
@@ -40,6 +60,10 @@ extension HealthData {
         todayLump.foodList = foodList
         todayLump.healthKitCalories = settingsObj.snapShotHKCalories
         todayLump.eatenCalories = foodList.reduce(0) { $0 + $1.calories } + settingsObj.snapShotHKCalories
+        // Macros today — own entries plus the iPhone's snapshot of other-app macros (no HealthKit here).
+        todayLump.eatenProtein = Int(foodList.reduce(0.0) { $0 + ($1.protein ?? 0) }.rounded()) + settingsObj.snapShotHKProtein
+        todayLump.eatenFat     = Int(foodList.reduce(0.0) { $0 + ($1.fat ?? 0) }.rounded()) + settingsObj.snapShotHKFat
+        todayLump.eatenCarbs   = Int(foodList.reduce(0.0) { $0 + ($1.carbs ?? 0) }.rounded()) + settingsObj.snapShotHKCarbs
         todayLump.allMeals = await calorieActor.getListOfMeals()
         todayLump.cleansedMealList = await calorieActor.cleansedMealList(data: foodList)
         todayLump.mealTotalList = [:]

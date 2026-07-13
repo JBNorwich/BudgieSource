@@ -22,36 +22,119 @@ struct EditCalsSheet: View {
     @FocusState var isFocused: Bool
     @State private var calories: Int = 0
     @State private var whatItIs: String = ""
+    @State private var amount: Double = 0
+    @State private var quantities: [FoodQuantity] = []
+    @State private var selectedQuantityIndex: Int = 0
     @State private var selectedMeal: UUID = UUID()
     @State private var selectedDate: Date = Date()
-    @State private var caloriesWereNil: Bool = false
+    @State private var showValueAlert: Bool = false
     @State private var mealList: [Meal] = []
-    
+    @State private var protein: Double?
+    @State private var carbs: Double?
+    @State private var fat: Double?
+
+    private var isFoodEntry: Bool { entryToEdit.isFoodEntry }
+    private var canPickQuantity: Bool { isFoodEntry && !quantities.isEmpty }
+
+    /// The serving the user has selected from the food (nil when the food's gone — we then rescale the stamp).
+    private var pickedQuantity: FoodQuantity? {
+        guard canPickQuantity, quantities.indices.contains(selectedQuantityIndex) else { return nil }
+        return quantities[selectedQuantityIndex]
+    }
+    private var effectiveServings: Double {
+        guard let q = pickedQuantity, q.count > 0 else { return 0 }
+        return amount / q.count
+    }
+    /// The unit currently in force: the picked serving's, or the stamped one if the food is unavailable.
+    private var displayUnit: FoodQuantityType? { pickedQuantity?.type ?? entryToEdit.servingUnit }
+
+    /// Live totals for the preview and save — recomputed from the picked serving, or rescaled from the stamp.
+    private var previewTotals: (calories: Int, protein: Double?, fat: Double?, carbs: Double?)? {
+        if let q = pickedQuantity {
+            let t = q.totals(servings: effectiveServings)
+            return (t.calories, t.protein, t.fat, t.carbs)
+        }
+        return entryToEdit.rescaled(toAmount: amount)
+    }
+
+    private var canSave: Bool {
+        isFoodEntry ? (amount > 0 && previewTotals != nil) : calories > 0
+    }
+
+    private func macroLine(_ t: (calories: Int, protein: Double?, fat: Double?, carbs: Double?)) -> String {
+        var parts: [String] = []
+        if let p = t.protein { parts.append("P \(Int(p.rounded()))g") }
+        if let c = t.carbs { parts.append("C \(Int(c.rounded()))g") }
+        if let f = t.fat { parts.append("F \(Int(f.rounded()))g") }
+        return parts.isEmpty ? "" : "  ·  " + parts.joined(separator: " · ")
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Calories", value: $calories, format: .number)
-                        .font(.largeTitle)
-                        .keyboardType(.numberPad)
-                        .autocorrectionDisabled()
-                        .focused($isFocused)
-                    
-                    TextField("Narrative (optional)", text: $whatItIs)
-                    
+                    if isFoodEntry {
+                        VStack(alignment: .leading, spacing: 2) {
+                            if let m = entryToEdit.manufacturer, !m.isEmpty {
+                                Text(m).font(.caption).foregroundStyle(.secondary)
+                            }
+                            Text(entryToEdit.narrative ?? "Food").font(.headline)
+                        }
+
+                        if canPickQuantity, quantities.count > 1 {
+                            Picker("Serving", selection: Binding(
+                                get: { selectedQuantityIndex },
+                                set: { newIndex in
+                                    selectedQuantityIndex = newIndex
+                                    // Switching unit makes the old amount meaningless — default to the new serving.
+                                    if quantities.indices.contains(newIndex) { amount = quantities[newIndex].count }
+                                }
+                            )) {
+                                ForEach(quantities.indices, id: \.self) { i in
+                                    Text(quantities[i].label).tag(i)
+                                }
+                            }.pickerStyle(.menu)
+                        }
+
+                        HStack {
+                            Text(displayUnit == .portion ? "Portions" : "Amount")
+                            Spacer()
+                            TextField("", value: $amount, format: .number)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(maxWidth: 90)
+                                .focused($isFocused)
+                            if let u = displayUnit, u != .portion { Text(u.unitName) }
+                        }
+
+                        if let t = previewTotals {
+                            Text("**\(t.calories.formatted())** kcal\(macroLine(t))")
+                        }
+                    } else {
+                        TextField("Calories", value: $calories, format: .number)
+                            .font(.largeTitle)
+                            .keyboardType(.numberPad)
+                            .autocorrectionDisabled()
+                            .focused($isFocused)
+
+                        TextField("Narrative (optional)", text: $whatItIs)
+                        
+                        DisclosureGroup("Nutrition (optional)") {
+                            MacroEntryFields(protein: $protein, carbs: $carbs, fat: $fat)
+                        }
+                    }
+
                     Picker("Meal", selection: $selectedMeal) {
                         ForEach(mealList.sorted(by: {$0.order < $1.order})) { meal in
-                            Text(meal.name)
-                                .tag(meal.mealUUID)
+                            Text(meal.name).tag(meal.mealUUID)
                         }
                     }.pickerStyle(.menu)
-                    
+
                     DatePicker(selection: $selectedDate, in: ...Date(), displayedComponents: .date, label: { Text("Date") })
-                    
-                    Button("Save") {
-                        guard calories > 0 else
-                        {
-                            caloriesWereNil = true
+
+                    Button("Save changes") {
+                        guard canSave else {
+                            showValueAlert = true
                             isFocused = true
                             return
                         }
@@ -67,26 +150,53 @@ struct EditCalsSheet: View {
         .onAppear {
             calories = entryToEdit.calories
             whatItIs = entryToEdit.narrative ?? "Quick calories"
+            amount = entryToEdit.servingAmount ?? 0
             selectedDate = entryToEdit.date
             selectedMeal = entryToEdit.meal
+            protein = entryToEdit.protein
+            carbs = entryToEdit.carbs
+            fat = entryToEdit.fat
         }
-        
-        .onChange(of: whatItIs)
-        {
+        .onChange(of: whatItIs) {
             whatItIs = String(whatItIs.prefix(30))
         }
-        
         .task {
             mealList = await dataStore.calorieActor.getListOfMeals()
+            if isFoodEntry, let id = entryToEdit.foodItem {
+                let qs = await dataStore.foodItemActor.quantities(id: id)
+                quantities = qs
+                if let idx = qs.firstIndex(where: { $0.type == entryToEdit.servingUnit }) {
+                    selectedQuantityIndex = idx           // default to the serving it was logged in
+                } else if let first = qs.first {
+                    selectedQuantityIndex = 0              // logged unit is gone; fall back to the first
+                    amount = first.count
+                }
+            }
         }
-        
-        .alert("Calories must be above zero.", isPresented: $caloriesWereNil) {
+        .alert(isFoodEntry ? "Amount must be above zero." : "Calories must be above zero.", isPresented: $showValueAlert) {
             Button("OK", role: .cancel) { }
         }
     }
-    
+
     func saveEntry() async {
-        await dataStore.calorieActor.updateCalories(entry: entryToEdit, calories: calories, narrative: whatItIs, date: selectedDate, meal: selectedMeal)
+        if isFoodEntry, let t = previewTotals {
+            await dataStore.calorieActor.updateFoodEntry(entry: entryToEdit,
+                                                         calories: t.calories,
+                                                         servingUnit: displayUnit,
+                                                         servingAmount: amount,
+                                                         protein: t.protein,
+                                                         fat: t.fat,
+                                                         carbs: t.carbs,
+                                                         date: selectedDate,
+                                                         meal: selectedMeal)
+        } else {
+            await dataStore.calorieActor.updateCalories(entry: entryToEdit,
+                                                        calories: calories,
+                                                        narrative: whatItIs,
+                                                        date: selectedDate,
+                                                        meal: selectedMeal,
+                                                        protein: protein, fat: fat, carbs: carbs)
+        }
         await dataStore.updateLump(todayLump: todayLump)
     }
 }

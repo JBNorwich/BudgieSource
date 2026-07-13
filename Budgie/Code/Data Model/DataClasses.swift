@@ -54,6 +54,9 @@ class TodayLump: ObservableObject {
     @Published var mealTotalList: [UUID:Int] = [:]
     @Published var foodList: [CalorieEntry] = []
     @Published var healthKitCalories: Int = 0
+    @Published var eatenProtein: Int = 0
+    @Published var eatenFat: Int = 0
+    @Published var eatenCarbs: Int = 0
     
     // flags for estimation of data
     @Published var basalEstimated: Bool = false
@@ -70,7 +73,9 @@ class TodayLump: ObservableObject {
     func recalculateBudget() {
         let uncapped = totalProjCalories - settingsObj.desiredDeficit
         var budget = max(uncapped, 1200)
-        let atCap = settingsObj.capBudget && budget > settingsObj.capBudgetCals
+        // Capping exists to stop a deficit budget ballooning when you burn more than expected;
+        // it makes no sense against a surplus, so it's ignored in surplus mode.
+        let atCap = settingsObj.capBudget && !settingsObj.surplusMode && budget > settingsObj.capBudgetCals
         if atCap { budget = max(settingsObj.capBudgetCals, 1200) }
         // Only flag the minimum when the 1,200 floor actually kicked in — not when the
         // budget legitimately works out at exactly 1,200.
@@ -352,4 +357,13 @@ struct WeightPoint: Identifiable {
     let id = UUID()
     let date: Date
     let kilos: Double
+}
+
+/// Macros eaten today, split by source so the HealthKit (other-app) portion can be snapshotted for the Mac, mirroring how eaten calories carry an `hk` part.
+struct EatenMacros {
+    var hkProtein = 0, hkFat = 0, hkCarbs = 0
+    var ownProtein = 0, ownFat = 0, ownCarbs = 0
+    var protein: Int { hkProtein + ownProtein }
+    var fat: Int { hkFat + ownFat }
+    var carbs: Int { hkCarbs + ownCarbs }
 }

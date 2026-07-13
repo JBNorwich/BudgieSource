@@ -21,6 +21,7 @@ struct TodayPane: View {
     @State private var showAddWater = false
     @State private var showDataView = false
     @State private var greeting = getBudgieGreeting()
+    @ObservedObject private var syncMonitor = CloudSyncMonitor.shared
 
     var body: some View {
         ScrollView {
@@ -49,6 +50,14 @@ struct TodayPane: View {
                         }
                     }
                     VStack(spacing: 24) {
+                        if !settingsObj.disableMacros {
+                            GroupBox {
+                                MacroSummaryView().environmentObject(todayLump).padding()
+                            } label: {
+                                Label("Macros", systemImage: "chart.pie")
+                            }
+                            .backgroundStyle(.regularMaterial)
+                        }
                         GroupBox {
                             VStack {
                                 TodayFoodList()
@@ -65,15 +74,17 @@ struct TodayPane: View {
             .frame(maxWidth: 800)
             .frame(maxWidth: .infinity)
 
-            }            .safeAreaInset(edge: .bottom) {
+            }
+            .background(alignment: .bottomLeading) {
                 HStack {
                     Image("Budgie")
                         .interpolation(.high)
                         .resizable()
-                        .frame(maxWidth: 116,maxHeight: 100)
+                        .frame(maxWidth: 116, maxHeight: 100)
                     Text(greeting)
                     Spacer()
-                }.offset(x: 0, y: 0)
+                }
+                .padding(.horizontal, 28)
         }
         .navigationTitle("Today")
         .toolbar {
@@ -154,10 +165,12 @@ struct TodayPane: View {
 
     @ViewBuilder private var budgetFootnote: some View {
         if let date = settingsObj.budgetSnapshotDate {
-            Label(settingsObj.budgetSnapshotIsFresh
-                  ? "Your calories out and total budget, as well as any calories or water in from Apple Health, are based on data synced from your iPhone. This was last synced at \(date.formatted(date: .omitted, time: .shortened)). To refresh it, open the iPhone app."
-                  : "Your iPhone was last synced at \(date.formatted(date: .abbreviated, time: .shortened)), so your budget is based on old calorie data. It'll refresh the next time Budgie Diet runs there.",
-                  systemImage: "info.circle")
+            GroupBox {
+                Label(settingsObj.budgetSnapshotIsFresh
+                      ? "Your calories out and total budget, as well as any calories or water in from Apple Health, are based on data synced from your iPhone. This was last synced at \(date.formatted(date: .omitted, time: .shortened)). To refresh it, open the iPhone app."
+                      : "Your iPhone was last synced at \(date.formatted(date: .abbreviated, time: .shortened)), so your budget is based on old calorie data. It'll refresh the next time Budgie Diet runs there.",
+                      systemImage: "info.circle")
+            }
         }
     }
 
@@ -171,6 +184,11 @@ struct TodayPane: View {
                         .foregroundStyle(.secondary)
                 }
                 ProgressView(value: todayLump.waterGoalDone)
+                if syncMonitor.isImporting && todayLump.waterToday == 0 {
+                    Label("Syncing from iCloud…", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             .padding()
         } label: {
