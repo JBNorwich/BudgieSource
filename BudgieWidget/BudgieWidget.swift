@@ -68,15 +68,23 @@ struct Provider: TimelineProvider {
         completion(entry)
     }
 
-    /// "Can eat now" at a given time, from the snapshot's raw numbers — the same
-    /// square-law ramp as weightCanEatNow(), but taking its inputs as parameters
-    /// because the widget can't trust settingsObj in its own process.
+    /// "Can eat now" at a given time, from the snapshot's raw numbers — the same square-law ramp
+    /// *and* meal reserve as weightCanEatNow(), but taking its inputs as parameters because the
+    /// widget can't trust settingsObj in its own process.
     private func canEat(at date: Date, budget: Int, eaten: Int, finalMealTime: Int) -> Int {
         let cal = Calendar.current
-        let mins = (60 * cal.component(.hour, from: date)) + cal.component(.minute, from: date)
-        var factor = Double(mins + 1) / Double(max(finalMealTime, 1))
-        if factor > 1 { factor = 1 } else { factor *= factor }
-        return Int(Double(budget) * factor) - eaten
+        let mealTime = max(finalMealTime, 1)
+        let minsNow = (60 * cal.component(.hour, from: date)) + cal.component(.minute, from: date) + 1
+        guard minsNow < mealTime else { return budget - eaten }
+
+        let factor = pow(Double(minsNow) / Double(mealTime), 2)
+
+        // Ease the reserved final meal back into the budget over the last stretch before meal time.
+        let releaseWindow = 45.0
+        let released = max(0, Double(minsNow) - (Double(mealTime) - releaseWindow)) / releaseWindow
+        let reserved = Double(budget) * mealReserveFraction * (1 - released)
+
+        return Int(min(Double(budget) * factor, Double(budget) - reserved)) - eaten
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
