@@ -44,6 +44,14 @@ struct AddCalsSheet: View {
     @State private var displayedItems: [RecentItem] = []
     @State private var showingOFFSheet = false
     @State private var editingFood: FoodItem?
+    
+    @State private var showingScanner = false
+    @State private var scannedBarcode: ScannedBarcode?
+
+    private struct ScannedBarcode: Identifiable {
+        let id: String
+        var barcode: String { id }
+    }
 
     // MARK: Shared
     @State private var mealList: [Meal] = []
@@ -136,6 +144,30 @@ struct AddCalsSheet: View {
             }
             .onDisappear { reloadToken = UUID() }   // pick up any edits
         }
+        
+        .toolbar {
+            if !settingsObj.offSearchDisabled {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingScanner = true
+                    } label: {
+                        Label("Scan barcode", systemImage: "barcode.viewfinder")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingScanner) {
+            BarcodeScannerSheet { code in
+                scannedBarcode = ScannedBarcode(id: code)
+            }
+        }
+        .sheet(item: $scannedBarcode) { scanned in
+            OpenFoodFactsSheet(barcode: scanned.barcode) { food in
+                selectFood(food)
+                scannedBarcode = nil
+            }
+        }
+        
         .navigationTitle("Add food")
         .task(id: searchKey) {
             if searchText.isEmpty {

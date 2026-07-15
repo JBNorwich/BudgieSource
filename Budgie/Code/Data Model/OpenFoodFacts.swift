@@ -55,7 +55,7 @@ enum OpenFoodFacts {
         ]
 
         var request = URLRequest(url: comps.url!)
-        request.setValue("Budgie Diet/3.3 (https://github.com/JBNorwich/BudgieSource)", forHTTPHeaderField: "User-Agent")
+        request.setValue("Budgie Diet/3.4 (https://github.com/JBNorwich/BudgieSource)", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -93,10 +93,45 @@ enum OpenFoodFacts {
             .sorted { $0.1 > $1.1 }        // most words matched first
             .map { $0.0 }
     }
+
+    /// Exact product lookup by barcode. A single deterministic match — no ranking needed, unlike free-text search.
+    static func lookup(barcode: String) async throws -> OFFProduct? {
+        let digits = barcode.filter(\.isNumber)
+        guard !digits.isEmpty else { return nil }
+
+        var comps = URLComponents(string: "https://world.openfoodfacts.org/api/v2/product/\(digits)")!
+        comps.queryItems = [
+            .init(name: "fields", value: "product_name,brands,code,serving_size,serving_quantity,nutriments")
+        ]
+
+        var request = URLRequest(url: comps.url!)
+        request.setValue("Budgie Diet/3.4 (https://github.com/JBNorwich/BudgieSource)", forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let http = response as? HTTPURLResponse {
+            if http.statusCode == 429 { throw SearchError.rateLimited }
+            guard (200...299).contains(http.statusCode) else { throw SearchError.serverUnavailable }
+            let contentType = http.value(forHTTPHeaderField: "Content-Type") ?? ""
+            guard contentType.contains("json") else { throw SearchError.serverUnavailable }
+        }
+
+        do {
+            let decoded = try JSONDecoder().decode(ProductResponse.self, from: data)
+            return decoded.product?.toProduct()
+        } catch is DecodingError {
+            throw SearchError.serverUnavailable
+        }
+    }
 }
 
 private struct SearchResponse: Decodable {
     let products: [LenientProduct]
+}
+
+private struct ProductResponse: Decodable {
+    let product: ProductDTO?
 }
 
 /// Wraps each product so one malformed entry is skipped rather than failing the whole response.

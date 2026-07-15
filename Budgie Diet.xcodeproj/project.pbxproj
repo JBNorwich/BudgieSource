@@ -153,6 +153,7 @@
 		D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E8318A2C7797B200AAF555 /* BMRHelper.swift */; };
 		D8F117DE2C8B6D1E0054F2A2 /* Budgie Diet.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D89A95C32C84F752007796AB /* Budgie Diet.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D8FE7F163008063000532570 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8FE7F153008063000532570 /* BarcodeScannerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -305,6 +306,7 @@
 		D8E831842C77549200AAF555 /* ChartPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPage.swift; sourceTree = "<group>"; };
 		D8E831882C776FCE00AAF555 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
 		D8E8318A2C7797B200AAF555 /* BMRHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMRHelper.swift; sourceTree = "<group>"; };
+		D8FE7F153008063000532570 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -448,6 +450,7 @@
 		D868606E2C7BD68400730373 /* Food Logging */ = {
 			isa = PBXGroup;
 			children = (
+				D8FE7F153008063000532570 /* BarcodeScannerView.swift */,
 				D86802773003985800D8871F /* OpenFoodFactsSheet.swift */,
 				D897F1B730023F5800581386 /* MacroEntryFields.swift */,
 				D8AAC99A30018B51008A3640 /* FoodLibraryView.swift */,
@@ -918,6 +921,7 @@
 				D829B08D2C7A7E6E0027841B /* Explainer.swift in Sources */,
 				D8CA2F022FF9682F00F63612 /* CalorieEntryView.swift in Sources */,
 				D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */,
+				D8FE7F163008063000532570 /* BarcodeScannerView.swift in Sources */,
 				D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */,
 				D8AAC99B30018B51008A3640 /* FoodLibraryView.swift in Sources */,
 				D8E831652C73D0BA00AAF555 /* DateFuncs.swift in Sources */,
@@ -1165,6 +1169,7 @@
 				INFOPLIST_FILE = Budgie/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Used to scan the barcodes on foods for OpenFoodFacts search.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs this access to calculate your budgets, show you your activity and account for food and water input with other apps.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs this to save calories and water you log using it.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -1207,6 +1212,7 @@
 				INFOPLIST_FILE = Budgie/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Used to scan the barcodes on foods for OpenFoodFacts search.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs this access to calculate your budgets, show you your activity and account for food and water input with other apps.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs this to save calories and water you log using it.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
