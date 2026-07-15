@@ -29,6 +29,6 @@ Carthage/
 *.swp
 *.lock
 
-.claude/settings.local
+.claude/*
 *CLAUDE.local.md*
 Budgie\ DietTests/
