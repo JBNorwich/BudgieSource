@@ -456,7 +456,7 @@ struct AddCalsSheet: View {
         if let picked = await resolveFood(for: entry) {
             // A logged food or generic → scaling mode, prefilled from the past entry.
             selectedFood = picked
-            selectedQuantityIndex = picked.quantities.firstIndex(where: { $0.type == entry.servingUnit }) ?? 0
+            selectedQuantityIndex = bestServingIndex(in: picked, for: entry)
             amount = entry.servingAmount ?? (picked.quantities.first?.count ?? 1)
             alsoSave = false
             searchText = ""
@@ -487,6 +487,23 @@ struct AddCalsSheet: View {
                              protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
         return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
                           manufacturer: entry.manufacturer, quantities: [q])
+    }
+    
+    /// Best serving to re-open a past entry on: the one matching the entry's unit and, when several
+    /// share that unit, the one whose per-unit calories are closest to what was actually logged —
+    /// so a food with two same-unit servings re-opens on the one the entry really used.
+    private func bestServingIndex(in food: PickedFood, for entry: CalorieEntry) -> Int {
+        guard let unit = entry.servingUnit else { return 0 }
+        let sameUnit = food.quantities.indices.filter { food.quantities[$0].type == unit }
+        guard let first = sameUnit.first else { return 0 }
+        guard let amount = entry.servingAmount, amount > 0 else { return first }
+        let loggedRate = Double(entry.calories) / amount
+        return sameUnit.min { rateGap(food.quantities[$0], loggedRate) < rateGap(food.quantities[$1], loggedRate) } ?? first
+    }
+
+    private func rateGap(_ q: FoodQuantity, _ rate: Double) -> Double {
+        guard q.count > 0 else { return .greatestFiniteMagnitude }
+        return abs(Double(q.calories) / q.count - rate)
     }
 
     /// For the recent list: entries linked to a live food show that food's current recipe (and re-add it fresh); archived or deleted foods are dropped so we don't suggest something you've retired; genuine quick entries keep their own values. One row per food, batched to one lookup per food.
