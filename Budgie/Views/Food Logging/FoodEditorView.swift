@@ -20,15 +20,22 @@ struct FoodEditorView: View {
     @Environment(\.dismiss) private var dismiss
 
     private let existingID: UUID?
+    private let prefilledBarcode: String?
+    private let onSaved: ((PickedFood) -> Void)?
     @State private var name: String
     @State private var manufacturer: String
     @State private var quantities: [FoodQuantity]
     private let isModal: Bool
 
-    /// Pass an existing item to edit it, or nothing to create a new one.
-    init(existing: FoodItem? = nil, isModal: Bool = false) {
+    /// Pass an existing item to edit it, or nothing to create a new one. `prefilledBarcode` stamps a
+    /// barcode onto a newly created food (so a future scan resolves it locally); `onSaved` hands the
+    /// created food back to a caller that wants to log it immediately.
+    init(existing: FoodItem? = nil, isModal: Bool = false,
+         prefilledBarcode: String? = nil, onSaved: ((PickedFood) -> Void)? = nil) {
         self.existingID = existing?.id
         self.isModal = isModal
+        self.prefilledBarcode = prefilledBarcode
+        self.onSaved = onSaved
         _name = State(initialValue: existing?.name ?? "")
         _manufacturer = State(initialValue: existing?.manufacturer ?? "")
         let qs = existing?.quantities ?? []
@@ -161,7 +168,9 @@ struct FoodEditorView: View {
         } else {
             let item = FoodItem(name: trimmedName, manufacturer: cleanMfr,
                                 quantities: quantities, source: .userInput)
+            item.barcode = prefilledBarcode
             await dataStore.foodItemActor.insert(item)
+            onSaved?(item.asPicked)
         }
     }
 }

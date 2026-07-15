@@ -33,6 +33,12 @@ struct OpenFoodFactsSheet: View {
     @State private var results: [OFFProduct] = []
     @State private var isSearching = false
     @State private var errorMessage: String?
+    @State private var creatingManually = false
+    
+    private var scannedBarcode: String? {
+        if case let .barcode(code) = mode { return code }
+        return nil
+    }
 
     enum Mode {
         case search(term: String)
@@ -69,6 +75,15 @@ struct OpenFoodFactsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                }
+            }
+            
+            .sheet(isPresented: $creatingManually) {
+                NavigationStack {
+                    FoodEditorView(isModal: true, prefilledBarcode: scannedBarcode) { picked in
+                        onImport(picked)
+                        dismiss()
+                    }
                 }
             }
         }
@@ -156,8 +171,14 @@ struct OpenFoodFactsSheet: View {
             } else if let product = results.first {
                 List { productRow(product) }
             } else {
-                ContentUnavailableView("Not found", systemImage: "barcode",
-                                       description: Text("This barcode isn't in OpenFoodFacts yet."))
+                ContentUnavailableView {
+                    Label("Not found", systemImage: "barcode")
+                } description: {
+                    Text("This barcode isn't in OpenFoodFacts yet.")
+                } actions: {
+                    Button("Create it manually") { creatingManually = true }
+                        .buttonStyle(.borderedProminent)
+                }
             }
         }
         .task { await runLookup(barcode: barcode) }
