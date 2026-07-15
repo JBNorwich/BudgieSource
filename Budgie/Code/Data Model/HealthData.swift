@@ -119,7 +119,7 @@ final class HealthData {
         
         let calsPerMinute: Double = Double(avgBasalCals) / 1440
         let projectedCals = Double(1440 - minutesIntoDay()) * calsPerMinute
-        return Int(projectedCals)
+        return Int(projectedCals.rounded())
     }
     
     func getAverageWeight(from: Date, to: Date) async -> Double {

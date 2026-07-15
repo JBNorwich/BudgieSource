@@ -152,21 +152,33 @@ private struct ProductDTO: Decodable {
 
     struct Nutriments: Decodable {
         let energyKcal100g: FlexibleDouble?
+        let energyKJ100g: FlexibleDouble?
+        let energy100g: FlexibleDouble?
         let proteins100g: FlexibleDouble?
         let carbohydrates100g: FlexibleDouble?
         let fat100g: FlexibleDouble?
 
         enum CodingKeys: String, CodingKey {
             case energyKcal100g = "energy-kcal_100g"
+            case energyKJ100g = "energy-kj_100g"
+            case energy100g = "energy_100g"
             case proteins100g = "proteins_100g"
             case carbohydrates100g = "carbohydrates_100g"
             case fat100g = "fat_100g"
+        }
+
+        /// Calories per 100 g/ml. Prefers the direct kcal field, then falls back to a kJ value
+        /// (÷4.184) — many EU-packaged products report only kJ. nil when neither is usable.
+        var kcalPer100: Double? {
+            if let kcal = energyKcal100g?.value, kcal > 0 { return kcal }
+            if let kj = energyKJ100g?.value ?? energy100g?.value, kj > 0 { return kj / 4.184 }
+            return nil
         }
     }
 
     func toProduct() -> OFFProduct? {
         guard let rawName = product_name?.trimmingCharacters(in: .whitespacesAndNewlines), !rawName.isEmpty,
-              let kcal100 = nutriments?.energyKcal100g?.value else { return nil } // skip products with no usable nutrition
+              let kcal100 = nutriments?.kcalPer100 else { return nil } // skip products with no usable energy
 
         let per100 = FoodQuantity(type: .grams, count: 100, calories: Int(kcal100.rounded()),
                                  protein: nutriments?.proteins100g?.value,
