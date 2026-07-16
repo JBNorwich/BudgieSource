@@ -16,6 +16,9 @@
 import SwiftUI
 
 struct FoodLibraryView: View {
+    @EnvironmentObject var todayLump: TodayLump
+    @State private var foodToLog: FoodItem?
+    @State private var foodToEdit: FoodItem?
     @State private var foods: [FoodItem] = []
     @State private var searchText: String = ""
     @State private var showArchived: Bool = false
@@ -38,21 +41,24 @@ struct FoodLibraryView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(foods) { food in
-                    NavigationLink {
-                        FoodEditorView(existing: food)
-                            .onDisappear { reloadToken = UUID() }
-                    } label: {
-                        foodRow(food)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button {
-                            Task { await setArchived(food, archived: !food.archived) }
-                        } label: {
-                            Label(food.archived ? "Unarchive" : "Archive",
-                                  systemImage: food.archived ? "tray.and.arrow.up" : "archivebox")
+                    foodRow(food)
+                        .contentShape(Rectangle())
+                        .onTapGesture { foodToLog = food }
+                        .swipeActions(edge: .leading) {            // swipe right → edit
+                            Button {
+                                foodToEdit = food
+                            } label: { Label("Edit", systemImage: "pencil") }
+                            .tint(.blue)
                         }
-                        .tint(.orange)
-                    }
+                        .swipeActions(edge: .trailing) {           // swipe left → archive
+                            Button {
+                                Task { await setArchived(food, archived: !food.archived) }
+                            } label: {
+                                Label(food.archived ? "Unarchive" : "Archive",
+                                      systemImage: food.archived ? "tray.and.arrow.up" : "archivebox")
+                            }
+                            .tint(.orange)
+                        }
                 }
             }
         }
@@ -80,6 +86,20 @@ struct FoodLibraryView: View {
         .sheet(isPresented: $showingNewFood) {
             NavigationStack { FoodEditorView(isModal: true) }
                 .onDisappear { reloadToken = UUID() }
+        }
+        
+        .sheet(item: $foodToLog) { food in
+            NavigationStack {
+                AddCalsSheet(selectedDate: Date(), preselectedFood: food.asPicked)
+                    .environmentObject(todayLump)
+            }
+            .onDisappear { reloadToken = UUID() }
+        }
+        .sheet(item: $foodToEdit) { food in
+            NavigationStack {
+                FoodEditorView(existing: food, isModal: true)
+            }
+            .onDisappear { reloadToken = UUID() }
         }
     }
 
@@ -111,4 +131,5 @@ struct FoodLibraryView: View {
     NavigationStack {
         FoodLibraryView()
     }
+    .environmentObject(TodayLump())
 }

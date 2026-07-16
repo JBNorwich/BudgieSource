@@ -116,9 +116,13 @@ struct AddCalsSheet: View {
         SearchKey(term: searchText, allMeals: showAllFoods, meal: selectedMeal, reload: reloadToken)
     }
     
-    init(selectedDate: Date, initialSearch: String = "") {
+    init(selectedDate: Date, initialSearch: String = "", preselectedFood: PickedFood? = nil) {
         _selectedDate = State(initialValue: selectedDate)
         _searchText = State(initialValue: initialSearch)
+        _selectedFood = State(initialValue: preselectedFood)
+        if let food = preselectedFood {
+            _amount = State(initialValue: food.quantities.first?.count ?? 0)
+        }
     }
 
     // MARK: Body
