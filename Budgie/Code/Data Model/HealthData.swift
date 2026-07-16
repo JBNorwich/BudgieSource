@@ -894,7 +894,7 @@ final class HealthData {
     /// One-off seed list of common manufacturer names bundled with the app, so autocomplete is useful
     /// before much has been saved. Optional: returns [] if the resource is absent or unreadable.
     static let seedManufacturers: [String] = {
-        guard let url = Bundle.main.url(forResource: "Manufacturers", withExtension: "json"),
+        guard let url = Bundle.main.url(forResource: "manufacturers", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let names = try? JSONDecoder().decode([String].self, from: data)
         else { return [] }
