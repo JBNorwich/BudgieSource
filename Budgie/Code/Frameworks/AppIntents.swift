@@ -157,6 +157,80 @@ struct LogWaterIntent: AppIntent {
     }
 }
 
+struct GetCanEatNowIntent: AppIntent {
+    static var title: LocalizedStringResource = "Get calories I can eat now"
+    static var description = IntentDescription("Returns how many calories you can eat right now as a variable for a Shortcut.")
+    static var openAppWhenRun: Bool = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<Int> {
+        let lump = TodayLump()
+        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        return .result(value: lump.canEatNow)
+    }
+}
+
+struct GetBudgetRemainingIntent: AppIntent {
+    static var title: LocalizedStringResource = "Get remaining calorie budget"
+    static var description = IntentDescription(
+        "Returns how many calories are left in today's budget as a variable in a Shortcut.")
+    static var openAppWhenRun: Bool = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ReturnsValue<Int> {
+        let lump = TodayLump()
+        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        return .result(value: lump.totalBudgetRem)
+    }
+}
+
+struct SpeakCanEatNowIntent: AppIntent {
+    static var title: LocalizedStringResource = "How many calories can I eat now"
+    static var description = IntentDescription(
+        "Tells you how many calories you can eat right now while staying on target.")
+    static var openAppWhenRun: Bool = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let lump = TodayLump()
+        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+
+        // With meal allocations on, "can eat now" isn't a user-facing figure — the app
+        // replaces it with remaining budget, so answer in those terms to stay consistent.
+        if settingsObj.useMealAllocations {
+            let v = lump.totalBudgetRem
+            let dialog: IntentDialog = v >= 0
+                ? "You have \(v.formatted()) calories left in your budget today."
+                : "You're about \((-v).formatted()) calories over your budget today."
+            return .result(dialog: dialog)
+        }
+
+        let v = lump.canEatNow
+        let dialog: IntentDialog = v >= 0
+            ? "You can eat \(v.formatted()) calories now."
+            : "You're about \((-v).formatted()) calories over your target for now."
+        return .result(dialog: dialog)
+    }
+}
+
+struct SpeakBudgetRemainingIntent: AppIntent {
+    static var title: LocalizedStringResource = "How much calorie budget do I have left"
+    static var description = IntentDescription(
+        "Tells you how many calories are left in today's budget.")
+    static var openAppWhenRun: Bool = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult & ProvidesDialog {
+        let lump = TodayLump()
+        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        let v = lump.totalBudgetRem
+        let dialog: IntentDialog = v >= 0
+            ? "You have \(v.formatted()) calories left in your budget today."
+            : "You're about \((-v).formatted()) calories over your budget today."
+        return .result(dialog: dialog)
+    }
+}
+
 struct LogFoodShortcuts: AppShortcutsProvider {
     @AppShortcutsBuilder
         static var appShortcuts: [AppShortcut] {
