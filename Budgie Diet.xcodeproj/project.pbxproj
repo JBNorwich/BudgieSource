@@ -326,12 +326,19 @@
 			);
 			target = D8CA2EDD2FF95BF000F63612 /* Budgie Mac */;
 		};
+		D8D1FFEB30095B49000B1B6F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				manufacturers.json,
+			);
+			target = D8CA2EDD2FF95BF000F63612 /* Budgie Mac */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D80D1DBB2FF3CDB500D01B51 /* .claude */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = .claude; sourceTree = "<group>"; };
 		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (D89A988C2FFA77200028857A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, D8CA2F272FF9B61600F63612 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
-		D897F1B93002445200581386 /* Data */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Data; sourceTree = "<group>"; };
+		D897F1B93002445200581386 /* Data */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (D8D1FFEB30095B49000B1B6F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Data; sourceTree = "<group>"; };
 		D8AAC98930017A09008A3640 /* Budgie DietTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Budgie DietTests"; sourceTree = "<group>"; };
 		D8B3F3012D8F11C500DDA41D /* Water Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Water Logging"; sourceTree = "<group>"; };
 		D8C302AB2FFED043009B7419 /* .github */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = .github; sourceTree = "<group>"; };
