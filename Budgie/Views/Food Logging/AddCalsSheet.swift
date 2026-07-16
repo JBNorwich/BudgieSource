@@ -31,6 +31,8 @@ struct AddCalsSheet: View {
     @State private var saveServingCount: Double = 1
     @State private var saveServingName: String = ""
     @FocusState private var caloriesFocused: Bool
+    @FocusState private var manufacturerFocused: Bool
+    @State private var knownManufacturers: [String] = []
 
     // MARK: Food selection (scaling an existing food)
     @State private var selectedFood: PickedFood?
@@ -78,6 +80,15 @@ struct AddCalsSheet: View {
         if selectedFood != nil { return pickedQuantity != nil && effectiveServings > 0 }
         if alsoSave { return (calories ?? 0) > 0 && !whatItIs.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         return (calories ?? 0) > 0
+    }
+    
+    private var manufacturerSuggestions: [String] {
+        let q = manufacturer.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return [] }
+        return knownManufacturers
+            .filter { $0.localizedCaseInsensitiveContains(q)
+                   && $0.localizedCaseInsensitiveCompare(q) != .orderedSame }   // don't suggest an exact match
+            .prefix(5).map { $0 }
     }
 
     private var newCalsIn: Int { effectiveCalories + todayLump.eatenCalories }
@@ -135,7 +146,7 @@ struct AddCalsSheet: View {
             } else {
                 searchResults
             }
-        }
+        }.suggestionOverlay(manufacturerSuggestions) { manufacturer = $0 }
         .searchable(text: $searchText, prompt: "Search foods and past entries")
         .sheet(isPresented: $showingOFFSheet) {
             OpenFoodFactsSheet(term: searchText) { food in
@@ -197,6 +208,8 @@ struct AddCalsSheet: View {
             guard let start = mealList.first(where: { $0.mealUUID == preSelectedMeal }) ?? mealList.first else { return }
             selectedMeal = start.mealUUID
         }
+        
+        .task { knownManufacturers = await dataStore.knownManufacturers() }
     }
 
     // MARK: Logging form (shown when not searching)
@@ -256,6 +269,8 @@ struct AddCalsSheet: View {
 
         TextField("Name (optional)", text: $whatItIs)
         TextField("Manufacturer (optional)", text: $manufacturer)
+            .focused($manufacturerFocused)
+            .suggestionAnchor(manufacturerFocused && !manufacturerSuggestions.isEmpty)
 
         DisclosureGroup("Nutrition (optional)") {
             MacroEntryFields(protein: $protein, carbs: $carbs, fat: $fat)

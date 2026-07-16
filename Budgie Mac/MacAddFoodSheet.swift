@@ -36,6 +36,7 @@ struct MacAddFoodSheet: View {
     @State private var saveServingUnit: FoodQuantityType = .portion
     @State private var saveServingCount: Double = 1
     @State private var saveServingName: String = ""
+    @State private var knownManufacturers: [String] = []
 
     // Food selection (scaling an existing food)
     @State private var selectedFood: PickedFood?
@@ -94,6 +95,15 @@ struct MacAddFoodSheet: View {
 
     private var queryKey: String { "\(searchText)|\(showAllFoods)|\(selectedMeal)|\(reloadToken)" }
 
+    private var manufacturerSuggestions: [String] {
+        let q = manufacturer.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return [] }
+        return knownManufacturers
+            .filter { $0.localizedCaseInsensitiveContains(q)
+                   && $0.localizedCaseInsensitiveCompare(q) != .orderedSame }   // don't suggest an exact match
+            .prefix(5).map { $0 }
+    }
+
     // MARK: Body
 
     var body: some View {
@@ -141,6 +151,7 @@ struct MacAddFoodSheet: View {
         }
         .frame(width: 470, height: 640)
         .task { await loadMeals() }
+        .task { knownManufacturers = await dataStore.knownManufacturers() }
         .task(id: queryKey) { await loadSearch() }
         .onChange(of: whatItIs) { whatItIs = String(whatItIs.prefix(30)) }
         .sheet(isPresented: $showingOFFSheet) {
@@ -159,6 +170,11 @@ struct MacAddFoodSheet: View {
             .textFieldStyle(.roundedBorder).font(.title2)
         TextField("Name (optional)", text: $whatItIs)
         TextField("Manufacturer (optional)", text: $manufacturer)
+            .textInputSuggestions {
+                ForEach(manufacturerSuggestions, id: \.self) { name in
+                    Text(name).textInputCompletion(name)
+                }
+            }
 
         DisclosureGroup("Nutrition (optional)") {
             MacMacroFields(protein: $protein, carbs: $carbs, fat: $fat)

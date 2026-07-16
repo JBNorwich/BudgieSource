@@ -230,4 +230,10 @@ actor FoodItemActor {
     func allPicked() -> [PickedFood] {
         ((try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []).filter { !$0.archived }.map(\.asPicked)
     }
+    
+    /// Non-empty manufacturer names from saved foods (may repeat; HealthData folds them).
+    func manufacturers() -> [String] {
+        let all = (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []
+        return all.compactMap(\.manufacturer).filter { !$0.isEmpty }
+    }
 }

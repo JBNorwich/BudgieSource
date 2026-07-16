@@ -26,6 +26,8 @@ struct FoodEditorView: View {
     @State private var manufacturer: String
     @State private var quantities: [FoodQuantity]
     private let isModal: Bool
+    @FocusState private var manufacturerFocused: Bool
+    @State private var knownManufacturers: [String] = []
 
     /// Pass an existing item to edit it, or nothing to create a new one. `prefilledBarcode` stamps a
     /// barcode onto a newly created food (so a future scan resolves it locally); `onSaved` hands the
@@ -48,11 +50,22 @@ struct FoodEditorView: View {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !quantities.isEmpty
     }
 
+    private var manufacturerSuggestions: [String] {
+        let q = manufacturer.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return [] }
+        return knownManufacturers
+            .filter { $0.localizedCaseInsensitiveContains(q)
+                   && $0.localizedCaseInsensitiveCompare(q) != .orderedSame }   // don't suggest an exact match
+            .prefix(5).map { $0 }
+    }
+
     var body: some View {
         Form {
             Section("Food") {
                 TextField("Name", text: $name)
                 TextField("Manufacturer (optional)", text: $manufacturer)
+                    .focused($manufacturerFocused)
+                    .suggestionAnchor(manufacturerFocused && !manufacturerSuggestions.isEmpty)
             }
 
             ForEach(quantities.indices, id: \.self) { i in
@@ -100,6 +113,8 @@ struct FoodEditorView: View {
                                                           to: field.endOfDocument)
             }
         }
+        .suggestionOverlay(manufacturerSuggestions) { manufacturer = $0 }
+        .task { knownManufacturers = await dataStore.knownManufacturers() }
     }
 
     @ViewBuilder

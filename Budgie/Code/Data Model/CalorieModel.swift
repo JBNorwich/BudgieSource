@@ -584,6 +584,12 @@ actor CalorieActor {
             do { try modelContext.save() } catch { print("Relabel entries error: \(error)") }
         }
     }
+    
+    /// Non-empty manufacturer names the user has typed on logged entries.
+    func manufacturers() -> [String] {
+        let all = (try? modelContext.fetch(FetchDescriptor<CalorieEntry>())) ?? []
+        return all.compactMap(\.manufacturer).filter { !$0.isEmpty }
+    }
 }
 
 extension CalorieEntry {

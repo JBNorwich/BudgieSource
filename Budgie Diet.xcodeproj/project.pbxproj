@@ -152,6 +152,7 @@
 		D8E831852C77549200AAF555 /* ChartPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831842C77549200AAF555 /* ChartPage.swift */; };
 		D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E8318A2C7797B200AAF555 /* BMRHelper.swift */; };
+		D8E98F723009542E0096E92A /* SuggestionAnchorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E98F713009542E0096E92A /* SuggestionAnchorKey.swift */; };
 		D8F117DE2C8B6D1E0054F2A2 /* Budgie Diet.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D89A95C32C84F752007796AB /* Budgie Diet.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D8FE7F163008063000532570 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8FE7F153008063000532570 /* BarcodeScannerView.swift */; };
 /* End PBXBuildFile section */
@@ -306,6 +307,7 @@
 		D8E831842C77549200AAF555 /* ChartPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPage.swift; sourceTree = "<group>"; };
 		D8E831882C776FCE00AAF555 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
 		D8E8318A2C7797B200AAF555 /* BMRHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMRHelper.swift; sourceTree = "<group>"; };
+		D8E98F713009542E0096E92A /* SuggestionAnchorKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionAnchorKey.swift; sourceTree = "<group>"; };
 		D8FE7F153008063000532570 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -450,6 +452,7 @@
 		D868606E2C7BD68400730373 /* Food Logging */ = {
 			isa = PBXGroup;
 			children = (
+				D8E98F713009542E0096E92A /* SuggestionAnchorKey.swift */,
 				D8FE7F153008063000532570 /* BarcodeScannerView.swift */,
 				D86802773003985800D8871F /* OpenFoodFactsSheet.swift */,
 				D897F1B730023F5800581386 /* MacroEntryFields.swift */,
@@ -890,6 +893,7 @@
 				D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */,
 				D8CA2F292FF9BDBE00F63612 /* WhatsNewSheet.swift in Sources */,
 				D8BDE73A2C7BAF7900E07471 /* CalorieModel.swift in Sources */,
+				D8E98F723009542E0096E92A /* SuggestionAnchorKey.swift in Sources */,
 				D868606D2C7BD0E900730373 /* Tests.swift in Sources */,
 				D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */,
 				D86802843003BBB000D8871F /* DataManagementView.swift in Sources */,

@@ -877,6 +877,19 @@ final class HealthData {
         UserDefaults.standard.set(candidates, forKey: defaultsKey)
     }
 #endif
+    
+    /// Distinct manufacturer names the user has entered — across saved foods and logged entries —
+    /// for autocomplete suggestions. Case-insensitively de-duplicated (first spelling wins), sorted.
+    func knownManufacturers() async -> [String] {
+        let saved = await foodItemActor.manufacturers()
+        let logged = await calorieActor.manufacturers()
+        var seen = Set<String>()
+        var result: [String] = []
+        for name in saved + logged where seen.insert(name.lowercased()).inserted {
+            result.append(name)
+        }
+        return result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
 }
 
 
