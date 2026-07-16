@@ -35,6 +35,7 @@ struct MacAddFoodSheet: View {
     @State private var alsoSave = false
     @State private var saveServingUnit: FoodQuantityType = .portion
     @State private var saveServingCount: Double = 1
+    @State private var saveServingName: String = ""
 
     // Food selection (scaling an existing food)
     @State private var selectedFood: PickedFood?
@@ -171,6 +172,8 @@ struct MacAddFoodSheet: View {
                 Text("Grams").tag(FoodQuantityType.grams)
                 Text("Millilitres").tag(FoodQuantityType.millilitres)
             }.pickerStyle(.menu)
+
+            TextField("Serving name (optional), e.g. “1 medium banana”", text: $saveServingName)
 
             HStack {
                 Text(saveServingUnit == .portion ? "Servings" : "Amount")
@@ -403,8 +406,10 @@ struct MacAddFoodSheet: View {
                                          date: selectedDate, meal: selectedMeal)
         } else if alsoSave {
             let mfr = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
+            let servName = saveServingName.trimmingCharacters(in: .whitespacesAndNewlines)
             let quantity = FoodQuantity(type: saveServingUnit, count: saveServingCount,
-                                        calories: calories!, protein: protein, carbs: carbs, fat: fat)
+                                        calories: calories!, protein: protein, carbs: carbs, fat: fat,
+                                        servingName: servName.isEmpty ? nil : servName)
             let food = FoodItem(name: whatItIs.trimmingCharacters(in: .whitespacesAndNewlines),
                                 manufacturer: mfr.isEmpty ? nil : mfr,
                                 quantities: [quantity], source: .userInput)
@@ -436,6 +441,7 @@ struct MacAddFoodSheet: View {
         alsoSave = false
         saveServingUnit = .portion
         saveServingCount = 1
+        saveServingName = ""
         selectedFood = nil
         selectedQuantityIndex = 0
         amount = 0
