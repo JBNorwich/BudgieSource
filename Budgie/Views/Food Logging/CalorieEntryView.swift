@@ -45,6 +45,8 @@ struct CalorieEntryView: View {
                         Text(manufacturer)
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
                     } else if isGeneric {
                         Text("Generic")
                             .font(.caption)
@@ -61,6 +63,8 @@ struct CalorieEntryView: View {
                     }
                 }
                 Text(narrative)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 if detailed, !macroText.isEmpty {
                     Text(macroText)
                         .font(.caption)
@@ -70,6 +74,7 @@ struct CalorieEntryView: View {
             Spacer()
             Text(calories.formatted())
                 .contentTransition(.numericText())
+                .layoutPriority(1)          // keep the number right-aligned; the name truncates, not this
         }
     }
 }

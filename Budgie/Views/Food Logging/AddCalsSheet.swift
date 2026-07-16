@@ -202,7 +202,6 @@ struct AddCalsSheet: View {
                 entryResults = entries.filter { $0.foodItem == nil && $0.servingUnit == nil }
             }
         }
-        .onChange(of: whatItIs) { whatItIs = String(whatItIs.prefix(30)) }
         .task {
             mealList = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
             guard let start = mealList.first(where: { $0.mealUUID == preSelectedMeal }) ?? mealList.first else { return }
