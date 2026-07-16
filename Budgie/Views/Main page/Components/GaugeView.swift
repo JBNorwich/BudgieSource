@@ -26,6 +26,17 @@ struct GaugeView: View {
         return "On target"
     }
     
+    private var standing: (text: String, colour: Color) {
+        switch budgetStanding(diff: todayLump.progressAgainstTarget,
+                              budget: todayLump.totalBudget,
+                              projectedBasal: todayLump.projectedBasal) {
+        case .wellUnder:    return ("Below target", .blue)
+        case .onTarget:     return ("On target", .green)
+        case .slightlyOver: return ("Slightly over", .yellow)
+        case .over:         return ("Above target", .red)
+        }
+    }
+    
     var body: some View {
         HStack {
             VStack {
@@ -55,16 +66,7 @@ struct GaugeView: View {
             Divider()
             VStack {
                 HStack {
-                    if (todayLump.progressAgainstTarget < 0.95) {
-                        Text("**Below target**")
-                            .foregroundColor(.blue)
-                    } else if todayLump.progressAgainstTarget > 1.05 {
-                        Text("**Above target**")
-                            .foregroundColor(.red)
-                    } else {
-                        Text("**On target**")
-                            .foregroundColor(.teal)
-                    }
+                    Text("**\(standing.text)**").foregroundColor(standing.colour)
                     Spacer()
                 }
                 HStack {

@@ -198,18 +198,31 @@ func budgetBlobColour(canEatNow: Int, surplusMode: Bool = settingsObj.surplusMod
     }
 }
 
-/// Colour of the progress ring. `diff` is the caller's progress metric (1.0 == on pace).
-func budgetPathColour(diff: Double, budget: Int, projectedBasal: Int) -> Color {
-    if diff < 0.25 {
-        return .blue
-    } else if diff < 1.05 {
-        return .green
-    } else if diff < 1.20 {
-        // A little over, but fine if the overage is smaller than the resting calories left to burn.
-        return (diff - 1) * Double(budget) < Double(projectedBasal) ? .green : .yellow
-    } else {
-        return .red          // ← single source of truth; fixes the watch's yellow "bad" bug
+/// Single source of truth for both the meter ring colour and the gauge's status label.
+enum BudgetStanding {
+    case wellUnder, onTarget, slightlyOver, over
+    var colour: Color {
+        switch self {
+        case .wellUnder:    return .blue
+        case .onTarget:     return .green
+        case .slightlyOver: return .yellow
+        case .over:         return .red
+        }
     }
+}
+
+func budgetStanding(diff: Double, budget: Int, projectedBasal: Int) -> BudgetStanding {
+    if diff < 0.25 { return .wellUnder }
+    if diff < 1.05 { return .onTarget }
+    if diff < 1.20 {
+        // a little over, but fine if the overage is under the resting calories left to burn
+        return (diff - 1) * Double(budget) < Double(projectedBasal) ? .onTarget : .slightlyOver
+    }
+    return .over
+}
+
+func budgetPathColour(diff: Double, budget: Int, projectedBasal: Int) -> Color {
+    budgetStanding(diff: diff, budget: budget, projectedBasal: projectedBasal).colour
 }
 
 /// Headline label above the meter.
