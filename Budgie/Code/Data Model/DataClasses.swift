@@ -70,6 +70,12 @@ class TodayLump: ObservableObject {
     /// Whether a request that queued behind an in-flight update wanted to publish the snapshot. OR-combined so a foreground publish isn't lost when it queues behind a background pass.
     var queuedPublishSnapshot: Bool = false
     
+    /// Whether the measured week genuinely shows movement AWAY from the goal — as distinct from
+    /// there simply being no target to project from. Only meaningful once food is logged consistently.
+    var movingAwayFromGoal: Bool {
+        consistentlyLoggedFood && measuredGoalRate <= 0
+    }
+
     func recalculateBudget() {
         let uncapped = totalProjCalories - settingsObj.desiredDeficit
         var budget = max(uncapped, 1200)

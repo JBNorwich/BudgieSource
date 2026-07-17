@@ -27,11 +27,7 @@ struct TinyMeter: View {
     var totalBudg: Int
     var projBasal: Int
     var surplusMode: Bool = false
-
-    private var pathDiff: Double {
-        let d = progress / getPercentOfDayDone()
-        return d.isFinite ? d : 0
-    }
+    var targetProgress: Double
 
     var body: some View {
         ZStack {
@@ -43,7 +39,7 @@ struct TinyMeter: View {
                 .rotation(Angle(degrees: -90))
                 // GOES CLOCKWISE FROM EAST
                 .fill(.clear)
-                .stroke(budgetPathColour(diff: pathDiff, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
+                .stroke(budgetPathColour(diff: targetProgress, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
                 .shadow(radius: 10)
             Text(abs(leftToEat).formatted())
                 .fontWeight(.heavy)
@@ -64,7 +60,9 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (BudgieEntry) -> ()) {
-        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false, useAllocations: false)
+        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890,
+                                totalBudg: 3560, projBasal: 2000, surplusMode: false,
+                                useAllocations: false, targetProgress: 0.86)
         completion(entry)
     }
 
@@ -130,6 +128,9 @@ struct Provider: TimelineProvider {
             let leftToEat = useAllocations
                 ? budget - eaten
                 : canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal)
+            // The paced target is just what's left plus what's gone — clamped like progressAgainstTarget.
+            let target = leftToEat + eaten
+            let targetProgress = target != 0 ? min(max(Double(eaten) / Double(target), 0), 2) : 0
             entries.append(BudgieEntry(date: entryDate,
                                        leftToEat: leftToEat,
                                        progressDbl: progress,
@@ -137,7 +138,8 @@ struct Provider: TimelineProvider {
                                        totalBudg: budget,
                                        projBasal: projBasal,
                                        surplusMode: surplus,
-                                       useAllocations: useAllocations))
+                                       useAllocations: useAllocations,
+                                       targetProgress: targetProgress))
         }
 
         // Reload after the last entry as before, but never later than midnight, so the stale
@@ -157,6 +159,8 @@ struct BudgieEntry: TimelineEntry {
     let surplusMode: Bool
     let useAllocations: Bool
     var isStale: Bool = false
+    /// Eaten ÷ the paced target, matching TodayLump.progressAgainstTarget — so the widget's ring colour agrees with the phone's. Computed per entry date, not at render time.
+    var targetProgress: Double = 0
 }
 
 struct BudgieWidgetEntryView : View {
@@ -193,7 +197,7 @@ struct BudgieWidgetEntryView : View {
                     Spacer()
                     HStack {
                         Spacer()
-                        TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode)
+                        TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode, targetProgress: entry.targetProgress)
                             .frame(maxWidth: 50, maxHeight: 50)
                     }
                 }

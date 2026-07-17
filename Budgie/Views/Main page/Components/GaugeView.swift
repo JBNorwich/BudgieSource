@@ -51,10 +51,8 @@ struct GaugeView: View {
                     }
                 } minimumValueLabel: {
                     Text("")
-                        .foregroundColor(.teal)
                 } maximumValueLabel: {
                     Text("")
-                        .foregroundColor(.red)
                 }.gaugeStyle(.accessoryCircular)
                     .tint(gradient)
                     .padding()

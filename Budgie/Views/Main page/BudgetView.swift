@@ -144,7 +144,7 @@ struct BudgetView: View {
                                 .accessibilityElement(children: .contain)
                                 .accessibilityAddTraits(.isButton)
                                 .accessibilityHint("Go to the Water page")
-                                .accessibilityAction { MainNavDestination = .waterPage }
+                                .accessibilityAction { mainNavDestination = .waterPage }
                         }
                         
                         if !settingsObj.disableWeightFeatures {

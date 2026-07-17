@@ -160,10 +160,13 @@ struct WeightView: View {
                             Text("Expect to hit goal in **\(formatDuration(days: daysToGoal))**")
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)
-                        } else {
+                        } else if todayLump.movingAwayFromGoal {
                             Text(settingsObj.surplusMode
                                  ? "**In caloric deficit** over past week"
                                  : "**In caloric surplus** over past week")
+                        } else {
+                            Text("Log your food regularly to get predictions.")
+                                .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
                         }
                         Spacer()
                     }

@@ -71,7 +71,8 @@ struct CalorieActorTests {
 
         let foodID = UUID()
         await CalorieActor(modelContainer: store)
-            .linkQuickEntries(toFood: foodID, name: "Protein Bar", manufacturer: "Acme", calories: 90)
+            .linkQuickEntries(toFood: foodID, name: "Protein Bar", manufacturer: "Acme",
+                              quantity: FoodQuantity(type: .portion, count: 1, calories: 90))
 
         let entries = try ModelContext(store).fetch(FetchDescriptor<CalorieEntry>())
         let linked = entries.first { $0.calories == 90 }

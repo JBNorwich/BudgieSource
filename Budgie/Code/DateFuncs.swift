@@ -181,16 +181,6 @@ func getCurrentTimeonDate(date: Date) -> Date {
     return newDate ?? date
 }
 
-extension Calendar {
-    /// Returns the number of days between two dates.
-    func numberOfDaysBetween(_ from: Date, and to: Date) -> Int {
-        let fromDate = startOfDay(for: from) // <1>
-        let toDate = startOfDay(for: to) // <2>
-        let numberOfDays = dateComponents([.day], from: fromDate, to: toDate)
-        return numberOfDays.day ?? 0
-    }
-}
-
 func timeToMinsIntoDay(time: Date) -> Int {
     let calendar = Calendar.current
     let hour = calendar.component(.hour, from: time)

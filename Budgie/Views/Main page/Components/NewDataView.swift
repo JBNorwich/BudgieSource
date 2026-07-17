@@ -120,15 +120,14 @@ struct NewDataView: View {
             }
             
             DataViewDivider()
-            
+            DataViewRow(imageName: "equal.circle", text: "Total burned today", number: dataLump.totalProjCalories)
             if settingsObj.desiredDeficit != 0 {
-                DataViewRow(imageName: "equal.circle", text: "Total burned today", number: dataLump.totalProjCalories)
                 settingsObj.desiredDeficit > 0
                 ? DataViewRow(imageName: "arrow.down", text: "Target deficit", number: -settingsObj.desiredDeficit)
                 : DataViewRow(imageName: "arrow.up", text: "Target surplus", number: -settingsObj.desiredDeficit)
             }
             
-            settingsObj.capBudget && dataLump.budgetAtCap
+            dataLump.budgetAtCap
             ? DataViewRow(imageName: "hat.cap", text: "Budget at cap", number: dataLump.budgetOverCap)
             : nil
             

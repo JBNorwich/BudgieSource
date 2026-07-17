@@ -152,7 +152,7 @@ struct WeightGoalSheet: View {
                         Label("This goal weight is in the underweight range (a BMI below 18.5) for the height I have stored for you. The lowest healthy weight for your height is around \(renderWeight(kilos: minWeight)). Aiming for below a healthy weight carries real and serious health risks. Please consider discussing this goal with your doctor before continuing.", systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.red)
                             .lineLimit(nil)
-                            .fixedSize(horizontal: false, vertical: false)
+                            .fixedSize(horizontal: false, vertical: true)
                         Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
                     }
                     if let goal = enteredKilos {
@@ -176,13 +176,13 @@ struct WeightGoalSheet: View {
                                     Divider()
                                     Label("Timescales given are estimates, and are not personalised. Your actual results will vary. This app is not medical advice.", systemImage: "info.circle")
                                         .lineLimit(nil)
-                                        .fixedSize(horizontal: false, vertical: false)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 } else {
                                     Text("Assuming you meet your target surplus every day, this will take you \(friendlyDuration).")
                                     Divider()
                                     Label("Timescales given are estimates, and are not personalised. Your actual results will vary. Gaining muscle from a caloric surplus, rather than fat, requires strength training and a balanced, protein-rich diet. This app is not medical advice.", systemImage: "info.circle")
                                         .lineLimit(nil)
-                                        .fixedSize(horizontal: false, vertical: false)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
                         }
@@ -237,20 +237,21 @@ struct WeightGoalSheet: View {
 
     private func recalculate() {
         guard let goal = enteredKilos, goal > 0, todayLump.weightToday != 0 else {
-            toLose = 0
-            daysToGo = 0
-            friendlyDuration = ""
+            toLose = 0; daysToGo = 0; friendlyDuration = ""
             return
         }
         // Positive => need to lose; negative => need to gain.
         toLose = todayLump.weightToday - goal
 
+        // A deficit can't reach a higher goal weight, nor a surplus a lower one — so there's no
+        // timescale to quote when the goal sits the other side of where they are now.
+        let movingTowardGoal = settingsObj.surplusMode ? toLose < 0 : toLose > 0
+        guard movingTowardGoal else { daysToGo = 0; friendlyDuration = ""; return }
+
         let magnitude = abs(toLose)
-        if settingsObj.surplusMode {
-            daysToGo = getDaysToGain(weight: magnitude, surplus: -settingsObj.desiredDeficit)
-        } else {
-            daysToGo = getDaysToLose(weight: magnitude, deficit: settingsObj.desiredDeficit)
-        }
+        daysToGo = settingsObj.surplusMode
+            ? getDaysToGain(weight: magnitude, surplus: -settingsObj.desiredDeficit)
+            : getDaysToLose(weight: magnitude, deficit: settingsObj.desiredDeficit)
         friendlyDuration = formatDuration(days: daysToGo)
     }
 }
