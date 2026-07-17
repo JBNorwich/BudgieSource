@@ -115,17 +115,25 @@ struct BudgetView: View {
                         Spacer()
                         GroupBox(label: GaugeLabelView(showingGaugeHelp: $showingGaugeHelp)) {
                             GaugeView().environmentObject(todayLump)
-                        }.backgroundStyle(.regularMaterial)
+                        }   .backgroundStyle(.regularMaterial)
                             .onTapGesture {
                                 showingDetail = true
                             }
+                            .accessibilityElement(children: .contain)
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityHint("Opens a detailed view of your daily budget")
+                            .accessibilityAction { showingDetail = true }
                         HStack {
                             GroupBox(label: ActivityLabelView()) {
                                 FitnessView().environmentObject(todayLump)
                             }.onTapGesture {
                                 UIApplication.shared.open(URL(string: "fitnessapp://")!)
-                            }.backgroundStyle(.regularMaterial)
+                            }   .backgroundStyle(.regularMaterial)
                                 .frame(minHeight: 100)
+                                .accessibilityElement(children: .contain)
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityHint("Opens the Fitness app, if it's installed")
+                                .accessibilityAction { UIApplication.shared.open(URL(string: "fitnessapp://")!) }
                             
                             GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
                                 WaterView().environmentObject(todayLump)
@@ -133,6 +141,10 @@ struct BudgetView: View {
                                 mainNavDestination = .waterPage
                             }.backgroundStyle(.regularMaterial)
                                 .frame(minHeight: 100)
+                                .accessibilityElement(children: .contain)
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityHint("Go to the Water page")
+                                .accessibilityAction { MainNavDestination = .waterPage }
                         }
                         
                         if !settingsObj.disableWeightFeatures {
@@ -143,6 +155,10 @@ struct BudgetView: View {
                                 .onTapGesture {
                                     showingWeightDetail = true
                                 }
+                                .accessibilityElement(children: .contain)
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityHint("Opens a detailed view of your weight trend")
+                                .accessibilityAction { showingWeightDetail = true }
                         }
                         
                         if settingsObj.hideTodayInDetail != true {
@@ -157,6 +173,10 @@ struct BudgetView: View {
                             }
                             .backgroundStyle(.regularMaterial)
                             .onTapGesture { showingMacroSettings = true }
+                            .accessibilityElement(children: .contain)
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityHint("Opens the settings page for macro tracking")
+                            .accessibilityAction { showingMacroSettings = true }
                             .sheet(isPresented: $showingMacroSettings, onDismiss: {
                                 Task { await dataStore.updateLump(todayLump: todayLump) }
                             }) {
@@ -175,9 +195,13 @@ struct BudgetView: View {
                         GroupBox(label: FoodListLabelView(showingAddCalsSheet: $showAddCalsSheet))
                         {
                             TodayFoodList().environmentObject(todayLump)
-                        }.onTapGesture {
+                        }   .onTapGesture {
                             mainNavDestination = .foodHub
-                        }.backgroundStyle(.regularMaterial)
+                        }   .backgroundStyle(.regularMaterial)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityHint("Opens the Food page")
+                            .accessibilityAction { mainNavDestination = .foodHub }
                         
                         HStack {
                             Text("Last updated: " + todayLump.lastUpdate.formatted())
