@@ -165,7 +165,7 @@ struct GetCanEatNowIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
         let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        await dataStore.updateLump(todayLump: lump, publishSnapshot: false, reloadWidgets: false)
         return .result(value: lump.canEatNow)
     }
 }
@@ -179,7 +179,7 @@ struct GetBudgetRemainingIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
         let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        await dataStore.updateLump(todayLump: lump, publishSnapshot: false, reloadWidgets: false)
         return .result(value: lump.totalBudgetRem)
     }
 }
@@ -193,7 +193,7 @@ struct SpeakCanEatNowIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        await dataStore.updateLump(todayLump: lump, publishSnapshot: false, reloadWidgets: false)
 
         // With meal allocations on, "can eat now" isn't a user-facing figure — the app
         // replaces it with remaining budget, so answer in those terms to stay consistent.
@@ -222,7 +222,7 @@ struct SpeakBudgetRemainingIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        await dataStore.updateLump(todayLump: lump, publishSnapshot: false, reloadWidgets: false)
         let v = lump.totalBudgetRem
         let dialog: IntentDialog = v >= 0
             ? "You have \(v.formatted()) calories left in your budget today."
