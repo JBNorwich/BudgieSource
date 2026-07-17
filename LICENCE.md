@@ -29,3 +29,5 @@ These files are *not* licenced under the Expat licence. These are under a differ
 The Expat licence above applies solely to the source code of this application. It does not apply to the names "Budgie" or "Budgie Diet", the green bird logo or any derivatives of it. These elements, and all intellectual property, trademark rights and copyrights associated with them, are the property of Joseph Baldwin. They may not be used for, in or in connection with any other application without permission, nor may you use them for a commercial purpose (including for a fork or separate distribution of Budgie Diet, whether you charge money for it or not) however you may redistribute unamended copies of them alongside this project's code.
 
 Apple Health, Apple Watch and Apple are all trademarks of Apple Inc., and used in a purely descriptive sense. Apple Inc. does not endorse or have any connection with this software.
+
+A file is included that contains a list of food brands to help pre-fill when adding food entries. All of these are trademarks of their respective owners; in no sense do these brands or their owners endorse Budgie Diet.
