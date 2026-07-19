@@ -88,7 +88,7 @@ struct BackupTests {
         let meal = FoodItem(name: "Sandwich", manufacturer: nil,
                             quantities: [FoodQuantity(type: .portion, count: 1, calories: 450)],
                             source: .customMeal)
-        meal.components = [MealComponent(foodItemID: ingredientID, servingUnit: .grams, servingAmount: 80)]
+        meal.components = [MealComponent(foodItemID: ingredientID, servingID: UUID(), servingUnit: .grams, servingAmount: 80)]
         meal.batchYield = 2
         let backup = BudgieBackup(schemaVersion: 1, exportDate: .now, appVersion: nil,
                                   settings: try emptySettings(), meals: [],
@@ -165,7 +165,8 @@ struct BackupTests {
                                   quantities: [FoodQuantity(type: .portion, count: 1, calories: 78)], source: .userInput)
         let meal = FoodItem(name: "Breakfast", manufacturer: nil,
                             quantities: [FoodQuantity(type: .portion, count: 1, calories: 156)], source: .customMeal)
-        meal.components = [MealComponent(foodItemID: ingredient.id, servingUnit: .portion, servingAmount: 2)]
+        meal.components = [MealComponent(foodItemID: ingredient.id, servingID: ingredient.quantities[0].id,
+                                         servingUnit: .portion, servingAmount: 2)]
         meal.batchYield = 1
         ctx.insert(ingredient); ctx.insert(meal)
         try ctx.save()

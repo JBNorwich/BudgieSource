@@ -60,7 +60,8 @@ struct FoodItemActorTests {
         let mealID = meal.id
         await actor.insert(meal)
 
-        let components = [MealComponent(foodItemID: ingredient.id, servingUnit: .portion, servingAmount: 2)]
+        let components = [MealComponent(foodItemID: ingredient.id, servingID: ingredient.quantities[0].id,
+                                        servingUnit: .portion, servingAmount: 2)]
         await actor.update(id: mealID, name: "Two eggs", manufacturer: nil,
                            quantities: [FoodQuantity(type: .portion, count: 1, calories: 156)],
                            components: components, batchYield: 1)
@@ -101,14 +102,16 @@ struct FoodItemActorTests {
         await actor.insert(a); await actor.insert(b)
 
         let meal = FoodItem(name: "Meal", manufacturer: nil, quantities: [], source: .customMeal)
-        meal.components = [MealComponent(foodItemID: a.id, servingUnit: .portion, servingAmount: 1)]
+        meal.components = [MealComponent(foodItemID: a.id, servingID: a.quantities[0].id,
+                                         servingUnit: .portion, servingAmount: 1)]
         let mealID = meal.id
         await actor.insert(meal)
 
         // Editing the meal to swap component A for component B should leave exactly B, not both.
         await actor.update(id: mealID, name: "Meal", manufacturer: nil,
                            quantities: [FoodQuantity(type: .portion, count: 1, calories: 50)],
-                           components: [MealComponent(foodItemID: b.id, servingUnit: .portion, servingAmount: 1)],
+                           components: [MealComponent(foodItemID: b.id, servingID: b.quantities[0].id,
+                                                      servingUnit: .portion, servingAmount: 1)],
                            batchYield: 1)
 
         let updated = await actor.fetch(id: mealID)

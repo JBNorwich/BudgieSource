@@ -51,12 +51,7 @@ struct FoodEditorView: View {
     }
 
     private var manufacturerSuggestions: [String] {
-        let q = manufacturer.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return [] }
-        return knownManufacturers
-            .filter { $0.localizedCaseInsensitiveContains(q)
-                   && $0.localizedCaseInsensitiveCompare(q) != .orderedSame }   // don't suggest an exact match
-            .prefix(5).map { $0 }
+        suggestedManufacturers(for: manufacturer, in: knownManufacturers)
     }
 
     var body: some View {

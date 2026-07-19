@@ -599,7 +599,8 @@ actor CalorieActor {
     
     /// Non-empty manufacturer names the user has typed on logged entries.
     func manufacturers() -> [String] {
-        let all = (try? modelContext.fetch(FetchDescriptor<CalorieEntry>())) ?? []
+        let descriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.manufacturer != nil })
+        let all = (try? modelContext.fetch(descriptor)) ?? []
         return all.compactMap(\.manufacturer).filter { !$0.isEmpty }
     }
 }

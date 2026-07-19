@@ -157,9 +157,6 @@ struct EditCalsSheet: View {
             carbs = entryToEdit.carbs
             fat = entryToEdit.fat
         }
-        .onChange(of: whatItIs) {
-            whatItIs = String(whatItIs.prefix(30))
-        }
         .task {
             mealList = await dataStore.calorieActor.getListOfMeals()
             if isFoodEntry, let id = entryToEdit.foodItem {

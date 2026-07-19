@@ -30,6 +30,10 @@ enum FoodSource: Codable {
 }
 
 struct FoodQuantity: Codable {
+    /// Stable identity for this specific serving, so a meal ingredient can reference exactly which
+    /// serving was picked rather than matching by type alone (a food can have more than one serving
+    /// of the same type, e.g. two `.portion` entries for "1 slice" and "1 loaf").
+    var id: UUID = UUID()
     /// The type of quantity (e.g. per portion/grams).
     var type: FoodQuantityType
     /// The count of quantity that the quantity represents.
@@ -44,6 +48,34 @@ struct FoodQuantity: Codable {
     var fat: Double?
     /// Friendly label for a portion.
     var servingName: String?
+
+    init(id: UUID = UUID(), type: FoodQuantityType, count: Double, calories: Int,
+         protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, servingName: String? = nil) {
+        self.id = id
+        self.type = type
+        self.count = count
+        self.calories = calories
+        self.protein = protein
+        self.carbs = carbs
+        self.fat = fat
+        self.servingName = servingName
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, type, count, calories, protein, carbs, fat, servingName
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        type = try c.decode(FoodQuantityType.self, forKey: .type)
+        count = try c.decode(Double.self, forKey: .count)
+        calories = try c.decode(Int.self, forKey: .calories)
+        protein = try c.decodeIfPresent(Double.self, forKey: .protein)
+        carbs = try c.decodeIfPresent(Double.self, forKey: .carbs)
+        fat = try c.decodeIfPresent(Double.self, forKey: .fat)
+        servingName = try c.decodeIfPresent(String.self, forKey: .servingName)
+    }
 }
 
 extension FoodQuantity {
@@ -88,16 +120,42 @@ extension FoodQuantity {
 struct MealComponent: Codable, Identifiable {
     var id: UUID = UUID()
     var foodItemID: UUID
+    var servingID: UUID = UUID()
     var servingUnit: FoodQuantityType
     var servingAmount: Double
 
+    init(id: UUID = UUID(), foodItemID: UUID, servingID: UUID = UUID(),
+         servingUnit: FoodQuantityType, servingAmount: Double) {
+        self.id = id
+        self.foodItemID = foodItemID
+        self.servingID = servingID
+        self.servingUnit = servingUnit
+        self.servingAmount = servingAmount
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, foodItemID, servingID, servingUnit, servingAmount
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        foodItemID = try c.decode(UUID.self, forKey: .foodItemID)
+        // Missing on components saved before per-serving matching existed — falls back to
+        // totals(in:)'s type-based match below, same as those components behaved beforehand.
+        servingID = try c.decodeIfPresent(UUID.self, forKey: .servingID) ?? UUID()
+        servingUnit = try c.decode(FoodQuantityType.self, forKey: .servingUnit)
+        servingAmount = try c.decode(Double.self, forKey: .servingAmount)
+    }
+
     /// This component's contribution, resolved against the matching serving on its (already-fetched)
-    /// food. Nil if that food no longer has a serving of this component's unit — e.g. its servings
-    /// were edited since this component was added — so the meal just skips it rather than guessing.
+    /// food. Matches by the specific serving id first (disambiguates two servings of the same type,
+    /// e.g. "1 slice" vs "1 loaf"); falls back to matching by type alone if that serving was since
+    /// removed, so an edited food doesn't just vanish from the meal. Nil if neither matches.
     func totals(in food: FoodItem) -> (calories: Int, protein: Double?, fat: Double?, carbs: Double?)? {
-        guard let quantity = food.quantities.first(where: { $0.type == servingUnit }), quantity.count > 0 else {
-            return nil
-        }
+        let quantity = food.quantities.first(where: { $0.id == servingID })
+            ?? food.quantities.first(where: { $0.type == servingUnit })
+        guard let quantity, quantity.count > 0 else { return nil }
         let t = quantity.totals(servings: servingAmount / quantity.count)
         return (t.calories, t.protein, t.fat, t.carbs)
     }
@@ -240,6 +298,17 @@ actor FoodItemActor {
         return (try? modelContext.fetch(descriptor))?.first
     }
 
+    /// Resolves multiple items by their stable UUIDs in one round trip — used to preload every
+    /// ingredient of a custom meal at once instead of one fetch per ingredient.
+    func fetch(ids: [UUID]) -> [FoodItem] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
+        guard !ids.isEmpty else { return [] }
+        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { ids.contains($0.id) })
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
     /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent. `components`/`batchYield` only apply to custom meals; ordinary foods keep the defaults, so existing callers don't need to change.
     func update(id: UUID, name: String, manufacturer: String?, quantities: [FoodQuantity],
                 components: [MealComponent] = [], batchYield: Double = 1) {
@@ -291,7 +360,8 @@ actor FoodItemActor {
     
     /// Non-empty manufacturer names from saved foods (may repeat; HealthData folds them).
     func manufacturers() -> [String] {
-        let all = (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []
+        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.manufacturer != nil })
+        let all = (try? modelContext.fetch(descriptor)) ?? []
         return all.compactMap(\.manufacturer).filter { !$0.isEmpty }
     }
 }

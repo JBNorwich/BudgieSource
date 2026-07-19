@@ -881,8 +881,9 @@ final class HealthData {
     /// Distinct manufacturer names the user has entered — across saved foods and logged entries —
     /// for autocomplete suggestions. Case-insensitively de-duplicated (first spelling wins), sorted.
     func knownManufacturers() async -> [String] {
-        let saved = await foodItemActor.manufacturers()
-        let logged = await calorieActor.manufacturers()
+        async let savedTask = foodItemActor.manufacturers()
+        async let loggedTask = calorieActor.manufacturers()
+        let (saved, logged) = await (savedTask, loggedTask)
         var seen = Set<String>()
         var result: [String] = []
         for name in saved + logged + Self.seedManufacturers where seen.insert(name.lowercased()).inserted {

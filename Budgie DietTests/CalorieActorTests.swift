@@ -154,7 +154,8 @@ struct CalorieActorTests {
         let ingredientB = FoodItem(name: "Egg", manufacturer: nil, quantities: q, source: .userInput)   // will be merged away
         let meal = FoodItem(name: "Breakfast", manufacturer: nil,
                             quantities: [FoodQuantity(type: .portion, count: 1, calories: 100)], source: .customMeal)
-        meal.components = [MealComponent(foodItemID: ingredientB.id, servingUnit: .portion, servingAmount: 1)]
+        meal.components = [MealComponent(foodItemID: ingredientB.id, servingID: ingredientB.quantities[0].id,
+                                         servingUnit: .portion, servingAmount: 1)]
         ctx.insert(ingredientA); ctx.insert(ingredientB); ctx.insert(meal)
         try ctx.save()
 

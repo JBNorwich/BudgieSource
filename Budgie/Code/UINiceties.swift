@@ -46,8 +46,18 @@ func calcBMR(height: Int, weight: Int, age: Int, sex: Int)-> Int {
 
 func getBudgieGreeting() -> String {
     let greetingArray = ["Hi.", "Hello.", "Cheep.", "Tweet.", "Chirp.", "Aah! You found me!", "...moo?"]
-    
+
     return greetingArray.randomElement()!
+}
+
+/// Case-insensitive substring matches for manufacturer autocomplete, excluding an exact match
+/// (nothing to suggest once it's been typed in full). Shared by every food-entry sheet.
+func suggestedManufacturers(for query: String, in known: [String], limit: Int = 5) -> [String] {
+    let q = query.trimmingCharacters(in: .whitespaces)
+    guard !q.isEmpty else { return [] }
+    return known
+        .filter { $0.localizedCaseInsensitiveContains(q) && $0.localizedCaseInsensitiveCompare(q) != .orderedSame }
+        .prefix(limit).map { $0 }
 }
 
 // WEIGHT RELATED STRUCTS/FUNCTIONS

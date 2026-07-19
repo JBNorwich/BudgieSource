@@ -28,6 +28,7 @@ struct MealEditorView: View {
     @State private var components: [MealComponent]
     @State private var resolvedFoods: [UUID: FoodItem] = [:]
     @State private var addingComponent = false
+    @State private var componentsLoaded = false
 
     /// Pass an existing custom meal to edit it, or nothing to create a new one.
     init(existing: FoodItem? = nil, isModal: Bool = false) {
@@ -39,7 +40,7 @@ struct MealEditorView: View {
     }
 
     private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !components.isEmpty
+        componentsLoaded && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !components.isEmpty
     }
 
     private var previewQuantity: FoodQuantity {
@@ -114,12 +115,16 @@ struct MealEditorView: View {
             }
         }
         .task {
-            // Resolve every existing component's food up front so names/totals show immediately.
-            for component in components where resolvedFoods[component.foodItemID] == nil {
-                if let food = await dataStore.foodItemActor.fetch(id: component.foodItemID) {
-                    resolvedFoods[component.foodItemID] = food
+            // Resolve every existing component's food in one round trip so names/totals show
+            // immediately, and gate Save on this finishing so an in-flight edit can't silently
+            // save with missing ingredients.
+            let missingIDs = Array(Set(components.map(\.foodItemID)).subtracting(resolvedFoods.keys))
+            if !missingIDs.isEmpty {
+                for food in await dataStore.foodItemActor.fetch(ids: missingIDs) {
+                    resolvedFoods[food.id] = food
                 }
             }
+            componentsLoaded = true
         }
     }
 
@@ -169,6 +174,7 @@ struct MealEditorView: View {
 /// search + serving-scaling flow, but hands back a MealComponent instead of logging an entry.
 private struct MealComponentPickerView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismissSearch) private var dismissSearch
     let onAdd: (MealComponent, FoodItem) -> Void
 
     @State private var searchText = ""
@@ -176,11 +182,20 @@ private struct MealComponentPickerView: View {
     @State private var selected: PickedFood?
     @State private var selectedQuantityIndex = 0
     @State private var amount: Double = 0
+    @State private var showingOFFSheet = false
+    @State private var showingScanner = false
+    @State private var scannedBarcode: ScannedBarcode?
+
+    private struct ScannedBarcode: Identifiable {
+        let id: String
+        var barcode: String { id }
+    }
 
     private var pickedQuantity: FoodQuantity? {
         guard let selected, selected.quantities.indices.contains(selectedQuantityIndex) else { return nil }
         return selected.quantities[selectedQuantityIndex]
     }
+    
     private var effectiveServings: Double {
         guard let q = pickedQuantity, q.count > 0 else { return 0 }
         return amount / q.count
@@ -200,27 +215,47 @@ private struct MealComponentPickerView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
             }
-            if selected != nil {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") { Task { await confirmAdd() } }.disabled(!canAdd)
+            if !settingsObj.offSearchDisabled {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingScanner = true
+                    } label: {
+                        Label("Scan barcode", systemImage: "barcode.viewfinder")
+                    }
                 }
             }
         }
         .searchable(text: $searchText, prompt: "Search foods")
+        .sheet(isPresented: $showingOFFSheet) {
+            OpenFoodFactsSheet(term: searchText) { food in
+                selected = food
+                selectedQuantityIndex = 0
+                amount = food.quantities.first?.count ?? 0
+                showingOFFSheet = false
+                dismissSearch()
+            }
+        }
+        .sheet(isPresented: $showingScanner) {
+            BarcodeScannerSheet { code in
+                scannedBarcode = ScannedBarcode(id: code)
+            }
+        }
+        .sheet(item: $scannedBarcode) { scanned in
+            OpenFoodFactsSheet(barcode: scanned.barcode) { food in
+                selected = food
+                selectedQuantityIndex = 0
+                amount = food.quantities.first?.count ?? 0
+                scannedBarcode = nil
+                dismissSearch()
+            }
+        }
         .task(id: searchText) {
             guard !searchText.isEmpty else { results = []; return }
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
             // No nesting: a custom meal can't itself be used as an ingredient of another meal.
             let mine = await dataStore.foodItemActor.search(term: searchText).filter { $0.source != .customMeal }
-            // Drop any generic that's already saved under an identical name AND servings/calories —
-            // a shared name alone isn't enough to call it the same food, so this only hides a true twin.
-            let mineSignatures = Set(mine.map {
-                FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities)
-            })
-            let generic = FoodCatalogue.shared.search(searchText).filter {
-                !mineSignatures.contains(FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities))
-            }
+            let generic = FoodCatalogue.shared.search(searchText, excluding: mine)
             results = mine.map(\.asPicked) + generic.map(\.asPicked)
         }
     }
@@ -258,7 +293,20 @@ private struct MealComponentPickerView: View {
                         selected = food
                         selectedQuantityIndex = 0
                         amount = food.quantities.first?.count ?? 0
+                        dismissSearch()
                     }
+                }
+            }
+
+            if !searchText.isEmpty && !settingsObj.offSearchDisabled {
+                Section {
+                    Button {
+                        showingOFFSheet = true
+                    } label: {
+                        Label("Search OpenFoodFacts", systemImage: "globe")
+                    }
+                } footer: {
+                    Text("Not finding it in your foods? Search the OpenFoodFacts database.")
                 }
             }
         }
@@ -299,6 +347,11 @@ private struct MealComponentPickerView: View {
                     Text("**\(q.totals(servings: effectiveServings).calories.formatted())** kcal")
                 }
             }
+
+            Section {
+                Button("Add") { Task { await confirmAdd() } }
+                    .disabled(!canAdd)
+            }
         }
     }
 
@@ -314,7 +367,7 @@ private struct MealComponentPickerView: View {
             // than saving another — a shared name alone isn't enough to call two foods the same.
             let signature = FoodSignature.make(name: selected.name, manufacturer: selected.manufacturer,
                                                quantities: selected.quantities)
-            let candidates = await dataStore.foodItemActor.search(term: selected.name)
+            let candidates = await dataStore.foodItemActor.search(term: selected.name, includeArchived: true)
             if let match = candidates.first(where: {
                 FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities) == signature
             }) {
@@ -326,7 +379,7 @@ private struct MealComponentPickerView: View {
                 food = created
             }
         }
-        let component = MealComponent(foodItemID: food.id, servingUnit: q.type, servingAmount: amount)
+        let component = MealComponent(foodItemID: food.id, servingID: q.id, servingUnit: q.type, servingAmount: amount)
         onAdd(component, food)
         dismiss()
     }

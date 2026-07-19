@@ -157,7 +157,6 @@ struct MacEditFoodSheet: View {
             carbs = entry.carbs
             fat = entry.fat
         }
-        .onChange(of: narrative) { narrative = String(narrative.prefix(30)) }
         .alert(isFoodEntry ? "Amount must be above zero." : "Calories must be above zero.", isPresented: $valueWasZero) {
             Button("OK", role: .cancel) {}
         }

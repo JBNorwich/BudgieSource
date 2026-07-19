@@ -48,6 +48,19 @@ final class FoodCatalogue {
     }
 }
 
+extension FoodCatalogue {
+    /// Generic catalogue matches for `term`, with anything structurally identical to one of the
+    /// caller's own saved foods removed — a shared name alone isn't enough to call it a duplicate.
+    func search(_ term: String, excluding mine: [FoodItem], limit: Int = 50) -> [CatalogueFood] {
+        let mineSignatures = Set(mine.map {
+            FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities)
+        })
+        return search(term, limit: limit).filter {
+            !mineSignatures.contains(FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities))
+        }
+    }
+}
+
 // MARK: - Bundled JSON schema (decoupled from the persisted model)
 
 private struct CatalogueFoodDTO: Codable {
