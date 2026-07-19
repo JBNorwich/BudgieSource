@@ -82,6 +82,53 @@ struct BackupTests {
         #expect(dto.quantities[0].protein == 5)
     }
 
+    // 2b. Custom meal fields (components, batchYield) survive the JSON round-trip.
+    @Test func encodeDecodePreservesMealComponents() throws {
+        let ingredientID = UUID()
+        let meal = FoodItem(name: "Sandwich", manufacturer: nil,
+                            quantities: [FoodQuantity(type: .portion, count: 1, calories: 450)],
+                            source: .customMeal)
+        meal.components = [MealComponent(foodItemID: ingredientID, servingUnit: .grams, servingAmount: 80)]
+        meal.batchYield = 2
+        let backup = BudgieBackup(schemaVersion: 1, exportDate: .now, appVersion: nil,
+                                  settings: try emptySettings(), meals: [],
+                                  foodItems: [FoodItemDTO(meal)], calorieEntries: [], waterEntries: [])
+
+        let restored = try BackupService.decode(try BackupService.encode(backup))
+        let dto = try #require(restored.foodItems.first)
+        #expect(dto.source == .customMeal)
+        #expect(dto.components?.count == 1)
+        #expect(dto.components?.first?.foodItemID == ingredientID)
+        #expect(dto.components?.first?.servingUnit == .grams)
+        #expect(dto.components?.first?.servingAmount == 80)
+        #expect(dto.batchYield == 2)
+    }
+
+    // 2c. A backup written before custom meals existed has no "components"/"batchYield" keys at
+    // all. Decoding it must still succeed (not throw keyNotFound), and restoring the result must
+    // produce an ordinary, non-meal food rather than crashing or guessing.
+    @Test func decodingPreMealBackupJSONStillSucceeds() throws {
+        let food = FoodItem(name: "Old food", manufacturer: nil,
+                            quantities: [FoodQuantity(type: .portion, count: 1, calories: 100)], source: .userInput)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        var json = try JSONSerialization.jsonObject(with: try encoder.encode(FoodItemDTO(food))) as! [String: Any]
+        json.removeValue(forKey: "components")   // simulate a pre-meal-feature backup file
+        json.removeValue(forKey: "batchYield")
+        let strippedData = try JSONSerialization.data(withJSONObject: json)
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decoded = try decoder.decode(FoodItemDTO.self, from: strippedData)   // must not throw
+        #expect(decoded.components == nil)
+        #expect(decoded.batchYield == nil)
+
+        let rebuilt = FoodItem(restoring: decoded)
+        #expect(rebuilt.components.isEmpty)
+        #expect(rebuilt.batchYield == 1)
+        #expect(rebuilt.source == .userInput)
+    }
+
     // 3. Export from one store, import into a fresh one → rows rebuilt with their ids and links intact.
     @Test func exportThenImportRebuildsRowsWithSameIDs() async throws {
         let store = try makeStore()
@@ -107,6 +154,36 @@ struct BackupTests {
         let check = ModelContext(store)
         #expect(try check.fetch(FetchDescriptor<FoodItem>()).first?.id == foodID)              // id preserved
         #expect(try check.fetch(FetchDescriptor<CalorieEntry>()).first?.foodItem == foodID)    // link intact
+    }
+
+    // 3b. A custom meal's components/batchYield survive a full actor-level export→wipe→import
+    // round trip, not just a raw DTO encode/decode.
+    @Test func exportThenImportPreservesMealComponents() async throws {
+        let store = try makeStore()
+        let ctx = ModelContext(store)
+        let ingredient = FoodItem(name: "Egg", manufacturer: nil,
+                                  quantities: [FoodQuantity(type: .portion, count: 1, calories: 78)], source: .userInput)
+        let meal = FoodItem(name: "Breakfast", manufacturer: nil,
+                            quantities: [FoodQuantity(type: .portion, count: 1, calories: 156)], source: .customMeal)
+        meal.components = [MealComponent(foodItemID: ingredient.id, servingUnit: .portion, servingAmount: 2)]
+        meal.batchYield = 1
+        ctx.insert(ingredient); ctx.insert(meal)
+        try ctx.save()
+        let mealID = meal.id, ingredientID = ingredient.id
+
+        let actor = CalorieActor(modelContainer: store)
+        let exported = await actor.exportFoodDomain()
+        await actor.wipeFoodDomain()
+        _ = await actor.importFoodDomain(meals: exported.meals, foods: exported.foods,
+                                         entries: exported.entries, merge: false)
+
+        let restoredMeal = try #require(try ModelContext(store).fetch(FetchDescriptor<FoodItem>())
+            .first { $0.id == mealID })
+        #expect(restoredMeal.source == .customMeal)
+        #expect(restoredMeal.components.count == 1)
+        #expect(restoredMeal.components.first?.foodItemID == ingredientID)
+        #expect(restoredMeal.components.first?.servingAmount == 2)
+        #expect(restoredMeal.batchYield == 1)
     }
 
     // 4. Merge is idempotent — re-importing the same backup inserts nothing and makes no duplicates.

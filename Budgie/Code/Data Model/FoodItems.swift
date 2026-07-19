@@ -26,6 +26,7 @@ enum FoodSource: Codable {
     case userInput
     case openFoodFacts
     case migration
+    case customMeal
 }
 
 struct FoodQuantity: Codable {
@@ -81,6 +82,51 @@ extension FoodQuantity {
     }
 }
 
+/// One ingredient of a custom meal: a reference to another saved FoodItem plus how much of one of
+/// its servings goes into the meal. Deliberately a plain UUID reference (not a SwiftData relationship),
+/// matching every other cross-model link in this app, so it stays CloudKit-sync-safe.
+struct MealComponent: Codable, Identifiable {
+    var id: UUID = UUID()
+    var foodItemID: UUID
+    var servingUnit: FoodQuantityType
+    var servingAmount: Double
+
+    /// This component's contribution, resolved against the matching serving on its (already-fetched)
+    /// food. Nil if that food no longer has a serving of this component's unit — e.g. its servings
+    /// were edited since this component was added — so the meal just skips it rather than guessing.
+    func totals(in food: FoodItem) -> (calories: Int, protein: Double?, fat: Double?, carbs: Double?)? {
+        guard let quantity = food.quantities.first(where: { $0.type == servingUnit }), quantity.count > 0 else {
+            return nil
+        }
+        let t = quantity.totals(servings: servingAmount / quantity.count)
+        return (t.calories, t.protein, t.fat, t.carbs)
+    }
+}
+
+extension FoodItem {
+    /// Bakes a custom meal's components into its own single "1 serving" FoodQuantity: sums every
+    /// component's totals against its resolved food, then divides by the batch yield. Called whenever
+    /// the meal editor saves — the result is what gets stored in `quantities` and is what the rest of
+    /// the app (search, logging, Shortcuts) sees, so a custom meal behaves like any other food with one
+    /// serving option everywhere outside the editor.
+    static func mealQuantity(components: [MealComponent], resolvedFoods: [UUID: FoodItem],
+                             batchYield: Double, servingName: String?) -> FoodQuantity {
+        var calories = 0.0
+        var protein: Double?, carbs: Double?, fat: Double?
+        for component in components {
+            guard let food = resolvedFoods[component.foodItemID], let t = component.totals(in: food) else { continue }
+            calories += Double(t.calories)
+            if let p = t.protein { protein = (protein ?? 0) + p }
+            if let c = t.carbs { carbs = (carbs ?? 0) + c }
+            if let f = t.fat { fat = (fat ?? 0) + f }
+        }
+        let yield = batchYield > 0 ? batchYield : 1
+        return FoodQuantity(type: .portion, count: 1, calories: Int((calories / yield).rounded()),
+                            protein: protein.map { $0 / yield }, carbs: carbs.map { $0 / yield },
+                            fat: fat.map { $0 / yield }, servingName: servingName)
+    }
+}
+
 @Model
 final class FoodItem {
     private(set) var id: UUID = UUID()
@@ -101,7 +147,12 @@ final class FoodItem {
     var dateCreated: Date = Date()
     /// Synchronisation lever in case of any sync issues down the line.
     var syncNonce: Int = 0
-    
+    /// The ingredients of a custom meal (source == .customMeal). Empty for every other food.
+    var components: [MealComponent] = []
+    /// How many servings a custom meal's components make. `quantities` always holds the per-serving
+    /// total (components summed, then divided by this), so this only matters inside the meal editor.
+    var batchYield: Double = 1
+
     init(name: String, manufacturer: String?, quantities: [FoodQuantity], source: FoodSource?) {
         self.name = name
         self.manufacturer = manufacturer
@@ -119,6 +170,10 @@ extension FoodItem {
         self.barcode = dto.barcode
         self.dateCreated = dto.dateCreated
         self.syncNonce = dto.syncNonce
+        // Optional in the DTO so a backup written before custom meals existed still decodes: a
+        // missing key just means "not a meal", which is exactly true of every food in such a backup.
+        self.components = dto.components ?? []
+        self.batchYield = dto.batchYield ?? 1
     }
 }
 
@@ -185,13 +240,16 @@ actor FoodItemActor {
         return (try? modelContext.fetch(descriptor))?.first
     }
 
-    /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent.
-    func update(id: UUID, name: String, manufacturer: String?, quantities: [FoodQuantity]) {
+    /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent. `components`/`batchYield` only apply to custom meals; ordinary foods keep the defaults, so existing callers don't need to change.
+    func update(id: UUID, name: String, manufacturer: String?, quantities: [FoodQuantity],
+                components: [MealComponent] = [], batchYield: Double = 1) {
         let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
         guard let item = (try? modelContext.fetch(descriptor))?.first else { return }
         item.name = name
         item.manufacturer = manufacturer
         item.quantities = quantities
+        item.components = components
+        item.batchYield = batchYield
         do { try modelContext.save() } catch { print("FoodItem update error: \(error)") }
     }
 

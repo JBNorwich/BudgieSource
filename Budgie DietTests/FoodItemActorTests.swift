@@ -48,4 +48,71 @@ struct FoodItemActorTests {
         #expect(await actor.fetchAll().isEmpty)                       // hidden
         #expect(await actor.fetchAll(includeArchived: true).count == 1) // still there
     }
+
+    @Test func updateWritesComponentsAndBatchYieldForCustomMeal() async throws {
+        let actor = try makeActor()
+        let ingredient = FoodItem(name: "Egg", manufacturer: nil,
+                                  quantities: [FoodQuantity(type: .portion, count: 1, calories: 78)],
+                                  source: .userInput)
+        await actor.insert(ingredient)
+
+        let meal = FoodItem(name: "Empty meal", manufacturer: nil, quantities: [], source: .customMeal)
+        let mealID = meal.id
+        await actor.insert(meal)
+
+        let components = [MealComponent(foodItemID: ingredient.id, servingUnit: .portion, servingAmount: 2)]
+        await actor.update(id: mealID, name: "Two eggs", manufacturer: nil,
+                           quantities: [FoodQuantity(type: .portion, count: 1, calories: 156)],
+                           components: components, batchYield: 1)
+
+        let updated = await actor.fetch(id: mealID)
+        #expect(updated?.components.count == 1)
+        #expect(updated?.components.first?.foodItemID == ingredient.id)
+        #expect(updated?.components.first?.servingAmount == 2)
+        #expect(updated?.batchYield == 1)
+        #expect(updated?.quantities.first?.calories == 156)
+    }
+
+    @Test func updateWithoutComponentsDefaultsToEmptyForOrdinaryFoods() async throws {
+        // FoodEditorView's existing call site never passes components/batchYield — confirms the
+        // new defaulted trailing params don't disturb that unrelated, pre-existing call path.
+        let actor = try makeActor()
+        let food = FoodItem(name: "Bread", manufacturer: nil,
+                            quantities: [FoodQuantity(type: .grams, count: 100, calories: 265)], source: .userInput)
+        let foodID = food.id
+        await actor.insert(food)
+
+        await actor.update(id: foodID, name: "Bread", manufacturer: "Brand",
+                           quantities: [FoodQuantity(type: .grams, count: 100, calories: 270)])
+
+        let updated = await actor.fetch(id: foodID)
+        #expect(updated?.components.isEmpty == true)
+        #expect(updated?.batchYield == 1)
+        #expect(updated?.manufacturer == "Brand")
+        #expect(updated?.quantities.first?.calories == 270)
+    }
+
+    @Test func updateReplacesRatherThanMergesExistingComponents() async throws {
+        let actor = try makeActor()
+        let a = FoodItem(name: "A", manufacturer: nil,
+                         quantities: [FoodQuantity(type: .portion, count: 1, calories: 50)], source: .userInput)
+        let b = FoodItem(name: "B", manufacturer: nil,
+                         quantities: [FoodQuantity(type: .portion, count: 1, calories: 50)], source: .userInput)
+        await actor.insert(a); await actor.insert(b)
+
+        let meal = FoodItem(name: "Meal", manufacturer: nil, quantities: [], source: .customMeal)
+        meal.components = [MealComponent(foodItemID: a.id, servingUnit: .portion, servingAmount: 1)]
+        let mealID = meal.id
+        await actor.insert(meal)
+
+        // Editing the meal to swap component A for component B should leave exactly B, not both.
+        await actor.update(id: mealID, name: "Meal", manufacturer: nil,
+                           quantities: [FoodQuantity(type: .portion, count: 1, calories: 50)],
+                           components: [MealComponent(foodItemID: b.id, servingUnit: .portion, servingAmount: 1)],
+                           batchYield: 1)
+
+        let updated = await actor.fetch(id: mealID)
+        #expect(updated?.components.count == 1)
+        #expect(updated?.components.first?.foodItemID == b.id)
+    }
 }

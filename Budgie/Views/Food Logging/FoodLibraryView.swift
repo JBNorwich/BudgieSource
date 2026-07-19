@@ -23,6 +23,7 @@ struct FoodLibraryView: View {
     @State private var searchText: String = ""
     @State private var showArchived: Bool = false
     @State private var showingNewFood: Bool = false
+    @State private var showingNewMeal: Bool = false
     @State private var reloadToken = UUID()
 
     private struct QueryKey: Equatable {
@@ -66,7 +67,12 @@ struct FoodLibraryView: View {
         .searchable(text: $searchText, prompt: "Search foods")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("New food", systemImage: "plus") { showingNewFood = true }
+                Menu {
+                    Button("New food") { showingNewFood = true }
+                    Button("New custom meal") { showingNewMeal = true }
+                } label: {
+                    Label("New", systemImage: "plus")
+                }
             }
             ToolbarItem(placement: .topBarLeading) {
                 Menu {
@@ -87,7 +93,11 @@ struct FoodLibraryView: View {
             NavigationStack { FoodEditorView(isModal: true) }
                 .onDisappear { reloadToken = UUID() }
         }
-        
+        .sheet(isPresented: $showingNewMeal) {
+            NavigationStack { MealEditorView(isModal: true) }
+                .onDisappear { reloadToken = UUID() }
+        }
+
         .sheet(item: $foodToLog) { food in
             NavigationStack {
                 AddCalsSheet(selectedDate: Date(), preselectedFood: food.asPicked)
@@ -97,7 +107,11 @@ struct FoodLibraryView: View {
         }
         .sheet(item: $foodToEdit) { food in
             NavigationStack {
-                FoodEditorView(existing: food, isModal: true)
+                if food.source == .customMeal {
+                    MealEditorView(existing: food, isModal: true)
+                } else {
+                    FoodEditorView(existing: food, isModal: true)
+                }
             }
             .onDisappear { reloadToken = UUID() }
         }
@@ -109,7 +123,12 @@ struct FoodLibraryView: View {
             if let m = food.manufacturer, !m.isEmpty {
                 Text(m).font(.caption).foregroundStyle(.secondary)
             }
-            Text(food.name)
+            HStack(spacing: 6) {
+                Text(food.name)
+                if food.source == .customMeal {
+                    Image(systemName: "fork.knife").font(.caption).foregroundStyle(.secondary)
+                }
+            }
             if let first = food.quantities.first {
                 Text("\(first.calories.formatted()) kcal per \(first.label)")
                     .font(.caption)

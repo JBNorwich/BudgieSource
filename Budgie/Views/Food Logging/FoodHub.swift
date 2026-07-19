@@ -130,6 +130,7 @@ struct FoodHub: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 NavigationLink {
                     FoodLibraryView()
+                        .environmentObject(todayLump)
                         .onDisappear {
                             Task {
                                 await doUpdates()                                  // refresh this screen

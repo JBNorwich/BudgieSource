@@ -111,6 +111,64 @@ struct CalorieActorTests {
         #expect(survivors.contains(entry!.foodItem!))   // entry re-pointed at whichever "Egg 100" survived
     }
 
+    @Test func dedupeDoesNotMergeIdenticalCustomMeals() async throws {
+        let store = try makeStore()
+        let ctx = ModelContext(store)
+        let q = [FoodQuantity(type: .portion, count: 1, calories: 300)]
+        // Two DIFFERENT custom meals that happen to share a name and a coincidentally-equal baked
+        // total — dedupeFoods must not collapse them, since an equal total doesn't mean equal
+        // composition (unlike an ordinary food, where identical quantities really does mean identical).
+        let mealA = FoodItem(name: "Lunch", manufacturer: nil, quantities: q, source: .customMeal)
+        let mealB = FoodItem(name: "Lunch", manufacturer: nil, quantities: q, source: .customMeal)
+        ctx.insert(mealA); ctx.insert(mealB)
+        try ctx.save()
+
+        await CalorieActor(modelContainer: store).dedupeFoods()
+
+        let foods = try ModelContext(store).fetch(FetchDescriptor<FoodItem>())
+        #expect(foods.count == 2)   // both survive — meals are excluded from signature-merge
+    }
+
+    @Test func dedupeStillMergesOrdinaryFoodsAlongsideUntouchedMeals() async throws {
+        let store = try makeStore()
+        let ctx = ModelContext(store)
+        let eggQ = [FoodQuantity(type: .portion, count: 1, calories: 100)]
+        let a = FoodItem(name: "Egg", manufacturer: nil, quantities: eggQ, source: .userInput)
+        let b = FoodItem(name: "Egg", manufacturer: nil, quantities: eggQ, source: .userInput)   // structural duplicate
+        let meal = FoodItem(name: "Egg", manufacturer: nil, quantities: eggQ, source: .customMeal)   // same signature, different source
+        ctx.insert(a); ctx.insert(b); ctx.insert(meal)
+        try ctx.save()
+
+        await CalorieActor(modelContainer: store).dedupeFoods()
+
+        let foods = try ModelContext(store).fetch(FetchDescriptor<FoodItem>())
+        #expect(foods.count == 2)   // the two ordinary "Egg"s merge to one; the meal is untouched
+        #expect(foods.contains { $0.source == .customMeal })
+    }
+
+    @Test func dedupeRemapsMealComponentsWhenAnIngredientIsMerged() async throws {
+        let store = try makeStore()
+        let ctx = ModelContext(store)
+        let q = [FoodQuantity(type: .portion, count: 1, calories: 100)]
+        let ingredientA = FoodItem(name: "Egg", manufacturer: nil, quantities: q, source: .userInput)
+        let ingredientB = FoodItem(name: "Egg", manufacturer: nil, quantities: q, source: .userInput)   // will be merged away
+        let meal = FoodItem(name: "Breakfast", manufacturer: nil,
+                            quantities: [FoodQuantity(type: .portion, count: 1, calories: 100)], source: .customMeal)
+        meal.components = [MealComponent(foodItemID: ingredientB.id, servingUnit: .portion, servingAmount: 1)]
+        ctx.insert(ingredientA); ctx.insert(ingredientB); ctx.insert(meal)
+        try ctx.save()
+
+        await CalorieActor(modelContainer: store).dedupeFoods()
+
+        let foods = try ModelContext(store).fetch(FetchDescriptor<FoodItem>())
+        let survivingIngredients = foods.filter { $0.source == .userInput }
+        #expect(survivingIngredients.count == 1)   // the two "Egg"s merged
+
+        let survivorID = survivingIngredients.first!.id
+        let survivingMeal = foods.first { $0.source == .customMeal }
+        #expect(survivingMeal?.components.first?.foodItemID == survivorID)   // remapped, not left dangling
+    }
+
     @Test func dedupeMealsMergesSameNameAndReassignsEntries() async throws {
         let store = try makeStore()
         let ctx = ModelContext(store)

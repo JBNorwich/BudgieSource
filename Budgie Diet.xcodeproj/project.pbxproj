@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		ABAE920A1194472292313C73 /* MealEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9817F1A1E14D699F021F27 /* MealEditorView.swift */; };
 		D80CB99A2F70290F0036EB8E /* WeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CB9992F70290C0036EB8E /* WeightView.swift */; };
 		D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
 		D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
@@ -217,6 +218,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1E9817F1A1E14D699F021F27 /* MealEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEditorView.swift; sourceTree = "<group>"; };
 		D80CB9992F70290C0036EB8E /* WeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightView.swift; sourceTree = "<group>"; };
 		D81987E62E4FA1F400ED81A4 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		D81EAB0C2CA049C000A7F302 /* Budgie-DietWatch-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Budgie-DietWatch-Watch-App-Info.plist"; sourceTree = "<group>"; };
@@ -465,6 +467,7 @@
 				D897F1B730023F5800581386 /* MacroEntryFields.swift */,
 				D8AAC99A30018B51008A3640 /* FoodLibraryView.swift */,
 				D8AAC9983001801B008A3640 /* FoodEditorView.swift */,
+				1E9817F1A1E14D699F021F27 /* MealEditorView.swift */,
 				D8CA2F012FF9682A00F63612 /* CalorieEntryView.swift */,
 				D8E3B2442F6FE41D00458DDD /* EditCalsSheet.swift */,
 				D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */,
@@ -909,6 +912,7 @@
 				D8BCE5092C7F9F9A001EA005 /* DataClasses.swift in Sources */,
 				D829B0852C79B5C50027841B /* ChartView.swift in Sources */,
 				D8AAC9993001801B008A3640 /* FoodEditorView.swift in Sources */,
+				ABAE920A1194472292313C73 /* MealEditorView.swift in Sources */,
 				D8BCE50B2C7FBBC9001EA005 /* TodayFoodList.swift in Sources */,
 				D8BDE7322C7B4CDA00E07471 /* Strings.swift in Sources */,
 				D8DE2B422FF6DD5400513101 /* FirstRunWizard.swift in Sources */,

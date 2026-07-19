@@ -109,3 +109,15 @@ extension CatalogueFood {
         PickedFood(id: id, persistedID: nil, name: name, manufacturer: manufacturer, quantities: quantities)
     }
 }
+
+/// A comparable fingerprint of a food's name, manufacturer and servings — used to recognise when two
+/// records are truly the same food (e.g. a generic catalogue entry and a saved copy of it), rather
+/// than just sharing a name. Shared by food dedup and by anything that needs to avoid presenting or
+/// re-saving a duplicate of something already in the library.
+enum FoodSignature {
+    static func make(name: String, manufacturer: String?, quantities: [FoodQuantity]) -> String {
+        let base = "\(name.lowercased())|\(manufacturer?.lowercased() ?? "")"
+        let servings = quantities.map { "\($0.type.unitName)-\($0.count)-\($0.calories)" }.joined(separator: ",")
+        return "\(base)|\(servings)"
+    }
+}

@@ -497,7 +497,7 @@ actor CalorieActor {
         "\(name.lowercased())|\(calories)"
     }
 
-    /// Merges structurally-identical FoodItems (same name, manufacturer and servings), moving any linked entries onto one survivor and deleting the rest. Catches duplicates from two devices migrating or creating the same food before CloudKit reconciles. Distinct-calorie "same name" variants have a different signature and are deliberately NOT merged.
+    /// Merges structurally-identical FoodItems (same name, manufacturer and servings), moving any linked entries onto one survivor and deleting the rest. Catches duplicates from two devices migrating or creating the same food before CloudKit reconciles. Distinct-calorie "same name" variants have a different signature and are deliberately NOT merged. Custom meals are excluded from merging: their `quantities` is a baked-in total, not their composition, so two differently-composed meals that happen to share a name and total would otherwise be wrongly collapsed into one. Any meal whose component pointed at a food that WAS merged away still gets repointed to the survivor, so a dedup elsewhere never leaves a meal referencing a deleted FoodItem.
     func dedupeFoods() {
         // Sort by a stable key so every device chooses the SAME survivor for a duplicate pair.
         // Otherwise two devices can each keep a different copy and delete the other's; after CloudKit
@@ -505,19 +505,35 @@ actor CalorieActor {
         let foods = ((try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? [])
             .sorted { $0.id.uuidString < $1.id.uuidString }
         var survivors: [String: FoodItem] = [:]
+        var remap: [UUID: UUID] = [:]   // doomed food id -> survivor id
         var changed = false
 
-        for food in foods {
+        for food in foods where food.source != .customMeal {
             let key = Self.foodSignature(food)
             if let survivor = survivors[key] {
                 let doomedID = food.id
                 let survivorID = survivor.id
                 let entryDescriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.foodItem == doomedID })
                 for entry in (try? modelContext.fetch(entryDescriptor)) ?? [] { entry.foodItem = survivorID }
+                remap[doomedID] = survivorID
                 modelContext.delete(food)
                 changed = true
             } else {
                 survivors[key] = food
+            }
+        }
+
+        if !remap.isEmpty {
+            for food in foods where !food.components.isEmpty {
+                var componentsChanged = false
+                food.components = food.components.map { component in
+                    guard let survivorID = remap[component.foodItemID] else { return component }
+                    componentsChanged = true
+                    var updated = component
+                    updated.foodItemID = survivorID
+                    return updated
+                }
+                if componentsChanged { changed = true }
             }
         }
 
@@ -527,11 +543,7 @@ actor CalorieActor {
     }
 
     private static func foodSignature(_ food: FoodItem) -> String {
-        let base = "\(food.name.lowercased())|\(food.manufacturer?.lowercased() ?? "")"
-        let servings = food.quantities
-            .map { "\($0.type.unitName)-\($0.count)-\($0.calories)" }
-            .joined(separator: ",")
-        return "\(base)|\(servings)"
+        FoodSignature.make(name: food.name, manufacturer: food.manufacturer, quantities: food.quantities)
     }
 
     // MARK: - Backup / restore

@@ -352,7 +352,14 @@ struct MacAddFoodSheet: View {
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
             let mine = await dataStore.foodItemActor.search(term: searchText)
-            let generic = FoodCatalogue.shared.search(searchText)
+            // Drop any generic that's already saved under an identical name AND servings/calories
+            // (e.g. promoted into the library via a custom meal) so it isn't shown twice.
+            let mineSignatures = Set(mine.map {
+                FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities)
+            })
+            let generic = FoodCatalogue.shared.search(searchText).filter {
+                !mineSignatures.contains(FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities))
+            }
             foodResults = mine.map(\.asPicked) + generic.map(\.asPicked)
             let entries = await dataStore.calorieActor.searchCals(term: searchText, meal: nil)
             entryResults = entries.filter { $0.foodItem == nil && $0.servingUnit == nil }
