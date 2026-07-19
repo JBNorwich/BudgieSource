@@ -238,8 +238,24 @@ extension FoodItem {
 /// Actor to act on the FoodItem database.
 @ModelActor
 actor FoodItemActor {
+    /// A custom meal can't itself be used as an ingredient of another meal — enforced here, at the
+    /// only place components are actually persisted, rather than relying on every caller (UI pickers,
+    /// Shortcuts, backup restore) to have separately excluded meals from whatever list they built
+    /// components from. A bad reference is dropped rather than rejecting the whole save, so a stray
+    /// one (e.g. from a hand-edited or older-version backup) doesn't block saving the rest of the item.
+    private func stripNestedMealComponents(_ components: [MealComponent]) -> [MealComponent] {
+        let ids = Set(components.map(\.foodItemID))
+        guard !ids.isEmpty else { return components }
+        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { ids.contains($0.id) })
+        let referenced = (try? modelContext.fetch(descriptor)) ?? []
+        let mealIDs = Set(referenced.filter { $0.source == .customMeal }.map(\.id))
+        guard !mealIDs.isEmpty else { return components }
+        return components.filter { !mealIDs.contains($0.foodItemID) }
+    }
+
     /// Inserts a new food item and saves.
     func insert(_ item: FoodItem) {
+        item.components = stripNestedMealComponents(item.components)
         modelContext.insert(item)
         do { try modelContext.save() } catch { print("FoodItem insertion error: \(error)") }
     }
@@ -309,16 +325,16 @@ actor FoodItemActor {
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
-    /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent. `components`/`batchYield` only apply to custom meals; ordinary foods keep the defaults, so existing callers don't need to change.
+    /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent. `components`/`batchYield` only apply to custom meals; leave them `nil` to leave the item's existing values untouched, so a caller that doesn't know about meals (e.g. the ordinary food editor) can never wipe a meal's ingredients just by reaching an item it doesn't recognise as one.
     func update(id: UUID, name: String, manufacturer: String?, quantities: [FoodQuantity],
-                components: [MealComponent] = [], batchYield: Double = 1) {
+                components: [MealComponent]? = nil, batchYield: Double? = nil) {
         let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
         guard let item = (try? modelContext.fetch(descriptor))?.first else { return }
         item.name = name
         item.manufacturer = manufacturer
         item.quantities = quantities
-        item.components = components
-        item.batchYield = batchYield
+        if let components { item.components = stripNestedMealComponents(components) }
+        if let batchYield { item.batchYield = batchYield }
         do { try modelContext.save() } catch { print("FoodItem update error: \(error)") }
     }
 

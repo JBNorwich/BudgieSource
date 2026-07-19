@@ -121,10 +121,10 @@ struct FoodLibraryView: View {
     private func foodRow(_ food: FoodItem) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             if let m = food.manufacturer, !m.isEmpty {
-                Text(m).font(.caption).foregroundStyle(.secondary)
+                Text(m).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
             }
             HStack(spacing: 6) {
-                Text(food.name)
+                Text(food.name).lineLimit(1).truncationMode(.tail)
                 if food.source == .customMeal {
                     Image(systemName: "fork.knife").font(.caption).foregroundStyle(.secondary)
                 }

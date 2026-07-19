@@ -97,3 +97,52 @@ struct BarcodeScannerSheet: View {
         }
     }
 }
+
+/// Adds a "Scan barcode" toolbar button (hidden when the user has disabled OpenFoodFacts search) and
+/// the scan → OpenFoodFacts-lookup sheet flow, handing back the picked product via `onPick`. Shared by
+/// every screen that lets the user add a food by barcode (AddCalsSheet, the meal-ingredient picker),
+/// so a future fix to the scan flow only needs to be made once.
+private struct BarcodeScanning: ViewModifier {
+    let onPick: (PickedFood) -> Void
+
+    @State private var showingScanner = false
+    @State private var scannedBarcode: ScannedBarcode?
+
+    private struct ScannedBarcode: Identifiable {
+        let id: String
+        var barcode: String { id }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .toolbar {
+                if !settingsObj.offSearchDisabled {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showingScanner = true
+                        } label: {
+                            Label("Scan barcode", systemImage: "barcode.viewfinder")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingScanner) {
+                BarcodeScannerSheet { code in
+                    scannedBarcode = ScannedBarcode(id: code)
+                }
+            }
+            .sheet(item: $scannedBarcode) { scanned in
+                OpenFoodFactsSheet(barcode: scanned.barcode) { food in
+                    scannedBarcode = nil
+                    onPick(food)
+                }
+            }
+    }
+}
+
+extension View {
+    /// See `BarcodeScanning`.
+    func barcodeScanning(onPick: @escaping (PickedFood) -> Void) -> some View {
+        modifier(BarcodeScanning(onPick: onPick))
+    }
+}

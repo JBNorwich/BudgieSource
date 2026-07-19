@@ -182,6 +182,7 @@ struct FoodEditorView: View {
             await dataStore.foodItemActor.insert(item)
             onSaved?(item.asPicked)
         }
+        if cleanMfr != nil { dataStore.invalidateManufacturersCache() }
     }
 }
 

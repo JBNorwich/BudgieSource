@@ -39,8 +39,19 @@ struct MealEditorView: View {
         _components = State(initialValue: existing?.components ?? [])
     }
 
+    /// True for a component whose food is still there but no longer has a serving it can resolve
+    /// against (the specific serving, and any same-type fallback, were both removed since it was
+    /// added) — distinct from the food itself being gone, which `resolvedFoods` already surfaces as
+    /// "Food no longer available". Left unresolved, this component would silently drop out of the
+    /// meal's total instead of blocking save, so it's surfaced and treated as blocking here too.
+    private func hasUnresolvableServing(_ component: MealComponent) -> Bool {
+        guard let food = resolvedFoods[component.foodItemID] else { return false }
+        return component.totals(in: food) == nil
+    }
+
     private var canSave: Bool {
         componentsLoaded && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !components.isEmpty
+            && components.allSatisfy { resolvedFoods[$0.foodItemID] != nil && !hasUnresolvableServing($0) }
     }
 
     private var previewQuantity: FoodQuantity {
@@ -68,7 +79,7 @@ struct MealEditorView: View {
                 Text("Enter the number of servings the ingredients and their quantities you add make. You can always log more or less than one serving at a time, just like any other food.")
             }
 
-            Section("Ingredients") {
+            Section {
                 if components.isEmpty {
                     Text("Add the foods that make up this meal.").foregroundStyle(.secondary)
                 } else {
@@ -81,6 +92,12 @@ struct MealEditorView: View {
                     addingComponent = true
                 } label: {
                     Label("Add ingredient", systemImage: "plus")
+                }
+            } header: {
+                Text("Ingredients")
+            } footer: {
+                if componentsLoaded && components.contains(where: { resolvedFoods[$0.foodItemID] == nil || hasUnresolvableServing($0) }) {
+                    Text("One or more ingredients are no longer available. Remove or replace them to save your changes.")
                 }
             }
 
@@ -130,17 +147,23 @@ struct MealEditorView: View {
 
     @ViewBuilder
     private func componentRow(_ component: MealComponent) -> some View {
+        let food = resolvedFoods[component.foodItemID]
+        let totals = food.flatMap { component.totals(in: $0) }
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                if let food = resolvedFoods[component.foodItemID] {
-                    Text(food.name)
-                    Text(componentLabel(component)).font(.caption).foregroundStyle(.secondary)
+                if let food {
+                    Text(food.name).lineLimit(1).truncationMode(.tail)
+                    if totals != nil {
+                        Text(componentLabel(component)).font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        Text("Serving no longer available").font(.caption).foregroundStyle(.secondary)
+                    }
                 } else {
                     Text("Food no longer available").foregroundStyle(.secondary)
                 }
             }
             Spacer()
-            if let food = resolvedFoods[component.foodItemID], let t = component.totals(in: food) {
+            if let t = totals {
                 Text("\(t.calories.formatted()) kcal").foregroundStyle(.secondary)
             }
         }
@@ -183,13 +206,6 @@ private struct MealComponentPickerView: View {
     @State private var selectedQuantityIndex = 0
     @State private var amount: Double = 0
     @State private var showingOFFSheet = false
-    @State private var showingScanner = false
-    @State private var scannedBarcode: ScannedBarcode?
-
-    private struct ScannedBarcode: Identifiable {
-        let id: String
-        var barcode: String { id }
-    }
 
     private var pickedQuantity: FoodQuantity? {
         guard let selected, selected.quantities.indices.contains(selectedQuantityIndex) else { return nil }
@@ -201,6 +217,13 @@ private struct MealComponentPickerView: View {
         return amount / q.count
     }
     private var canAdd: Bool { pickedQuantity != nil && effectiveServings > 0 }
+
+    private func select(_ food: PickedFood) {
+        selected = food
+        selectedQuantityIndex = 0
+        amount = food.quantities.first?.count ?? 0
+        dismissSearch()
+    }
 
     var body: some View {
         Group {
@@ -215,38 +238,13 @@ private struct MealComponentPickerView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
             }
-            if !settingsObj.offSearchDisabled {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingScanner = true
-                    } label: {
-                        Label("Scan barcode", systemImage: "barcode.viewfinder")
-                    }
-                }
-            }
         }
+        .barcodeScanning { food in select(food) }
         .searchable(text: $searchText, prompt: "Search foods")
         .sheet(isPresented: $showingOFFSheet) {
             OpenFoodFactsSheet(term: searchText) { food in
-                selected = food
-                selectedQuantityIndex = 0
-                amount = food.quantities.first?.count ?? 0
                 showingOFFSheet = false
-                dismissSearch()
-            }
-        }
-        .sheet(isPresented: $showingScanner) {
-            BarcodeScannerSheet { code in
-                scannedBarcode = ScannedBarcode(id: code)
-            }
-        }
-        .sheet(item: $scannedBarcode) { scanned in
-            OpenFoodFactsSheet(barcode: scanned.barcode) { food in
-                selected = food
-                selectedQuantityIndex = 0
-                amount = food.quantities.first?.count ?? 0
-                scannedBarcode = nil
-                dismissSearch()
+                select(food)
             }
         }
         .task(id: searchText) {
@@ -271,7 +269,7 @@ private struct MealComponentPickerView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 6) {
-                                Text(food.name)
+                                Text(food.name).lineLimit(1).truncationMode(.tail)
                                 if food.isGeneric {
                                     Text("Generic").font(.caption2)
                                         .padding(.horizontal, 6).padding(.vertical, 2)
@@ -289,12 +287,7 @@ private struct MealComponentPickerView: View {
                         }
                     }
                     .contentShape(Rectangle())
-                    .onTapGesture {
-                        selected = food
-                        selectedQuantityIndex = 0
-                        amount = food.quantities.first?.count ?? 0
-                        dismissSearch()
-                    }
+                    .onTapGesture { select(food) }
                 }
             }
 
@@ -376,10 +369,17 @@ private struct MealComponentPickerView: View {
                 let created = FoodItem(name: selected.name, manufacturer: selected.manufacturer,
                                        quantities: selected.quantities, source: .userInput)
                 await dataStore.foodItemActor.insert(created)
+                if selected.manufacturer != nil { dataStore.invalidateManufacturersCache() }
                 food = created
             }
         }
-        let component = MealComponent(foodItemID: food.id, servingID: q.id, servingUnit: q.type, servingAmount: amount)
+        // `q`'s id was minted for `selected` (the catalogue pick or freshly-fetched food), which may
+        // not be the same FoodQuantity instance as the one on `food` if an existing saved copy was
+        // reused above — resolve to the matching serving on `food` itself so the component's
+        // servingID actually exists in `food.quantities` instead of silently falling back to a
+        // type-only match later.
+        let servingID = food.quantities.first(where: { $0.type == q.type && $0.count == q.count && $0.calories == q.calories })?.id ?? q.id
+        let component = MealComponent(foodItemID: food.id, servingID: servingID, servingUnit: q.type, servingAmount: amount)
         onAdd(component, food)
         dismiss()
     }

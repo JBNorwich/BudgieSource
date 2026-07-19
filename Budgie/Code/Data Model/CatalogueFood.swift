@@ -41,23 +41,31 @@ final class FoodCatalogue {
         }
     }
 
-    func search(_ term: String, limit: Int = 50) -> [CatalogueFood] {
+    /// Every catalogue entry matching `term`, unlimited — the shared base for both public `search`
+    /// overloads, so excluding duplicates always happens before either one applies its result cap.
+    private func matches(_ term: String) -> [CatalogueFood] {
         let t = term.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty else { return [] }
-        return Array(foods.filter { $0.name.localizedCaseInsensitiveContains(t) }.prefix(limit))
+        return foods.filter { $0.name.localizedCaseInsensitiveContains(t) }
+    }
+
+    func search(_ term: String, limit: Int = 50) -> [CatalogueFood] {
+        Array(matches(term).prefix(limit))
     }
 }
 
 extension FoodCatalogue {
     /// Generic catalogue matches for `term`, with anything structurally identical to one of the
     /// caller's own saved foods removed — a shared name alone isn't enough to call it a duplicate.
+    /// Excludes duplicates against the FULL match set before applying `limit`, so a search doesn't
+    /// come back short just because some of the first `limit` raw matches happened to be duplicates.
     func search(_ term: String, excluding mine: [FoodItem], limit: Int = 50) -> [CatalogueFood] {
         let mineSignatures = Set(mine.map {
             FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities)
         })
-        return search(term, limit: limit).filter {
+        return Array(matches(term).filter {
             !mineSignatures.contains(FoodSignature.make(name: $0.name, manufacturer: $0.manufacturer, quantities: $0.quantities))
-        }
+        }.prefix(limit))
     }
 }
 

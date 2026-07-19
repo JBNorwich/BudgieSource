@@ -381,6 +381,7 @@ final class HealthData {
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID, manufacturer: manufacturer, protein: protein, fat: fat, carbs: carbs)
         await calorieActor.insertNewCals(object: newEntry)
+        if let manufacturer, !manufacturer.isEmpty { invalidateManufacturersCache() }
     }
     
     func addFoodEntry(foodItemID: UUID?, name: String, manufacturer: String? = nil, quantity: FoodQuantity, servings: Double, date: Date, meal: UUID) async {
@@ -878,9 +879,15 @@ final class HealthData {
     }
 #endif
     
+    /// Cached result of `knownManufacturers()` — every food-entry sheet asks for this on open, and
+    /// without a cache each one repeats two full-table scans just to populate autocomplete. Cleared
+    /// by `invalidateManufacturersCache()` wherever a save could introduce a new manufacturer name.
+    private var manufacturersCache: [String]?
+
     /// Distinct manufacturer names the user has entered — across saved foods and logged entries —
     /// for autocomplete suggestions. Case-insensitively de-duplicated (first spelling wins), sorted.
     func knownManufacturers() async -> [String] {
+        if let manufacturersCache { return manufacturersCache }
         async let savedTask = foodItemActor.manufacturers()
         async let loggedTask = calorieActor.manufacturers()
         let (saved, logged) = await (savedTask, loggedTask)
@@ -889,7 +896,15 @@ final class HealthData {
         for name in saved + logged + Self.seedManufacturers where seen.insert(name.lowercased()).inserted {
             result.append(name)
         }
-        return result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        let sorted = result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        manufacturersCache = sorted
+        return sorted
+    }
+
+    /// Clears the cached manufacturer list. Call after any save that could introduce a manufacturer
+    /// name not already in the list, so the next autocomplete lookup picks it up.
+    func invalidateManufacturersCache() {
+        manufacturersCache = nil
     }
     
     /// One-off seed list of common manufacturer names bundled with the app, so autocomplete is useful

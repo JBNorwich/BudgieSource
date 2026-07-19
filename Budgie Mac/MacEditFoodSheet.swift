@@ -139,8 +139,10 @@ struct MacEditFoodSheet: View {
             if isFoodEntry, let id = entry.foodItem {
                 let qs = await dataStore.foodItemActor.quantities(id: id)
                 quantities = qs
-                if let idx = qs.firstIndex(where: { $0.type == entry.servingUnit }) {
-                    selectedQuantityIndex = idx
+                if qs.contains(where: { $0.type == entry.servingUnit }) {
+                    selectedQuantityIndex = bestServingIndex(in: qs, forUnit: entry.servingUnit,
+                                                             calories: entry.calories,
+                                                             servingAmount: entry.servingAmount)
                 } else if let first = qs.first {
                     selectedQuantityIndex = 0
                     amount = first.count

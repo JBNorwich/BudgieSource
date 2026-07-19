@@ -162,8 +162,12 @@ struct EditCalsSheet: View {
             if isFoodEntry, let id = entryToEdit.foodItem {
                 let qs = await dataStore.foodItemActor.quantities(id: id)
                 quantities = qs
-                if let idx = qs.firstIndex(where: { $0.type == entryToEdit.servingUnit }) {
-                    selectedQuantityIndex = idx           // default to the serving it was logged in
+                if qs.contains(where: { $0.type == entryToEdit.servingUnit }) {
+                    // Default to the serving it was logged in — and, when several share that unit,
+                    // the one whose rate matches what was actually logged.
+                    selectedQuantityIndex = bestServingIndex(in: qs, forUnit: entryToEdit.servingUnit,
+                                                             calories: entryToEdit.calories,
+                                                             servingAmount: entryToEdit.servingAmount)
                 } else if let first = qs.first {
                     selectedQuantityIndex = 0              // logged unit is gone; fall back to the first
                     amount = first.count

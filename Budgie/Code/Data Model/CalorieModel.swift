@@ -576,6 +576,20 @@ actor CalorieActor {
         for dto in meals where !mealUUIDs.contains(dto.mealUUID) { modelContext.insert(Meal(restoring: dto)); mealCount += 1 }
         for dto in foods where !foodIDs.contains(dto.id) { modelContext.insert(FoodItem(restoring: dto)); foodCount += 1 }
         for dto in entries where !entryIDs.contains(dto.id) { modelContext.insert(CalorieEntry(restoring: dto)); entryCount += 1 }
+
+        // No nesting: a custom meal can't itself be used as an ingredient of another meal. Import
+        // bypasses FoodItemActor's own guard against this, so it's re-applied here against every
+        // food now in the store (existing and just-restored) before saving — a hand-edited or
+        // older-version backup can't smuggle a meal-of-meal reference past the UI-only picker filter.
+        let allFoods = (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? []
+        let mealIDs = Set(allFoods.filter { $0.source == .customMeal }.map(\.id))
+        if !mealIDs.isEmpty {
+            for food in allFoods where !food.components.isEmpty {
+                let filtered = food.components.filter { !mealIDs.contains($0.foodItemID) }
+                if filtered.count != food.components.count { food.components = filtered }
+            }
+        }
+
         do { try modelContext.save() } catch { print("Backup import error: \(error)") }
         return (mealCount, foodCount, entryCount)
     }

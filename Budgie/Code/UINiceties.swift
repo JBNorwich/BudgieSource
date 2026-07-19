@@ -60,6 +60,28 @@ func suggestedManufacturers(for query: String, in known: [String], limit: Int = 
         .prefix(limit).map { $0 }
 }
 
+/// Best serving to re-open a past logged entry on: the one matching the entry's unit and, when
+/// several share that unit, the one whose per-unit calorie rate is closest to what was actually
+/// logged — so a food with two same-unit servings (e.g. "1 slice" and "1 loaf") re-opens on the one
+/// the entry really used, rather than whichever happens to come first. Shared by every screen that
+/// re-opens a past CalorieEntry against a food's current servings.
+func bestServingIndex(in quantities: [FoodQuantity], forUnit unit: FoodQuantityType?,
+                      calories: Int, servingAmount: Double?) -> Int {
+    guard let unit else { return 0 }
+    let sameUnit = quantities.indices.filter { quantities[$0].type == unit }
+    guard let first = sameUnit.first else { return 0 }
+    guard let amount = servingAmount, amount > 0 else { return first }
+    let loggedRate = Double(calories) / amount
+    return sameUnit.min { servingRateGap(quantities[$0], loggedRate) < servingRateGap(quantities[$1], loggedRate) } ?? first
+}
+
+/// How far a serving's per-unit calorie rate is from a target rate — used to disambiguate two
+/// servings that share a unit type.
+private func servingRateGap(_ q: FoodQuantity, _ rate: Double) -> Double {
+    guard q.count > 0 else { return .greatestFiniteMagnitude }
+    return abs(Double(q.calories) / q.count - rate)
+}
+
 // WEIGHT RELATED STRUCTS/FUNCTIONS
 /// Hardcoded constant of the amount in kg of a lb.
 let lbInKg: Double = 0.45359237

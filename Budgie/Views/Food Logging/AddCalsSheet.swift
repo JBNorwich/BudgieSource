@@ -47,14 +47,6 @@ struct AddCalsSheet: View {
     @State private var displayedItems: [RecentItem] = []
     @State private var showingOFFSheet = false
     @State private var editingFood: FoodItem?
-    
-    @State private var showingScanner = false
-    @State private var scannedBarcode: ScannedBarcode?
-
-    private struct ScannedBarcode: Identifiable {
-        let id: String
-        var barcode: String { id }
-    }
 
     // MARK: Shared
     @State private var mealList: [Meal] = []
@@ -151,34 +143,17 @@ struct AddCalsSheet: View {
         }
         .sheet(item: $editingFood) { food in
             NavigationStack {
-                FoodEditorView(existing: food, isModal: true)
+                if food.source == .customMeal {
+                    MealEditorView(existing: food, isModal: true)
+                } else {
+                    FoodEditorView(existing: food, isModal: true)
+                }
             }
             .onDisappear { reloadToken = UUID() }   // pick up any edits
         }
         
-        .toolbar {
-            if !settingsObj.offSearchDisabled {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingScanner = true
-                    } label: {
-                        Label("Scan barcode", systemImage: "barcode.viewfinder")
-                    }
-                }
-            }
-        }
-        .sheet(isPresented: $showingScanner) {
-            BarcodeScannerSheet { code in
-                scannedBarcode = ScannedBarcode(id: code)
-            }
-        }
-        .sheet(item: $scannedBarcode) { scanned in
-            OpenFoodFactsSheet(barcode: scanned.barcode) { food in
-                selectFood(food)
-                scannedBarcode = nil
-            }
-        }
-        
+        .barcodeScanning { food in selectFood(food) }
+
         .navigationTitle("Add food")
         .task(id: searchKey) {
             if searchText.isEmpty {
@@ -436,7 +411,7 @@ struct AddCalsSheet: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(food.name)
+                    Text(food.name).lineLimit(1).truncationMode(.tail)
                     if food.isGeneric {
                         Text("Generic").font(.caption2)
                             .padding(.horizontal, 6).padding(.vertical, 2)
@@ -447,7 +422,7 @@ struct AddCalsSheet: View {
                 let caption = [food.manufacturer, food.quantities.first?.label]
                     .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
                 if !caption.isEmpty {
-                    Text(caption).font(.caption).foregroundStyle(.secondary)
+                    Text(caption).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                 }
             }
             Spacer()
@@ -472,7 +447,8 @@ struct AddCalsSheet: View {
         if let picked = await resolveFood(for: entry) {
             // A logged food or generic → scaling mode, prefilled from the past entry.
             selectedFood = picked
-            selectedQuantityIndex = bestServingIndex(in: picked, for: entry)
+            selectedQuantityIndex = bestServingIndex(in: picked.quantities, forUnit: entry.servingUnit,
+                                                     calories: entry.calories, servingAmount: entry.servingAmount)
             amount = entry.servingAmount ?? (picked.quantities.first?.count ?? 1)
             alsoSave = false
             searchText = ""
@@ -505,23 +481,6 @@ struct AddCalsSheet: View {
                           manufacturer: entry.manufacturer, quantities: [q])
     }
     
-    /// Best serving to re-open a past entry on: the one matching the entry's unit and, when several
-    /// share that unit, the one whose per-unit calories are closest to what was actually logged —
-    /// so a food with two same-unit servings re-opens on the one the entry really used.
-    private func bestServingIndex(in food: PickedFood, for entry: CalorieEntry) -> Int {
-        guard let unit = entry.servingUnit else { return 0 }
-        let sameUnit = food.quantities.indices.filter { food.quantities[$0].type == unit }
-        guard let first = sameUnit.first else { return 0 }
-        guard let amount = entry.servingAmount, amount > 0 else { return first }
-        let loggedRate = Double(entry.calories) / amount
-        return sameUnit.min { rateGap(food.quantities[$0], loggedRate) < rateGap(food.quantities[$1], loggedRate) } ?? first
-    }
-
-    private func rateGap(_ q: FoodQuantity, _ rate: Double) -> Double {
-        guard q.count > 0 else { return .greatestFiniteMagnitude }
-        return abs(Double(q.calories) / q.count - rate)
-    }
-
     /// For the recent list: entries linked to a live food show that food's current recipe (and re-add it fresh); archived or deleted foods are dropped so we don't suggest something you've retired; genuine quick entries keep their own values. One row per food, batched to one lookup per food.
     private func resolveRecents(_ entries: [CalorieEntry]) async -> [RecentItem] {
         var foodCache: [UUID: FoodItem?] = [:]
@@ -567,6 +526,7 @@ struct AddCalsSheet: View {
             let newFoodName = food.name
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
+            if newFoodMfr != nil { dataStore.invalidateManufacturersCache() }
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
                                                           manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,

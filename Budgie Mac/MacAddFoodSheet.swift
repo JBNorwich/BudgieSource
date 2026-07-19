@@ -365,7 +365,8 @@ struct MacAddFoodSheet: View {
     private func prefill(from entry: CalorieEntry) async {
         if let picked = await resolveFood(for: entry) {
             selectedFood = picked
-            selectedQuantityIndex = picked.quantities.firstIndex(where: { $0.type == entry.servingUnit }) ?? 0
+            selectedQuantityIndex = bestServingIndex(in: picked.quantities, forUnit: entry.servingUnit,
+                                                     calories: entry.calories, servingAmount: entry.servingAmount)
             amount = entry.servingAmount ?? (picked.quantities.first?.count ?? 1)
             alsoSave = false
             searchText = ""
@@ -427,6 +428,7 @@ struct MacAddFoodSheet: View {
             let newFoodName = food.name
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
+            if newFoodMfr != nil { dataStore.invalidateManufacturersCache() }
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
                                                           manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,
