@@ -19,13 +19,14 @@ import Charts
 func deficitMagnitude(_ deficit: Int) -> Int { max(deficit, 0) }
 func surplusMagnitude(_ surplus: Int) -> Int { max(-surplus, 0) }
 
-struct ChartView: View {
-    @Binding var chartData: [ChartDataLump]
+/// Pure-render calorie in/out/deficit chart. Takes already-fetched data; does no fetching itself.
+struct CalorieChartView: View {
+    var chartData: [ChartDataLump]
     var goodString: String { settingsObj.surplusMode ? "Surplus" : "Deficit" }
     var badString: String { settingsObj.surplusMode ? "Deficit" : "Surplus" }
     var targString: String { "TARGET " + goodString.uppercased() }
     var targDeficit: Int { abs(settingsObj.desiredDeficit) }
-    
+
     var body: some View {
         Chart(chartData) {
             LineMark(
@@ -61,5 +62,22 @@ struct ChartView: View {
             .chartLegend(.visible)
             .chartLegend(position: .bottom, alignment: .center)
             .contentTransition(.interpolate)
+            .chartPressPopup(dates: chartData.map(\.date)) { date in
+                popupContent(for: date)
+            }
     }
+
+    @ViewBuilder
+    private func popupContent(for date: Date) -> some View {
+        if let lump = chartData.first(where: { $0.date == date }) {
+            Text("In: \(lump.eatenCals.formatted())").font(.caption2).foregroundStyle(.red)
+            Text("Out: \(lump.totalCals.formatted())").font(.caption2).foregroundStyle(.green)
+            Text((lump.deficit < 0 ? "Surplus: " : "Deficit: ") + abs(lump.deficit).formatted())
+                .font(.caption2).foregroundStyle(.secondary)
+        }
+    }
+}
+
+#Preview {
+    CalorieChartView(chartData: [])
 }

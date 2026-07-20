@@ -36,6 +36,50 @@ func formatDateForPicker(date: Date) -> String {
     pickerDateFormatter.string(from: date)
 }
 
+/// One step backward for a date window, preserving its width — the exact math behind
+/// `ChartDatePicker`'s left arrow, exposed so a chart's own swipe-to-page gesture can page
+/// identically to tapping the arrow.
+func steppedDateRangeBackward(start: Date, end: Date, stepComponent: Calendar.Component, stepValue: Int) -> (start: Date, end: Date) {
+    let cal = Calendar.current
+    func stepped(_ date: Date) -> Date {
+        cal.startOfDay(for: cal.date(byAdding: stepComponent, value: -stepValue, to: date) ?? date)
+    }
+    return (stepped(start), stepped(end))
+}
+
+/// One step forward, clamped so `end` never exceeds "tomorrow at midnight" — the exact math behind
+/// `ChartDatePicker`'s right arrow. `start` is derived from the (possibly-clamped) new `end` rather
+/// than stepped independently, so the window's width doesn't silently shrink right at the live edge.
+func steppedDateRangeForward(start: Date, end: Date, stepComponent: Calendar.Component, stepValue: Int) -> (start: Date, end: Date) {
+    let cal = Calendar.current
+    func stepped(_ date: Date, by multiplier: Int) -> Date {
+        cal.startOfDay(for: cal.date(byAdding: stepComponent, value: stepValue * multiplier, to: date) ?? date)
+    }
+    let newEnd = min(stepped(end, by: 1), getMidnightOnDayAfter(date: Date()))
+    let newStart = stepped(newEnd, by: -1)
+    return (newStart, newEnd)
+}
+
+/// A horizontal-swipe gesture that pages a date window backward/forward, using the same stepping
+/// math as `ChartDatePicker`'s arrows — shared by every chart page that embeds one, so a swipe on
+/// the chart itself behaves identically to tapping the picker's own arrows.
+///
+/// Attached as a plain `.gesture()` (not `.highPriorityGesture`) on a chart, so the chart's own
+/// press-and-hold popup gesture — nested inside via `.chartOverlay`, hence a descendant view — keeps
+/// first refusal on any touch, per SwiftUI's default gesture-resolution order; a quick swipe
+/// naturally fails the popup's hold requirement and falls through to this one instead.
+func pagingSwipeGesture(startDate: Binding<Date>, endDate: Binding<Date>, stepComponent: Calendar.Component, stepValue: Int) -> some Gesture {
+    DragGesture(minimumDistance: 40)
+        .onEnded { value in
+            guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+            let next = value.translation.width < 0
+                ? steppedDateRangeForward(start: startDate.wrappedValue, end: endDate.wrappedValue, stepComponent: stepComponent, stepValue: stepValue)
+                : steppedDateRangeBackward(start: startDate.wrappedValue, end: endDate.wrappedValue, stepComponent: stepComponent, stepValue: stepValue)
+            startDate.wrappedValue = next.start
+            endDate.wrappedValue = next.end
+        }
+}
+
 struct ChartDatePicker: View {
     @Binding var startDate: Date
     @Binding var endDate: Date
@@ -49,18 +93,6 @@ struct ChartDatePicker: View {
     @State var calsSheetSize = PresentationDetent.medium
     @State var showingFullPicker: Bool = false
     
-    /// Shifts a date by `times` whole steps, normalised to midnight to match the app's
-    /// half-open [start, midnight-after-end) date convention.
-    private func stepped(_ date: Date, times: Int) -> Date {
-        let cal = Calendar.current
-        let shifted = cal.date(byAdding: stepComponent, value: stepValue * times, to: date) ?? date
-        return cal.startOfDay(for: shifted)
-    }
-
-    var prevStartDate: Date { stepped(startDate, times: -1) }
-    var prevEndDate: Date { stepped(endDate, times: -1) }
-    var nextStartDate: Date { stepped(nextEndDate, times: -1) }
-    var nextEndDate: Date { min(stepped(endDate, times: 1), getMidnightOnDayAfter(date: Date())) }
     var atMax: Bool { endDate >= getMidnightOnDayAfter(date: Date()) }
     
     var body: some View {
@@ -70,10 +102,7 @@ struct ChartDatePicker: View {
             .overlay {
                 HStack {
                     Button("", systemImage: "arrow.left") {
-                        let newStart = prevStartDate
-                        let newEnd = prevEndDate
-                        startDate = newStart
-                        endDate = newEnd
+                        (startDate, endDate) = steppedDateRangeBackward(start: startDate, end: endDate, stepComponent: stepComponent, stepValue: stepValue)
                         dateChanged = true
                     }
                     .padding()
@@ -98,10 +127,7 @@ struct ChartDatePicker: View {
                     Spacer()
                     
                     Button("", systemImage: "arrow.right") {
-                        let newStart = nextStartDate
-                        let newEnd = nextEndDate
-                        startDate = newStart
-                        endDate = newEnd
+                        (startDate, endDate) = steppedDateRangeForward(start: startDate, end: endDate, stepComponent: stepComponent, stepValue: stepValue)
                         dateChanged = true
                     }
                     .padding()
