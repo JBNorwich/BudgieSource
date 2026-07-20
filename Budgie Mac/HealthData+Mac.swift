@@ -56,7 +56,12 @@ extension HealthData {
 
         // Food today — Budgie's own entries only. The Mac can't see food logged in other apps'
         // HealthKit data; that's the known, accepted limitation.
-        let foodList = await calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
+        // Fan out the three independent fetches concurrently, mirroring the shared updateLump.
+        async let foodListTask = calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
+        async let allMealsTask = calorieActor.getListOfMeals()
+        async let waterTask = waterActor.getTotalOnDate(date: todayStart)
+
+        let foodList = await foodListTask
         todayLump.foodList = foodList
         todayLump.healthKitCalories = settingsObj.snapShotHKCalories
         todayLump.eatenCalories = foodList.reduce(0) { $0 + $1.calories } + settingsObj.snapShotHKCalories
@@ -64,7 +69,7 @@ extension HealthData {
         todayLump.eatenProtein = Int(foodList.reduce(0.0) { $0 + ($1.protein ?? 0) }.rounded()) + settingsObj.snapShotHKProtein
         todayLump.eatenFat     = Int(foodList.reduce(0.0) { $0 + ($1.fat ?? 0) }.rounded()) + settingsObj.snapShotHKFat
         todayLump.eatenCarbs   = Int(foodList.reduce(0.0) { $0 + ($1.carbs ?? 0) }.rounded()) + settingsObj.snapShotHKCarbs
-        todayLump.allMeals = await calorieActor.getListOfMeals()
+        todayLump.allMeals = await allMealsTask
         todayLump.cleansedMealList = await calorieActor.cleansedMealList(data: foodList)
         todayLump.mealTotalList = [:]
         for meal in todayLump.cleansedMealList {
@@ -73,7 +78,7 @@ extension HealthData {
         }
 
         // Water today.
-        todayLump.waterToday = await waterActor.getTotalOnDate(date: todayStart) + settingsObj.snapShotHKWater
+        todayLump.waterToday = await waterTask + settingsObj.snapShotHKWater
 
         // Budget — taken from the iPhone's published snapshot, not recomputed.
         todayLump.applyBudgetSnapshot(budget: settingsObj.snapshotBudget,

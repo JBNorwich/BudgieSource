@@ -25,6 +25,7 @@
 		D837D0832C8601BF00587504 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D837D0822C8601BF00587504 /* StoreKit.framework */; };
 		D838A6122C8075710083F3B3 /* NewDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6112C8075710083F3B3 /* NewDataView.swift */; };
 		D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6132C80828A0083F3B3 /* GaugeView.swift */; };
+		D8C5FEFF1750D1E503B979BC /* AccessoryCircularGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */; };
 		D840B0292D27F03100AFE471 /* BudgetCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = D840B0282D27F03100AFE471 /* BudgetCap.swift */; };
 		D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF18E2D8C48B900340EE1 /* FitnessView.swift */; };
 		D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1902D8C4F6B00340EE1 /* WaterView.swift */; };
@@ -127,6 +128,7 @@
 		D8CA2F032FF9687400F63612 /* CalorieEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8CA2F012FF9682A00F63612 /* CalorieEntryView.swift */; };
 		D8CA2F042FF9689500F63612 /* TodayFoodList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCE50A2C7FBBC8001EA005 /* TodayFoodList.swift */; };
 		D8CA2F052FF968CC00F63612 /* GaugeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D838A6132C80828A0083F3B3 /* GaugeView.swift */; };
+		D82FC988434952AF959CC6B2 /* AccessoryCircularGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */; };
 		D8CA2F062FF96A8600F63612 /* MeterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E8316D2C74976300AAF555 /* MeterView.swift */; };
 		D8CA2F182FF9931C00F63612 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89461A82C73C3FD00138B60 /* Assets.xcassets */; };
 		D8CA2F192FF99D5D00F63612 /* BudgetHelperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831732C74CDC700AAF555 /* BudgetHelperView.swift */; };
@@ -234,6 +236,7 @@
 		D837D0822C8601BF00587504 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS10.5.sdk/System/Library/Frameworks/StoreKit.framework; sourceTree = DEVELOPER_DIR; };
 		D838A6112C8075710083F3B3 /* NewDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewDataView.swift; sourceTree = "<group>"; };
 		D838A6132C80828A0083F3B3 /* GaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GaugeView.swift; sourceTree = "<group>"; };
+		D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryCircularGauge.swift; sourceTree = "<group>"; };
 		D840B0282D27F03100AFE471 /* BudgetCap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetCap.swift; sourceTree = "<group>"; };
 		D85CF18E2D8C48B900340EE1 /* FitnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessView.swift; sourceTree = "<group>"; };
 		D85CF1902D8C4F6B00340EE1 /* WaterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterView.swift; sourceTree = "<group>"; };
@@ -435,6 +438,7 @@
 				D8BCE50A2C7FBBC8001EA005 /* TodayFoodList.swift */,
 				D838A6132C80828A0083F3B3 /* GaugeView.swift */,
 				D85CF1902D8C4F6B00340EE1 /* WaterView.swift */,
+				D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -938,6 +942,7 @@
 				D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */,
 				D8FE7F163008063000532570 /* BarcodeScannerView.swift in Sources */,
 				D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */,
+				D8C5FEFF1750D1E503B979BC /* AccessoryCircularGauge.swift in Sources */,
 				D8AAC99B30018B51008A3640 /* FoodLibraryView.swift in Sources */,
 				D8E831652C73D0BA00AAF555 /* DateFuncs.swift in Sources */,
 				D897F1B830023F5800581386 /* MacroEntryFields.swift in Sources */,
@@ -1020,6 +1025,7 @@
 				D8CA2EF32FF95D0300F63612 /* HealthData.swift in Sources */,
 				D8CA2EF42FF95D0300F63612 /* WaterModel.swift in Sources */,
 				D8CA2F052FF968CC00F63612 /* GaugeView.swift in Sources */,
+				D82FC988434952AF959CC6B2 /* AccessoryCircularGauge.swift in Sources */,
 				D8CA2F032FF9687400F63612 /* CalorieEntryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

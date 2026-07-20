@@ -155,9 +155,10 @@ struct WeightHistoryView: View {
     private func load() async {
         let from = getStartOfDay(date: startDate)
         let to = endDate
-        points = await dataStore.weightSeries(from: from, to: to)
-        ownEntries = await dataStore.fetchBudgieWeightSamples(from: from, to: to)
-        otherEntries = await dataStore.fetchOtherWeightSamples(from: from, to: to)
+        async let seriesTask = dataStore.weightSeries(from: from, to: to)
+        async let ownTask = dataStore.fetchBudgieWeightSamples(from: from, to: to)
+        async let otherTask = dataStore.fetchOtherWeightSamples(from: from, to: to)
+        (points, ownEntries, otherEntries) = await (seriesTask, ownTask, otherTask)
     }
 
     private func delete(_ offsets: IndexSet) {

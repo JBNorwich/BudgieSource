@@ -83,7 +83,7 @@ extension FoodQuantity {
     /// Used both to stamp an entry at log time and to preview totals live in the UI.
     func totals(servings: Double) -> (calories: Int, protein: Double?, fat: Double?, carbs: Double?, amount: Double) {
         (
-            calories: Int((Double(calories) * servings).rounded()),
+            calories: (Double(calories) * servings).safeInt,
             protein: protein.map { $0 * servings },
             fat: fat.map { $0 * servings },
             carbs: carbs.map { $0 * servings },
@@ -336,6 +336,9 @@ actor FoodItemActor {
         if let components { item.components = stripNestedMealComponents(components) }
         if let batchYield { item.batchYield = batchYield }
         do { try modelContext.save() } catch { print("FoodItem update error: \(error)") }
+        // A rename or newly-filled-in manufacturer can introduce a name autocomplete doesn't know
+        // about yet — same invalidation HealthData.addCalories does when logging one directly.
+        if let manufacturer, !manufacturer.isEmpty { dataStore.invalidateManufacturersCache() }
     }
 
     /// Archives / unarchives — pulls it from pickers without disturbing any entries that reference it.
@@ -378,6 +381,6 @@ actor FoodItemActor {
     func manufacturers() -> [String] {
         let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.manufacturer != nil })
         let all = (try? modelContext.fetch(descriptor)) ?? []
-        return all.compactMap(\.manufacturer).filter { !$0.isEmpty }
+        return nonEmptyManufacturers(all.map(\.manufacturer))
     }
 }

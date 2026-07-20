@@ -20,10 +20,6 @@ struct DeficitAssessment {
     var narrative: String = ""
 }
 
-func sortChartData(data: [ChartDataLump]) -> [ChartDataLump] {
-    return data.sorted { $0.date > $1.date }
-}
-
 func assessDeficit(desired: Int, actual: Int) -> DeficitAssessment {
     var returnStruct = DeficitAssessment()
     let diff = actual - desired
@@ -45,10 +41,16 @@ struct ChartTableView: View {
     @State var chartData: [ChartDataLump]
     @State var openingFoodHub: Bool = false
     @State var selDate: Date = Date()
-    
+
+    /// Sorts once, up front — `chartData` arrives already sorted from `ChartData.assembleChartData()`,
+    /// but re-sorting here on every render (as a plain computed property would) is wasted work.
+    init(chartData: [ChartDataLump]) {
+        _chartData = State(initialValue: chartData.sorted { $0.date > $1.date })
+    }
+
     var body: some View {
         ScrollView {
-            ForEach(sortChartData(data: chartData)) { dataLump in
+            ForEach(chartData) { dataLump in
                 ChartTableRow(dataLump: dataLump)
                     .onTapGesture {
                         selDate = dataLump.date

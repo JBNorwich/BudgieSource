@@ -105,7 +105,7 @@ struct AllocateBudgetView: View {
     }
 
     private func load() async {
-        let all = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
+        let all = await dataStore.calorieActor.getOrderedListOfMeals()
         let snacksUUID = settingsObj.snacksUUID
         meals = all.filter { $0.mealUUID != snacksUUID }
         if let snacks = all.first(where: { $0.mealUUID == snacksUUID }) {

@@ -22,6 +22,19 @@ import SwiftUI
 import SwiftData
 import WidgetKit
 
+#if !os(macOS)
+/// Builds a query predicate that excludes HealthKit samples Budgie Diet has already mirrored
+/// (matched by UUID), so a mirrored entry logged on another device isn't counted twice against
+/// Budgie's own stored total. `mirrored` empty means nothing to exclude.
+func excludingMirroredPredicate(time: NSPredicate, mirrored: Set<UUID>) -> NSPredicate {
+    var subpredicates: [NSPredicate] = [notBudgiePredicate, time]
+    if !mirrored.isEmpty {
+        subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
+    }
+    return NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
+}
+#endif
+
 /// HealthData is a "god object" which acts as the main data store for the application. There should only ever be one instance of HealthData, which is instantiated at app start as "dataStore". You should never call HealthData(), subclass it or create a new object from it.
 final class HealthData {
     static let shared = HealthData()
@@ -59,23 +72,20 @@ final class HealthData {
         let endDate = getMidnightOnDayAfter(date: startDate)
         
         let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-        var subpredicates: [NSPredicate] = [notBudgiePredicate, timePredicate]
-        
+        var mirrored = Set<UUID>()
+
         if type == eatenQuantityType {
             // Exclude our mirrored samples by UUID as well as by source. HKSource.default()
             // means "this process", so on the watch or in the widget the iPhone app's samples
             // would otherwise be counted on top of the CloudKit-synced Budgie entries.
             let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
-            let mirrored = Set(budgieResults.compactMap(\.healthKitUUID))
-            if !mirrored.isEmpty {
-                subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
-            }
+            mirrored = Set(budgieResults.compactMap(\.healthKitUUID))
             if hkOnly == false {
                 calories = Double(budgieResults.reduce(0) { $0 + $1.calories })
             }
         }
-        
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
+
+        let queryPredicate = excludingMirroredPredicate(time: timePredicate, mirrored: mirrored)
         let calsToday = HKSamplePredicate.quantitySample(type: type, predicate: queryPredicate)
         let sumActCalsQuery = HKStatisticsQueryDescriptor(predicate: calsToday, options: .cumulativeSum)
         let kcals = (try? await sumActCalsQuery.result(for: healthStore))??.sumQuantity()
@@ -86,19 +96,22 @@ final class HealthData {
     
     /// Obtain the calories eaten from both Budgie Diet's internal storage and HealthKit. Returns a tuple of Ints that include HealthKit calories plus internal Budgie calories only.
     func pullEatenCalories(startDate: Date, endDate: Date) async -> (hk: Int, budgie: Int) {
+        let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
+        return await pullEatenCalories(budgieResults: budgieResults, startDate: startDate, endDate: endDate)
+    }
+
+    /// Same as `pullEatenCalories(startDate:endDate:)`, but takes an already-fetched Budgie entry list
+    /// instead of fetching its own — for callers (like `updateLump`) that already have it on hand and
+    /// would otherwise be asking the calorie actor for the identical window twice.
+    func pullEatenCalories(budgieResults: [CalorieEntry], startDate: Date, endDate: Date) async -> (hk: Int, budgie: Int) {
         // Budgie entries first — their mirrored HealthKit UUIDs are excluded from the HK
         // query so entries logged on another device (or the watch) are never counted twice.
-        let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
         let budgieCalories = budgieResults.reduce(0) { $0 + $1.calories }
         let mirrored = Set(budgieResults.compactMap(\.healthKitUUID))
-        
+
         var healthKitcalories: Double = 0
         let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
-        var subpredicates: [NSPredicate] = [notBudgiePredicate, timePredicate]
-        if !mirrored.isEmpty {
-            subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
-        }
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
+        let queryPredicate = excludingMirroredPredicate(time: timePredicate, mirrored: mirrored)
         let descriptor = HKSampleQueryDescriptor(predicates:[.quantitySample(type: eatenQuantityType, predicate: queryPredicate)], sortDescriptors: [])
         do {
             let results = try await descriptor.result(for: healthStore)
@@ -108,7 +121,7 @@ final class HealthData {
         } catch {
             healthKitcalories = 0
         }
-        
+
         return (hk: Int(healthKitcalories), budgie: budgieCalories)
     }
     
@@ -222,8 +235,9 @@ final class HealthData {
         var actQuot: Double = 1
         let today: Date = Date()
         let endDate = getStartOfDay(date: today)
-        let curActive = await pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
-        
+        // Kicked off concurrently with whichever branch below runs — neither depends on it.
+        async let curActiveTask = pullCalorieTotalForDate(date: today, type: activeQuantityType, hkOnly: true)
+
         if settingsObj.useFitnessGoal != true {
             // Default behaviour - base projections on the arithmetic mean of the user's past week's active calories
             // Pull the arithmetic mean from HealthKit
@@ -254,6 +268,7 @@ final class HealthData {
             }
         }
         // Remaining from average = how much more would user have to burn to reach their previous week's average?
+        let curActive = await curActiveTask
         remainingFromAvg = averageBurn - curActive
         
         if remainingFromAvg < 0 {
@@ -298,6 +313,12 @@ final class HealthData {
     /// Macros eaten today (grams) from Budgie's own entries plus other apps' HealthKit dietary samples, kept split by source. Own contribution is summed from entries (consistent with the calorie figure); only *other* sources are read from HealthKit (excluded by source), so Budgie's own writes never double-count.
     func pullEatenMacros(startDate: Date, endDate: Date) async -> EatenMacros {
         let budgieResults = await calorieActor.fetchCalsBetween(from: startDate, to: endDate)
+        return await pullEatenMacros(budgieResults: budgieResults, startDate: startDate, endDate: endDate)
+    }
+
+    /// Same as `pullEatenMacros(startDate:endDate:)`, but takes an already-fetched Budgie entry list —
+    /// see `pullEatenCalories(budgieResults:startDate:endDate:)`.
+    func pullEatenMacros(budgieResults: [CalorieEntry], startDate: Date, endDate: Date) async -> EatenMacros {
         var m = EatenMacros()
         m.ownProtein = Int(budgieResults.reduce(0.0) { $0 + ($1.protein ?? 0) }.rounded())
         m.ownFat     = Int(budgieResults.reduce(0.0) { $0 + ($1.fat ?? 0) }.rounded())
@@ -403,8 +424,9 @@ final class HealthData {
                                     fat: totals.fat,
                                     carbs: totals.carbs)
         await calorieActor.insertNewCals(object: newEntry)
+        if let manufacturer, !manufacturer.isEmpty { invalidateManufacturersCache() }
     }
-    
+
     func addWater(amount: Int, datetime: Date) async {
         let hkUUID = await saveHKSample(value: Double(amount), unit: .literUnit(with: .milli), type: waterQuantityType, date: datetime)
         let newWaterObj = WaterEntry(quantity: amount, healthKitUUID: hkUUID, date: datetime)
@@ -489,11 +511,7 @@ final class HealthData {
         let mirrored = Set(budgieEntries.compactMap(\.healthKitUUID))
         
         let timePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: HKQueryOptions.strictEndDate)
-        var subpredicates: [NSPredicate] = [notBudgiePredicate, timePredicate]
-        if !mirrored.isEmpty {
-            subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
-        }
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
+        let queryPredicate = excludingMirroredPredicate(time: timePredicate, mirrored: mirrored)
         let waterToday = HKSamplePredicate.quantitySample(type: waterQuantityType, predicate: queryPredicate)
         let sumWaterQuery = HKStatisticsQueryDescriptor(predicate: waterToday, options: .cumulativeSum)
         var waterTotalInHealthKit = 0
@@ -591,8 +609,6 @@ final class HealthData {
         
         // Kick every independent query off concurrently. These fan out across HealthKit and the
         // calorie actor: the HK queries run in parallel, and the actor serialises its own work safely.
-        async let eatenTask        = pullEatenCalories(startDate: todayStart, endDate: todayEnd)
-        async let eatenMacrosTask  = pullEatenMacros(startDate: todayStart, endDate: todayEnd)
         async let foodListTask     = calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
         async let projBasalTask    = getProjBasalCalories()
         async let projActiveTask   = getProjActiveCalories()
@@ -605,23 +621,28 @@ final class HealthData {
         async let foodDaysTask     = daysWithFoodLogged(from: previousWeekStart, to: todayEnd)
         async let waterTask        = getWaterOnDate(date: todayStart)
         async let activityTask     = getActivitySummary()
-        
+
+        // Food list + meal breakdown (the meal list depends on the fetched food list). Eaten
+        // calories and macros are derived from this same fetch below, rather than each separately
+        // re-querying the calorie actor for the identical today window.
+        let foodList = await foodListTask
+        todayLump.foodList = foodList
+        todayLump.allMeals = await calorieActor.getListOfMeals()
+        todayLump.cleansedMealList = await calorieActor.cleansedMealList(data: foodList)
+
+        async let eatenTask       = pullEatenCalories(budgieResults: foodList, startDate: todayStart, endDate: todayEnd)
+        async let eatenMacrosTask = pullEatenMacros(budgieResults: foodList, startDate: todayStart, endDate: todayEnd)
+
         // Food eaten today
         let eatenCalories = await eatenTask
         todayLump.eatenCalories = eatenCalories.hk + eatenCalories.budgie
         todayLump.healthKitCalories = eatenCalories.hk
-        
+
         // Macros eaten today (own entries + other apps' HealthKit samples, same as calories)
         let eatenMacros = await eatenMacrosTask
         todayLump.eatenProtein = eatenMacros.protein
         todayLump.eatenFat = eatenMacros.fat
         todayLump.eatenCarbs = eatenMacros.carbs
-        
-        // Food list + meal breakdown (the meal list depends on the fetched food list)
-        let foodList = await foodListTask
-        todayLump.foodList = foodList
-        todayLump.allMeals = await calorieActor.getListOfMeals()
-        todayLump.cleansedMealList = await calorieActor.cleansedMealList(data: foodList)
         
         todayLump.mealTotalList = [:]
         for meal in todayLump.cleansedMealList {
@@ -706,22 +727,26 @@ final class HealthData {
         
         todayLump.lastUpdate = Date()
         if reloadWidgets {
-            // Mirror the numbers the widget needs into the shared app-group defaults.
-            // The widget can't reliably run HealthKit/SwiftData work or read iCloud
-            // key-value settings in its own process, so it renders from this snapshot.
-            if let group = UserDefaults(suiteName: "group.JoeBaldwin.Budgie") {
-                group.set(todayLump.totalBudget, forKey: "widgetTotalBudget")
-                group.set(todayLump.eatenCalories, forKey: "widgetEatenCalories")
-                group.set(todayLump.projectedBasal, forKey: "widgetProjectedBasal")
-                group.set(settingsObj.finalMealTime, forKey: "widgetFinalMealTime")
-                group.set(settingsObj.surplusMode, forKey: "widgetSurplusMode")
-                group.set(settingsObj.useMealAllocations, forKey: "widgetUseAllocations")
-                // The day this snapshot describes. The widget compares it against "today" so it never
-                // shows yesterday's budget/eaten as if the day hadn't rolled over.
-                group.set(getStartOfDay(date: Date()).timeIntervalSince1970, forKey: "widgetSnapshotDay")
-            }
-            WidgetCenter.shared.reloadAllTimelines()
+            publishWidgetSnapshot(todayLump)
         }
+    }
+
+    /// Mirrors the numbers the widget needs into the shared app-group defaults, then asks WidgetKit
+    /// to reload. The widget can't reliably run HealthKit/SwiftData work or read iCloud key-value
+    /// settings in its own process, so it renders from this snapshot instead.
+    private func publishWidgetSnapshot(_ todayLump: TodayLump) {
+        if let group = UserDefaults(suiteName: "group.JoeBaldwin.Budgie") {
+            group.set(todayLump.totalBudget, forKey: "widgetTotalBudget")
+            group.set(todayLump.eatenCalories, forKey: "widgetEatenCalories")
+            group.set(todayLump.projectedBasal, forKey: "widgetProjectedBasal")
+            group.set(settingsObj.finalMealTime, forKey: "widgetFinalMealTime")
+            group.set(settingsObj.surplusMode, forKey: "widgetSurplusMode")
+            group.set(settingsObj.useMealAllocations, forKey: "widgetUseAllocations")
+            // The day this snapshot describes. The widget compares it against "today" so it never
+            // shows yesterday's budget/eaten as if the day hadn't rolled over.
+            group.set(getStartOfDay(date: Date()).timeIntervalSince1970, forKey: "widgetSnapshotDay")
+        }
+        WidgetCenter.shared.reloadAllTimelines()
     }
     
     /// Sets up HealthKit observer queries to trigger updates to the TodayLump if the app sees new active, basal or eaten calories, weight entries, or new water entries.

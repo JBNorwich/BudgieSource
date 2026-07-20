@@ -86,11 +86,8 @@ struct MacAddFoodSheet: View {
     private var scaledMacroPreview: String {
         guard let q = pickedQuantity else { return "" }
         let t = q.totals(servings: effectiveServings)
-        var parts: [String] = []
-        if let p = t.protein { parts.append("P \(Int(p.rounded()))g") }
-        if let c = t.carbs { parts.append("C \(Int(c.rounded()))g") }
-        if let f = t.fat { parts.append("F \(Int(f.rounded()))g") }
-        return parts.isEmpty ? "" : "  ·  " + parts.joined(separator: " · ")
+        let summary = macroSummary(protein: t.protein, carbs: t.carbs, fat: t.fat)
+        return summary.isEmpty ? "" : "  ·  " + summary
     }
 
     private var queryKey: String { "\(searchText)|\(showAllFoods)|\(selectedMeal)|\(reloadToken)" }
@@ -330,7 +327,7 @@ struct MacAddFoodSheet: View {
     // MARK: Loading
 
     private func loadMeals() async {
-        mealList = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
+        mealList = await dataStore.calorieActor.getOrderedListOfMeals()
         if !mealList.contains(where: { $0.mealUUID == selectedMeal }) {
             selectedMeal = mealList.first?.mealUUID ?? selectedMeal
         }
@@ -379,23 +376,6 @@ struct MacAddFoodSheet: View {
             selectedFood = nil
             searchText = ""
         }
-    }
-
-    /// Resolves the food behind a logged entry so re-adding behaves like a fresh log: the saved FoodItem,
-    /// the bundled generic (by name), or a one-serving reconstruction from the entry's own stamp.
-    private func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
-        if let id = entry.foodItem, let food = await dataStore.foodItemActor.fetch(id: id) {
-            return food.asPicked
-        }
-        guard let unit = entry.servingUnit else { return nil }
-        let name = entry.narrative ?? ""
-        if let match = FoodCatalogue.shared.search(name).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
-            return match.asPicked
-        }
-        let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,
-                             protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
-        return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
-                          manufacturer: entry.manufacturer, quantities: [q])
     }
 
     // MARK: Persistence

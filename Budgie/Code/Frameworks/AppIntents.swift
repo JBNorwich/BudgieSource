@@ -15,6 +15,20 @@
 
 import AppIntents
 
+extension HealthData {
+    /// Convenience for App Intents/Shortcuts, which repeatedly need a fresh, throwaway `TodayLump`
+    /// either just to read a figure off of or purely to trigger the refresh's side effects (recalculating
+    /// the budget, and — on iOS — republishing the snapshot other platforms read). Never publishes that
+    /// snapshot itself: a Shortcut run isn't the authoritative foreground pass. `reloadWidgets` is left
+    /// to the caller since intents that only read a value skip it, while ones that log something don't.
+    @MainActor
+    func freshLump(reloadWidgets: Bool) async -> TodayLump {
+        let lump = TodayLump()
+        await updateLump(todayLump: lump, reloadWidgets: reloadWidgets, publishSnapshot: false)
+        return lump
+    }
+}
+
 struct LogQuickCaloriesIntent: AppIntent {
     // Logs calories to the "Snacks/Other" meal
     static var title: LocalizedStringResource = "Log quick calories"
@@ -42,8 +56,8 @@ struct LogQuickCaloriesIntent: AppIntent {
             throw $calories.needsValueError("Budgie Diet hasn't finished setting up yet — please open the app first.")
         }
         await dataStore.addCalories(calories: calsToLog, narrative: nil, date: Date(), meal: snacksUUID)
-        await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
-        
+        _ = await dataStore.freshLump(reloadWidgets: true)
+
         return .result(dialog: "Logged \(calsToLog.formatted()) kcal.")
     }
 }
@@ -123,7 +137,7 @@ struct LogFoodIntent: AppIntent {
     }
 
     private func refreshBudget() async {
-        await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
+        _ = await dataStore.freshLump(reloadWidgets: true)
     }
 }
 
@@ -164,8 +178,7 @@ struct GetCanEatNowIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
-        let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        let lump = await dataStore.freshLump(reloadWidgets: false)
         return .result(value: lump.canEatNow)
     }
 }
@@ -178,8 +191,7 @@ struct GetBudgetRemainingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
-        let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        let lump = await dataStore.freshLump(reloadWidgets: false)
         return .result(value: lump.totalBudgetRem)
     }
 }
@@ -192,8 +204,7 @@ struct SpeakCanEatNowIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        let lump = await dataStore.freshLump(reloadWidgets: false)
 
         // With meal allocations on, "can eat now" isn't a user-facing figure — the app
         // replaces it with remaining budget, so answer in those terms to stay consistent.
@@ -221,8 +232,7 @@ struct SpeakBudgetRemainingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let lump = TodayLump()
-        await dataStore.updateLump(todayLump: lump, reloadWidgets: false, publishSnapshot: false)
+        let lump = await dataStore.freshLump(reloadWidgets: false)
         let v = lump.totalBudgetRem
         let dialog: IntentDialog = v >= 0
             ? "You have \(v.formatted()) calories left in your budget today."
@@ -337,7 +347,7 @@ struct LogSavedFoodIntent: AppIntent {
         await dataStore.addFoodEntry(foodItemID: item.persistedID, name: item.name,
                                      manufacturer: item.manufacturer, quantity: q,
                                      servings: servings, date: Date(), meal: meal.id)
-        await dataStore.updateLump(todayLump: TodayLump(), publishSnapshot: false)
+        _ = await dataStore.freshLump(reloadWidgets: true)
         let cals = q.totals(servings: servings).calories
         return .result(dialog: "Logged \(servings.formatted()) × \(q.label) of \(item.name) — \(cals.formatted()) kcal — to \(meal.name).")
     }

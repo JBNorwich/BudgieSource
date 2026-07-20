@@ -127,7 +127,7 @@ struct ManageMealsView: View {
     }
 
     private func reload() async {
-        meals = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
+        meals = await dataStore.calorieActor.getOrderedListOfMeals()
     }
 
     private func moveMeals(from source: IndexSet, to destination: Int) {

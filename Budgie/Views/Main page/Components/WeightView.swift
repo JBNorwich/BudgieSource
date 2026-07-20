@@ -69,11 +69,9 @@ struct WeightView: View {
         } else {
             HStack {
                 VStack {
-                    Gauge(value: todayLump.weightGoalRemaining, in: 0...1) {
-                    } currentValueLabel: {
+                    AccessoryCircularGauge(value: todayLump.weightGoalRemaining, range: 0...1, gradient: gradient) {
                         Text(renderWeight(kilos: todayLump.weightToday, includeSuffix: false))
-                    }.gaugeStyle(.accessoryCircular)
-                        .tint(gradient)
+                    }
                         .scaleEffect(1.5)
                         .padding()
                         .animation(.easeInOut, value: todayLump.weightGoalRemaining)

@@ -90,11 +90,8 @@ struct AddCalsSheet: View {
     private var scaledMacroPreview: String {
         guard let q = pickedQuantity else { return "" }
         let t = q.totals(servings: effectiveServings)
-        var parts: [String] = []
-        if let p = t.protein { parts.append("P \(Int(p.rounded()))g") }
-        if let c = t.carbs { parts.append("C \(Int(c.rounded()))g") }
-        if let f = t.fat { parts.append("F \(Int(f.rounded()))g") }
-        return parts.isEmpty ? "" : "  ·  " + parts.joined(separator: " · ")
+        let summary = macroSummary(protein: t.protein, carbs: t.carbs, fat: t.fat)
+        return summary.isEmpty ? "" : "  ·  " + summary
     }
 
     private struct SearchKey: Equatable {
@@ -173,7 +170,7 @@ struct AddCalsSheet: View {
             }
         }
         .task {
-            mealList = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
+            mealList = await dataStore.calorieActor.getOrderedListOfMeals()
             guard let start = mealList.first(where: { $0.mealUUID == preSelectedMeal }) ?? mealList.first else { return }
             selectedMeal = start.mealUUID
         }
@@ -462,23 +459,6 @@ struct AddCalsSheet: View {
             selectedFood = nil
             searchText = ""
         }
-    }
-    
-    /// Resolves the food behind a logged entry so re-adding behaves like a fresh log: the saved FoodItem,
-    /// the bundled generic (by name), or a one-serving reconstruction from the entry's own stamp.
-    private func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
-        if let id = entry.foodItem, let food = await dataStore.foodItemActor.fetch(id: id) {
-            return food.asPicked
-        }
-        guard let unit = entry.servingUnit else { return nil }   // no serving stamp → genuine quick entry
-        let name = entry.narrative ?? ""
-        if let match = FoodCatalogue.shared.search(name).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
-            return match.asPicked
-        }
-        let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,
-                             protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
-        return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
-                          manufacturer: entry.manufacturer, quantities: [q])
     }
     
     /// For the recent list: entries linked to a live food show that food's current recipe (and re-add it fresh); archived or deleted foods are dropped so we don't suggest something you've retired; genuine quick entries keep their own values. One row per food, batched to one lookup per food.

@@ -31,17 +31,7 @@ struct LogWeightSheet: View {
     private var unit: weightUnits { weightUnits(rawValue: settingsObj.weightDisplayUnit) ?? .kilograms }
 
     private var enteredKilos: Double? {
-        switch unit {
-        case .kilograms:
-            return kilosField
-        case .pounds:
-            guard let p = poundsField else { return nil }
-            return p * lbInKg
-        case .stonepounds:
-            let s = stonesField ?? 0, p = poundsPart ?? 0
-            guard s != 0 || p != 0 else { return nil }
-            return StonePounds(stones: s, pounds: p).kilos
-        }
+        kilograms(kg: kilosField, lb: poundsField, st: stonesField, stLb: poundsPart, unit: unit)
     }
 
     var body: some View {

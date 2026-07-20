@@ -24,15 +24,9 @@ struct WaterView: View {
     var body: some View {
         VStack {
             Spacer()
-            Gauge(value: todayLump.waterGoalDone, in: 0...1) {
-            } currentValueLabel: {
+            AccessoryCircularGauge(value: todayLump.waterGoalDone, range: 0...1, gradient: gradient) {
                 Text(renderVolume(millilitres: todayLump.waterToday))
-            } minimumValueLabel: {
-                Text("")
-            } maximumValueLabel: {
-                Text("")
-            }.gaugeStyle(.accessoryCircular)
-                .tint(gradient)
+            }
                 .scaleEffect(1.5)
                 .padding(.top, 10)
                 .animation(.easeInOut, value: todayLump.waterGoalDone)

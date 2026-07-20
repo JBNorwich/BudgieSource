@@ -66,23 +66,12 @@ struct Provider: TimelineProvider {
         completion(entry)
     }
 
-    /// "Can eat now" at a given time, from the snapshot's raw numbers — the same square-law ramp
-    /// *and* meal reserve as weightCanEatNow(), but taking its inputs as parameters because the
-    /// widget can't trust settingsObj in its own process.
-    private func canEat(at date: Date, budget: Int, eaten: Int, finalMealTime: Int) -> Int {
-        let cal = Calendar.current
-        let mealTime = max(finalMealTime, 1)
-        let minsNow = (60 * cal.component(.hour, from: date)) + cal.component(.minute, from: date) + 1
-        guard minsNow < mealTime else { return budget - eaten }
-
-        let factor = pow(Double(minsNow) / Double(mealTime), 2)
-
-        // Ease the reserved final meal back into the budget over the last stretch before meal time.
-        let releaseWindow = 45.0
-        let released = max(0, Double(minsNow) - (Double(mealTime) - releaseWindow)) / releaseWindow
-        let reserved = Double(budget) * mealReserveFraction * (1 - released)
-
-        return Int(min(Double(budget) * factor, Double(budget) - reserved)) - eaten
+    /// "Can eat now" at a given time, from the snapshot's raw numbers — shares its math with
+    /// `weightCanEatNow()` via `canEatNow(budget:minsIntoDay:finalMealTime:)`, since the widget can't
+    /// trust settingsObj/the wall clock in its own process and has to pass its own inputs explicitly.
+    private func canEat(at date: Date, budget: Int, eaten: Int, finalMealTime: Int, cal: Calendar) -> Int {
+        let minsIntoDay = (60 * cal.component(.hour, from: date)) + cal.component(.minute, from: date)
+        return canEatNow(budget: budget, minsIntoDay: minsIntoDay, finalMealTime: finalMealTime) - eaten
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
@@ -127,10 +116,10 @@ struct Provider: TimelineProvider {
             let entryDate = now.addingTimeInterval(Double(i) * 15 * 60)
             let leftToEat = useAllocations
                 ? budget - eaten
-                : canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal)
+                : canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal, cal: cal)
             // The paced target is just what's left plus what's gone — clamped like progressAgainstTarget.
             let target = leftToEat + eaten
-            let targetProgress = target != 0 ? min(max(Double(eaten) / Double(target), 0), 2) : 0
+            let targetProgress = clampedProgress(eaten: eaten, target: target)
             entries.append(BudgieEntry(date: entryDate,
                                        leftToEat: leftToEat,
                                        progressDbl: progress,
@@ -202,33 +191,31 @@ struct BudgieWidgetEntryView : View {
                     }
                 }
                 VStack {
-                    VStack {
+                    HStack {
+                        Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode, usingAllocations: entry.useAllocations).uppercased())
+                            .font(.caption)
+                        Spacer()
+                    }
+                    HStack {
+                        Text(abs(entry.leftToEat).formatted())
+                            .font(.title)
+                        Spacer()
+                    }
+
+                    // no value in showing left to eat if it's the same as the remaining budget
+                    if entry.totalBudgRem != entry.leftToEat {
                         HStack {
-                            Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode, usingAllocations: entry.useAllocations).uppercased())
+                            Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
                                 .font(.caption)
                             Spacer()
                         }
                         HStack {
-                            Text(abs(entry.leftToEat).formatted())
+                            Text(abs(entry.totalBudgRem).formatted())
                                 .font(.title)
                             Spacer()
                         }
-
-                        // no value in showing left to eat if it's the same as the remaining budget
-                        if entry.totalBudgRem != entry.leftToEat {
-                            HStack {
-                                Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
-                                    .font(.caption)
-                                Spacer()
-                            }
-                            HStack {
-                                Text(abs(entry.totalBudgRem).formatted())
-                                    .font(.title)
-                                Spacer()
-                            }
-                        }
-                        Spacer()
                     }
+                    Spacer()
                 }
             }
         }
@@ -295,9 +282,3 @@ struct BudgieWidget: Widget {
         .supportedFamilies([.systemSmall, .accessoryCircular])
     }
 }
-//
-//#Preview(as: .systemSmall) {
-//    BudgieWidget()
-//} timeline: {
-//    BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
-//}

@@ -66,3 +66,65 @@ struct FoodQuantityTests {
         #expect(quick.isGenericFood == false)
     }
 }
+
+/// Deterministic coverage for weightActiveProjection's per-style branching. Expected values were
+/// worked out independently of the function's own code, so a change to the maths — deliberate or
+/// not — actually gets caught rather than the test just re-deriving whatever the code currently
+/// does. `input`/`timeInput` are chosen so every intermediate fraction (0, 0.5 or 1) is exactly
+/// representable in binary floating point, keeping results bit-exact and clear of any truncation
+/// boundary.
+struct WeightActiveProjectionTests {
+
+    @Test func styleMinus2NeverWeightsDownRegardlessOfTimeOrActQuot() {
+        // "Don't weight down" always returns the full input, at any time, ignoring actQuot.
+        #expect(weightActiveProjection(input: 200, style: -2, timeInput: 0, actQuot: 1) == 200)
+        #expect(weightActiveProjection(input: 200, style: -2, timeInput: 1440, actQuot: 0.1) == 200)
+    }
+
+    @Test func styleMinus1ForgivingRampsDownAcrossTheDay() {
+        #expect(weightActiveProjection(input: 100, style: -1, timeInput: 720, actQuot: 0) == 96)
+
+        // Before the 240-minute start time, weightTime clamps to 240 — every sub-threshold time
+        // (including 0) should therefore produce the identical result.
+        let clamped = [0, 1, 100, 239, 240].map {
+            weightActiveProjection(input: 300, style: -1, timeInput: $0, actQuot: 1)
+        }
+        #expect(Set(clamped).count == 1)
+        #expect(clamped.first == 299)
+
+        // Past the clamp the ramp keeps moving, down to zero credit right at midnight.
+        #expect(weightActiveProjection(input: 300, style: -1, timeInput: 720, actQuot: 1) == 290)
+        #expect(weightActiveProjection(input: 300, style: -1, timeInput: 1440, actQuot: 1) == 0)
+    }
+
+    @Test func styleZeroDefaultHalvesInputAndSquaresTheRamp() {
+        #expect(weightActiveProjection(input: 200, style: 0, timeInput: 660, actQuot: 1) == 75)
+        // actQuot scales the result directly (unlike styles -2, -1 and 3, which ignore it).
+        #expect(weightActiveProjection(input: 200, style: 0, timeInput: 660, actQuot: 0.5) == 37)
+    }
+
+    @Test func styleOneHarshQuartersInputAndLinearlyRamps() {
+        #expect(weightActiveProjection(input: 400, style: 1, timeInput: 660, actQuot: 1) == 50)
+    }
+
+    @Test func styleTwoNeverProjectsAnything() {
+        #expect(weightActiveProjection(input: 1000, style: 2, timeInput: 500, actQuot: 5) == 0)
+    }
+
+    @Test func styleThreeOldDefaultIgnoresActQuot() {
+        #expect(weightActiveProjection(input: 800, style: 3, timeInput: 660, actQuot: 99) == 525)
+    }
+
+    @Test func unrecognisedStyleFallsBackToZero() {
+        // Any style outside -2...3 silently behaves like "no projection" rather than crashing or
+        // defaulting to the regular style — locking this in so a future style value doesn't quietly
+        // change this fallback without a test noticing.
+        #expect(weightActiveProjection(input: 999, style: 42, timeInput: 999, actQuot: 999) == 0)
+    }
+
+    @Test func resultNeverGoesNegative() {
+        // A negative actQuot shouldn't happen via the app's own call site, but the function doesn't
+        // guard against it — it must still floor at zero rather than returning a negative kcal figure.
+        #expect(weightActiveProjection(input: 100, style: 0, timeInput: 660, actQuot: -1) == 0)
+    }
+}

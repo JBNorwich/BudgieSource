@@ -62,11 +62,8 @@ struct MacEditFoodSheet: View {
     }
 
     private func macroLine(_ t: (calories: Int, protein: Double?, fat: Double?, carbs: Double?)) -> String {
-        var parts: [String] = []
-        if let p = t.protein { parts.append("P \(Int(p.rounded()))g") }
-        if let c = t.carbs { parts.append("C \(Int(c.rounded()))g") }
-        if let f = t.fat { parts.append("F \(Int(f.rounded()))g") }
-        return parts.isEmpty ? "" : "  ·  " + parts.joined(separator: " · ")
+        let summary = macroSummary(protein: t.protein, carbs: t.carbs, fat: t.fat)
+        return summary.isEmpty ? "" : "  ·  " + summary
     }
 
     var body: some View {

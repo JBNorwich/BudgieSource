@@ -16,6 +16,51 @@
 import Foundation
 import SwiftUI
 
+/// Eaten ÷ target, clamped to 0...2 — shared by `TodayLump.progressAgainstTarget` and the widget's
+/// per-entry equivalent, so both compute the same ring-colour figure the same way.
+func clampedProgress(eaten: Int, target: Int) -> Double {
+    guard target != 0 else { return 0 }
+    return min(max(Double(eaten) / Double(target), 0), 2)
+}
+
+extension Double {
+    /// Safe Double → Int for user-entered or scaled values (e.g. a serving amount multiplied through
+    /// a food's stamped calories/macros): clamps non-finite or out-of-range doubles instead of
+    /// trapping, unlike `Int(_:)`, which crashes on NaN, ±infinity, or anything outside Int's range.
+    var safeInt: Int {
+        guard isFinite else { return 0 }
+        return Int(max(Double(Int.min), min(Double(Int.max), self)).rounded())
+    }
+}
+
+/// Resolves whichever unit's fields the user actually entered into kilograms. `nil` means nothing
+/// meaningful was entered for that unit (not zero) — shared by the weight-log and weight-goal sheets,
+/// which otherwise each carried an identical copy of this per-unit dispatch.
+func kilograms(kg: Double?, lb: Double?, st: Int?, stLb: Int?, unit: weightUnits) -> Double? {
+    switch unit {
+    case .kilograms:
+        return kg
+    case .pounds:
+        guard let lb else { return nil }
+        return lb * lbInKg
+    case .stonepounds:
+        let s = st ?? 0, p = stLb ?? 0
+        guard s != 0 || p != 0 else { return nil }
+        return StonePounds(stones: s, pounds: p).kilos
+    }
+}
+
+/// A two-way binding onto a `CloudSettings` property that also bumps `refresh` on write, forcing a
+/// redraw — `CloudSettings` isn't `ObservableObject` (it's a thin wrapper over iCloud key-value
+/// storage), so views that bind directly to it need this to pick up their own writes. Shared by every
+/// settings screen, which otherwise each declared their own identical copy of this.
+func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>, refresh: Binding<UUID>) -> Binding<T> {
+    Binding(
+        get: { settingsObj[keyPath: keyPath] },
+        set: { settingsObj[keyPath: keyPath] = $0; refresh.wrappedValue = UUID() }
+    )
+}
+
 func getActivityNarrative(activityLevel: Double) -> String {
     switch activityLevel {
         
@@ -58,6 +103,32 @@ func suggestedManufacturers(for query: String, in known: [String], limit: Int = 
     return known
         .filter { $0.localizedCaseInsensitiveContains(q) && $0.localizedCaseInsensitiveCompare(q) != .orderedSame }
         .prefix(limit).map { $0 }
+}
+
+/// A compact "P Xg · C Xg · F Xg" line, listing only the macros that were actually recorded
+/// (rounded to whole grams). Shared by every place that previews or displays an entry's macros.
+func macroSummary(protein: Double?, carbs: Double?, fat: Double?) -> String {
+    [("P", protein), ("C", carbs), ("F", fat)]
+        .compactMap { label, value in value.map { "\(label) \($0.safeInt)g" } }
+        .joined(separator: " · ")
+}
+
+/// Resolves the food behind a logged entry so re-adding it behaves like a fresh log: the saved
+/// FoodItem, the bundled generic (by name), or a one-serving reconstruction from the entry's own
+/// stamp. Shared by the iOS and Mac add-food sheets.
+func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
+    if let id = entry.foodItem, let food = await dataStore.foodItemActor.fetch(id: id) {
+        return food.asPicked
+    }
+    guard let unit = entry.servingUnit else { return nil }   // no serving stamp → genuine quick entry
+    let name = entry.narrative ?? ""
+    if let match = FoodCatalogue.shared.search(name).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+        return match.asPicked
+    }
+    let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,
+                         protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
+    return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
+                      manufacturer: entry.manufacturer, quantities: [q])
 }
 
 /// Best serving to re-open a past logged entry on: the one matching the entry's unit and, when

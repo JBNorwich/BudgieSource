@@ -114,11 +114,7 @@ class ChartData: ObservableObject {
         let mirrored = Set(objArray.compactMap(\.healthKitUUID))
 
         let queryPeriod = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
-        var subpredicates: [NSPredicate] = [notBudgiePredicate, queryPeriod]
-        if !mirrored.isEmpty {
-            subpredicates.append(NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(with: mirrored)))
-        }
-        let queryPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: subpredicates)
+        let queryPredicate = excludingMirroredPredicate(time: queryPeriod, mirrored: mirrored)
         let hkPackets = await runCumulativeQuery(quantityType: eatenQuantityType, predicate: queryPredicate, anchorDate: startDate)
 
         return (budgie: budgiePackets, hk: hkPackets)

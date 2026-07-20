@@ -95,17 +95,19 @@ struct TodayFoodList: View {
     }
 
     var body: some View {
+        // Computed once per body evaluation rather than once per meal iteration below.
+        let grouped = groupedByMeal
         if allocationsOn {
             // Planning view: show every meal with its target, even those with no food yet.
             ForEach(displayedMeals) { meal in
-                mealSection(for: meal, entries: groupedByMeal[meal.mealUUID] ?? [])
+                mealSection(for: meal, entries: grouped[meal.mealUUID] ?? [])
             }
             healthKitSection
         } else if !dataLump.foodList.isEmpty || dataLump.healthKitCalories != 0 {
             // Original behaviour: only meals that actually have food.
             if !dataLump.foodList.isEmpty {
                 ForEach(displayedMeals) { meal in
-                    let entries = groupedByMeal[meal.mealUUID] ?? []
+                    let entries = grouped[meal.mealUUID] ?? []
                     if !entries.isEmpty {
                         mealSection(for: meal, entries: entries)
                     }

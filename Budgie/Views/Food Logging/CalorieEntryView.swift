@@ -28,13 +28,8 @@ struct CalorieEntryView: View {
     /// When true (the Food hub's food rows), show the manufacturer/placeholder caption and macro line. Left false elsewhere (Today screen, Health aggregate rows) to keep those plain.
     var detailed: Bool = false
 
-    /// A compact "P 30g · C 40g · F 20g" line, listing only the macros that were recorded.
     private var macroText: String {
-        var parts: [String] = []
-        if let protein { parts.append("P \(Int(protein.rounded()))g") }
-        if let carbs { parts.append("C \(Int(carbs.rounded()))g") }
-        if let fat { parts.append("F \(Int(fat.rounded()))g") }
-        return parts.joined(separator: " · ")
+        macroSummary(protein: protein, carbs: carbs, fat: fat)
     }
 
     var body: some View {

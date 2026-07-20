@@ -45,18 +45,7 @@ struct WeightGoalSheet: View {
     /// The goal the user has entered, converted to kilograms for storage.
     /// Returns nil when nothing meaningful has been entered.
     private var enteredKilos: Double? {
-        switch unit {
-        case .kilograms:
-            return kilosField
-        case .pounds:
-            guard let pounds = poundsField else { return nil }
-            return pounds * lbInKg
-        case .stonepounds:
-            let stones = stonesField ?? 0
-            let pounds = poundsPart ?? 0
-            guard stones != 0 || pounds != 0 else { return nil }
-            return StonePounds(stones: stones, pounds: pounds).kilos
-        }
+        kilograms(kg: kilosField, lb: poundsField, st: stonesField, stLb: poundsPart, unit: unit)
     }
     
     /// The BMI implied by the entered goal weight and the user's stored height.

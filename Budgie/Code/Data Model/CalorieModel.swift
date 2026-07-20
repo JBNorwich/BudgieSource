@@ -20,6 +20,13 @@ import HealthKit
 #endif
 import AppIntents
 
+/// Manufacturer names from a raw optional-manufacturer fetch, with empties dropped. Shared by
+/// CalorieActor.manufacturers() and FoodItemActor.manufacturers(), which otherwise repeat this
+/// compactMap+filter identically over their own model type.
+func nonEmptyManufacturers(_ raw: [String?]) -> [String] {
+    raw.compactMap { $0 }.filter { !$0.isEmpty }
+}
+
 @Model final class Meal {
     private(set) var id: UUID = UUID()
     var mealUUID: UUID = UUID()
@@ -90,7 +97,6 @@ final class CalorieEntry {
         self.date = date
         self.calories = calories
         self.narrative = narrative
-        self.isInHK = isInHK
         self.realEntry = true
         self.meal = mealUUID
         self.healthKitUUID = isInHK ? healthKitUUID : nil
@@ -124,7 +130,7 @@ extension CalorieEntry {
         guard let oldAmount = servingAmount, oldAmount > 0 else { return nil }
         let factor = newAmount / oldAmount
         return (
-            calories: Int((Double(calories) * factor).rounded()),
+            calories: (Double(calories) * factor).safeInt,
             protein: protein.map { $0 * factor },
             fat: fat.map { $0 * factor },
             carbs: carbs.map { $0 * factor }
@@ -160,13 +166,9 @@ actor CalorieActor {
         }
         var descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate, sortBy: [SortDescriptor(\CalorieEntry.date, order: .reverse)])
         descriptor.fetchLimit = 100
-        
+
         guard let results = try? modelContext.fetch(descriptor) else { return [] }
-        var seenKeys = Set<String>()
-        return results.filter { entry in
-            guard let narrative = entry.narrative else { return true }
-            return seenKeys.insert("\(narrative)|\(entry.calories)").inserted
-        }
+        return dedupedByNarrativeAndCalories(results)
     }
     
     func searchCals(term: String, meal: UUID?, limit: Int = 50) async -> [CalorieEntry] {
@@ -185,15 +187,20 @@ actor CalorieActor {
         )
         descriptor.fetchLimit = limit
         guard let results = try? modelContext.fetch(descriptor) else { return [] }
+        return dedupedByNarrativeAndCalories(results)
+    }
 
-        // Same dedup as fetchCalsForMeal.
-        var seen = Set<String>()
+    /// De-dupes results that share a narrative+calorie signature, keeping the first (most recent,
+    /// given callers sort newest-first) occurrence of each. Entries with no narrative are never
+    /// deduped against each other, since a blank narrative isn't a meaningful signature.
+    private func dedupedByNarrativeAndCalories(_ results: [CalorieEntry]) -> [CalorieEntry] {
+        var seenKeys = Set<String>()
         return results.filter { entry in
-            guard let n = entry.narrative else { return true }
-            return seen.insert("\(n)|\(entry.calories)").inserted
+            guard let narrative = entry.narrative else { return true }
+            return seenKeys.insert("\(narrative)|\(entry.calories)").inserted
         }
     }
-    
+
     func insertNewCals(object: CalorieEntry)
     {
 
@@ -234,6 +241,12 @@ actor CalorieActor {
         }
     }
     
+    /// Every meal, ordered for display. Shared by every screen that lists all meals in order, rather
+    /// than each re-sorting `getListOfMeals()`'s own result.
+    func getOrderedListOfMeals() -> [Meal] {
+        getListOfMeals().sorted { $0.order < $1.order }
+    }
+
     func cleansedMealList(data: [CalorieEntry]) -> [Meal] {
         let usedMealUUIDs = Set(data.map(\.meal))
         return getListOfMeals()
@@ -250,17 +263,28 @@ actor CalorieActor {
         return results.first?.mealUUID
     }
     
-    func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
+    /// Rewrites the HK calorie sample and its macro samples for an edited entry — HK can't be updated
+    /// in place, so the old sample is deleted and a fresh one written. Returns the new sample's UUID
+    /// (nil on macOS, or if the entry wasn't mirrored to HK), which the caller stamps onto the entry
+    /// alongside whichever fields it owns. Shared by updateCalories and updateFoodEntry, which only
+    /// differ in which entry fields they update afterwards.
+    private func rewriteHKSample(for entry: CalorieEntry, calories: Int, protein: Double?, fat: Double?, carbs: Double?, date: Date) async -> UUID? {
         #if !os(macOS)
-        // HK can't be updated in place — delete the old sample, then write a fresh one.
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
             await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
             await dataStore.deleteMacroSamples(groupUUID: oldUUID)
         }
         let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
         if let newUUID { await dataStore.writeMacroSamples(groupUUID: newUUID, protein: protein, fat: fat, carbs: carbs, date: date) }
+        return newUUID
+        #else
+        return nil
         #endif
-        
+    }
+
+    func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
+        let newUUID = await rewriteHKSample(for: entry, calories: calories, protein: protein, fat: fat, carbs: carbs, date: date)
+
         // SwiftData, unlike HK, can just be mutated — this preserves the entry's identity.
         entry.calories = calories
         entry.narrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
@@ -269,30 +293,23 @@ actor CalorieActor {
         entry.protein = protein
         entry.fat = fat
         entry.carbs = carbs
-        
+
         #if !os(macOS)
         entry.isInHK = newUUID != nil
         entry.healthKitUUID = newUUID
         #endif
-        
+
         do {
             try modelContext.save()
         } catch {
             // Not recoverable.
         }
     }
-    
+
     /// Updates a food-linked entry, writing recomputed calories/macros (and possibly a new serving unit)
     /// so the entry stays internally consistent. HealthKit's calorie sample is rewritten, as in updateCalories.
     func updateFoodEntry(entry: CalorieEntry, calories: Int, servingUnit: FoodQuantityType?, servingAmount: Double, protein: Double?, fat: Double?, carbs: Double?, date: Date, meal: UUID) async {
-        #if !os(macOS)
-        if entry.isInHK, let oldUUID = entry.healthKitUUID {
-            await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
-            await dataStore.deleteMacroSamples(groupUUID: oldUUID)
-        }
-        let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
-        if let newUUID { await dataStore.writeMacroSamples(groupUUID: newUUID, protein: protein, fat: fat, carbs: carbs, date: date) }
-        #endif
+        let newUUID = await rewriteHKSample(for: entry, calories: calories, protein: protein, fat: fat, carbs: carbs, date: date)
 
         entry.calories = calories
         entry.servingUnit = servingUnit
@@ -615,7 +632,7 @@ actor CalorieActor {
     func manufacturers() -> [String] {
         let descriptor = FetchDescriptor<CalorieEntry>(predicate: #Predicate { $0.manufacturer != nil })
         let all = (try? modelContext.fetch(descriptor)) ?? []
-        return all.compactMap(\.manufacturer).filter { !$0.isEmpty }
+        return nonEmptyManufacturers(all.map(\.manufacturer))
     }
 }
 

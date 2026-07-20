@@ -142,16 +142,7 @@ class TodayLump: ObservableObject {
     }
     
     var progressAgainstTarget: Double {
-        var returnVal: Double = 0
-        if self.currentTarget != 0 {
-            returnVal = Double(self.eatenCalories) / Double(self.currentTarget)
-        }
-        if returnVal > 2 {
-            returnVal = 2
-        } else if returnVal < 0 {
-            returnVal = 0
-        }
-        return returnVal
+        clampedProgress(eaten: self.eatenCalories, target: self.currentTarget)
     }
     
     var gaugeNumber: Int {
@@ -167,24 +158,11 @@ class TodayLump: ObservableObject {
     }
     
     var waterGoalDone: Double {
-        let done = Double(self.waterToday) / Double(self.effectiveWaterGoal)
-
-        if done > 1 {
-            return 1
-        } else if done < 0 {
-            return 0
-        } else {
-            return done
-        }
+        min(max(Double(self.waterToday) / Double(self.effectiveWaterGoal), 0), 1)
     }
-    
+
     var waterGoalRem: Int {
-        let left = self.effectiveWaterGoal - self.waterToday
-        if left < 0 {
-            return 0
-        } else {
-            return left
-        }
+        max(self.effectiveWaterGoal - self.waterToday, 0)
     }
     
     // WEIGHT RELATED CALCULATED VARIABLES

@@ -14,7 +14,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import SwiftUI
-import SwiftUI
 import Combine
 
 struct MacFoodPane: View {
@@ -160,16 +159,14 @@ struct MacFoodPane: View {
             MacEditFoodSheet(entry: entry) { await reload() }.environmentObject(todayLump)
         }
         .padding()
-        
-        .onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange).receive(on: RunLoop.main)) { _ in
-            Task { await reload() }
-        }
+        .onRemoteStoreChange { await reload() }
     }
 
     private func reload() async {
         let start = getStartOfDay(date: selectedDate)
-        entries = await dataStore.calorieActor.fetchCalsBetween(from: start, to: getMidnightOnDayAfter(date: start))
-        meals = await dataStore.calorieActor.getListOfMeals()
+        async let entriesTask = dataStore.calorieActor.fetchCalsBetween(from: start, to: getMidnightOnDayAfter(date: start))
+        async let mealsTask = dataStore.calorieActor.getListOfMeals()
+        (entries, meals) = await (entriesTask, mealsTask)
     }
     private func delete(_ entry: CalorieEntry) {
         Task {

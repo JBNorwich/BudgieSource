@@ -25,13 +25,15 @@ func unrollPickerDate(date: Date) -> Date
     return getMidnightOnDayAfter(date: date)
 }
 
+private let pickerDateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .none
+    return formatter
+}()
+
 func formatDateForPicker(date: Date) -> String {
-    
-    let dateFormatter = DateFormatter()
-    dateFormatter.dateStyle = .short
-    dateFormatter.timeStyle = .none
-    
-    return dateFormatter.string(from: date)
+    pickerDateFormatter.string(from: date)
 }
 
 struct ChartDatePicker: View {

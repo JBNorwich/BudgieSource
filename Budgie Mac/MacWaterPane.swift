@@ -14,7 +14,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import SwiftUI
-import SwiftUI
 import Combine
 
 struct MacWaterPane: View {
@@ -109,10 +108,7 @@ struct MacWaterPane: View {
                 .environmentObject(todayLump)
         }
         .padding()
-        
-        .onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange).receive(on: RunLoop.main)) { _ in
-            Task { await reload() }
-        }
+        .onRemoteStoreChange { await reload() }
     }
 
     private func reload() async {

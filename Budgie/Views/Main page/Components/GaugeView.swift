@@ -40,8 +40,7 @@ struct GaugeView: View {
     var body: some View {
         HStack {
             VStack {
-                Gauge(value: todayLump.progressAgainstTarget, in: 0...2) {
-                } currentValueLabel: {
+                AccessoryCircularGauge(value: todayLump.progressAgainstTarget, range: 0...2, gradient: gradient) {
                     if todayLump.gaugeNumber > 0 {
                         Text("+" + todayLump.gaugeNumber.formatted() + "%")
                     } else if todayLump.gaugeNumber < 0 {
@@ -49,14 +48,11 @@ struct GaugeView: View {
                     } else {
                         Text("0%")
                     }
-                } minimumValueLabel: {
-                    Text("")
-                } maximumValueLabel: {
-                    Text("")
-                }.gaugeStyle(.accessoryCircular)
-                    .tint(gradient)
+                }
                     .padding()
                     .animation(.easeInOut, value: todayLump.progressToday)
+                    .scaleEffect(1.5)
+                Spacer()
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Eaten against target")

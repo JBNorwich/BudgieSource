@@ -146,22 +146,7 @@ struct FoodEditorView: View {
         }
 
         DisclosureGroup("Nutrition (optional)") {
-            macroField("Protein", value: $quantities[i].protein)
-            macroField("Carbs", value: $quantities[i].carbs)
-            macroField("Fat", value: $quantities[i].fat)
-        }
-    }
-
-    @ViewBuilder
-    private func macroField(_ label: String, value: Binding<Double?>) -> some View {
-        HStack {
-            Text(label)
-            Spacer()
-            TextField("—", text: value.optionalNumberText)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: 90)
-            Text("g")
+            MacroEntryFields(protein: $quantities[i].protein, carbs: $quantities[i].carbs, fat: $quantities[i].fat)
         }
     }
 

@@ -82,7 +82,6 @@ struct WhaleFacts: View {
     @Binding var showing: Bool
     @State var whaleFact: String = ""
     @State var buttonText: String = ""
-    @State var newOne: String = ""
     @State var usedStrings: [String] = []
     
     var body: some View {
@@ -103,24 +102,9 @@ struct WhaleFacts: View {
                     usedStrings.remove(at: 0)
                 }
 
-                
-                var noDupes = false
-                
-                while noDupes == false
-                {
-                    var thereIsADupe = false
-                    newOne = whaleFactsArray.randomElement()!
-                    for entry in usedStrings {
-                        if newOne == entry {
-                            thereIsADupe = true
-                        }
-                    }
-                    if thereIsADupe == false {
-                        noDupes = true
-                        whaleFact = newOne
-                    }
-                }
-                
+                let candidates = whaleFactsArray.filter { !usedStrings.contains($0) }
+                whaleFact = candidates.randomElement() ?? whaleFactsArray.randomElement()!
+
                 buttonText = buttonTextArray.randomElement()!
             }.padding()
             Button(buttonText)
