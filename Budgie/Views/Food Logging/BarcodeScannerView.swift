@@ -19,6 +19,9 @@ import VisionKit
 /// Live camera view that recognises a food barcode and hands back the first result. Stops itself after one read.
 struct BarcodeScannerView: UIViewControllerRepresentable {
     var onScan: (String) -> Void
+    /// Called if the camera fails to start (e.g. permission denied/revoked), so the caller can fall
+    /// back to manual entry instead of leaving a dead, unresponsive camera view on screen.
+    var onFailure: () -> Void = {}
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
         let vc = DataScannerViewController(
@@ -29,7 +32,11 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
             isHighlightingEnabled: true
         )
         vc.delegate = context.coordinator
-        try? vc.startScanning()
+        do {
+            try vc.startScanning()
+        } catch {
+            DispatchQueue.main.async { onFailure() }
+        }
         return vc
     }
 
@@ -54,21 +61,30 @@ struct BarcodeScannerView: UIViewControllerRepresentable {
 struct BarcodeScannerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var manualBarcode = ""
-    var onScan: (String) -> Void
+    @State private var scanFailed = false
+    /// Async so the sheet can wait for it (e.g. a local-library lookup) before dismissing — dismissing
+    /// first and letting the caller's follow-up state change land later would race presenting whatever
+    /// sheet comes next (SwiftUI doesn't reliably present a new sheet while this one is still dismissing).
+    var onScan: (String) async -> Void
 
     private var trimmedBarcode: String { manualBarcode.filter(\.isNumber) }
+    private var cameraUnavailable: Bool { !DataScannerViewController.isSupported || !DataScannerViewController.isAvailable }
+
+    private func handleScan(_ code: String) {
+        Task {
+            await onScan(code)
+            dismiss()
+        }
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
-                    BarcodeScannerView { code in
-                        onScan(code)
-                        dismiss()
-                    }
-                    .ignoresSafeArea()
-                } else {
+                if cameraUnavailable || scanFailed {
                     manualEntryView
+                } else {
+                    BarcodeScannerView(onScan: handleScan, onFailure: { scanFailed = true })
+                        .ignoresSafeArea()
                 }
             }
             .navigationTitle("Scan barcode")
@@ -87,13 +103,12 @@ struct BarcodeScannerSheet: View {
                 TextField("Barcode number", text: $manualBarcode)
                     .keyboardType(.numberPad)
             } footer: {
-                Text("Camera scanning isn't available on this device. Type the number printed under the barcode instead.")
+                Text(cameraUnavailable
+                    ? "Camera scanning isn't available on this device. Type the number printed under the barcode instead."
+                    : "The camera couldn't be started — check that Budgie Diet has camera access in Settings, or type the number printed under the barcode instead.")
             }
-            Button("Look up") {
-                onScan(trimmedBarcode)
-                dismiss()
-            }
-            .disabled(trimmedBarcode.isEmpty)
+            Button("Look up") { handleScan(trimmedBarcode) }
+                .disabled(trimmedBarcode.isEmpty)
         }
     }
 }
@@ -128,7 +143,16 @@ private struct BarcodeScanning: ViewModifier {
             }
             .sheet(isPresented: $showingScanner) {
                 BarcodeScannerSheet { code in
-                    scannedBarcode = ScannedBarcode(id: code)
+                    // A barcode already saved locally (from an earlier OFF import, or created
+                    // manually because OFF didn't have it) resolves instantly, without a network
+                    // round-trip that would just end in the same "not found" result again. Awaited
+                    // by the sheet itself before it dismisses, so this state change always lands
+                    // before (never racing) the sheet presented next.
+                    if let existing = await dataStore.foodItemActor.fetch(barcode: code) {
+                        onPick(existing.asPicked)
+                    } else {
+                        scannedBarcode = ScannedBarcode(id: code)
+                    }
                 }
             }
             .sheet(item: $scannedBarcode) { scanned in

@@ -122,7 +122,12 @@ func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
     }
     guard let unit = entry.servingUnit else { return nil }   // no serving stamp → genuine quick entry
     let name = entry.narrative ?? ""
-    if let match = FoodCatalogue.shared.search(name).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+    let entryManufacturer = entry.manufacturer ?? ""
+    if let match = FoodCatalogue.shared.search(name).first(where: {
+        let nameMatches = $0.name.caseInsensitiveCompare(name) == .orderedSame
+        let manufacturerMatches = ($0.manufacturer ?? "").caseInsensitiveCompare(entryManufacturer) == .orderedSame
+        return nameMatches && manufacturerMatches
+    }) {
         return match.asPicked
     }
     let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,

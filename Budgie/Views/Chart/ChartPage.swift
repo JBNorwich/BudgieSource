@@ -240,6 +240,7 @@ struct ChartPage: View {
             switch selectedMetric {
             case .calories:
                 let data = await dataStore.calorieSeries(from: startDate, to: endDate)
+                guard !Task.isCancelled else { return }
                 withAnimation(.easeInOut(duration: 0.25)) {
                     calorieData = data
                     phase = data.isEmpty ? .empty(.calories) : .loaded(.calories)
@@ -252,23 +253,32 @@ struct ChartPage: View {
                 async let macroTask = dataStore.macroSeries(from: startDate, to: endDate)
                 async let burnTask = dataStore.burnSeries(from: paddedStart, to: endDate)
                 let (data, burnForGoals) = await (macroTask, burnTask)
+                guard !Task.isCancelled else { return }
                 let goals = macroGoalSeries(calorieData: burnForGoals, forDates: data.map(\.date))
                 withAnimation(.easeInOut(duration: 0.25)) {
                     macroData = data
                     macroGoalData = goals
                     macroGoalsByDate = Dictionary(uniqueKeysWithValues: goals.map { ($0.date, $0) })
-                    phase = data.isEmpty ? .empty(.macros) : .loaded(.macros)
+                    // `data` now has one entry per day in range regardless of whether anything was
+                    // logged (so the chart's x-axis always spans the full range) — "no data" means
+                    // every day is zero, not that the array itself is empty.
+                    let noData = data.allSatisfy { $0.protein == 0 && $0.fat == 0 && $0.carbs == 0 }
+                    phase = noData ? .empty(.macros) : .loaded(.macros)
                 }
             case .water:
                 // Only burn data is needed for the activity-adjusted goal, not the full calorie series.
                 async let waterTask = dataStore.waterSeries(from: startDate, to: endDate)
                 async let burnTask = dataStore.burnSeries(from: startDate, to: endDate)
                 let (data, burnForGoal) = await (waterTask, burnTask)
+                guard !Task.isCancelled else { return }
                 let goals = waterGoalSeries(calorieData: burnForGoal, forDates: data.map(\.date))
                 withAnimation(.easeInOut(duration: 0.25)) {
                     waterData = data
                     waterGoalByDay = goals
-                    phase = data.isEmpty ? .empty(.water) : .loaded(.water)
+                    // Same reasoning as the macros case above: `data` always has one entry per day
+                    // now, so emptiness has to be judged by content, not array length.
+                    let noData = data.allSatisfy { $0.millilitres == 0 }
+                    phase = noData ? .empty(.water) : .loaded(.water)
                 }
             }
         }

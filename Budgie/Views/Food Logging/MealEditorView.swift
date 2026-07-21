@@ -51,6 +51,7 @@ struct MealEditorView: View {
 
     private var canSave: Bool {
         componentsLoaded && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !components.isEmpty
+            && batchYield > 0
             && components.allSatisfy { resolvedFoods[$0.foodItemID] != nil && !hasUnresolvableServing($0) }
     }
 
@@ -377,8 +378,12 @@ private struct MealComponentPickerView: View {
         // not be the same FoodQuantity instance as the one on `food` if an existing saved copy was
         // reused above — resolve to the matching serving on `food` itself so the component's
         // servingID actually exists in `food.quantities` instead of silently falling back to a
-        // type-only match later.
-        let servingID = food.quantities.first(where: { $0.type == q.type && $0.count == q.count && $0.calories == q.calories })?.id ?? q.id
+        // type-only match later. Compares macros too (not just type/count/calories), since a food
+        // can have two servings that share all three but differ in protein/carbs/fat.
+        let servingID = food.quantities.first(where: {
+            $0.type == q.type && $0.count == q.count && $0.calories == q.calories
+                && $0.protein == q.protein && $0.carbs == q.carbs && $0.fat == q.fat
+        })?.id ?? q.id
         let component = MealComponent(foodItemID: food.id, servingID: servingID, servingUnit: q.type, servingAmount: amount)
         onAdd(component, food)
         dismiss()

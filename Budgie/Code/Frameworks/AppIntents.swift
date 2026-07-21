@@ -15,6 +15,14 @@
 
 import AppIntents
 
+/// Thrown by intents that read budget figures when the app hasn't finished its first-run setup
+/// (`settingsObj.isFirstRun`, the same flag that gates the in-app setup wizard — unlike `snacksUUID`,
+/// which the logging intents check but which populates on first launch regardless of whether setup
+/// was ever completed), so Siri surfaces a clear "not set up yet" message instead of a placeholder 0.
+private struct BudgieDietNotSetUpError: LocalizedError {
+    var errorDescription: String? { "Budgie Diet hasn't finished setting up yet — please open the app first." }
+}
+
 extension HealthData {
     /// Convenience for App Intents/Shortcuts, which repeatedly need a fresh, throwaway `TodayLump`
     /// either just to read a figure off of or purely to trigger the refresh's side effects (recalculating
@@ -178,6 +186,7 @@ struct GetCanEatNowIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
+        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
         let lump = await dataStore.freshLump(reloadWidgets: false)
         return .result(value: lump.canEatNow)
     }
@@ -191,6 +200,7 @@ struct GetBudgetRemainingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
+        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
         let lump = await dataStore.freshLump(reloadWidgets: false)
         return .result(value: lump.totalBudgetRem)
     }
@@ -204,6 +214,7 @@ struct SpeakCanEatNowIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
         let lump = await dataStore.freshLump(reloadWidgets: false)
 
         // With meal allocations on, "can eat now" isn't a user-facing figure — the app
@@ -232,6 +243,7 @@ struct SpeakBudgetRemainingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
         let lump = await dataStore.freshLump(reloadWidgets: false)
         let v = lump.totalBudgetRem
         let dialog: IntentDialog = v >= 0

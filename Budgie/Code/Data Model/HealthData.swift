@@ -636,10 +636,11 @@ final class HealthData {
             carbsByDay[day, default: 0]   += Int((entry.carbs ?? 0).rounded())
         }
 
-        let days = Set(proteinByDay.keys).union(fatByDay.keys).union(carbsByDay.keys)
-        return days.map { day in
+        // Every day in range, not just days with a sample — otherwise a chart's x-axis silently
+        // narrows to only the days that happened to have logged macros.
+        return datesInRange(from: from, to: to).map { day in
             MacroPoint(date: day, protein: proteinByDay[day] ?? 0, fat: fatByDay[day] ?? 0, carbs: carbsByDay[day] ?? 0)
-        }.sorted { $0.date < $1.date }
+        }
     }
 
     /// Day-bucketed water totals: Budgie's own logged entries plus HealthKit samples from other
@@ -660,7 +661,9 @@ final class HealthData {
             totalByDay[day, default: 0] += entry.quantity
         }
 
-        return totalByDay.map { WaterPoint(date: $0.key, millilitres: $0.value) }.sorted { $0.date < $1.date }
+        // Every day in range, not just days with a sample — otherwise a chart's x-axis silently
+        // narrows to only the days that happened to have logged water.
+        return datesInRange(from: from, to: to).map { WaterPoint(date: $0, millilitres: totalByDay[$0] ?? 0) }
     }
     
     /// Distinct days within the range that have any eaten-calorie data — from HealthKit (any source) or Budgie Diet's own store. Used to decide whether food logging is consistent enough to draw conclusions from.
@@ -1021,11 +1024,16 @@ final class HealthData {
     /// without a cache each one repeats two full-table scans just to populate autocomplete. Cleared
     /// by `invalidateManufacturersCache()` wherever a save could introduce a new manufacturer name.
     private var manufacturersCache: [String]?
+    /// Bumped by `invalidateManufacturersCache()`. Lets `knownManufacturers()` notice an invalidation
+    /// that happened while it was awaiting its fetch, so it doesn't clobber the (now-correctly-nil)
+    /// cache with a result computed before that invalidation.
+    private var manufacturersCacheEpoch = 0
 
     /// Distinct manufacturer names the user has entered — across saved foods and logged entries —
     /// for autocomplete suggestions. Case-insensitively de-duplicated (first spelling wins), sorted.
     func knownManufacturers() async -> [String] {
         if let manufacturersCache { return manufacturersCache }
+        let epoch = manufacturersCacheEpoch
         async let savedTask = foodItemActor.manufacturers()
         async let loggedTask = calorieActor.manufacturers()
         let (saved, logged) = await (savedTask, loggedTask)
@@ -1035,7 +1043,12 @@ final class HealthData {
             result.append(name)
         }
         let sorted = result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-        manufacturersCache = sorted
+        // Only commit to the cache if nothing invalidated it while this fetch was in flight —
+        // otherwise `sorted` predates whatever save triggered the invalidation, and caching it would
+        // silently hide that save's new manufacturer until some later, unrelated invalidation fires.
+        if epoch == manufacturersCacheEpoch {
+            manufacturersCache = sorted
+        }
         return sorted
     }
 
@@ -1043,6 +1056,7 @@ final class HealthData {
     /// name not already in the list, so the next autocomplete lookup picks it up.
     func invalidateManufacturersCache() {
         manufacturersCache = nil
+        manufacturersCacheEpoch += 1
     }
     
     /// One-off seed list of common manufacturer names bundled with the app, so autocomplete is useful

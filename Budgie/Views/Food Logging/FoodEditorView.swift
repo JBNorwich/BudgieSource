@@ -164,8 +164,8 @@ struct FoodEditorView: View {
             let item = FoodItem(name: trimmedName, manufacturer: cleanMfr,
                                 quantities: quantities, source: .userInput)
             item.barcode = prefilledBarcode
-            await dataStore.foodItemActor.insert(item)
-            onSaved?(item.asPicked)
+            let saved = await dataStore.foodItemActor.insert(item)
+            onSaved?(saved.asPicked)
         }
         if cleanMfr != nil { dataStore.invalidateManufacturersCache() }
     }

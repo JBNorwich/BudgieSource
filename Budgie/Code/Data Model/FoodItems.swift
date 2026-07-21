@@ -253,11 +253,23 @@ actor FoodItemActor {
         return components.filter { !mealIDs.contains($0.foodItemID) }
     }
 
-    /// Inserts a new food item and saves.
-    func insert(_ item: FoodItem) {
+    /// Inserts a new food item and saves. If the item carries a barcode matching an existing
+    /// non-archived food, returns that one instead of creating a duplicate — the same rule
+    /// `importOFF` already applies for OpenFoodFacts imports, extended here so a manually-created
+    /// food (e.g. from an unrecognised barcode scan) also resolves locally on a repeat scan rather
+    /// than piling up copies of the same product. Returns the item that now represents the save:
+    /// `item` itself in the common case, or the pre-existing match when one was found.
+    @discardableResult
+    func insert(_ item: FoodItem) -> FoodItem {
         item.components = stripNestedMealComponents(item.components)
+        if let barcode = item.barcode, !barcode.isEmpty {
+            let descriptor = FetchDescriptor<FoodItem>(
+                predicate: #Predicate { $0.barcode == barcode && $0.archived == false })
+            if let existing = (try? modelContext.fetch(descriptor))?.first { return existing }
+        }
         modelContext.insert(item)
         do { try modelContext.save() } catch { print("FoodItem insertion error: \(error)") }
+        return item
     }
     
     /// Persists an OpenFoodFacts import, or reuses a non-archived saved food with the same barcode instead of creating a duplicate, and returns it as a value type to log against. Stops the same product piling up copies when it's imported more than once.
@@ -270,6 +282,17 @@ actor FoodItemActor {
         modelContext.insert(item)
         do { try modelContext.save() } catch { print("FoodItem insertion error: \(error)") }
         return item.asPicked
+    }
+
+    /// A saved, non-archived food already stamped with this barcode, if one exists — checked before
+    /// a barcode scan hits OpenFoodFacts, so re-scanning a product already saved locally (whether it
+    /// came from an OFF import or was created manually because OFF didn't have it) resolves instantly
+    /// instead of repeating a network lookup that's only going to end the same way again.
+    func fetch(barcode: String) -> FoodItem? {
+        guard !barcode.isEmpty else { return nil }
+        let descriptor = FetchDescriptor<FoodItem>(
+            predicate: #Predicate { $0.barcode == barcode && $0.archived == false })
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     /// All food items, newest first. Archived items are excluded unless asked for.

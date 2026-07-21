@@ -40,6 +40,22 @@ func getStartOfDay(date: Date) -> Date {
     return calendar.startOfDay(for: date)
 }
 
+/// Every day's start-of-day date in `[from, to)`, one per calendar day — used to densify a
+/// day-bucketed series so a day with no data still gets an explicit (zero) entry rather than being
+/// omitted, which would otherwise narrow a chart's x-axis to only the days that happened to have data.
+func datesInRange(from: Date, to: Date) -> [Date] {
+    let calendar = Calendar.current
+    var day = calendar.startOfDay(for: from)
+    let end = calendar.startOfDay(for: to)
+    var days: [Date] = []
+    while day < end {
+        days.append(day)
+        guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+        day = next
+    }
+    return days
+}
+
 /// Returns midnight on the day before the date passed. For example, if you passed this function 19:02 on the 29th June, this would return 00:00 on the 28th June.
 func getMidnightOnDayBefore(date: Date) -> Date { midnight(daysOffset: -1, from: date) }
 

@@ -385,7 +385,16 @@ struct MacAddFoodSheet: View {
         Task {
             await saveEntry()
             await onSave()
-            if keepOpen { resetInputs(); reloadToken = UUID() } else { dismiss() }
+            if keepOpen {
+                resetInputs()
+                // Re-fetch rather than trust the stale local array: saveEntry() may have just
+                // invalidated the manufacturer cache (a brand-new manufacturer was saved), and the
+                // sheet is staying open for another entry that could reference it.
+                knownManufacturers = await dataStore.knownManufacturers()
+                reloadToken = UUID()
+            } else {
+                dismiss()
+            }
         }
     }
 

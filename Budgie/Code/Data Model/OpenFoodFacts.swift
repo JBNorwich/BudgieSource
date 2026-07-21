@@ -160,7 +160,8 @@ private struct ProductDTO: Decodable {
         }
 
         /// Calories per 100 g/ml. Prefers the direct kcal field, then falls back to a kJ value
-        /// (÷4.184) — many EU-packaged products report only kJ. nil when neither is usable.
+        /// (÷4.184) — many EU-packaged products report only kJ, and OpenFoodFacts' generic
+        /// `energy_100g` field defaults to kJ too. nil when neither is usable.
         var kcalPer100: Double? {
             if let kcal = energyKcal100g?.value { return kcal }
             if let kj = energyKJ100g?.value ?? energy100g?.value { return kj / 4.184 }
