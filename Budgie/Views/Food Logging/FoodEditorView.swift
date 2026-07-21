@@ -28,6 +28,7 @@ struct FoodEditorView: View {
     private let isModal: Bool
     @FocusState private var manufacturerFocused: Bool
     @State private var knownManufacturers: [String] = []
+    @State private var isSaving = false
 
     /// Pass an existing item to edit it, or nothing to create a new one. `prefilledBarcode` stamps a
     /// barcode onto a newly created food (so a future scan resolves it locally); `onSaved` hands the
@@ -47,7 +48,10 @@ struct FoodEditorView: View {
     }
 
     var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !quantities.isEmpty
+        !isSaving
+            && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !quantities.isEmpty
+            && quantities.allSatisfy { $0.count > 0 && $0.calories >= 0 }
     }
 
     private var manufacturerSuggestions: [String] {
@@ -83,21 +87,7 @@ struct FoodEditorView: View {
             }
         }
         .navigationTitle(existingID == nil ? "New food" : "Edit food")
-        .toolbar {
-            if isModal {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    Task {
-                        await save()
-                        dismiss()
-                    }
-                }.disabled(!canSave)
-            }
-        }
+        .editorToolbar(isModal: isModal, canSave: canSave, isSaving: $isSaving) { await save() }
         // For a brand-new food the amount (100) and calories (0) start pre-filled; select the value
         // on focus so the user types straight over it. Empty fields (name, macros…) are unaffected,
         // and editing an existing food is left alone so a partial edit isn't wiped.
@@ -125,25 +115,11 @@ struct FoodEditorView: View {
                   text: Binding(get: { quantities[i].servingName ?? "" },
                                 set: { quantities[i].servingName = $0.isEmpty ? nil : $0 }))
 
-        HStack {
-            Text(quantities[i].type == .portion ? "Portions" : "Amount")
-            Spacer()
-            TextField("", value: $quantities[i].count, format: .number)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: 90)
-            if quantities[i].type != .portion { Text(quantities[i].type.unitName) }
-        }
+        LabeledDoubleRow(label: quantities[i].type == .portion ? "Portions" : "Amount",
+                        value: $quantities[i].count,
+                        suffix: quantities[i].type != .portion ? quantities[i].type.unitName : nil)
 
-        HStack {
-            Text("Calories")
-            Spacer()
-            TextField("", value: $quantities[i].calories, format: .number)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: 90)
-            Text("kcal")
-        }
+        LabeledIntRow(label: "Calories", value: $quantities[i].calories, suffix: "kcal")
 
         DisclosureGroup("Nutrition (optional)") {
             MacroEntryFields(protein: $quantities[i].protein, carbs: $quantities[i].carbs, fat: $quantities[i].fat)

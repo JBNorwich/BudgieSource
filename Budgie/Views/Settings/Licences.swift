@@ -57,13 +57,5 @@ struct LicencesScreen: View {
 }
 
 #Preview {
-    struct Preview: View {
-        @State var changed: Bool = true
-
-        var body: some View {
-            LicencesScreen()
-        }
-    }
-    
-    return Preview()
+    LicencesScreen()
 }

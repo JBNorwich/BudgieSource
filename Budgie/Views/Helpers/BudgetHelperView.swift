@@ -52,6 +52,7 @@ struct BudgetHelperView: View {
     private func deficitSection(_ option: DeficitOption) -> some View {
         Section(footer: Text(option.footer)) {
             Button("\(option.label) - \(option.kcal)kcal per day") {
+                settingsObj.surplusMode = false
                 settingsObj.desiredDeficit = option.kcal
                 isPresented = false
             }.fontWeight(.bold)
@@ -85,6 +86,7 @@ struct BudgetHelperView: View {
                 Section(footer: Text("Choose this if your goal is to maintain your current weight.")) {
                     Button("No deficit at all")
                     {
+                        settingsObj.surplusMode = false
                         settingsObj.desiredDeficit = 0
                         isPresented = false
                     } .fontWeight(.bold)
@@ -116,6 +118,7 @@ struct BudgetHelperView: View {
             ThousandKcalWarningSheet(
                 isDisplayed: $displaying1000kcalWarning,
                 onConfirm: {
+                    settingsObj.surplusMode = false
                     settingsObj.desiredDeficit = 1000
                     isPresented = false
                 }

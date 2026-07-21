@@ -58,7 +58,7 @@ struct WeightChartView: View {
         if points.allSatisfy({ $0.actualWeight == nil }) {
             ContentUnavailableView("No weight data", systemImage: "scalemass",
                 description: Text("Log your weight, or record it in another Health app, to see your trend."))
-                .frame(height: 220)
+                .frame(height: 300)
         } else {
             Chart {
                 ForEach(points) { point in
@@ -86,27 +86,14 @@ struct WeightChartView: View {
                         .lineStyle(.init(dash: [5]))
                 }
             }
-            .chartForegroundStyleScale([
+            .chartYScale(domain: yDomain)
+            .chartYAxisFormatted(axisLabel)
+            .chartCardStyle(colors: [
                 "Weight": Color.gray,
                 "Trend": Color.blue,
                 "Expected range": Color.blue.opacity(0.15),
                 "Goal": Color.green
-            ])
-            .chartLegend(.visible)
-            .chartLegend(position: .bottom, alignment: .center)
-            .chartYScale(domain: yDomain)
-            .chartYAxis {
-                AxisMarks { value in
-                    AxisGridLine()
-                    AxisValueLabel {
-                        if let v = value.as(Double.self) {
-                            Text(axisLabel(v))
-                        }
-                    }
-                }
-            }
-            .frame(height: 220)
-            .chartPressPopup(dates: points.compactMap { $0.actualWeight != nil ? $0.date : nil }) { date in
+            ], dates: points.compactMap { $0.actualWeight != nil ? $0.date : nil }) { date in
                 popupContent(for: date)
             }
         }

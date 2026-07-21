@@ -39,39 +39,20 @@ struct WaterChartView: View {
     }
 
     var body: some View {
-        if waterData.isEmpty {
-            ContentUnavailableView("No water data", systemImage: "drop",
-                description: Text("Log your water intake, or record it in another Health app, to see your trend."))
-                .frame(height: 220)
-        } else {
-            Chart {
-                ForEach(waterData) { point in
-                    BarMark(x: .value("Date", point.date), y: .value("Water", plotValue(point.millilitres)))
-                        .foregroundStyle(by: .value("Series", "Water"))
-                    if let goal = goalByDay[point.date], goal > 0 {
-                        LineMark(x: .value("Date", point.date), y: .value("Water", plotValue(goal)), series: .value("Line", "Goal"))
-                            .foregroundStyle(by: .value("Series", "Goal"))
-                            .lineStyle(StrokeStyle(dash: [5]))
-                    }
+        Chart {
+            ForEach(waterData) { point in
+                BarMark(x: .value("Date", point.date), y: .value("Water", plotValue(point.millilitres)))
+                    .foregroundStyle(by: .value("Series", "Water"))
+                if let goal = goalByDay[point.date], goal > 0 {
+                    LineMark(x: .value("Date", point.date), y: .value("Water", plotValue(goal)), series: .value("Line", "Goal"))
+                        .foregroundStyle(by: .value("Series", "Goal"))
+                        .lineStyle(StrokeStyle(dash: [5]))
                 }
             }
-            .chartForegroundStyleScale(["Water": Color.blue, "Goal": Color.teal])
-            .chartLegend(.visible)
-            .chartLegend(position: .bottom, alignment: .center)
-            .chartYAxis {
-                AxisMarks { value in
-                    AxisGridLine()
-                    AxisValueLabel {
-                        if let v = value.as(Double.self) {
-                            Text(axisLabel(v))
-                        }
-                    }
-                }
-            }
-            .frame(height: 220)
-            .chartPressPopup(dates: waterData.map(\.date)) { date in
-                popupContent(for: date)
-            }
+        }
+        .chartYAxisFormatted(axisLabel)
+        .chartCardStyle(colors: ["Water": Color.blue, "Goal": Color.teal], dates: waterData.map(\.date)) { date in
+            popupContent(for: date)
         }
     }
 

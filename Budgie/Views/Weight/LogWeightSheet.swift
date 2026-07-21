@@ -26,7 +26,8 @@ struct LogWeightSheet: View {
     @State private var date: Date = Date()
     @State private var showAlert = false
     @State private var alertText = ""
-    @FocusState private var focused: Bool
+    @State private var isSaving = false
+    @FocusState private var focusedField: WeightEntryField?
 
     private var unit: weightUnits { weightUnits(rawValue: settingsObj.weightDisplayUnit) ?? .kilograms }
 
@@ -38,59 +39,36 @@ struct LogWeightSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    switch unit {
-                    case .kilograms:
-                        HStack {
-                            TextField("Weight", value: $kilosField, format: .number)
-                                .font(.largeTitle).keyboardType(.decimalPad).focused($focused)
-                            Text("kg").font(.largeTitle).foregroundStyle(.secondary)
-                        }
-                    case .pounds:
-                        HStack {
-                            TextField("Weight", value: $poundsField, format: .number)
-                                .font(.largeTitle).keyboardType(.decimalPad).focused($focused)
-                            Text("lbs").font(.largeTitle).foregroundStyle(.secondary)
-                        }
-                    case .stonepounds:
-                        HStack {
-                            TextField("0", value: $stonesField, format: .number)
-                                .font(.largeTitle).keyboardType(.numberPad).focused($focused)
-                            Text("st").font(.largeTitle).foregroundStyle(.secondary)
-                            TextField("0", value: $poundsPart, format: .number)
-                                .font(.largeTitle).keyboardType(.numberPad)
-                            Text("lb").font(.largeTitle).foregroundStyle(.secondary)
-                        }
-                    }
+                    WeightUnitEntryFields(unit: unit, placeholder: "Weight",
+                                          kilos: $kilosField, pounds: $poundsField,
+                                          stones: $stonesField, poundsPart: $poundsPart,
+                                          focus: $focusedField)
                     DatePicker("Date and time", selection: $date, in: ...Date())
                 }
                 Section {
-                    Button("Save") { save() }.buttonStyle(.borderedProminent)
+                    Button("Save") { save() }.buttonStyle(.borderedProminent).disabled(isSaving)
                 }
             }
             .navigationTitle("Log weight")
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { focused = false }
-                }
-            }
-            .alert(alertText, isPresented: $showAlert) {
-                Button("OK", role: .cancel) { }
-            }
+            .keyboardDoneButton(clearing: $focusedField)
+            .okAlert(alertText, isPresented: $showAlert)
         }
     }
 
     private func save() {
+        guard !isSaving else { return }
         guard let kg = enteredKilos, kg > 0 else {
             alertText = "Weight must be above zero."
             showAlert = true
             return
         }
+        isSaving = true
         Task {
             let uuid = await dataStore.saveHKSample(value: kg, unit: .gramUnit(with: .kilo), type: weightSampleType, date: date)
             if uuid == nil {
                 alertText = "I couldn't save your weight. Check that Budgie Diet is allowed to write weight data in the Health app."
                 showAlert = true
+                isSaving = false
             } else {
                 await dataStore.updateLump(todayLump: todayLump)
                 isDisplayed = false

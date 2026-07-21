@@ -37,6 +37,29 @@ struct ColoredButton: ButtonStyle {
     }
 }
 
+private struct TappableCard: ViewModifier {
+    var hint: String
+    var action: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .backgroundStyle(.regularMaterial)
+            .onTapGesture(perform: action)
+            .accessibilityElement(children: .contain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(hint)
+            .accessibilityAction { action() }
+    }
+}
+
+private extension View {
+    /// A GroupBox card that's tappable as a whole, with matching VoiceOver affordances — shared by
+    /// every stat card on the main page.
+    func tappableCard(hint: String, action: @escaping () -> Void) -> some View {
+        modifier(TappableCard(hint: hint, action: action))
+    }
+}
+
 private enum MainNavDestination: Hashable { case foodHub, waterPage }
 
 struct BudgetView: View {
@@ -115,50 +138,29 @@ struct BudgetView: View {
                         Spacer()
                         GroupBox(label: GaugeLabelView(showingGaugeHelp: $showingGaugeHelp)) {
                             GaugeView().environmentObject(todayLump)
-                        }   .backgroundStyle(.regularMaterial)
-                            .onTapGesture {
-                                showingDetail = true
-                            }
-                            .accessibilityElement(children: .contain)
-                            .accessibilityAddTraits(.isButton)
-                            .accessibilityHint("Opens a detailed view of your daily budget")
-                            .accessibilityAction { showingDetail = true }
+                        }.tappableCard(hint: "Opens a detailed view of your daily budget") { showingDetail = true }
                         HStack {
                             GroupBox(label: ActivityLabelView()) {
                                 FitnessView().environmentObject(todayLump)
-                            }.onTapGesture {
+                            }
+                            .frame(minHeight: 100)
+                            .tappableCard(hint: "Opens the Fitness app, if it's installed") {
                                 UIApplication.shared.open(URL(string: "fitnessapp://")!)
-                            }   .backgroundStyle(.regularMaterial)
-                                .frame(minHeight: 100)
-                                .accessibilityElement(children: .contain)
-                                .accessibilityAddTraits(.isButton)
-                                .accessibilityHint("Opens the Fitness app, if it's installed")
-                                .accessibilityAction { UIApplication.shared.open(URL(string: "fitnessapp://")!) }
-                            
+                            }
+
                             GroupBox(label: WaterLabelView(showingWaterSheet: $showWaterSheet)) {
                                 WaterView().environmentObject(todayLump)
-                            }.onTapGesture {
-                                mainNavDestination = .waterPage
-                            }.backgroundStyle(.regularMaterial)
-                                .frame(minHeight: 100)
-                                .accessibilityElement(children: .contain)
-                                .accessibilityAddTraits(.isButton)
-                                .accessibilityHint("Go to the Water page")
-                                .accessibilityAction { mainNavDestination = .waterPage }
+                            }
+                            .frame(minHeight: 100)
+                            .tappableCard(hint: "Go to the Water page") { mainNavDestination = .waterPage }
                         }
-                        
+
                         if !settingsObj.disableWeightFeatures {
                             GroupBox(label: WeightLabelView(showingWeightGoalSheet: $showingWeightGoalSheet, showingLogWeightSheet: $showingWeightLogSheet)) {
                                 WeightView(showingWeightGoalSheet: $showingWeightGoalSheet).environmentObject(todayLump)
-                            }.backgroundStyle(.regularMaterial)
-                                .frame(minHeight: 100)
-                                .onTapGesture {
-                                    showingWeightDetail = true
-                                }
-                                .accessibilityElement(children: .contain)
-                                .accessibilityAddTraits(.isButton)
-                                .accessibilityHint("Opens a detailed view of your weight trend")
-                                .accessibilityAction { showingWeightDetail = true }
+                            }
+                            .frame(minHeight: 100)
+                            .tappableCard(hint: "Opens a detailed view of your weight trend") { showingWeightDetail = true }
                         }
                         
                         if settingsObj.hideTodayInDetail != true {
@@ -171,12 +173,7 @@ struct BudgetView: View {
                             GroupBox(label: Label("Macros", systemImage: "chart.pie")) {
                                 MacroSummaryView().environmentObject(todayLump)
                             }
-                            .backgroundStyle(.regularMaterial)
-                            .onTapGesture { showingMacroSettings = true }
-                            .accessibilityElement(children: .contain)
-                            .accessibilityAddTraits(.isButton)
-                            .accessibilityHint("Opens the settings page for macro tracking")
-                            .accessibilityAction { showingMacroSettings = true }
+                            .tappableCard(hint: "Opens the settings page for macro tracking") { showingMacroSettings = true }
                             .sheet(isPresented: $showingMacroSettings, onDismiss: {
                                 Task { await dataStore.updateLump(todayLump: todayLump) }
                             }) {
@@ -192,16 +189,9 @@ struct BudgetView: View {
                             }
                         }
                         
-                        GroupBox(label: FoodListLabelView(showingAddCalsSheet: $showAddCalsSheet))
-                        {
+                        GroupBox(label: FoodListLabelView(showingAddCalsSheet: $showAddCalsSheet)) {
                             TodayFoodList().environmentObject(todayLump)
-                        }   .onTapGesture {
-                            mainNavDestination = .foodHub
-                        }   .backgroundStyle(.regularMaterial)
-                            .accessibilityElement(children: .contain)
-                            .accessibilityAddTraits(.isButton)
-                            .accessibilityHint("Opens the Food page")
-                            .accessibilityAction { mainNavDestination = .foodHub }
+                        }.tappableCard(hint: "Opens the Food page") { mainNavDestination = .foodHub }
                         
                         HStack {
                             Text("Last updated: " + todayLump.lastUpdate.formatted())

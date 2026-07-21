@@ -27,8 +27,7 @@ struct WeightGoalSheet: View {
 
     @State private var goalWasInvalid: Bool = false
 
-    private enum Field { case kilos, pounds, stones, poundsPart }
-    @FocusState private var focusedField: Field?
+    @FocusState private var focusedField: WeightEntryField?
 
     @State private var toLose: Double = 0
     @State private var daysToGo: Int = 0
@@ -76,49 +75,10 @@ struct WeightGoalSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    switch unit {
-                    case .kilograms:
-                        HStack {
-                            TextField("Goal", value: $kilosField, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.decimalPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .kilos)
-                            Text("kg")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                        }
-                    case .pounds:
-                        HStack {
-                            TextField("Goal", value: $poundsField, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.decimalPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .pounds)
-                            Text("lbs")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                        }
-                    case .stonepounds:
-                        HStack {
-                            TextField("0", value: $stonesField, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .stones)
-                            Text("st")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                            TextField("0", value: $poundsPart, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .poundsPart)
-                            Text("lb")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    WeightUnitEntryFields(unit: unit, placeholder: "Goal",
+                                          kilos: $kilosField, pounds: $poundsField,
+                                          stones: $stonesField, poundsPart: $poundsPart,
+                                          focus: $focusedField)
 
                     Button("Add") {
                         guard let goal = enteredKilos, goal > 0 else {
@@ -180,18 +140,10 @@ struct WeightGoalSheet: View {
             }
 
             .navigationTitle("Set weight goal")
-
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { focusedField = nil }
-                }
-            }
+            .keyboardDoneButton(clearing: $focusedField)
         }
 
-        .alert("Please enter a weight above zero.", isPresented: $goalWasInvalid) {
-            Button("OK", role: .cancel) { }
-        }
+        .okAlert("Please enter a weight above zero.", isPresented: $goalWasInvalid)
 
         .onAppear {
             if settingsObj.weightGoal != 0 {
@@ -216,7 +168,7 @@ struct WeightGoalSheet: View {
     }
 
     /// The field to return focus to when the entry is rejected.
-    private var firstField: Field {
+    private var firstField: WeightEntryField {
         switch unit {
         case .kilograms: return .kilos
         case .pounds: return .pounds

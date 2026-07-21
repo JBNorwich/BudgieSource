@@ -116,6 +116,18 @@ struct BMRHelper: View {
         return (thisYear - 100)...(thisYear - 18)
     }
 
+    /// A trailing-aligned whole-number field with a unit suffix — the shape repeated by every
+    /// weight/height field below, differing only in which value, suffix and focus target they bind.
+    @ViewBuilder
+    private func numberField(_ value: Binding<Int>, suffix: String, focus: Field) -> some View {
+        TextField("", value: value, format: .number)
+            .multilineTextAlignment(.trailing)
+            .keyboardType(.numberPad)
+            .autocorrectionDisabled()
+            .focused($focusedField, equals: focus)
+        Text(suffix)
+    }
+
     var body: some View {
         Form {
             Section(header: Text("About you")) {
@@ -158,45 +170,21 @@ struct BMRHelper: View {
                 switch currentWeightUnit {
                 case .kilograms:
                     LabeledContent {
-                        HStack {
-                            TextField("", value: $weightKg, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightKg)
-                            Text("kg")
-                        }
+                        HStack { numberField($weightKg, suffix: "kg", focus: .weightKg) }
                     } label: {
                         Text("Weight")
                     }
                 case .pounds:
                     LabeledContent {
-                        HStack {
-                            TextField("", value: $weightLb, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightLb)
-                            Text("lbs")
-                        }
+                        HStack { numberField($weightLb, suffix: "lbs", focus: .weightLb) }
                     } label: {
                         Text("Weight")
                     }
                 case .stonepounds:
                     LabeledContent {
                         HStack {
-                            TextField("", value: $weightSt, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightSt)
-                            Text("st")
-                            TextField("", value: $weightStLb, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightStLb)
-                            Text("lb")
+                            numberField($weightSt, suffix: "st", focus: .weightSt)
+                            numberField($weightStLb, suffix: "lb", focus: .weightStLb)
                         }
                     } label: {
                         Text("Weight")
@@ -211,14 +199,7 @@ struct BMRHelper: View {
                 }
                 if metricImperial == 0 {
                     LabeledContent {
-                        HStack {
-                            TextField("", value: $heightCM, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .heightCM)
-                            Text("cm")
-                        }
+                        HStack { numberField($heightCM, suffix: "cm", focus: .heightCM) }
                     } label: {
                         Text("Height")
                     }
@@ -324,15 +305,7 @@ struct BMRHelper: View {
             }
         }
 
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-
-                Button("Done") {
-                    focusedField = nil
-                }
-             }
-        }
+        .keyboardDoneButton(clearing: $focusedField)
     }
 }
 

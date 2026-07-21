@@ -35,6 +35,44 @@ extension HealthData {
         await updateLump(todayLump: lump, reloadWidgets: reloadWidgets, publishSnapshot: false)
         return lump
     }
+
+    /// `freshLump(reloadWidgets: false)`, gated on first-run setup having finished — shared by every
+    /// intent that just reads a budget figure rather than logging something.
+    @MainActor
+    func freshLumpOrThrow() async throws -> TodayLump {
+        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
+        return await freshLump(reloadWidgets: false)
+    }
+}
+
+/// Resolves an optional intent parameter to a value (asking via `request` if it's nil) and guards
+/// that the result is positive — the "resolve-or-ask-then-validate" pattern shared by every intent
+/// that logs a number.
+@MainActor
+func resolvePositive<T: Comparable & AdditiveArithmetic>(
+    _ value: T?, request: () async throws -> T, reject: () -> Error
+) async throws -> T {
+    let resolved: T
+    if let value {
+        resolved = value
+    } else {
+        resolved = try await request()
+    }
+    guard resolved > .zero else { throw reject() }
+    return resolved
+}
+
+/// "You have X left" / "You're about X over" dialog for the day's remaining budget — shared by every
+/// intent that speaks this figure.
+private func budgetRemainingDialog(_ lump: TodayLump) -> IntentDialog {
+    let v = lump.totalBudgetRem
+    return v >= 0
+        ? "You have \(v.formatted()) calories left in your budget today."
+        : "You're about \((-v).formatted()) calories over your budget today."
+}
+
+private struct MealOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [MealEntity] { try await StructMealQuery().suggestedEntities() }
 }
 
 struct LogQuickCaloriesIntent: AppIntent {
@@ -52,14 +90,10 @@ struct LogQuickCaloriesIntent: AppIntent {
     
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        var calsToLog: Int
-        
-        if let calories = calories {
-            calsToLog = calories
-        } else {
-            calsToLog = try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?"))
-        }
-        
+        let calsToLog = try await resolvePositive(calories,
+            request: { try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?")) },
+            reject: { $calories.needsValueError("Calories must be above zero.") })
+
         guard let snacksUUID = settingsObj.snacksUUID else {
             throw $calories.needsValueError("Budgie Diet hasn't finished setting up yet — please open the app first.")
         }
@@ -84,13 +118,7 @@ struct LogFoodIntent: AppIntent {
     
     @Parameter(title: "Meal", requestValueDialog: "The meal to log to.", optionsProvider: MealOptionsProvider())
     var meal: MealEntity!
-    
-    private struct MealOptionsProvider: DynamicOptionsProvider {
-        func results() async throws -> [MealEntity] {
-            return try await StructMealQuery().suggestedEntities()
-        }
-    }
-    
+
     @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
         // Narrative first, so we can resolve a saved food before deciding whether we even need a number.
         let narrativeToLog: String
@@ -114,6 +142,9 @@ struct LogFoodIntent: AppIntent {
         }
 
         if let provided = calories {
+            guard provided > 0 else {
+                throw $calories.needsValueError("Calories must be above zero.")
+            }
             // A number was given: link to the food only if the name AND a serving's calories both match;
             // otherwise it's quick calories at the number they gave.
             if let food, let q = food.quantities.first(where: { $0.calories == provided }) {
@@ -132,6 +163,9 @@ struct LogFoodIntent: AppIntent {
         } else {
             // No number and no matching food → ask, then quick calories.
             let asked = try await $calories.requestValue(.init(stringLiteral: "How many calories did you eat?"))
+            guard asked > 0 else {
+                throw $calories.needsValueError("Calories must be above zero.")
+            }
             await dataStore.addCalories(calories: asked, narrative: narrativeToLog, date: Date(), meal: meal.id)
             await refreshBudget()
             return .result(dialog: "Logged \(asked.formatted()) kcal for \(narrativeToLog) to \(meal.name).")
@@ -165,14 +199,10 @@ struct LogWaterIntent: AppIntent {
     
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        var mlsToLog: Int
-        
-        if let millilitres = millilitres {
-            mlsToLog = millilitres
-        } else {
-            mlsToLog = try await $millilitres.requestValue(.init(stringLiteral: "How much water did you drink, in millilitres?"))
-        }
-        
+        let mlsToLog = try await resolvePositive(millilitres,
+            request: { try await $millilitres.requestValue(.init(stringLiteral: "How much water did you drink, in millilitres?")) },
+            reject: { $millilitres.needsValueError("Amount must be above zero.") })
+
         await dataStore.addWater(amount: mlsToLog, datetime: Date())
         
         return .result(dialog: "Logged \(renderVolume(millilitres: mlsToLog)).")
@@ -186,8 +216,7 @@ struct GetCanEatNowIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
-        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
-        let lump = await dataStore.freshLump(reloadWidgets: false)
+        let lump = try await dataStore.freshLumpOrThrow()
         return .result(value: lump.canEatNow)
     }
 }
@@ -200,8 +229,7 @@ struct GetBudgetRemainingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<Int> {
-        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
-        let lump = await dataStore.freshLump(reloadWidgets: false)
+        let lump = try await dataStore.freshLumpOrThrow()
         return .result(value: lump.totalBudgetRem)
     }
 }
@@ -214,17 +242,12 @@ struct SpeakCanEatNowIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
-        let lump = await dataStore.freshLump(reloadWidgets: false)
+        let lump = try await dataStore.freshLumpOrThrow()
 
         // With meal allocations on, "can eat now" isn't a user-facing figure — the app
         // replaces it with remaining budget, so answer in those terms to stay consistent.
         if settingsObj.useMealAllocations {
-            let v = lump.totalBudgetRem
-            let dialog: IntentDialog = v >= 0
-                ? "You have \(v.formatted()) calories left in your budget today."
-                : "You're about \((-v).formatted()) calories over your budget today."
-            return .result(dialog: dialog)
+            return .result(dialog: budgetRemainingDialog(lump))
         }
 
         let v = lump.canEatNow
@@ -243,13 +266,8 @@ struct SpeakBudgetRemainingIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        guard !settingsObj.isFirstRun else { throw BudgieDietNotSetUpError() }
-        let lump = await dataStore.freshLump(reloadWidgets: false)
-        let v = lump.totalBudgetRem
-        let dialog: IntentDialog = v >= 0
-            ? "You have \(v.formatted()) calories left in your budget today."
-            : "You're about \((-v).formatted()) calories over your budget today."
-        return .result(dialog: dialog)
+        let lump = try await dataStore.freshLumpOrThrow()
+        return .result(dialog: budgetRemainingDialog(lump))
     }
 }
 
@@ -323,10 +341,6 @@ struct LogSavedFoodIntent: AppIntent {
         Summary("Log \(\.$servings) × \(\.$serving) of \(\.$food) to \(\.$meal)")
     }
 
-    private struct MealOptionsProvider: DynamicOptionsProvider {
-        func results() async throws -> [MealEntity] { try await StructMealQuery().suggestedEntities() }
-    }
-
     private struct ServingOptionsProvider: DynamicOptionsProvider {
         @IntentParameterDependency<LogSavedFoodIntent>(\.$food)
         var input
@@ -380,15 +394,9 @@ struct LogWeightIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        var toLog: Double
-        if let kilograms {
-            toLog = kilograms
-        } else {
-            toLog = try await $kilograms.requestValue(.init(stringLiteral: "What do you weigh, in kilograms?"))
-        }
-        guard toLog > 0 else {
-            throw $kilograms.needsValueError("Weight must be above zero.")
-        }
+        let toLog = try await resolvePositive(kilograms,
+            request: { try await $kilograms.requestValue(.init(stringLiteral: "What do you weigh, in kilograms?")) },
+            reject: { $kilograms.needsValueError("Weight must be above zero.") })
         let uuid = await dataStore.saveHKSample(value: toLog, unit: .gramUnit(with: .kilo), type: weightSampleType, date: Date())
         guard uuid != nil else {
             return .result(dialog: "I couldn't save that. Check that Budgie Diet is allowed to write weight data in the Health app.")

@@ -41,41 +41,6 @@ struct NewDataView: View {
         }
     }
     
-    private struct DataViewHeader: View {
-        let imageName: String
-        let leftText: String
-        let rightText: String
-        
-        var body: some View {
-            HStack {
-                HStack {
-                    Image(systemName: imageName)
-                        .frame(minWidth: 30)
-                        .foregroundStyle(.secondary)
-                    Text(leftText.uppercased())
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Text(rightText.uppercased())
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-    
-    private struct DataViewDivider: View {
-        var body: some View {
-            HStack {
-                Spacer()
-                VStack {
-                    Divider()
-                        .frame(maxWidth: 100)
-                }
-            }
-        }
-    }
-    
     private struct DataViewAlert: View {
         let imageName: String
         let text: String
@@ -91,17 +56,17 @@ struct NewDataView: View {
     var body: some View {       
         VStack {
             VStack {
-                DataViewHeader(imageName: "figure.walk", leftText: "Active calories", rightText: "Calories")
+                SectionHeaderRow(imageName: "figure.walk", leftText: "Active calories", rightText: "Calories")
                 DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.activeCalories)
                 if dataLump.projectedActive != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedActive) }
             }
             VStack {
-                DataViewHeader(imageName: "sofa", leftText: "Resting calories", rightText: "Calories")
+                SectionHeaderRow(imageName: "sofa", leftText: "Resting calories", rightText: "Calories")
                 DataViewRow(imageName: "flame.circle", text: "Burned so far today", number: dataLump.basalCalories)
                 if dataLump.projectedBasal != 0 { DataViewRow(imageName: "questionmark.circle", text: "Projected future", number: dataLump.projectedBasal) }
             }
             
-            DataViewDivider()
+            CenteredDivider(maxWidth: 100)
             DataViewRow(imageName: "equal.circle", text: "Total burned today", number: dataLump.totalProjCalories)
             if settingsObj.desiredDeficit != 0 {
                 settingsObj.desiredDeficit > 0
@@ -113,12 +78,12 @@ struct NewDataView: View {
                 DataViewRow(imageName: "hat.cap", text: "Budget at cap", number: dataLump.budgetOverCap)
             }
 
-            DataViewDivider()
+            CenteredDivider(maxWidth: 100)
 
             DataViewRow(imageName: "equal.circle", text: "Total calorie budget", number: dataLump.totalBudget, bold: true)
             
             if dataLump.eatenCalories != 0 {
-                DataViewDivider()
+                CenteredDivider(maxWidth: 100)
                 DataViewRow(imageName: "fork.knife", text: "Eaten today", number: -dataLump.eatenCalories)
                 if dataLump.totalBudgetRem != 0 {
                     dataLump.totalBudgetRem > 0

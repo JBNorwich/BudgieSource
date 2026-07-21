@@ -74,4 +74,30 @@ extension View {
     func chartPressPopup<Content: View>(dates: [Date], @ViewBuilder content: @escaping (Date) -> Content) -> some View {
         modifier(ChartPressPopupModifier(dates: dates, popup: content))
     }
+
+    /// Legend + fixed frame height + press-popup, layered onto a `Chart` — the chrome shared by
+    /// every metric chart in this stack, so each one only has to supply its own colour scale and marks.
+    /// `colors` maps each `foregroundStyle(by:)` category name to its colour.
+    func chartCardStyle<Popup: View>(
+        colors: KeyValuePairs<String, Color>, dates: [Date], @ViewBuilder popup: @escaping (Date) -> Popup
+    ) -> some View {
+        self
+            .chartForegroundStyleScale(colors)
+            .chartLegend(position: .bottom, alignment: .center)
+            .frame(height: 300)
+            .chartPressPopup(dates: dates, content: popup)
+    }
+
+    /// Y-axis grid + tick labels formatted via `format` — shared by the charts whose ticks need
+    /// unit-aware formatting (weight, water) rather than Swift Charts' default numeric labels.
+    func chartYAxisFormatted(_ format: @escaping (Double) -> String) -> some View {
+        chartYAxis {
+            AxisMarks { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let v = value.as(Double.self) { Text(format(v)) }
+                }
+            }
+        }
+    }
 }

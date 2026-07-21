@@ -401,6 +401,7 @@ final class HealthData {
     }
     
     func addCalories(calories: Int, narrative: String?, date: Date, meal: UUID, manufacturer: String? = nil, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
+        guard calories > 0 else { return }
         let hkUUID = await saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date)
         if let hkUUID { await writeMacroSamples(groupUUID: hkUUID, protein: protein, fat: fat, carbs: carbs, date: date) }
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
@@ -432,6 +433,7 @@ final class HealthData {
     }
 
     func addWater(amount: Int, datetime: Date) async {
+        guard amount > 0 else { return }
         let hkUUID = await saveHKSample(value: Double(amount), unit: .literUnit(with: .milli), type: waterQuantityType, date: datetime)
         let newWaterObj = WaterEntry(quantity: amount, healthKitUUID: hkUUID, date: datetime)
         await waterActor.addWater(object: newWaterObj)
@@ -540,6 +542,16 @@ final class HealthData {
         }
     }
 
+    /// Fetches (or lazily creates) the `ChartDataLump` for a date within a date-keyed accumulator.
+    /// Shared by every day-bucketed series builder below.
+    private func lump(for date: Date, in lumpsByDate: inout [Date: ChartDataLump]) -> ChartDataLump {
+        if let existing = lumpsByDate[date] { return existing }
+        let newLump = ChartDataLump()
+        newLump.date = date
+        lumpsByDate[date] = newLump
+        return newLump
+    }
+
     /// Day-bucketed active+basal burn only, with no eaten-calorie fetch — the lean version of
     /// `calorieSeries` for callers that only need `totalCals`/`activeCals` (the macro/water goal
     /// series, which derive a day's budget from its burn alone), so they don't pay for the SwiftData
@@ -551,15 +563,11 @@ final class HealthData {
         let (activeDays, basalDays) = await (activeTask, basalTask)
 
         var lumpsByDate: [Date: ChartDataLump] = [:]
-        func lump(for date: Date) -> ChartDataLump {
-            if let existing = lumpsByDate[date] { return existing }
-            let newLump = ChartDataLump()
-            newLump.date = date
-            lumpsByDate[date] = newLump
-            return newLump
-        }
-        for p in basalDays  where p.day < to { lump(for: p.day).basalCals = p.value }
-        for p in activeDays where p.day < to { lump(for: p.day).activeCals = p.value }
+        // Every day in range, not just days with a sample — otherwise a chart's x-axis silently
+        // narrows to only the days that happened to have HealthKit burn data (e.g. no Apple Watch).
+        for day in datesInRange(from: from, to: to) { _ = lump(for: day, in: &lumpsByDate) }
+        for p in basalDays  where p.day < to { lump(for: p.day, in: &lumpsByDate).basalCals = p.value }
+        for p in activeDays where p.day < to { lump(for: p.day, in: &lumpsByDate).activeCals = p.value }
         return lumpsByDate.values.sorted { $0.date < $1.date }
     }
 
@@ -576,18 +584,11 @@ final class HealthData {
         async let hkEatenTask = dailyCumulativeSeries(quantityType: eatenQuantityType, predicate: eatenPredicate, from: from, to: to, unit: .kilocalorie())
 
         var lumpsByDate = Dictionary(uniqueKeysWithValues: (await burnTask).map { ($0.date, $0) })
-        func lump(for date: Date) -> ChartDataLump {
-            if let existing = lumpsByDate[date] { return existing }
-            let newLump = ChartDataLump()
-            newLump.date = date
-            lumpsByDate[date] = newLump
-            return newLump
-        }
-        for p in await hkEatenTask where p.day < to { lump(for: p.day).eatenCals = p.value }
+        for p in await hkEatenTask where p.day < to { lump(for: p.day, in: &lumpsByDate).eatenCals = p.value }
         for entry in budgieResults {
             let day = getStartOfDay(date: entry.date)
             guard day < to else { continue }
-            lump(for: day).eatenCals += entry.calories
+            lump(for: day, in: &lumpsByDate).eatenCals += entry.calories
         }
 
         return lumpsByDate.values.sorted { $0.date < $1.date }
@@ -628,13 +629,20 @@ final class HealthData {
         for p in hkProtein where p.day < to { proteinByDay[p.day, default: 0] += p.value }
         for p in hkFat     where p.day < to { fatByDay[p.day, default: 0] += p.value }
         for p in hkCarbs   where p.day < to { carbsByDay[p.day, default: 0] += p.value }
+
+        // Sum each day's own-entry macros as raw values first, then round once — matching
+        // pullEatenMacros's rounding order, so "today" agrees between the main screen and this chart.
+        var rawProteinByDay: [Date: Double] = [:], rawFatByDay: [Date: Double] = [:], rawCarbsByDay: [Date: Double] = [:]
         for entry in budgieResults {
             let day = getStartOfDay(date: entry.date)
             guard day < to else { continue }
-            proteinByDay[day, default: 0] += Int((entry.protein ?? 0).rounded())
-            fatByDay[day, default: 0]     += Int((entry.fat ?? 0).rounded())
-            carbsByDay[day, default: 0]   += Int((entry.carbs ?? 0).rounded())
+            rawProteinByDay[day, default: 0] += entry.protein ?? 0
+            rawFatByDay[day, default: 0]     += entry.fat ?? 0
+            rawCarbsByDay[day, default: 0]   += entry.carbs ?? 0
         }
+        for (day, value) in rawProteinByDay { proteinByDay[day, default: 0] += Int(value.rounded()) }
+        for (day, value) in rawFatByDay     { fatByDay[day, default: 0]     += Int(value.rounded()) }
+        for (day, value) in rawCarbsByDay   { carbsByDay[day, default: 0]   += Int(value.rounded()) }
 
         // Every day in range, not just days with a sample — otherwise a chart's x-axis silently
         // narrows to only the days that happened to have logged macros.

@@ -54,21 +54,17 @@ struct AddCalsSheet: View {
     var preSelectedMeal: UUID = settingsObj.snacksUUID ?? UUID()
     @State var selectedDate: Date
     @State private var reloadToken = UUID()
+    @State private var isSaving = false
 
     // MARK: Derived
-    private var pickedQuantity: FoodQuantity? {
-        guard let food = selectedFood, food.quantities.indices.contains(selectedQuantityIndex) else { return nil }
-        return food.quantities[selectedQuantityIndex]
-    }
-    private var effectiveServings: Double {
-        guard let q = pickedQuantity, q.count > 0 else { return 0 }
-        return amount / q.count
-    }
+    private var pickedQuantity: FoodQuantity? { selectedFood?.quantities[safe: selectedQuantityIndex] }
+    private var effectiveServings: Double { servingsScaled(pickedQuantity, amount: amount) }
     private var effectiveCalories: Int {
         if let q = pickedQuantity { return q.totals(servings: effectiveServings).calories }
         return calories ?? 0
     }
     private var canSave: Bool {
+        guard !isSaving else { return false }
         if selectedFood != nil { return pickedQuantity != nil && effectiveServings > 0 }
         if alsoSave { return (calories ?? 0) > 0 && !whatItIs.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         return (calories ?? 0) > 0
@@ -205,14 +201,17 @@ struct AddCalsSheet: View {
 
                 HStack {
                     Button("Log") {
+                        isSaving = true
                         Task { await saveEntry(); dismiss() }
                     }.buttonStyle(.borderedProminent).disabled(!canSave)
 
                     Button("Log and add more") {
+                        isSaving = true
                         Task {
                             await saveEntry()
                             reloadToken = UUID()
                             resetInputs()
+                            isSaving = false
                             caloriesFocused = true
                         }
                     }.buttonStyle(.borderedProminent).disabled(!canSave)
@@ -253,13 +252,9 @@ struct AddCalsSheet: View {
 
             TextField("Serving name (optional), e.g. “1 medium banana”", text: $saveServingName)
 
-            HStack {
-                Text(saveServingUnit == .portion ? "Servings" : "Amount")
-                Spacer()
-                TextField("", value: $saveServingCount, format: .number)
-                    .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 90)
-                if saveServingUnit != .portion { Text(saveServingUnit.unitName) }
-            }
+            LabeledDoubleRow(label: saveServingUnit == .portion ? "Servings" : "Amount",
+                            value: $saveServingCount,
+                            suffix: saveServingUnit != .portion ? saveServingUnit.unitName : nil)
         }
     }
 
@@ -280,27 +275,12 @@ struct AddCalsSheet: View {
         }
 
         if food.quantities.count > 1 {
-            Picker("Serving", selection: Binding(
-                get: { selectedQuantityIndex },
-                set: { newIndex in
-                    selectedQuantityIndex = newIndex
-                    if food.quantities.indices.contains(newIndex) { amount = food.quantities[newIndex].count }
-                }
-            )) {
-                ForEach(food.quantities.indices, id: \.self) { i in
-                    Text(food.quantities[i].label).tag(i)
-                }
-            }.pickerStyle(.menu)
+            ServingPicker(quantities: food.quantities, selectedIndex: $selectedQuantityIndex, amount: $amount)
         }
 
         if let q = pickedQuantity {
-            HStack {
-                Text(q.type == .portion ? "Portions" : "Amount")
-                Spacer()
-                TextField("", value: $amount, format: .number)
-                    .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 90)
-                if q.type != .portion { Text(q.type.unitName) }
-            }
+            LabeledDoubleRow(label: q.type == .portion ? "Portions" : "Amount", value: $amount,
+                            suffix: q.type != .portion ? q.type.unitName : nil)
             Text("**\(effectiveCalories.formatted())** kcal\(scaledMacroPreview)")
         }
     }
@@ -313,7 +293,7 @@ struct AddCalsSheet: View {
             if !foodResults.isEmpty {
                 Section("Foods") {
                     ForEach(foodResults) { food in
-                        pickedFoodRow(food) { selectFood(food) }
+                        PickedFoodRow(food: food) { selectFood(food) }
                             .swipeActions(edge: .leading) {           // swipe right → edit
                                 if !food.isGeneric, let id = food.persistedID {
                                     Button {
@@ -358,17 +338,7 @@ struct AddCalsSheet: View {
                 Text("No matches.").foregroundStyle(.secondary)
             }
             
-            if !settingsObj.offSearchDisabled {
-                Section {
-                    Button {
-                        showingOFFSheet = true
-                    } label: {
-                        Label("Search OpenFoodFacts", systemImage: "globe")
-                    }
-                } footer: {
-                    Text("Not finding it in your foods? Search the OpenFoodFacts database.")
-                }
-            }
+            openFoodFactsSearchSection(showing: $showingOFFSheet)
         }
     }
     
@@ -385,7 +355,7 @@ struct AddCalsSheet: View {
             } else {
                 ForEach(displayedItems) { item in
                     if let food = item.food {
-                        pickedFoodRow(food) { selectFood(food) }         // current recipe → scale fresh
+                        PickedFoodRow(food: food) { selectFood(food) }   // current recipe → scale fresh
                     } else {
                         CalorieEntryView(calories: item.entry.calories,
                                          narrative: item.entry.narrative ?? "Quick calories",
@@ -401,34 +371,6 @@ struct AddCalsSheet: View {
                 }
             }
         }
-    }
-    
-    @ViewBuilder
-    private func pickedFoodRow(_ food: PickedFood, onTap: @escaping () -> Void) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(food.name).lineLimit(1).truncationMode(.tail)
-                    if food.isGeneric {
-                        Text("Generic").font(.caption2)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(.secondary.opacity(0.15), in: Capsule())
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                let caption = [food.manufacturer, food.quantities.first?.label]
-                    .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-                if !caption.isEmpty {
-                    Text(caption).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
-                }
-            }
-            Spacer()
-            if let first = food.quantities.first {
-                Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
     }
     
     // MARK: Selection handlers

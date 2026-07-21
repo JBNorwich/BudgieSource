@@ -20,31 +20,32 @@ struct EditCalsSheet: View {
     @Environment(\.dismiss) private var dismiss
     var entryToEdit: CalorieEntry
     @FocusState var isFocused: Bool
+    @FocusState private var manufacturerFocused: Bool
     @State private var calories: Int = 0
     @State private var whatItIs: String = ""
+    @State private var manufacturer: String = ""
+    @State private var knownManufacturers: [String] = []
     @State private var amount: Double = 0
     @State private var quantities: [FoodQuantity] = []
     @State private var selectedQuantityIndex: Int = 0
     @State private var selectedMeal: UUID = UUID()
     @State private var selectedDate: Date = Date()
-    @State private var showValueAlert: Bool = false
     @State private var mealList: [Meal] = []
     @State private var protein: Double?
     @State private var carbs: Double?
     @State private var fat: Double?
+    @State private var isSaving: Bool = false
+
+    private var manufacturerSuggestions: [String] {
+        suggestedManufacturers(for: manufacturer, in: knownManufacturers)
+    }
 
     private var isFoodEntry: Bool { entryToEdit.isFoodEntry }
     private var canPickQuantity: Bool { isFoodEntry && !quantities.isEmpty }
 
     /// The serving the user has selected from the food (nil when the food's gone — we then rescale the stamp).
-    private var pickedQuantity: FoodQuantity? {
-        guard canPickQuantity, quantities.indices.contains(selectedQuantityIndex) else { return nil }
-        return quantities[selectedQuantityIndex]
-    }
-    private var effectiveServings: Double {
-        guard let q = pickedQuantity, q.count > 0 else { return 0 }
-        return amount / q.count
-    }
+    private var pickedQuantity: FoodQuantity? { canPickQuantity ? quantities[safe: selectedQuantityIndex] : nil }
+    private var effectiveServings: Double { servingsScaled(pickedQuantity, amount: amount) }
     /// The unit currently in force: the picked serving's, or the stamped one if the food is unavailable.
     private var displayUnit: FoodQuantityType? { pickedQuantity?.type ?? entryToEdit.servingUnit }
 
@@ -79,30 +80,12 @@ struct EditCalsSheet: View {
                         }
 
                         if canPickQuantity, quantities.count > 1 {
-                            Picker("Serving", selection: Binding(
-                                get: { selectedQuantityIndex },
-                                set: { newIndex in
-                                    selectedQuantityIndex = newIndex
-                                    // Switching unit makes the old amount meaningless — default to the new serving.
-                                    if quantities.indices.contains(newIndex) { amount = quantities[newIndex].count }
-                                }
-                            )) {
-                                ForEach(quantities.indices, id: \.self) { i in
-                                    Text(quantities[i].label).tag(i)
-                                }
-                            }.pickerStyle(.menu)
+                            ServingPicker(quantities: quantities, selectedIndex: $selectedQuantityIndex, amount: $amount)
                         }
 
-                        HStack {
-                            Text(displayUnit == .portion ? "Portions" : "Amount")
-                            Spacer()
-                            TextField("", value: $amount, format: .number)
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(maxWidth: 90)
-                                .focused($isFocused)
-                            if let u = displayUnit, u != .portion { Text(u.unitName) }
-                        }
+                        LabeledDoubleRow(label: displayUnit == .portion ? "Portions" : "Amount", value: $amount,
+                                        suffix: displayUnit != .portion ? displayUnit?.unitName : nil,
+                                        focus: $isFocused)
 
                         if let t = previewTotals {
                             Text("**\(t.calories.formatted())** kcal\(macroLine(t))")
@@ -114,8 +97,11 @@ struct EditCalsSheet: View {
                             .autocorrectionDisabled()
                             .focused($isFocused)
 
-                        TextField("Narrative (optional)", text: $whatItIs)
-                        
+                        TextField("Name (optional)", text: $whatItIs)
+                        TextField("Manufacturer (optional)", text: $manufacturer)
+                            .focused($manufacturerFocused)
+                            .suggestionAnchor(manufacturerFocused && !manufacturerSuggestions.isEmpty)
+
                         DisclosureGroup("Nutrition (optional)") {
                             MacroEntryFields(protein: $protein, carbs: $carbs, fat: $fat)
                         }
@@ -130,23 +116,21 @@ struct EditCalsSheet: View {
                     DatePicker(selection: $selectedDate, in: ...Date(), displayedComponents: .date, label: { Text("Date") })
 
                     Button("Save changes") {
-                        guard canSave else {
-                            showValueAlert = true
-                            isFocused = true
-                            return
-                        }
+                        isSaving = true
                         Task {
                             await saveEntry()
                             dismiss()
                         }
-                    }.buttonStyle(.borderedProminent)
+                    }.buttonStyle(.borderedProminent).disabled(isSaving || !canSave)
                 }
             }
         }
+        .suggestionOverlay(manufacturerSuggestions) { manufacturer = $0 }
         .navigationTitle("Edit food entry")
         .onAppear {
             calories = entryToEdit.calories
             whatItIs = entryToEdit.narrative ?? "Quick calories"
+            manufacturer = entryToEdit.manufacturer ?? ""
             amount = entryToEdit.servingAmount ?? 0
             selectedDate = entryToEdit.date
             selectedMeal = entryToEdit.meal
@@ -171,9 +155,7 @@ struct EditCalsSheet: View {
                 }
             }
         }
-        .alert(isFoodEntry ? "Amount must be above zero." : "Calories must be above zero.", isPresented: $showValueAlert) {
-            Button("OK", role: .cancel) { }
-        }
+        .task { knownManufacturers = await dataStore.knownManufacturers() }
     }
 
     func saveEntry() async {
@@ -188,12 +170,15 @@ struct EditCalsSheet: View {
                                                          date: selectedDate,
                                                          meal: selectedMeal)
         } else {
+            let mfr = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
             await dataStore.calorieActor.updateCalories(entry: entryToEdit,
                                                         calories: calories,
                                                         narrative: whatItIs,
                                                         date: selectedDate,
                                                         meal: selectedMeal,
+                                                        manufacturer: mfr.isEmpty ? nil : mfr,
                                                         protein: protein, fat: fat, carbs: carbs)
+            if !mfr.isEmpty { dataStore.invalidateManufacturersCache() }
         }
         await dataStore.updateLump(todayLump: todayLump)
     }

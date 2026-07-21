@@ -253,6 +253,28 @@ actor FoodItemActor {
         return components.filter { !mealIDs.contains($0.foodItemID) }
     }
 
+    /// The item currently matching `id`, if it still exists. Shared by every id-keyed lookup/mutation below.
+    private func item(id: UUID) -> FoodItem? {
+        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    /// A saved, non-archived food already stamped with this barcode, if one exists — checked before
+    /// a barcode scan hits OpenFoodFacts, so re-scanning a product already saved locally (whether it
+    /// came from an OFF import or was created manually because OFF didn't have it) resolves instantly
+    /// instead of repeating a network lookup that's only going to end the same way again. Also shared
+    /// by `insert` and `importOFF`, which apply the same no-duplicate rule when saving.
+    func fetch(barcode: String) -> FoodItem? {
+        guard !barcode.isEmpty else { return nil }
+        let descriptor = FetchDescriptor<FoodItem>(
+            predicate: #Predicate { $0.barcode == barcode && $0.archived == false })
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func save(_ label: String) {
+        do { try modelContext.save() } catch { print("\(label) error: \(error)") }
+    }
+
     /// Inserts a new food item and saves. If the item carries a barcode matching an existing
     /// non-archived food, returns that one instead of creating a duplicate — the same rule
     /// `importOFF` already applies for OpenFoodFacts imports, extended here so a manually-created
@@ -262,37 +284,18 @@ actor FoodItemActor {
     @discardableResult
     func insert(_ item: FoodItem) -> FoodItem {
         item.components = stripNestedMealComponents(item.components)
-        if let barcode = item.barcode, !barcode.isEmpty {
-            let descriptor = FetchDescriptor<FoodItem>(
-                predicate: #Predicate { $0.barcode == barcode && $0.archived == false })
-            if let existing = (try? modelContext.fetch(descriptor))?.first { return existing }
-        }
+        if let barcode = item.barcode, let existing = fetch(barcode: barcode) { return existing }
         modelContext.insert(item)
-        do { try modelContext.save() } catch { print("FoodItem insertion error: \(error)") }
+        save("FoodItem insertion")
         return item
     }
-    
+
     /// Persists an OpenFoodFacts import, or reuses a non-archived saved food with the same barcode instead of creating a duplicate, and returns it as a value type to log against. Stops the same product piling up copies when it's imported more than once.
     func importOFF(_ item: FoodItem) -> PickedFood {
-        if let barcode = item.barcode, !barcode.isEmpty {
-            let descriptor = FetchDescriptor<FoodItem>(
-                predicate: #Predicate { $0.barcode == barcode && $0.archived == false })
-            if let existing = (try? modelContext.fetch(descriptor))?.first { return existing.asPicked }
-        }
+        if let barcode = item.barcode, let existing = fetch(barcode: barcode) { return existing.asPicked }
         modelContext.insert(item)
-        do { try modelContext.save() } catch { print("FoodItem insertion error: \(error)") }
+        save("FoodItem insertion")
         return item.asPicked
-    }
-
-    /// A saved, non-archived food already stamped with this barcode, if one exists — checked before
-    /// a barcode scan hits OpenFoodFacts, so re-scanning a product already saved locally (whether it
-    /// came from an OFF import or was created manually because OFF didn't have it) resolves instantly
-    /// instead of repeating a network lookup that's only going to end the same way again.
-    func fetch(barcode: String) -> FoodItem? {
-        guard !barcode.isEmpty else { return nil }
-        let descriptor = FetchDescriptor<FoodItem>(
-            predicate: #Predicate { $0.barcode == barcode && $0.archived == false })
-        return (try? modelContext.fetch(descriptor))?.first
     }
 
     /// All food items, newest first. Archived items are excluded unless asked for.
@@ -333,8 +336,7 @@ actor FoodItemActor {
         #if os(macOS)
         modelContext.rollback()
         #endif
-        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
-        return (try? modelContext.fetch(descriptor))?.first
+        return item(id: id)
     }
 
     /// Resolves multiple items by their stable UUIDs in one round trip — used to preload every
@@ -351,14 +353,13 @@ actor FoodItemActor {
     /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent. `components`/`batchYield` only apply to custom meals; leave them `nil` to leave the item's existing values untouched, so a caller that doesn't know about meals (e.g. the ordinary food editor) can never wipe a meal's ingredients just by reaching an item it doesn't recognise as one.
     func update(id: UUID, name: String, manufacturer: String?, quantities: [FoodQuantity],
                 components: [MealComponent]? = nil, batchYield: Double? = nil) {
-        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
-        guard let item = (try? modelContext.fetch(descriptor))?.first else { return }
+        guard let item = item(id: id) else { return }
         item.name = name
         item.manufacturer = manufacturer
         item.quantities = quantities
         if let components { item.components = stripNestedMealComponents(components) }
         if let batchYield { item.batchYield = batchYield }
-        do { try modelContext.save() } catch { print("FoodItem update error: \(error)") }
+        save("FoodItem update")
         // A rename or newly-filled-in manufacturer can introduce a name autocomplete doesn't know
         // about yet — same invalidation HealthData.addCalories does when logging one directly.
         if let manufacturer, !manufacturer.isEmpty { dataStore.invalidateManufacturersCache() }
@@ -366,10 +367,9 @@ actor FoodItemActor {
 
     /// Archives / unarchives — pulls it from pickers without disturbing any entries that reference it.
     func setArchived(id: UUID, archived: Bool) {
-        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
-        guard let item = (try? modelContext.fetch(descriptor))?.first else { return }
+        guard let item = item(id: id) else { return }
         item.archived = archived
-        do { try modelContext.save() } catch { print("FoodItem archive error: \(error)") }
+        save("FoodItem archive")
     }
 
     /// The serving options for a food, by id — used when editing an entry so the user can switch
@@ -378,10 +378,9 @@ actor FoodItemActor {
         #if os(macOS)
         modelContext.rollback()
         #endif
-        let descriptor = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
-        return (try? modelContext.fetch(descriptor))?.first?.quantities ?? []
+        return item(id: id)?.quantities ?? []
     }
-    
+
     /// Non-archived saved foods whose name matches exactly (case-insensitive). For the log-food intent.
     func picked(named name: String) -> [PickedFood] {
         let lower = name.lowercased()
@@ -391,8 +390,7 @@ actor FoodItemActor {
 
     /// One saved food by its persistent id, as a value type. For the saved-food intent.
     func picked(id: UUID) -> PickedFood? {
-        let d = FetchDescriptor<FoodItem>(predicate: #Predicate { $0.id == id })
-        return (try? modelContext.fetch(d))?.first?.asPicked
+        item(id: id)?.asPicked
     }
 
     /// Every non-archived saved food, for the Shortcuts food picker.

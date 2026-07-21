@@ -76,12 +76,7 @@ struct MacroSettingsView: View {
             }
         }
         .navigationTitle("Macros")
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") { fieldFocused = false }
-            }
-        }
+        .keyboardDoneButton($fieldFocused)
     }
 
     @ViewBuilder

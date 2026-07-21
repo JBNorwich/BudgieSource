@@ -273,6 +273,11 @@ func millilitres(from displayValue: Double, in unit: volumeUnits) -> Int {
     Int((displayValue * unit.millilitresPerUnit).rounded())
 }
 
+/// Converts a millilitre value into the given display unit — the inverse of `millilitres(from:in:)`.
+func displayValue(millilitres ml: Int, in unit: volumeUnits) -> Double {
+    Double(ml) / unit.millilitresPerUnit
+}
+
 /// Renders a volume given in millilitres into a formatted string, either using a supplied unit or the user's setting. Includes a suffix by default.
 func renderVolume(millilitres ml: Int, outputUnit: volumeUnits? = nil, includeSuffix: Bool = true) -> String {
     let usedUnit = outputUnit ?? volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
@@ -282,7 +287,7 @@ func renderVolume(millilitres ml: Int, outputUnit: volumeUnits? = nil, includeSu
         case .millilitres:
             returnString = ml.formatted()
         case .usFluidOunces, .imperialFluidOunces:
-            returnString = (Double(ml) / usedUnit.millilitresPerUnit)
+            returnString = displayValue(millilitres: ml, in: usedUnit)
                 .formatted(.number.precision(.fractionLength(0...1)))
     }
 
@@ -342,6 +347,16 @@ func budgetStatusLabel(leftToEat: Int, surplusMode: Bool = settingsObj.surplusMo
         return leftToEat > -1 ? "Left today" : "Over budget by"
     } else {
         return leftToEat > -1 ? "Can eat now" : "Over target by"
+    }
+}
+
+extension View {
+    /// A simple informational alert with a single "OK" button — shared by every sheet that just needs
+    /// to tell the user why an action didn't go through.
+    func okAlert(_ message: String, isPresented: Binding<Bool>) -> some View {
+        alert(message, isPresented: isPresented) {
+            Button("OK", role: .cancel) { }
+        }
     }
 }
 

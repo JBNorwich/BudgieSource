@@ -27,9 +27,7 @@ struct WaterView: View {
             AccessoryCircularGauge(value: todayLump.waterGoalDone, range: 0...1, gradient: gradient) {
                 Text(renderVolume(millilitres: todayLump.waterToday))
             }
-                .scaleEffect(1.5)
                 .padding(.top, 10)
-                .animation(.easeInOut, value: todayLump.waterGoalDone)
             Spacer()
             if syncMonitor.isImporting && todayLump.waterToday == 0 {
                 Text("Syncing…")

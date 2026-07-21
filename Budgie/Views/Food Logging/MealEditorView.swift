@@ -29,6 +29,7 @@ struct MealEditorView: View {
     @State private var resolvedFoods: [UUID: FoodItem] = [:]
     @State private var addingComponent = false
     @State private var componentsLoaded = false
+    @State private var isSaving = false
 
     /// Pass an existing custom meal to edit it, or nothing to create a new one.
     init(existing: FoodItem? = nil, isModal: Bool = false) {
@@ -50,7 +51,7 @@ struct MealEditorView: View {
     }
 
     private var canSave: Bool {
-        componentsLoaded && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !components.isEmpty
+        !isSaving && componentsLoaded && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !components.isEmpty
             && batchYield > 0
             && components.allSatisfy { resolvedFoods[$0.foodItemID] != nil && !hasUnresolvableServing($0) }
     }
@@ -67,15 +68,8 @@ struct MealEditorView: View {
             }
 
             Section {
-                HStack {
-                    Text("Makes")
-                    Spacer()
-                    TextField("", value: $batchYield, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 60)
-                    Text(batchYield == 1 ? "serving" : "servings")
-                }
+                LabeledDoubleRow(label: "Makes", value: $batchYield,
+                                suffix: batchYield == 1 ? "serving" : "servings", width: 60)
             } footer: {
                 Text("Enter the number of servings the ingredients and their quantities you add make. You can always log more or less than one serving at a time, just like any other food.")
             }
@@ -109,21 +103,7 @@ struct MealEditorView: View {
             }
         }
         .navigationTitle(existingID == nil ? "New custom meal" : "Edit custom meal")
-        .toolbar {
-            if isModal {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    Task {
-                        await save()
-                        dismiss()
-                    }
-                }.disabled(!canSave)
-            }
-        }
+        .editorToolbar(isModal: isModal, canSave: canSave, isSaving: $isSaving) { await save() }
         .sheet(isPresented: $addingComponent) {
             NavigationStack {
                 MealComponentPickerView { component, food in
@@ -208,15 +188,8 @@ private struct MealComponentPickerView: View {
     @State private var amount: Double = 0
     @State private var showingOFFSheet = false
 
-    private var pickedQuantity: FoodQuantity? {
-        guard let selected, selected.quantities.indices.contains(selectedQuantityIndex) else { return nil }
-        return selected.quantities[selectedQuantityIndex]
-    }
-    
-    private var effectiveServings: Double {
-        guard let q = pickedQuantity, q.count > 0 else { return 0 }
-        return amount / q.count
-    }
+    private var pickedQuantity: FoodQuantity? { selected?.quantities[safe: selectedQuantityIndex] }
+    private var effectiveServings: Double { servingsScaled(pickedQuantity, amount: amount) }
     private var canAdd: Bool { pickedQuantity != nil && effectiveServings > 0 }
 
     private func select(_ food: PickedFood) {
@@ -267,41 +240,12 @@ private struct MealComponentPickerView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(results) { food in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text(food.name).lineLimit(1).truncationMode(.tail)
-                                if food.isGeneric {
-                                    Text("Generic").font(.caption2)
-                                        .padding(.horizontal, 6).padding(.vertical, 2)
-                                        .background(.secondary.opacity(0.15), in: Capsule())
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            if let first = food.quantities.first {
-                                Text(first.label).font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        if let first = food.quantities.first {
-                            Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture { select(food) }
+                    PickedFoodRow(food: food) { select(food) }
                 }
             }
 
-            if !searchText.isEmpty && !settingsObj.offSearchDisabled {
-                Section {
-                    Button {
-                        showingOFFSheet = true
-                    } label: {
-                        Label("Search OpenFoodFacts", systemImage: "globe")
-                    }
-                } footer: {
-                    Text("Not finding it in your foods? Search the OpenFoodFacts database.")
-                }
+            if !searchText.isEmpty {
+                openFoodFactsSearchSection(showing: $showingOFFSheet)
             }
         }
     }
@@ -317,27 +261,12 @@ private struct MealComponentPickerView: View {
                 }
 
                 if food.quantities.count > 1 {
-                    Picker("Serving", selection: Binding(
-                        get: { selectedQuantityIndex },
-                        set: { newIndex in
-                            selectedQuantityIndex = newIndex
-                            if food.quantities.indices.contains(newIndex) { amount = food.quantities[newIndex].count }
-                        }
-                    )) {
-                        ForEach(food.quantities.indices, id: \.self) { i in
-                            Text(food.quantities[i].label).tag(i)
-                        }
-                    }.pickerStyle(.menu)
+                    ServingPicker(quantities: food.quantities, selectedIndex: $selectedQuantityIndex, amount: $amount)
                 }
 
                 if let q = pickedQuantity {
-                    HStack {
-                        Text(q.type == .portion ? "Portions" : "Amount")
-                        Spacer()
-                        TextField("", value: $amount, format: .number)
-                            .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 90)
-                        if q.type != .portion { Text(q.type.unitName) }
-                    }
+                    LabeledDoubleRow(label: q.type == .portion ? "Portions" : "Amount", value: $amount,
+                                    suffix: q.type != .portion ? q.type.unitName : nil)
                     Text("**\(q.totals(servings: effectiveServings).calories.formatted())** kcal")
                 }
             }

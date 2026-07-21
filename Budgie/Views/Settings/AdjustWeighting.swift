@@ -80,6 +80,11 @@ let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": C
 struct AdjustWeighting: View {
     @State private var refreshID = UUID()
 
+    private static let dayWeightKeyPaths: [(String, ReferenceWritableKeyPath<CloudSettings, Int>)] = [
+        ("Monday", \.monWeight), ("Tuesday", \.tuesWeight), ("Wednesday", \.wedsWeight),
+        ("Thursday", \.thursWeight), ("Friday", \.friWeight), ("Saturday", \.satWeight), ("Sunday", \.sunWeight)
+    ]
+
     // Depends only on hard-coded constants (weightForGraph's own inputs), never on any @State, so it's
     // computed once here rather than being rebuilt on every redraw this view already forces via refreshID.
     private let object = WeightingChartObject()
@@ -120,13 +125,9 @@ struct AdjustWeighting: View {
                         WeightOptions()
                     }.pickerStyle(.menu)
                 } else {
-                    Picker("Monday", selection: settingBinding(\.monWeight, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Tuesday", selection: settingBinding(\.tuesWeight, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Wednesday", selection: settingBinding(\.wedsWeight, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Thursday", selection: settingBinding(\.thursWeight, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Friday", selection: settingBinding(\.friWeight, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Saturday", selection: settingBinding(\.satWeight, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Sunday", selection: settingBinding(\.sunWeight, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
+                    ForEach(Self.dayWeightKeyPaths, id: \.0) { label, keyPath in
+                        Picker(label, selection: settingBinding(keyPath, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
+                    }
                 }
             }
         }.frame(maxHeight: .infinity)

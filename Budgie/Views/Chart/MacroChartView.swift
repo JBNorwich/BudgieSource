@@ -27,49 +27,39 @@ struct MacroChartView: View {
     var goalData: [MacroGoalPoint]
 
     var body: some View {
-        if macroData.isEmpty {
-            ContentUnavailableView("No macro data", systemImage: "chart.line.uptrend.xyaxis",
-                description: Text("Log food with protein, fat or carbs to see your trend."))
-                .frame(height: 260)
-        } else {
-            Chart {
-                ForEach(macroData) { point in
-                    LineMark(x: .value("Date", point.date), y: .value("Grams", point.protein), series: .value("Line", "Protein"))
+        Chart {
+            ForEach(macroData) { point in
+                LineMark(x: .value("Date", point.date), y: .value("Grams", point.protein), series: .value("Line", "Protein"))
+                    .foregroundStyle(by: .value("Series", "Protein"))
+                LineMark(x: .value("Date", point.date), y: .value("Grams", point.fat), series: .value("Line", "Fat"))
+                    .foregroundStyle(by: .value("Series", "Fat"))
+                LineMark(x: .value("Date", point.date), y: .value("Grams", point.carbs), series: .value("Line", "Carbs"))
+                    .foregroundStyle(by: .value("Series", "Carbs"))
+            }
+            // Separate `series` identity from the actual-intake lines above (despite sharing the
+            // same `foregroundStyle(by:)` colour category) so goal points connect to each other,
+            // not to the actual-intake points — otherwise Swift Charts would draw one zigzagging
+            // line alternating between actual grams and goal grams instead of two parallel ones.
+            ForEach(goalData) { point in
+                if let protein = point.protein {
+                    LineMark(x: .value("Date", point.date), y: .value("Grams", protein), series: .value("Line", "Protein goal"))
                         .foregroundStyle(by: .value("Series", "Protein"))
-                    LineMark(x: .value("Date", point.date), y: .value("Grams", point.fat), series: .value("Line", "Fat"))
+                        .lineStyle(StrokeStyle(dash: [5]))
+                }
+                if let fat = point.fat {
+                    LineMark(x: .value("Date", point.date), y: .value("Grams", fat), series: .value("Line", "Fat goal"))
                         .foregroundStyle(by: .value("Series", "Fat"))
-                    LineMark(x: .value("Date", point.date), y: .value("Grams", point.carbs), series: .value("Line", "Carbs"))
+                        .lineStyle(StrokeStyle(dash: [5]))
+                }
+                if let carbs = point.carbs {
+                    LineMark(x: .value("Date", point.date), y: .value("Grams", carbs), series: .value("Line", "Carbs goal"))
                         .foregroundStyle(by: .value("Series", "Carbs"))
-                }
-                // Separate `series` identity from the actual-intake lines above (despite sharing the
-                // same `foregroundStyle(by:)` colour category) so goal points connect to each other,
-                // not to the actual-intake points — otherwise Swift Charts would draw one zigzagging
-                // line alternating between actual grams and goal grams instead of two parallel ones.
-                ForEach(goalData) { point in
-                    if let protein = point.protein {
-                        LineMark(x: .value("Date", point.date), y: .value("Grams", protein), series: .value("Line", "Protein goal"))
-                            .foregroundStyle(by: .value("Series", "Protein"))
-                            .lineStyle(StrokeStyle(dash: [5]))
-                    }
-                    if let fat = point.fat {
-                        LineMark(x: .value("Date", point.date), y: .value("Grams", fat), series: .value("Line", "Fat goal"))
-                            .foregroundStyle(by: .value("Series", "Fat"))
-                            .lineStyle(StrokeStyle(dash: [5]))
-                    }
-                    if let carbs = point.carbs {
-                        LineMark(x: .value("Date", point.date), y: .value("Grams", carbs), series: .value("Line", "Carbs goal"))
-                            .foregroundStyle(by: .value("Series", "Carbs"))
-                            .lineStyle(StrokeStyle(dash: [5]))
-                    }
+                        .lineStyle(StrokeStyle(dash: [5]))
                 }
             }
-            .chartForegroundStyleScale(["Protein": Color.red, "Fat": Color.orange, "Carbs": Color.teal])
-            .chartLegend(.visible)
-            .chartLegend(position: .bottom, alignment: .center)
-            .frame(height: 260)
-            .chartPressPopup(dates: macroData.map(\.date)) { date in
-                popupContent(for: date)
-            }
+        }
+        .chartCardStyle(colors: ["Protein": Color.red, "Fat": Color.orange, "Carbs": Color.teal], dates: macroData.map(\.date)) { date in
+            popupContent(for: date)
         }
     }
 

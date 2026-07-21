@@ -15,6 +15,30 @@
 
 import SwiftUI
 
+extension View {
+    /// A "Done" button above the keyboard that clears the given focus state(s) — shared by every
+    /// numeric-entry screen that otherwise repeated this toolbar verbatim.
+    func keyboardDoneButton(_ focuses: FocusState<Bool>.Binding...) -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focuses.forEach { $0.wrappedValue = false } }
+            }
+        }
+    }
+
+    /// Same as `keyboardDoneButton(_:)`, for a screen whose focus state is an optional field enum
+    /// rather than a plain `Bool` — "Done" clears it to `nil`.
+    func keyboardDoneButton<F>(clearing focus: FocusState<F?>.Binding) -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focus.wrappedValue = nil }
+            }
+        }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var todayLump: TodayLump
     
@@ -61,7 +85,7 @@ struct SettingsView: View {
                 let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
                 return unit == .millilitres
                     ? settingsObj.waterGoal
-                    : Int((Double(settingsObj.waterGoal) / unit.millilitresPerUnit).rounded())
+                    : Int(displayValue(millilitres: settingsObj.waterGoal, in: unit).rounded())
             },
             set: { newValue in
                 let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
@@ -95,6 +119,16 @@ struct SettingsView: View {
 
     private func refreshState() {
         refreshID = UUID()
+    }
+
+    @ViewBuilder
+    private func integerSettingRow(_ label: String, value: Binding<Int>, focus: FocusState<Bool>.Binding) -> some View {
+        LabeledContent(label) {
+            TextField("0", value: value, format: SettingsView.integerFieldFormat)
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.numberPad)
+                .focused(focus)
+        }
     }
     
     var body: some View {
@@ -143,21 +177,8 @@ struct SettingsView: View {
             
             Section(header: Text("Estimated daily calorie burn"), footer: Text("This is used when actual calorie data from Apple Health isn't available or is incomplete."))
             {
-                LabeledContent {
-                    TextField(settingsObj.manualBMR.formatted(), value: settingBinding(\.manualBMR, refresh: $refreshID), format: SettingsView.integerFieldFormat)
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                        .focused($focusResting)
-                } label: { Text("Resting calories") }
-                
-                LabeledContent {
-                    TextField(settingsObj.manualActive.formatted(), value: settingBinding(\.manualActive, refresh: $refreshID), format: SettingsView.integerFieldFormat)
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                        .focused($focusActive)
-                } label: {
-                    Text("Active calories")
-                }
+                integerSettingRow("Resting calories", value: settingBinding(\.manualBMR, refresh: $refreshID), focus: $focusResting)
+                integerSettingRow("Active calories", value: settingBinding(\.manualActive, refresh: $refreshID), focus: $focusActive)
                 Button("Calculate this for me") {
                     showingBMRHelper = true
                 }.sheet(isPresented: $showingBMRHelper, onDismiss: { refreshState() }) {
@@ -173,31 +194,14 @@ struct SettingsView: View {
                     Text(volumeUnits.usFluidOunces.pickerLabel).tag(1)
                     Text(volumeUnits.imperialFluidOunces.pickerLabel).tag(2)
                 }
-                LabeledContent {
-                    TextField(waterGoalBinding.wrappedValue.formatted(), value: waterGoalBinding, format: SettingsView.integerFieldFormat)
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                        .focused($focusWater)
-                } label: { Text(waterGoalLabel) }
+                integerSettingRow(waterGoalLabel, value: waterGoalBinding, focus: $focusWater)
                 Toggle("Increase goal with activity", isOn: settingBinding(\.waterFromActivity, refresh: $refreshID))
             }
             
             Section(header: Text("Food logging"), footer: Text("Disabling OpenFoodFacts search stops Budgie Diet from searching it for nutritional information completely. You can still add and save foods manually.")) {
-                NavigationLink {
-                    MacroSettingsView().environmentObject(todayLump)
-                } label: {
-                    Text("Macro tracking and goals")
-                }
-                NavigationLink {
-                    AllocateBudgetView()
-                } label: {
-                    Text("Budget allocation")
-                }
-                NavigationLink {
-                    ManageMealsView()
-                } label: {
-                    Text("Manage meals")
-                }
+                NavigationLink("Macro tracking and goals") { MacroSettingsView().environmentObject(todayLump) }
+                NavigationLink("Budget allocation") { AllocateBudgetView() }
+                NavigationLink("Manage meals") { ManageMealsView() }
                 Toggle("Disable OpenFoodFacts search", isOn: settingBinding(\.offSearchDisabled, refresh: $refreshID))
             }
             
@@ -220,23 +224,9 @@ struct SettingsView: View {
             }
             
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
-                NavigationLink {
-                    DataManagementView().environmentObject(todayLump)
-                } label: {
-                    Text("Backup and restore")
-                }
-                NavigationLink {
-                    BudgetCap()
-                } label: {
-                    Text("Budget capping")
-                }
-                
-                NavigationLink {
-                    AdjustWeighting()
-                } label: {
-                    Text("Budget weighting options")
-                }
-                
+                NavigationLink("Backup and restore") { DataManagementView().environmentObject(todayLump) }
+                NavigationLink("Budget capping") { BudgetCap() }
+                NavigationLink("Budget weighting options") { AdjustWeighting() }
                 DatePicker("Typical evening meal time", selection: weightTimeBinding, displayedComponents: .hourAndMinute)
             }
             
@@ -270,21 +260,9 @@ struct SettingsView: View {
                 }
             }
             
-            NavigationLink {
-                LicencesScreen()
-            } label: {
-                Text("Licences")
-            }
-            NavigationLink {
-                Donate()
-            } label: {
-                Text("Tip me a protein bar!")
-            }
-            NavigationLink {
-                Disclaimer(displayed: $disclaimerDisplayed)
-            } label: {
-                Text("Health disclaimer")
-            }
+            NavigationLink("Licences") { LicencesScreen() }
+            NavigationLink("Tip me a protein bar!") { Donate() }
+            NavigationLink("Health disclaimer") { Disclaimer(displayed: $disclaimerDisplayed) }
             Button("Send feedback/bug reports") {
                 openURL(URL(string: "mailto:budgieapp@icloud.com")!)
             }
@@ -327,19 +305,7 @@ struct SettingsView: View {
         
         .navigationTitle("Settings")
         .navigationBarBackButtonHidden(false)
-    
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-
-                Button("Done") {
-                    focusResting = false
-                    focusActive = false
-                    focusWater = false
-                }
-             }
-        }
-        
+        .keyboardDoneButton($focusResting, $focusActive, $focusWater)
         .healthDataAccessRequest(store: healthStore, shareTypes: [], readTypes: fitnessGoalSet, trigger: useFitnessGoal) { result in
             switch result {
             case .success(_):

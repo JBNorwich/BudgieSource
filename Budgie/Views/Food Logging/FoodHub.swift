@@ -176,6 +176,7 @@ struct FoodHub: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                 TextField("Search foods to add", text: $foodSearch)
                     .submitLabel(.search)
+                    .autocorrectionDisabled()
                     .onSubmit { openSearch() }
                 if !foodSearch.isEmpty {
                     Button {

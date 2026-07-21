@@ -141,40 +141,40 @@ extension CalorieEntry {
 /// Actor to act on the CalorieEntry database.
 @ModelActor
 actor CalorieActor {
-    func fetchCalsBetween(from: Date, to: Date) async -> [CalorieEntry] {
+    /// Fetches with the standard `#if os(macOS) modelContext.rollback() #endif` guard applied first.
+    private func fetch<T>(_ descriptor: FetchDescriptor<T>) -> [T] {
         #if os(macOS)
         modelContext.rollback()
         #endif
-        let descriptor = FetchDescriptor<CalorieEntry>(
-            predicate: #Predicate<CalorieEntry> { $0.date > from && $0.date < to }
-        )
         return (try? modelContext.fetch(descriptor)) ?? []
     }
-    
+
+    private func save(_ label: String? = nil) {
+        do {
+            try modelContext.save()
+        } catch {
+            if let label { print("\(label) error: \(error)") }
+        }
+    }
+
+    func fetchCalsBetween(from: Date, to: Date) async -> [CalorieEntry] {
+        fetch(FetchDescriptor<CalorieEntry>(predicate: #Predicate<CalorieEntry> { $0.date > from && $0.date < to }))
+    }
+
     func fetchCalsForMeal(_ meal: Meal?) async -> [CalorieEntry] {
-        #if os(macOS)
-        modelContext.rollback()
-        #endif
-        var searchPredicate: Predicate<CalorieEntry>
-        if meal != nil {
-            let mealUUID = meal!.mealUUID
-            searchPredicate = #Predicate<CalorieEntry> { entry in
-                entry.meal == mealUUID
-            }
+        let searchPredicate: Predicate<CalorieEntry>
+        if let meal {
+            let mealUUID = meal.mealUUID
+            searchPredicate = #Predicate<CalorieEntry> { $0.meal == mealUUID }
         } else {
             searchPredicate = #Predicate<CalorieEntry> { _ in true }
         }
         var descriptor = FetchDescriptor<CalorieEntry>(predicate: searchPredicate, sortBy: [SortDescriptor(\CalorieEntry.date, order: .reverse)])
         descriptor.fetchLimit = 100
-
-        guard let results = try? modelContext.fetch(descriptor) else { return [] }
-        return dedupedByNarrativeAndCalories(results)
+        return dedupedByNarrativeAndCalories(fetch(descriptor))
     }
-    
+
     func searchCals(term: String, meal: UUID?, limit: Int = 50) async -> [CalorieEntry] {
-        #if os(macOS)
-        modelContext.rollback()
-        #endif
         let predicate: Predicate<CalorieEntry>
         if let meal {
             predicate = #Predicate { $0.meal == meal && ($0.narrative?.localizedStandardContains(term) ?? false) }
@@ -186,8 +186,7 @@ actor CalorieActor {
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         descriptor.fetchLimit = limit
-        guard let results = try? modelContext.fetch(descriptor) else { return [] }
-        return dedupedByNarrativeAndCalories(results)
+        return dedupedByNarrativeAndCalories(fetch(descriptor))
     }
 
     /// De-dupes results that share a narrative+calorie signature, keeping the first (most recent,
@@ -201,44 +200,45 @@ actor CalorieActor {
         }
     }
 
-    func insertNewCals(object: CalorieEntry)
-    {
+    #if !os(macOS)
+    /// Deletes an eaten-calorie HK sample and its paired macro samples together — the two always go
+    /// as a pair wherever a stamped entry's HK mirror needs tearing down (a failed insert, a rewritten
+    /// sample, or a deleted entry).
+    private func deleteEatenSampleAndMacros(uuid: UUID) async {
+        await dataStore.deleteHKSample(uuid: uuid, type: eatenQuantityType)
+        await dataStore.deleteMacroSamples(groupUUID: uuid)
+    }
+    #endif
 
+    func insertNewCals(object: CalorieEntry) async {
         do {
             modelContext.insert(object)
             try modelContext.save()
         } catch {
+            #if !os(macOS)
+            if let hkUUID = object.healthKitUUID {
+                await deleteEatenSampleAndMacros(uuid: hkUUID)
+            }
+            #endif
             print("Calorie insertion error: \(error)")
         }
     }
-    
+
     func getListOfMeals() -> [Meal] {
-        #if os(macOS)
-        modelContext.rollback()
-        #endif
-        do {
-            let returns = try modelContext.fetch(FetchDescriptor<Meal>())
-            return returns
-        } catch {
-            return []
-        }
+        fetch(FetchDescriptor<Meal>())
     }
-    
+
     func setUpMeals() {
         let breakfast = Meal(name: "Breakfast", order: 0)
         let lunch = Meal(name: "Lunch", order: 1)
         let dinner = Meal(name: "Dinner", order: 2)
         let snacks = Meal(name: "Snacks/Other", order: 3)
 
-        do {
-            modelContext.insert(breakfast)
-            modelContext.insert(lunch)
-            modelContext.insert(dinner)
-            modelContext.insert(snacks)
-            try modelContext.save()
-        } catch {
-            print("Error setting up meals: \(error)")
-        }
+        modelContext.insert(breakfast)
+        modelContext.insert(lunch)
+        modelContext.insert(dinner)
+        modelContext.insert(snacks)
+        save("Meal setup")
     }
     
     /// Every meal, ordered for display. Shared by every screen that lists all meals in order, rather
@@ -255,14 +255,9 @@ actor CalorieActor {
     }
     
     func getMealUUIDbyName(name: String) async -> UUID? {
-        #if os(macOS)
-        modelContext.rollback()
-        #endif
-        let descriptor = FetchDescriptor<Meal>(predicate: #Predicate<Meal> { $0.name == name })
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.first?.mealUUID
+        fetch(FetchDescriptor<Meal>(predicate: #Predicate<Meal> { $0.name == name })).first?.mealUUID
     }
-    
+
     /// Rewrites the HK calorie sample and its macro samples for an edited entry — HK can't be updated
     /// in place, so the old sample is deleted and a fresh one written. Returns the new sample's UUID
     /// (nil on macOS, or if the entry wasn't mirrored to HK), which the caller stamps onto the entry
@@ -271,8 +266,7 @@ actor CalorieActor {
     private func rewriteHKSample(for entry: CalorieEntry, calories: Int, protein: Double?, fat: Double?, carbs: Double?, date: Date) async -> UUID? {
         #if !os(macOS)
         if entry.isInHK, let oldUUID = entry.healthKitUUID {
-            await dataStore.deleteHKSample(uuid: oldUUID, type: eatenQuantityType)
-            await dataStore.deleteMacroSamples(groupUUID: oldUUID)
+            await deleteEatenSampleAndMacros(uuid: oldUUID)
         }
         let newUUID = entry.isInHK ? await dataStore.saveHKSample(value: Double(calories), unit: .kilocalorie(), type: eatenQuantityType, date: date) : nil
         if let newUUID { await dataStore.writeMacroSamples(groupUUID: newUUID, protein: protein, fat: fat, carbs: carbs, date: date) }
@@ -282,7 +276,18 @@ actor CalorieActor {
         #endif
     }
 
-    func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
+    /// Stamps the HK rewrite's result onto an entry's HK-tracking fields — the tail shared by
+    /// updateCalories and updateFoodEntry, which only differ in which of the entry's other fields
+    /// they update beforehand.
+    private func applyHKResult(_ newUUID: UUID?, to entry: CalorieEntry) {
+        #if !os(macOS)
+        entry.isInHK = newUUID != nil
+        entry.healthKitUUID = newUUID
+        #endif
+        save()
+    }
+
+    func updateCalories(entry: CalorieEntry, calories: Int, narrative: String?, date: Date, meal: UUID, manufacturer: String? = nil, protein: Double? = nil, fat: Double? = nil, carbs: Double? = nil) async {
         let newUUID = await rewriteHKSample(for: entry, calories: calories, protein: protein, fat: fat, carbs: carbs, date: date)
 
         // SwiftData, unlike HK, can just be mutated — this preserves the entry's identity.
@@ -290,20 +295,12 @@ actor CalorieActor {
         entry.narrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         entry.date = date
         entry.meal = meal
+        entry.manufacturer = manufacturer
         entry.protein = protein
         entry.fat = fat
         entry.carbs = carbs
 
-        #if !os(macOS)
-        entry.isInHK = newUUID != nil
-        entry.healthKitUUID = newUUID
-        #endif
-
-        do {
-            try modelContext.save()
-        } catch {
-            // Not recoverable.
-        }
+        applyHKResult(newUUID, to: entry)
     }
 
     /// Updates a food-linked entry, writing recomputed calories/macros (and possibly a new serving unit)
@@ -320,33 +317,19 @@ actor CalorieActor {
         entry.date = date
         entry.meal = meal
 
-        #if !os(macOS)
-        entry.isInHK = newUUID != nil
-        entry.healthKitUUID = newUUID
-        #endif
-
-        do {
-            try modelContext.save()
-        } catch {
-            // Not recoverable.
-        }
+        applyHKResult(newUUID, to: entry)
     }
-    
+
     func deleteEntries(objects: [CalorieEntry]) async {
         for object in objects {
             #if !os(macOS)
             if object.isInHK, let hkUUID = object.healthKitUUID {
-                await dataStore.deleteHKSample(uuid: hkUUID, type: eatenQuantityType)
-                await dataStore.deleteMacroSamples(groupUUID: hkUUID)
+                await deleteEatenSampleAndMacros(uuid: hkUUID)
             }
             #endif
             modelContext.delete(object)
         }
-        do {
-            try modelContext.save()
-        } catch {
-            // Not recoverable.
-        }
+        save()
     }
     
     /// Adds a new meal, placed after the current highest-ordered meal.
@@ -354,7 +337,7 @@ actor CalorieActor {
         let nextOrder = (getListOfMeals().map(\.order).max() ?? -1) + 1
         let meal = Meal(name: name.trimmingCharacters(in: .whitespacesAndNewlines), order: nextOrder)
         modelContext.insert(meal)
-        do { try modelContext.save() } catch { print("Meal insertion error: \(error)") }
+        save("Meal insertion")
     }
     
     /// Renames the meal identified by `mealUUID`. Empty names fall back to "Unnamed meal".
@@ -363,7 +346,7 @@ actor CalorieActor {
         guard let meal = (try? modelContext.fetch(descriptor))?.first else { return }
         let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         meal.name = trimmed.isEmpty ? "Unnamed meal" : trimmed
-        do { try modelContext.save() } catch { print("Meal rename error: \(error)") }
+        save("Meal rename")
     }
     
     /// Persists a new display order. `orderedUUIDs` lists the meal UUIDs in the desired order.
@@ -372,7 +355,7 @@ actor CalorieActor {
         for (index, uuid) in orderedUUIDs.enumerated() {
             meals.first(where: { $0.mealUUID == uuid })?.order = index
         }
-        do { try modelContext.save() } catch { print("Meal reorder error: \(error)") }
+        save("Meal reorder")
     }
     
     /// Deletes a meal, first moving every CalorieEntry assigned to it onto `reassignTo`.
@@ -393,7 +376,7 @@ actor CalorieActor {
             modelContext.delete(meal)
         }
 
-        do { try modelContext.save() } catch { print("Meal deletion error: \(error)") }
+        save("Meal deletion")
     }
     
     /// Writes per-meal budget percentages. Values are clamped to 0...100.
@@ -404,7 +387,7 @@ actor CalorieActor {
                 meal.budgetPercent = max(0, min(100, pct))
             }
         }
-        do { try modelContext.save() } catch { print("Allocation save error: \(error)") }
+        save("Allocation save")
     }
     
     /// Merges meals that share a name (e.g. duplicates created when two devices both seeded the defaults before CloudKit synced). Keeps one copy of each name - preferring `preferredSurvivor` (the stored Snacks/Other UUID), then the lowest order - moves the duplicates' entries across, and deletes the rest.
@@ -430,7 +413,7 @@ actor CalorieActor {
             }
         }
         if changed {
-            do { try modelContext.save() } catch { print("Meal dedupe error: \(error)") }
+            save("Meal dedupe")
         }
     }
     
@@ -460,7 +443,7 @@ actor CalorieActor {
             changed = true
         }
         if changed {
-            do { try modelContext.save() } catch { print("Link quick entries error: \(error)") }
+            save("Link quick entries")
         }
     }
     
@@ -507,7 +490,7 @@ actor CalorieActor {
             entry.servingAmount = 1
         }
 
-        do { try modelContext.save() } catch { print("Legacy migration error: \(error)") }
+        save("Legacy migration")
     }
 
     private static func migrationKey(name: String, calories: Int) -> String {
@@ -555,7 +538,7 @@ actor CalorieActor {
         }
 
         if changed {
-            do { try modelContext.save() } catch { print("Food dedupe error: \(error)") }
+            save("Food dedupe")
         }
     }
 
@@ -578,7 +561,7 @@ actor CalorieActor {
         for entry in (try? modelContext.fetch(FetchDescriptor<CalorieEntry>())) ?? [] { modelContext.delete(entry) }
         for meal in (try? modelContext.fetch(FetchDescriptor<Meal>())) ?? [] { modelContext.delete(meal) }
         for food in (try? modelContext.fetch(FetchDescriptor<FoodItem>())) ?? [] { modelContext.delete(food) }
-        do { try modelContext.save() } catch { print("Backup wipe error: \(error)") }
+        save("Backup wipe")
     }
 
     /// Inserts backed-up meals, foods and entries. In merge mode, rows whose identifier already exists are skipped so re-importing the same file is idempotent; a Replace has wiped first, so nothing collides. Returns how many of each were actually inserted.
@@ -607,7 +590,7 @@ actor CalorieActor {
             }
         }
 
-        do { try modelContext.save() } catch { print("Backup import error: \(error)") }
+        save("Backup import")
         return (mealCount, foodCount, entryCount)
     }
     
@@ -624,7 +607,7 @@ actor CalorieActor {
             changed = true
         }
         if changed {
-            do { try modelContext.save() } catch { print("Relabel entries error: \(error)") }
+            save("Relabel entries")
         }
     }
     

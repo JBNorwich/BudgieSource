@@ -16,9 +16,10 @@
 import SwiftUI
 
 /// The "accessoryCircular" gauge scaffold shared by the main page's ring-based stats (budget, water,
-/// weight): a blank min/max label and the accessoryCircular style, which every caller otherwise
-/// repeated identically. Callers still apply their own scale, padding, animation, overlay and
-/// accessibility modifiers to the result, exactly as they did around the raw `Gauge` before.
+/// weight): a blank min/max label, the accessoryCircular style, and the 1.5x scale + easeInOut
+/// animation on `value` every caller otherwise repeated identically (in a couple of different, visibly
+/// inconsistent orders relative to their own padding). Callers still apply their own padding, overlay
+/// and accessibility modifiers to the result, exactly as they did around the raw `Gauge` before.
 struct AccessoryCircularGauge<CurrentValueLabel: View>: View {
     var value: Double
     var range: ClosedRange<Double>
@@ -36,5 +37,59 @@ struct AccessoryCircularGauge<CurrentValueLabel: View>: View {
         }
         .gaugeStyle(.accessoryCircular)
         .tint(gradient)
+        .scaleEffect(1.5)
+        .animation(.easeInOut, value: value)
+    }
+}
+
+/// A bold headline paired with a status colour — the small "**label**" readout repeated by every
+/// main-page status line (the gauge's standing, the weight trend/performance labels).
+struct StatusHeadline: View {
+    var text: String
+    var color: Color
+
+    var body: some View {
+        Text("**\(text)**").foregroundColor(color)
+    }
+}
+
+/// A section header row: optional leading icon, left label, and a right-aligned label — both
+/// secondary, uppercased and subheadline — shared by the main page's food and data breakdown lists.
+struct SectionHeaderRow: View {
+    var imageName: String?
+    var leftText: String
+    var rightText: String
+
+    var body: some View {
+        HStack {
+            HStack {
+                if let imageName {
+                    Image(systemName: imageName)
+                        .frame(minWidth: 30)
+                        .foregroundStyle(.secondary)
+                }
+                Text(leftText.uppercased())
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(rightText.uppercased())
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// A thin centered divider capped to `maxWidth` — shared by the main page's row-list sections.
+struct CenteredDivider: View {
+    var maxWidth: CGFloat
+
+    var body: some View {
+        HStack {
+            Spacer()
+            VStack {
+                Divider().frame(maxWidth: maxWidth)
+            }
+        }
     }
 }

@@ -72,9 +72,7 @@ struct WeightView: View {
                     AccessoryCircularGauge(value: todayLump.weightGoalRemaining, range: 0...1, gradient: gradient) {
                         Text(renderWeight(kilos: todayLump.weightToday, includeSuffix: false))
                     }
-                        .scaleEffect(1.5)
                         .padding()
-                        .animation(.easeInOut, value: todayLump.weightGoalRemaining)
                         .overlay(alignment: .bottom) {
                             Text("Goal: " + renderWeight(kilos: settingsObj.weightGoal, includeSuffix: true))
                                 .font(.caption2)
@@ -105,7 +103,7 @@ struct WeightView: View {
                 VStack(alignment: .leading) {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text("**\(trendLabel.text)**").foregroundColor(trendLabel.color)
+                            StatusHeadline(text: trendLabel.text, color: trendLabel.color)
                             HStack {
                                 if !haveTrendData {
                                     Text("Weigh in for a couple of weeks to see your weight trend.")
@@ -127,7 +125,7 @@ struct WeightView: View {
                             Divider()
                             VStack(alignment: .leading) {
                                 if let performance = performanceLabel {
-                                    Text("**\(performance.text)**").foregroundColor(performance.color)
+                                    StatusHeadline(text: performance.text, color: performance.color)
                                     Text("Expected\n\(renderWeight(kilos: performance.min)) - \(renderWeight(kilos: performance.max))")
                                         .foregroundColor(.secondary)
                                         .multilineTextAlignment(.leading)

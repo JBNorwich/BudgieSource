@@ -45,30 +45,39 @@ struct ChartTableView: View {
     @State var selDate: Date = Date()
 
     var body: some View {
-        ScrollView {
-            ForEach(chartData) { dataLump in
-                ChartTableRow(dataLump: dataLump)
-                    .onTapGesture {
-                        selDate = dataLump.date
-                        openingFoodHub = true
-                    }
+        MetricHistoryList(rows: chartData) { dataLump in
+            ChartTableRow(dataLump: dataLump)
+                .onTapGesture {
+                    selDate = dataLump.date
+                    openingFoodHub = true
+                }
+        }
+        .navigationDestination(isPresented: $openingFoodHub) {
+            FoodHub(curDate: selDate).environmentObject(todayLump)
+        }
+    }
+}
 
+/// Reverse-chronological daily readout beneath a chart — the `ScrollView`/whale-easter-egg wrapper
+/// shared by every chart tab's history list (calories, macros, water), whose rows (built on
+/// `MetricRowLayout` below) are supplied by the caller.
+struct MetricHistoryList<Row: Identifiable, RowContent: View>: View {
+    var rows: [Row]
+    @ViewBuilder var rowContent: (Row) -> RowContent
+
+    var body: some View {
+        ScrollView {
+            ForEach(rows) { row in
+                rowContent(row)
                 Divider()
             }
             if settingsObj.whalesEverywhere == true {
                 VStack {
                     Spacer()
-                    VStack {
-                        Text("🐋 " + (whaleSalutations.randomElement() ?? "Whoops, I'm a whale."))
-                            .padding()
-                    }
-                } .frame(minHeight: 100)
+                    Text("🐋 " + (whaleSalutations.randomElement() ?? "Whoops, I'm a whale."))
+                        .padding()
+                }.frame(minHeight: 100)
             }
-        }
-
-        .navigationDestination(isPresented: $openingFoodHub)
-        {
-            FoodHub(curDate: selDate).environmentObject(todayLump)
         }
     }
 }
@@ -143,7 +152,7 @@ struct ChartTableRow: View {
                         .font(.caption)
                         .fontWeight(.bold)
                     Spacer()
-                    Text((-dataLump.deficit).formatted())
+                    Text(abs(dataLump.deficit).formatted())
                         .font(.caption)
                         .fontWeight(.bold)
                 }

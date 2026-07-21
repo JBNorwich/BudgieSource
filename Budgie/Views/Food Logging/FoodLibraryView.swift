@@ -138,6 +138,7 @@ struct FoodLibraryView: View {
                 Text("Archived").font(.caption2).italic().foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func setArchived(_ food: FoodItem, archived: Bool) async {

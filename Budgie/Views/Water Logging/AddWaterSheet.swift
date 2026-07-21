@@ -21,6 +21,7 @@ struct AddWaterSheet: View {
     var dateToAddOn: Date
     @State var amount: Int?          // entered in the user's chosen volume unit
     @State var amountWasZero: Bool = false
+    @State private var isSaving: Bool = false
     @FocusState var isFocused: Bool
 
     private var unit: volumeUnits {
@@ -34,12 +35,22 @@ struct AddWaterSheet: View {
 
     private let quickImages = ["mug.fill", "waterbottle", "waterbottle.fill", "waterbottle.fill"]
 
+    /// Logs `displayAmount` (in the current display unit) and dismisses — shared by the manual "Add"
+    /// button and every quick-add preset, so the save/dismiss sequence only lives in one place.
+    private func logWater(_ displayAmount: Int) {
+        isSaving = true
+        Task {
+            await dataStore.addWater(amount: millilitres(from: Double(displayAmount), in: unit), datetime: dateToAddOn)
+            isDisplayed = false
+        }
+    }
+
     struct QuickWaterButton: View {
         let image: String
         let displayAmount: Int
         let unit: volumeUnits
-        let date: Date
-        @Binding var isDisplayed: Bool
+        let isSaving: Bool
+        let onTap: () -> Void
 
         private var label: String {
             unit == .millilitres ? "\(displayAmount)ml" : "\(displayAmount) fl oz"
@@ -47,15 +58,12 @@ struct AddWaterSheet: View {
 
         var body: some View {
             VStack {
-                Button(label, systemImage: image) {
-                    Task {
-                        await dataStore.addWater(amount: millilitres(from: Double(displayAmount), in: unit), datetime: date)
-                        isDisplayed = false
-                    }
-                }.buttonStyle(.bordered)
+                Button(label, systemImage: image, action: onTap)
+                    .buttonStyle(.bordered)
                     .controlSize(.extraLarge)
                     .buttonBorderShape(.circle)
                     .labelStyle(.iconOnly)
+                    .disabled(isSaving)
                 Text(label)
             }
         }
@@ -74,16 +82,13 @@ struct AddWaterSheet: View {
                         Text(unit.suffix)
                             .font(.largeTitle)
                         Button("Add") {
-                            guard (amount ?? 0) > 0 else {
+                            guard let amount, amount > 0 else {
                                 amountWasZero = true
                                 isFocused = true
                                 return
                             }
-                            Task {
-                                await dataStore.addWater(amount: millilitres(from: Double(amount!), in: unit), datetime: dateToAddOn)
-                                isDisplayed = false
-                            }
-                        }.buttonStyle(.borderedProminent)
+                            logWater(amount)
+                        }.buttonStyle(.borderedProminent).disabled(isSaving)
                     }
                 }
 
@@ -94,16 +99,15 @@ struct AddWaterSheet: View {
                             QuickWaterButton(image: quickImages[min(index, quickImages.count - 1)],
                                              displayAmount: qa,
                                              unit: unit,
-                                             date: dateToAddOn,
-                                             isDisplayed: $isDisplayed)
+                                             isSaving: isSaving,
+                                             onTap: { logWater(qa) })
                         }
                     }
                 }
             }
             .navigationTitle("Add water")
+            .keyboardDoneButton($isFocused)
         }
-        .alert("Amount must be above zero.", isPresented: $amountWasZero) {
-            Button("OK", role: .cancel) { }
-        }
+        .okAlert("Amount must be above zero.", isPresented: $amountWasZero)
     }
 }

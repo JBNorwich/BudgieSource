@@ -293,30 +293,6 @@ struct ChartPage: View {
     }
 }
 
-/// Reverse-chronological daily readout beneath a chart — the `ScrollView`/whale-easter-egg wrapper
-/// shared by the macro and water tabs, whose rows (built on `MetricRowLayout`, same as
-/// `ChartTableView`'s) are supplied by the caller.
-private struct MetricHistoryList<Row: Identifiable, RowContent: View>: View {
-    var rows: [Row]
-    @ViewBuilder var rowContent: (Row) -> RowContent
-
-    var body: some View {
-        ScrollView {
-            ForEach(rows) { row in
-                rowContent(row)
-                Divider()
-            }
-            if settingsObj.whalesEverywhere == true {
-                VStack {
-                    Spacer()
-                    Text("🐋 " + (whaleSalutations.randomElement() ?? "Whoops, I'm a whale."))
-                        .padding()
-                }.frame(minHeight: 100)
-            }
-        }
-    }
-}
-
 #Preview {
     struct Preview: View {
         @State var lump = TodayLump()

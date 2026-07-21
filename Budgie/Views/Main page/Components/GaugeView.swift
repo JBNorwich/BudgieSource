@@ -41,17 +41,9 @@ struct GaugeView: View {
         HStack {
             VStack {
                 AccessoryCircularGauge(value: todayLump.progressAgainstTarget, range: 0...2, gradient: gradient) {
-                    if todayLump.gaugeNumber > 0 {
-                        Text("+" + todayLump.gaugeNumber.formatted() + "%")
-                    } else if todayLump.gaugeNumber < 0 {
-                        Text("-" + (-todayLump.gaugeNumber).formatted() + "%")
-                    } else {
-                        Text("0%")
-                    }
+                    Text(todayLump.gaugeNumber.formatted(.number.sign(strategy: .always(includingZero: false))) + "%")
                 }
                     .padding()
-                    .animation(.easeInOut, value: todayLump.progressToday)
-                    .scaleEffect(1.5)
                 Spacer()
             }
             .accessibilityElement(children: .ignore)
@@ -60,7 +52,7 @@ struct GaugeView: View {
             Divider()
             VStack {
                 HStack {
-                    Text("**\(standing.text)**").foregroundColor(standing.colour)
+                    StatusHeadline(text: standing.text, color: standing.colour)
                     Spacer()
                 }
                 HStack {

@@ -57,14 +57,14 @@ struct CalorieChartView: View {
                         .font(.caption)
                 }
             }
-        }.frame(maxHeight: 300)
-            .chartForegroundStyleScale(["Calories in": Color.red, "Calories out": Color.green, goodString: Color.teal, badString: Color.orange])
-            .chartLegend(.visible)
-            .chartLegend(position: .bottom, alignment: .center)
-            .contentTransition(.interpolate)
-            .chartPressPopup(dates: chartData.map(\.date)) { date in
-                popupContent(for: date)
-            }
+        }
+        .contentTransition(.interpolate)
+        .chartCardStyle(
+            colors: ["Calories in": Color.red, "Calories out": Color.green, goodString: Color.teal, badString: Color.orange],
+            dates: chartData.map(\.date)
+        ) { date in
+            popupContent(for: date)
+        }
     }
 
     @ViewBuilder

@@ -171,12 +171,17 @@ private struct ProductDTO: Decodable {
 
     func toProduct() -> OFFProduct? {
         guard let rawName = product_name?.trimmingCharacters(in: .whitespacesAndNewlines), !rawName.isEmpty,
-              let kcal100 = nutriments?.kcalPer100 else { return nil } // skip products with no usable energy
+              let kcal100 = nutriments?.kcalPer100, kcal100 >= 0 else { return nil } // skip products with no usable/negative energy
+
+        // Discard implausible negative macro values rather than propagating them into the app's own store.
+        let protein100 = nutriments?.proteins100g?.value.flatMap { $0 >= 0 ? $0 : nil }
+        let carbs100 = nutriments?.carbohydrates100g?.value.flatMap { $0 >= 0 ? $0 : nil }
+        let fat100 = nutriments?.fat100g?.value.flatMap { $0 >= 0 ? $0 : nil }
 
         let per100 = FoodQuantity(type: .grams, count: 100, calories: Int(kcal100.rounded()),
-                                 protein: nutriments?.proteins100g?.value,
-                                 carbs: nutriments?.carbohydrates100g?.value,
-                                 fat: nutriments?.fat100g?.value)
+                                 protein: protein100,
+                                 carbs: carbs100,
+                                 fat: fat100)
 
        var quantities: [FoodQuantity] = []
        if let grams = serving_quantity?.value, grams > 0 {
@@ -184,9 +189,9 @@ private struct ProductDTO: Decodable {
            quantities.append(FoodQuantity(
                type: .portion, count: 1,
                calories: Int((kcal100 * factor).rounded()),
-               protein: nutriments?.proteins100g?.value.map { $0 * factor },
-               carbs: nutriments?.carbohydrates100g?.value.map { $0 * factor },
-               fat: nutriments?.fat100g?.value.map { $0 * factor },
+               protein: protein100.map { $0 * factor },
+               carbs: carbs100.map { $0 * factor },
+               fat: fat100.map { $0 * factor },
                servingName: (serving_size?.isEmpty ?? true) ? "1 serving" : serving_size))
        }
        quantities.append(per100)

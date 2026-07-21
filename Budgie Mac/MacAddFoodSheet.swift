@@ -49,6 +49,8 @@ struct MacAddFoodSheet: View {
     @State private var recent: [CalorieEntry] = []
     @State private var foodResults: [PickedFood] = []
     @State private var entryResults: [CalorieEntry] = []
+    @State private var customMealIDs: Set<UUID> = []
+    @State private var editingMeal: FoodItem?
     @State private var showingOFFSheet = false
     @State private var reloadToken = UUID()
 
@@ -150,6 +152,9 @@ struct MacAddFoodSheet: View {
                 selectFood(picked)
                 showingOFFSheet = false
             }
+        }
+        .sheet(item: $editingMeal) { food in
+            MacMealEditorSheet(existing: food) { await loadSearch() }
         }
     }
 
@@ -310,6 +315,13 @@ struct MacAddFoodSheet: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { selectFood(food) }
+        .contextMenu {
+            if let id = food.persistedID, customMealIDs.contains(id) {
+                Button("Edit meal…") {
+                    Task { editingMeal = await dataStore.foodItemActor.fetch(id: id) }
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -345,6 +357,7 @@ struct MacAddFoodSheet: View {
             let mine = await dataStore.foodItemActor.search(term: searchText)
             let generic = FoodCatalogue.shared.search(searchText, excluding: mine)
             foodResults = mine.map(\.asPicked) + generic.map(\.asPicked)
+            customMealIDs = Set(mine.filter { $0.source == .customMeal }.map(\.id))
             let entries = await dataStore.calorieActor.searchCals(term: searchText, meal: nil)
             entryResults = entries.filter { $0.foodItem == nil && $0.servingUnit == nil }
         }

@@ -16,7 +16,6 @@
 		D825E2B02FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
 		D825E2B12FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
 		D8282A6C300EB89100668DF8 /* ChartPressPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8282A6B300EB89100668DF8 /* ChartPressPopup.swift */; };
-		D8282A6D300EB89100668DF8 /* ChartPressPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8282A6B300EB89100668DF8 /* ChartPressPopup.swift */; };
 		D829B0872C79BAA80027841B /* ChartTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0862C79BAA80027841B /* ChartTableView.swift */; };
 		D829B0892C7A0F880027841B /* ChartDatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0882C7A0F880027841B /* ChartDatePicker.swift */; };
 		D829B08B2C7A6BC00027841B /* WhaleFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B08A2C7A6BC00027841B /* WhaleFacts.swift */; };
@@ -31,7 +30,6 @@
 		D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF18E2D8C48B900340EE1 /* FitnessView.swift */; };
 		D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1902D8C4F6B00340EE1 /* WaterView.swift */; };
 		D865F44830055BC7008DF256 /* GaugeExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D865F44730055BC4008DF256 /* GaugeExplainer.swift */; };
-		D865F44930055BC7008DF256 /* GaugeExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D865F44730055BC4008DF256 /* GaugeExplainer.swift */; };
 		D86802783003985800D8871F /* OpenFoodFactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86802773003985800D8871F /* OpenFoodFactsSheet.swift */; };
 		D868027A30039B8C00D8871F /* OpenFoodFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868027930039B8C00D8871F /* OpenFoodFacts.swift */; };
 		D868027B30039B8C00D8871F /* OpenFoodFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868027930039B8C00D8871F /* OpenFoodFacts.swift */; };
@@ -58,10 +56,6 @@
 		D88E69FB300EACD10059E076 /* WaterChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F8300EACD10059E076 /* WaterChartView.swift */; };
 		D88E69FC300EACD10059E076 /* CalorieChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F6300EACD10059E076 /* CalorieChartView.swift */; };
 		D88E69FD300EACD10059E076 /* WeightChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F9300EACD10059E076 /* WeightChartView.swift */; };
-		D88E69FE300EACD10059E076 /* MacroChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F7300EACD10059E076 /* MacroChartView.swift */; };
-		D88E69FF300EACD10059E076 /* WaterChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F8300EACD10059E076 /* WaterChartView.swift */; };
-		D88E6A00300EACD10059E076 /* CalorieChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F6300EACD10059E076 /* CalorieChartView.swift */; };
-		D88E6A01300EACD10059E076 /* WeightChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F9300EACD10059E076 /* WeightChartView.swift */; };
 		D88F918A2FF7AFE90070715B /* ManageMeals.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F91892FF7AFE50070715B /* ManageMeals.swift */; };
 		D88F918C2FF7B5880070715B /* AllocateBudgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F918B2FF7B5860070715B /* AllocateBudgets.swift */; };
 		D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A42C73C3FC00138B60 /* BudgieApp.swift */; };
@@ -1011,11 +1005,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D8282A6D300EB89100668DF8 /* ChartPressPopup.swift in Sources */,
-				D88E69FE300EACD10059E076 /* MacroChartView.swift in Sources */,
-				D88E69FF300EACD10059E076 /* WaterChartView.swift in Sources */,
-				D88E6A00300EACD10059E076 /* CalorieChartView.swift in Sources */,
-				D88E6A01300EACD10059E076 /* WeightChartView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1032,7 +1021,6 @@
 				D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */,
 				D8C302A22FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */,
 				D8CA2EEE2FF95D0300F63612 /* DateFuncs.swift in Sources */,
-				D865F44930055BC7008DF256 /* GaugeExplainer.swift in Sources */,
 				D8AAC9803001687A008A3640 /* FoodItems.swift in Sources */,
 				D8CA2EEF2FF95D0300F63612 /* Strings.swift in Sources */,
 				D8CA2EF02FF95D0300F63612 /* CalorieModel.swift in Sources */,

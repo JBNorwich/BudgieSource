@@ -137,11 +137,7 @@ class TodayLump: ObservableObject {
     }
     
     var gaugeNumber: Int {
-        if self.progressAgainstTarget != 0 {
-            return Int(self.progressAgainstTarget * 100) - 100
-        } else {
-            return 0
-        }
+        Int(self.progressAgainstTarget * 100) - 100
     }
     
     var calsOutNow: Int {

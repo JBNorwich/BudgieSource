@@ -296,6 +296,7 @@ struct FirstRunWizard: View {
                 case 1, 3:
                     go(to: .calorieTarget)
                 case 2:
+                    settingsObj.surplusMode = false
                     settingsObj.desiredDeficit = 0
                     go(to: .done)
                 default:
@@ -382,10 +383,8 @@ struct FirstRunWizard: View {
             Text(.init(healthDisclaimer))
                 .multilineTextAlignment(.center)
                 .font(.callout)
-            NavigationLink {
+            NavigationLink("Read full health disclaimer") {
                 Disclaimer(displayed: $disclaimerOn)
-            } label: {
-                Text("Read full health disclaimer")
             }
             Spacer()
             Button("Start using Budgie Diet") {

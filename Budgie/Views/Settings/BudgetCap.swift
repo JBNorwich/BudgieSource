@@ -16,20 +16,21 @@
 import SwiftUI
 
 struct BudgetCap: View {
-    @State var capBudget: Bool = false
+    @State private var refreshID = UUID()
     @State var capBudgetCals: Int = 0
     @FocusState private var focusCap: Bool
-    
+
     private func commitCap() {
         capBudgetCals = max(capBudgetCals, 1200)
         settingsObj.capBudgetCals = capBudgetCals
     }
-       
+
     var body: some View {
-        Form {          
+        let _ = refreshID   // observe so a setting change redraws the form
+        Form {
             Section(header: Text("Budget cap"), footer: Text(.init(cappingText))) {
-                Toggle("Cap budget", isOn: $capBudget)
-                if capBudget {
+                Toggle("Cap budget", isOn: settingBinding(\.capBudget, refresh: $refreshID))
+                if settingsObj.capBudget {
                     LabeledContent("Cap") {
                         TextField("", value: $capBudgetCals, format: .number .grouping(.automatic) .precision(.integerLength(4)))
                             .multilineTextAlignment(.trailing)
@@ -41,16 +42,11 @@ struct BudgetCap: View {
             }
         }
         .navigationTitle("Budget capping")
-        
+
         .onAppear {
             capBudgetCals = settingsObj.capBudgetCals
-            capBudget = settingsObj.capBudget
         }
-        
-        .onChange(of: capBudget) {
-            settingsObj.capBudget = capBudget
-        }
-        
+
         // Persist the moment the field's binding commits (including when focus is lost by
         // navigating back), so an edited cap can never be silently dropped. The 1,200 floor
         // is normalised on focus loss / Done / submit via commitCap().
