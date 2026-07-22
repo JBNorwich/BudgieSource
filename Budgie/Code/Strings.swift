@@ -37,7 +37,7 @@ let versionString = "Version \(appVersion) (Build \(appBuild))"
 let copyrightString = "Copyright 2024- Joe Baldwin"
 
 /// Bump this ONLY for releases with major new features (not bug-fix point releases). It drives the "What's New" sheet and is the value written to `settingsObj.lastOpenedVersion` once seen. Keep it "major.minor" so the numeric string comparison behaves.
-let whatsNewVersion = "3.3"
+let whatsNewVersion = "3.5"
 
 struct WhatsNewItem: Identifiable {
     let id = UUID()
@@ -53,7 +53,7 @@ let whatsNewItems: [WhatsNewItem] = [
                  detail: "Add together different foods and ingredients into custom meals that you can log single servings of!"),
     WhatsNewItem(icon: "chart.xyaxis.line",
                  title: "Better charts!",
-                 detail: "Charts have had a full revamp! See your calories in and out, macros and water by day on the History page!")
+                 detail: "Charts have had a full revamp! See your calories in and out, macros and water by day on the History page! Swipe through all your data!")
 ]
 
 /// Whether the "What's New" sheet should appear: setup is finished and the user hasn't yet seen this version's sheet.
