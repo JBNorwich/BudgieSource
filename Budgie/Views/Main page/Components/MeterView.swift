@@ -67,7 +67,7 @@ struct MeterView: View {
                            label: budgetStatusLabel(leftToEat: todayLump.canEatNow),
                            value: abs(todayLump.canEatNow).formatted())
                     .sensoryFeedback(.increase, trigger: todayLump.progressToday)
-                    .sensoryFeedback(.increase, trigger: todayLump.canEatNow)
+                    .sensoryFeedback(trigger: todayLump.canEatNow) { old, new in new < old ? .decrease : .increase }
                     .animation(.easeInOut, value: todayLump.canEatNow)
         }
     }

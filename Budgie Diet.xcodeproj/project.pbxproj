@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		ABAE920A1194472292313C73 /* MealEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9817F1A1E14D699F021F27 /* MealEditorView.swift */; };
 		D80CB99A2F70290F0036EB8E /* WeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80CB9992F70290C0036EB8E /* WeightView.swift */; };
 		D81987E72E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
 		D81987E82E4FA1F400ED81A4 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = D81987E62E4FA1F400ED81A4 /* AppIcon.icon */; };
@@ -14,11 +15,12 @@
 		D825E2AF2FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
 		D825E2B02FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
 		D825E2B12FFA9DD9003CD148 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */; };
-		D829B0852C79B5C50027841B /* ChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0842C79B5C50027841B /* ChartView.swift */; };
+		D8282A6C300EB89100668DF8 /* ChartPressPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8282A6B300EB89100668DF8 /* ChartPressPopup.swift */; };
 		D829B0872C79BAA80027841B /* ChartTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0862C79BAA80027841B /* ChartTableView.swift */; };
 		D829B0892C7A0F880027841B /* ChartDatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B0882C7A0F880027841B /* ChartDatePicker.swift */; };
 		D829B08B2C7A6BC00027841B /* WhaleFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B08A2C7A6BC00027841B /* WhaleFacts.swift */; };
 		D829B08D2C7A7E6E0027841B /* Explainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D829B08C2C7A7E6E0027841B /* Explainer.swift */; };
+		D82FC988434952AF959CC6B2 /* AccessoryCircularGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */; };
 		D83398542C833F4D00A09CDB /* AdjustWeighting.swift in Sources */ = {isa = PBXBuildFile; fileRef = D83398532C833F4D00A09CDB /* AdjustWeighting.swift */; };
 		D83398582C83A0CF00A09CDB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D83398572C83A0CF00A09CDB /* LaunchScreen.storyboard */; };
 		D837D0832C8601BF00587504 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D837D0822C8601BF00587504 /* StoreKit.framework */; };
@@ -28,7 +30,6 @@
 		D85CF18F2D8C48BA00340EE1 /* FitnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF18E2D8C48B900340EE1 /* FitnessView.swift */; };
 		D85CF1912D8C4F6B00340EE1 /* WaterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85CF1902D8C4F6B00340EE1 /* WaterView.swift */; };
 		D865F44830055BC7008DF256 /* GaugeExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D865F44730055BC4008DF256 /* GaugeExplainer.swift */; };
-		D865F44930055BC7008DF256 /* GaugeExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D865F44730055BC4008DF256 /* GaugeExplainer.swift */; };
 		D86802783003985800D8871F /* OpenFoodFactsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86802773003985800D8871F /* OpenFoodFactsSheet.swift */; };
 		D868027A30039B8C00D8871F /* OpenFoodFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868027930039B8C00D8871F /* OpenFoodFacts.swift */; };
 		D868027B30039B8C00D8871F /* OpenFoodFacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D868027930039B8C00D8871F /* OpenFoodFacts.swift */; };
@@ -51,6 +52,10 @@
 		D88358123004037C00141AF6 /* MacroSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88358113004037C00141AF6 /* MacroSettingsView.swift */; };
 		D88358133004072100141AF6 /* MacroSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D883580F3004019200141AF6 /* MacroSummaryView.swift */; };
 		D88C894B2C86122B005B2BE8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D88C894A2C86122B005B2BE8 /* StoreKit.framework */; };
+		D88E69FA300EACD10059E076 /* MacroChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F7300EACD10059E076 /* MacroChartView.swift */; };
+		D88E69FB300EACD10059E076 /* WaterChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F8300EACD10059E076 /* WaterChartView.swift */; };
+		D88E69FC300EACD10059E076 /* CalorieChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F6300EACD10059E076 /* CalorieChartView.swift */; };
+		D88E69FD300EACD10059E076 /* WeightChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88E69F9300EACD10059E076 /* WeightChartView.swift */; };
 		D88F918A2FF7AFE90070715B /* ManageMeals.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F91892FF7AFE50070715B /* ManageMeals.swift */; };
 		D88F918C2FF7B5880070715B /* AllocateBudgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = D88F918B2FF7B5860070715B /* AllocateBudgets.swift */; };
 		D89461A52C73C3FC00138B60 /* BudgieApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89461A42C73C3FC00138B60 /* BudgieApp.swift */; };
@@ -70,7 +75,6 @@
 		D89A959E2C84BB55007796AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D89A959D2C84BB55007796AB /* Assets.xcassets */; };
 		D89A95A22C84BB55007796AB /* Budgie DietWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D89A95952C84BB53007796AB /* Budgie DietWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D89A95B72C84C9FA007796AB /* CalorieModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */; };
-		D89A95B82C84CA2A007796AB /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE072C7934B800C4533A /* ChartData.swift */; };
 		D89A95B92C84CA2A007796AB /* DataClasses.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */; };
 		D89A95BA2C84CA2A007796AB /* HealthData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831612C73C7EE00AAF555 /* HealthData.swift */; };
 		D89A95BB2C84CA2A007796AB /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
@@ -97,7 +101,6 @@
 		D8B3F2FE2D8F0EED00DDA41D /* WaterModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */; };
 		D8B3F2FF2D8F0EED00DDA41D /* WaterModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */; };
 		D8B3F3002D8F0EED00DDA41D /* WaterModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */; };
-		D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B5AE072C7934B800C4533A /* ChartData.swift */; };
 		D8BCE5092C7F9F9A001EA005 /* DataClasses.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */; };
 		D8BCE50B2C7FBBC9001EA005 /* TodayFoodList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCE50A2C7FBBC8001EA005 /* TodayFoodList.swift */; };
 		D8BDE7322C7B4CDA00E07471 /* Strings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BDE7312C7B4CDA00E07471 /* Strings.swift */; };
@@ -112,6 +115,7 @@
 		D8C302A82FFECFB4009B7419 /* GEMINI.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302A72FFECFB4009B7419 /* GEMINI.md */; };
 		D8C302A92FFECFB4009B7419 /* GEMINI.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302A72FFECFB4009B7419 /* GEMINI.md */; };
 		D8C302AA2FFECFB4009B7419 /* GEMINI.md in Resources */ = {isa = PBXBuildFile; fileRef = D8C302A72FFECFB4009B7419 /* GEMINI.md */; };
+		D8C5FEFF1750D1E503B979BC /* AccessoryCircularGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */; };
 		D8CA2EEC2FF95D0300F63612 /* SearchPredicates.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */; };
 		D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831662C74835900AAF555 /* UINiceties.swift */; };
 		D8CA2EEE2FF95D0300F63612 /* DateFuncs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831642C73D0BA00AAF555 /* DateFuncs.swift */; };
@@ -152,7 +156,9 @@
 		D8E831852C77549200AAF555 /* ChartPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831842C77549200AAF555 /* ChartPage.swift */; };
 		D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E831882C776FCE00AAF555 /* UserSettings.swift */; };
 		D8E8318B2C7797B200AAF555 /* BMRHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E8318A2C7797B200AAF555 /* BMRHelper.swift */; };
+		D8E98F723009542E0096E92A /* SuggestionAnchorKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E98F713009542E0096E92A /* SuggestionAnchorKey.swift */; };
 		D8F117DE2C8B6D1E0054F2A2 /* Budgie Diet.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = D89A95C32C84F752007796AB /* Budgie Diet.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D8FE7F163008063000532570 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8FE7F153008063000532570 /* BarcodeScannerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -215,11 +221,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1E9817F1A1E14D699F021F27 /* MealEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEditorView.swift; sourceTree = "<group>"; };
 		D80CB9992F70290C0036EB8E /* WeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightView.swift; sourceTree = "<group>"; };
 		D81987E62E4FA1F400ED81A4 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		D81EAB0C2CA049C000A7F302 /* Budgie-DietWatch-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Budgie-DietWatch-Watch-App-Info.plist"; sourceTree = "<group>"; };
 		D825E2AE2FFA9DD3003CD148 /* ARCHITECTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ARCHITECTURE.md; sourceTree = "<group>"; };
-		D829B0842C79B5C50027841B /* ChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartView.swift; sourceTree = "<group>"; };
+		D8282A6B300EB89100668DF8 /* ChartPressPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPressPopup.swift; sourceTree = "<group>"; };
 		D829B0862C79BAA80027841B /* ChartTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartTableView.swift; sourceTree = "<group>"; };
 		D829B0882C7A0F880027841B /* ChartDatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartDatePicker.swift; sourceTree = "<group>"; };
 		D829B08A2C7A6BC00027841B /* WhaleFacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhaleFacts.swift; sourceTree = "<group>"; };
@@ -242,10 +249,15 @@
 		D86806EE2FF2D083007D6231 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		D86806F02FF2D288007D6231 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		D868606C2C7BD0E900730373 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
+		D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryCircularGauge.swift; sourceTree = "<group>"; };
 		D878D13E2C80DB470075F770 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		D883580F3004019200141AF6 /* MacroSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroSummaryView.swift; sourceTree = "<group>"; };
 		D88358113004037C00141AF6 /* MacroSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroSettingsView.swift; sourceTree = "<group>"; };
 		D88C894A2C86122B005B2BE8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		D88E69F6300EACD10059E076 /* CalorieChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieChartView.swift; sourceTree = "<group>"; };
+		D88E69F7300EACD10059E076 /* MacroChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroChartView.swift; sourceTree = "<group>"; };
+		D88E69F8300EACD10059E076 /* WaterChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterChartView.swift; sourceTree = "<group>"; };
+		D88E69F9300EACD10059E076 /* WeightChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightChartView.swift; sourceTree = "<group>"; };
 		D88F91892FF7AFE50070715B /* ManageMeals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageMeals.swift; sourceTree = "<group>"; };
 		D88F918B2FF7B5860070715B /* AllocateBudgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllocateBudgets.swift; sourceTree = "<group>"; };
 		D89461A12C73C3FC00138B60 /* Budgie Diet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Budgie Diet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -274,7 +286,6 @@
 		D8AAC99A30018B51008A3640 /* FoodLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodLibraryView.swift; sourceTree = "<group>"; };
 		D8B0D86F2C7C672B00E46C63 /* SearchPredicates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPredicates.swift; sourceTree = "<group>"; };
 		D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterModel.swift; sourceTree = "<group>"; };
-		D8B5AE072C7934B800C4533A /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
 		D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataClasses.swift; sourceTree = "<group>"; };
 		D8BCE50A2C7FBBC8001EA005 /* TodayFoodList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayFoodList.swift; sourceTree = "<group>"; };
 		D8BDE7312C7B4CDA00E07471 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
@@ -305,6 +316,8 @@
 		D8E831842C77549200AAF555 /* ChartPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPage.swift; sourceTree = "<group>"; };
 		D8E831882C776FCE00AAF555 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
 		D8E8318A2C7797B200AAF555 /* BMRHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMRHelper.swift; sourceTree = "<group>"; };
+		D8E98F713009542E0096E92A /* SuggestionAnchorKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionAnchorKey.swift; sourceTree = "<group>"; };
+		D8FE7F153008063000532570 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -322,12 +335,19 @@
 			);
 			target = D8CA2EDD2FF95BF000F63612 /* Budgie Mac */;
 		};
+		D8D1FFEB30095B49000B1B6F /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				manufacturers.json,
+			);
+			target = D8CA2EDD2FF95BF000F63612 /* Budgie Mac */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D80D1DBB2FF3CDB500D01B51 /* .claude */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = .claude; sourceTree = "<group>"; };
 		D827ACB62D8E033D006413F1 /* Frameworks */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (D89A988C2FFA77200028857A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, D8CA2F272FF9B61600F63612 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Frameworks; sourceTree = "<group>"; };
-		D897F1B93002445200581386 /* Data */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Data; sourceTree = "<group>"; };
+		D897F1B93002445200581386 /* Data */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (D8D1FFEB30095B49000B1B6F /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Data; sourceTree = "<group>"; };
 		D8AAC98930017A09008A3640 /* Budgie DietTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Budgie DietTests"; sourceTree = "<group>"; };
 		D8B3F3012D8F11C500DDA41D /* Water Logging */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Water Logging"; sourceTree = "<group>"; };
 		D8C302AB2FFED043009B7419 /* .github */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = .github; sourceTree = "<group>"; };
@@ -422,6 +442,7 @@
 				D8BCE50A2C7FBBC8001EA005 /* TodayFoodList.swift */,
 				D838A6132C80828A0083F3B3 /* GaugeView.swift */,
 				D85CF1902D8C4F6B00340EE1 /* WaterView.swift */,
+				D872953D5DCB386D25185F79 /* AccessoryCircularGauge.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -448,10 +469,13 @@
 		D868606E2C7BD68400730373 /* Food Logging */ = {
 			isa = PBXGroup;
 			children = (
+				D8E98F713009542E0096E92A /* SuggestionAnchorKey.swift */,
+				D8FE7F153008063000532570 /* BarcodeScannerView.swift */,
 				D86802773003985800D8871F /* OpenFoodFactsSheet.swift */,
 				D897F1B730023F5800581386 /* MacroEntryFields.swift */,
 				D8AAC99A30018B51008A3640 /* FoodLibraryView.swift */,
 				D8AAC9983001801B008A3640 /* FoodEditorView.swift */,
+				1E9817F1A1E14D699F021F27 /* MealEditorView.swift */,
 				D8CA2F012FF9682A00F63612 /* CalorieEntryView.swift */,
 				D8E3B2442F6FE41D00458DDD /* EditCalsSheet.swift */,
 				D8D4BF712C7CD04E0061A9A4 /* FoodDatePicker.swift */,
@@ -557,10 +581,14 @@
 		D8B5AE092C79B56100C4533A /* Chart */ = {
 			isa = PBXGroup;
 			children = (
-				D829B0842C79B5C50027841B /* ChartView.swift */,
 				D829B0862C79BAA80027841B /* ChartTableView.swift */,
 				D829B0882C7A0F880027841B /* ChartDatePicker.swift */,
 				D8E831842C77549200AAF555 /* ChartPage.swift */,
+				D88E69F6300EACD10059E076 /* CalorieChartView.swift */,
+				D88E69F7300EACD10059E076 /* MacroChartView.swift */,
+				D88E69F8300EACD10059E076 /* WaterChartView.swift */,
+				D88E69F9300EACD10059E076 /* WeightChartView.swift */,
+				D8282A6B300EB89100668DF8 /* ChartPressPopup.swift */,
 			);
 			path = Chart;
 			sourceTree = "<group>";
@@ -576,7 +604,6 @@
 				D8B3F2FD2D8F0EE900DDA41D /* WaterModel.swift */,
 				D8E831612C73C7EE00AAF555 /* HealthData.swift */,
 				D8BDE7392C7BAF7900E07471 /* CalorieModel.swift */,
-				D8B5AE072C7934B800C4533A /* ChartData.swift */,
 				D8BCE5082C7F9F9A001EA005 /* DataClasses.swift */,
 				D8E831882C776FCE00AAF555 /* UserSettings.swift */,
 			);
@@ -884,22 +911,27 @@
 				D88358103004019200141AF6 /* MacroSummaryView.swift in Sources */,
 				D8BDE7362C7B961200E07471 /* Donate.swift in Sources */,
 				D868027A30039B8C00D8871F /* OpenFoodFacts.swift in Sources */,
-				D8B5AE082C7934B800C4533A /* ChartData.swift in Sources */,
 				D8CA2F292FF9BDBE00F63612 /* WhatsNewSheet.swift in Sources */,
 				D8BDE73A2C7BAF7900E07471 /* CalorieModel.swift in Sources */,
+				D8E98F723009542E0096E92A /* SuggestionAnchorKey.swift in Sources */,
 				D868606D2C7BD0E900730373 /* Tests.swift in Sources */,
 				D8B0D8702C7C672B00E46C63 /* SearchPredicates.swift in Sources */,
 				D86802843003BBB000D8871F /* DataManagementView.swift in Sources */,
 				D8E831672C74835900AAF555 /* UINiceties.swift in Sources */,
 				D897F1C33002D8B200581386 /* Licences.swift in Sources */,
 				D8BCE5092C7F9F9A001EA005 /* DataClasses.swift in Sources */,
-				D829B0852C79B5C50027841B /* ChartView.swift in Sources */,
 				D8AAC9993001801B008A3640 /* FoodEditorView.swift in Sources */,
+				ABAE920A1194472292313C73 /* MealEditorView.swift in Sources */,
 				D8BCE50B2C7FBBC9001EA005 /* TodayFoodList.swift in Sources */,
 				D8BDE7322C7B4CDA00E07471 /* Strings.swift in Sources */,
 				D8DE2B422FF6DD5400513101 /* FirstRunWizard.swift in Sources */,
 				D8B3F2FF2D8F0EED00DDA41D /* WaterModel.swift in Sources */,
 				D8C302A12FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */,
+				D88E69FA300EACD10059E076 /* MacroChartView.swift in Sources */,
+				D88E69FB300EACD10059E076 /* WaterChartView.swift in Sources */,
+				D88E69FC300EACD10059E076 /* CalorieChartView.swift in Sources */,
+				D8282A6C300EB89100668DF8 /* ChartPressPopup.swift in Sources */,
+				D88E69FD300EACD10059E076 /* WeightChartView.swift in Sources */,
 				D897F1BD3002D04300581386 /* CatalogueFood.swift in Sources */,
 				D8D4BF742C7CD04E0061A9A4 /* FoodHub.swift in Sources */,
 				D8D4BF762C7CD05B0061A9A4 /* AddCalsSheet.swift in Sources */,
@@ -918,7 +950,9 @@
 				D829B08D2C7A7E6E0027841B /* Explainer.swift in Sources */,
 				D8CA2F022FF9682F00F63612 /* CalorieEntryView.swift in Sources */,
 				D8E831892C776FCE00AAF555 /* UserSettings.swift in Sources */,
+				D8FE7F163008063000532570 /* BarcodeScannerView.swift in Sources */,
 				D838A6142C80828A0083F3B3 /* GaugeView.swift in Sources */,
+				D8C5FEFF1750D1E503B979BC /* AccessoryCircularGauge.swift in Sources */,
 				D8AAC99B30018B51008A3640 /* FoodLibraryView.swift in Sources */,
 				D8E831652C73D0BA00AAF555 /* DateFuncs.swift in Sources */,
 				D897F1B830023F5800581386 /* MacroEntryFields.swift in Sources */,
@@ -937,7 +971,6 @@
 				D89A95B72C84C9FA007796AB /* CalorieModel.swift in Sources */,
 				D89A959C2C84BB53007796AB /* BudgieWidget.swift in Sources */,
 				D89A95BC2C84CA2F007796AB /* UserSettings.swift in Sources */,
-				D89A95B82C84CA2A007796AB /* ChartData.swift in Sources */,
 				D89A95B92C84CA2A007796AB /* DataClasses.swift in Sources */,
 				D897F1BF3002D04300581386 /* CatalogueFood.swift in Sources */,
 				D8AAC97E3001687A008A3640 /* FoodItems.swift in Sources */,
@@ -988,7 +1021,6 @@
 				D8CA2EED2FF95D0300F63612 /* UINiceties.swift in Sources */,
 				D8C302A22FFECC28009B7419 /* CloudSyncMonitor.swift in Sources */,
 				D8CA2EEE2FF95D0300F63612 /* DateFuncs.swift in Sources */,
-				D865F44930055BC7008DF256 /* GaugeExplainer.swift in Sources */,
 				D8AAC9803001687A008A3640 /* FoodItems.swift in Sources */,
 				D8CA2EEF2FF95D0300F63612 /* Strings.swift in Sources */,
 				D8CA2EF02FF95D0300F63612 /* CalorieModel.swift in Sources */,
@@ -1001,6 +1033,7 @@
 				D8CA2EF32FF95D0300F63612 /* HealthData.swift in Sources */,
 				D8CA2EF42FF95D0300F63612 /* WaterModel.swift in Sources */,
 				D8CA2F052FF968CC00F63612 /* GaugeView.swift in Sources */,
+				D82FC988434952AF959CC6B2 /* AccessoryCircularGauge.swift in Sources */,
 				D8CA2F032FF9687400F63612 /* CalorieEntryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1158,13 +1191,14 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Budgie/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Used to scan the barcodes on foods for OpenFoodFacts search.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs this access to calculate your budgets, show you your activity and account for food and water input with other apps.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs this to save calories and water you log using it.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -1177,7 +1211,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1200,13 +1234,14 @@
 				CODE_SIGN_ENTITLEMENTS = Budgie/Budgie.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				DEVELOPMENT_ASSET_PATHS = "\"Budgie/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Budgie/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Used to scan the barcodes on foods for OpenFoodFacts search.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Budgie Diet needs this access to calculate your budgets, show you your activity and account for food and water input with other apps.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Budgie Diet needs this to save calories and water you log using it.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -1219,7 +1254,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1240,7 +1275,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = BudgieWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BudgieWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
@@ -1252,7 +1287,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.BudgieWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1273,7 +1308,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = BudgieWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BudgieWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budgie Diet";
@@ -1285,7 +1320,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.BudgieWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1306,7 +1341,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1321,7 +1356,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;
@@ -1340,7 +1375,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "BudgieWatch Watch App/BudgieWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				DEVELOPMENT_ASSET_PATHS = "\"BudgieWatch Watch App/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1355,7 +1390,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie.watchkitapp;
 				PRODUCT_NAME = "Budgie Diet";
 				SDKROOT = watchos;
@@ -1419,7 +1454,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Budgie Mac/Budgie Mac.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_APP_SANDBOX = YES;
@@ -1445,7 +1480,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "Budgie Diet";
 				REGISTER_APP_GROUPS = YES;
@@ -1467,7 +1502,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Budgie Mac/Budgie Mac.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 260713.1;
+				CURRENT_PROJECT_VERSION = 260722.1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = QDNLA5J7JK;
 				ENABLE_APP_SANDBOX = YES;
@@ -1493,7 +1528,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 3.3;
+				MARKETING_VERSION = 3.5;
 				PRODUCT_BUNDLE_IDENTIFIER = JoeBaldwin.Budgie;
 				PRODUCT_NAME = "Budgie Diet";
 				REGISTER_APP_GROUPS = YES;

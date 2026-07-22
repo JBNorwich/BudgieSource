@@ -15,12 +15,19 @@
 
 import SwiftUI
 import HealthKit
-import Charts
+
+/// Identifies one load request for `WeightHistoryView` — `.task(id:)` re-fires whenever the visible
+/// window changes, regardless of what changed it (the picker's arrows/full-picker sheet, or a swipe
+/// on the chart), so a swipe reliably triggers a reload the same way `ChartPage`'s does.
+private struct DateRangeKey: Equatable {
+    var start: Date
+    var end: Date
+}
 
 struct WeightHistoryView: View {
     @EnvironmentObject var todayLump: TodayLump
 
-    @State private var points: [WeightPoint] = []
+    @State private var trendPoints: [WeightTrendPoint] = []
     @State private var ownEntries: [HKQuantitySample] = []
     @State private var otherEntries: [HKQuantitySample] = []
     @State private var showAddSheet = false
@@ -31,15 +38,12 @@ struct WeightHistoryView: View {
     @State private var endDate: Date = getMidnightOnDayAfter(date: Date())
     @State private var dateChanged: Bool = false
 
-    private var unit: weightUnits {
-        weightUnits(rawValue: settingsObj.weightDisplayUnit) ?? .kilograms
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             VStack {
                 ChartDatePicker(startDate: $startDate, endDate: $endDate, dateChanged: $dateChanged, stepComponent: .month, stepValue: 1)
-                chart
+                WeightChartView(points: trendPoints, goalWeight: settingsObj.weightGoal)
+                    .gesture(pagingSwipeGesture(startDate: $startDate, endDate: $endDate, stepComponent: .month, stepValue: 1))
             }
             .padding(.horizontal)
             .padding(.top)
@@ -72,12 +76,11 @@ struct WeightHistoryView: View {
                 Button("Log weight", systemImage: "plus") { showAddSheet = true }
             }
         }
-        .task { await load() }
+        .task(id: DateRangeKey(start: startDate, end: endDate)) {
+            await load()
+        }
         .onChange(of: dateChanged) {
-            if dateChanged {
-                Task { await load() }
-                dateChanged = false
-            }
+            dateChanged = false
         }
         .sheet(isPresented: $showAddSheet, onDismiss: { Task { await load() } }) {
             LogWeightSheet(isDisplayed: $showAddSheet)
@@ -97,31 +100,6 @@ struct WeightHistoryView: View {
         }
     }
 
-    @ViewBuilder private var chart: some View {
-        if points.isEmpty {
-            ContentUnavailableView("No weight data", systemImage: "scalemass",
-                description: Text("Log your weight, or record it in another Health app, to see your trend."))
-                .frame(height: 220)
-        } else {
-            Chart(points) { point in
-                LineMark(x: .value("Date", point.date), y: .value("Weight", plotValue(point.kilos)))
-                PointMark(x: .value("Date", point.date), y: .value("Weight", plotValue(point.kilos)))
-            }
-            .chartYScale(domain: yDomain)
-            .chartYAxis {
-                AxisMarks { value in
-                    AxisGridLine()
-                    AxisValueLabel {
-                        if let v = value.as(Double.self) {
-                            Text(axisLabel(v))
-                        }
-                    }
-                }
-            }
-            .frame(height: 220)
-        }
-    }
-
     private func row(for sample: HKQuantitySample) -> some View {
         HStack {
             Text(sample.startDate.formatted(date: .abbreviated, time: .shortened))
@@ -131,33 +109,18 @@ struct WeightHistoryView: View {
         }
     }
 
-    /// The value plotted on the Y axis, in the user's chosen unit, so the ticks land on round numbers of that unit.
-    private func plotValue(_ kilos: Double) -> Double {
-        switch unit {
-        case .kilograms:            return kilos
-        case .pounds, .stonepounds: return kilos / lbInKg   // pounds; stone+pounds is plotted on a pound scale
-        }
-    }
-
-    /// Format a Y-axis tick (already in the plotted unit) via the app's standard weight formatter.
-    private func axisLabel(_ value: Double) -> String {
-        let kilos = (unit == .kilograms) ? value : value * lbInKg
-        return renderWeight(kilos: kilos)
-    }
-
-    private var yDomain: ClosedRange<Double> {
-        let values = points.map { plotValue($0.kilos) }
-        guard let lo = values.min(), let hi = values.max() else { return 0...100 }
-        let pad = max((hi - lo) * 0.15, 1)
-        return (lo - pad)...(hi + pad)
-    }
-
     private func load() async {
         let from = getStartOfDay(date: startDate)
         let to = endDate
-        points = await dataStore.weightSeries(from: from, to: to)
-        ownEntries = await dataStore.fetchBudgieWeightSamples(from: from, to: to)
-        otherEntries = await dataStore.fetchOtherWeightSamples(from: from, to: to)
+        async let trendTask = dataStore.fetchWeightTrend(from: from, to: to, surplusMode: settingsObj.surplusMode)
+        async let ownTask = dataStore.fetchBudgieWeightSamples(from: from, to: to)
+        async let otherTask = dataStore.fetchOtherWeightSamples(from: from, to: to)
+        let (trend, own, other) = await (trendTask, ownTask, otherTask)
+        withAnimation(.easeInOut(duration: 0.25)) {
+            ownEntries = own
+            otherEntries = other
+            trendPoints = trend
+        }
     }
 
     private func delete(_ offsets: IndexSet) {

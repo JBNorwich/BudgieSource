@@ -15,26 +15,19 @@
 
 import SwiftUI
 
-func showFootFromCM(cms: Int) -> Int {
-    let workingCms = Double(cms)
-    let feet = workingCms * 0.0328084
-    let feetShow = Int(floor(feet))
+/// Feet and inches derived from one rounded total-inches figure, so the two can never disagree
+/// (e.g. rounding separately could previously show "5ft 11in" for a height that's really 6ft 0in).
+private func feetAndInches(fromCM cms: Int) -> (feet: Int, inches: Int) {
+    let totalInches = Int((Double(cms) * 0.0328084 * 12).rounded())
+    return (totalInches / 12, totalInches % 12)
+}
 
-    return feetShow
+func showFootFromCM(cms: Int) -> Int {
+    feetAndInches(fromCM: cms).feet
 }
 
 func showInchesFromCM(cms: Int) -> Int {
-    let workingCms = Double(cms)
-    let feet = workingCms * 0.0328084 //5.74147
-    let feetShow = floor(feet) //5
-    let feetRest: Double = feet - feetShow //0.74147
-    let inches = (feetRest * 12).rounded(.up) // 9
-    var retInches = Int(inches)
-    if retInches > 11
-    {
-        retInches = 11
-    }
-    return retInches
+    feetAndInches(fromCM: cms).inches
 }
 
 func showCMfromFootIn(feet: Int, inches: Int) -> Int
@@ -116,6 +109,18 @@ struct BMRHelper: View {
         return (thisYear - 100)...(thisYear - 18)
     }
 
+    /// A trailing-aligned whole-number field with a unit suffix — the shape repeated by every
+    /// weight/height field below, differing only in which value, suffix and focus target they bind.
+    @ViewBuilder
+    private func numberField(_ value: Binding<Int>, suffix: String, focus: Field) -> some View {
+        TextField("", value: value, format: .number)
+            .multilineTextAlignment(.trailing)
+            .keyboardType(.numberPad)
+            .autocorrectionDisabled()
+            .focused($focusedField, equals: focus)
+        Text(suffix)
+    }
+
     var body: some View {
         Form {
             Section(header: Text("About you")) {
@@ -158,45 +163,21 @@ struct BMRHelper: View {
                 switch currentWeightUnit {
                 case .kilograms:
                     LabeledContent {
-                        HStack {
-                            TextField("", value: $weightKg, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightKg)
-                            Text("kg")
-                        }
+                        HStack { numberField($weightKg, suffix: "kg", focus: .weightKg) }
                     } label: {
                         Text("Weight")
                     }
                 case .pounds:
                     LabeledContent {
-                        HStack {
-                            TextField("", value: $weightLb, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightLb)
-                            Text("lbs")
-                        }
+                        HStack { numberField($weightLb, suffix: "lbs", focus: .weightLb) }
                     } label: {
                         Text("Weight")
                     }
                 case .stonepounds:
                     LabeledContent {
                         HStack {
-                            TextField("", value: $weightSt, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightSt)
-                            Text("st")
-                            TextField("", value: $weightStLb, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .weightStLb)
-                            Text("lb")
+                            numberField($weightSt, suffix: "st", focus: .weightSt)
+                            numberField($weightStLb, suffix: "lb", focus: .weightStLb)
                         }
                     } label: {
                         Text("Weight")
@@ -211,14 +192,7 @@ struct BMRHelper: View {
                 }
                 if metricImperial == 0 {
                     LabeledContent {
-                        HStack {
-                            TextField("", value: $heightCM, format: .number)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .heightCM)
-                            Text("cm")
-                        }
+                        HStack { numberField($heightCM, suffix: "cm", focus: .heightCM) }
                     } label: {
                         Text("Height")
                     }
@@ -324,15 +298,7 @@ struct BMRHelper: View {
             }
         }
 
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-
-                Button("Done") {
-                    focusedField = nil
-                }
-             }
-        }
+        .keyboardDoneButton(clearing: $focusedField)
     }
 }
 

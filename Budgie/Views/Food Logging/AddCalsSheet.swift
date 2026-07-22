@@ -29,7 +29,10 @@ struct AddCalsSheet: View {
     @State private var alsoSave: Bool = false
     @State private var saveServingUnit: FoodQuantityType = .portion
     @State private var saveServingCount: Double = 1
+    @State private var saveServingName: String = ""
     @FocusState private var caloriesFocused: Bool
+    @FocusState private var manufacturerFocused: Bool
+    @State private var knownManufacturers: [String] = []
 
     // MARK: Food selection (scaling an existing food)
     @State private var selectedFood: PickedFood?
@@ -51,24 +54,24 @@ struct AddCalsSheet: View {
     var preSelectedMeal: UUID = settingsObj.snacksUUID ?? UUID()
     @State var selectedDate: Date
     @State private var reloadToken = UUID()
+    @State private var isSaving = false
 
     // MARK: Derived
-    private var pickedQuantity: FoodQuantity? {
-        guard let food = selectedFood, food.quantities.indices.contains(selectedQuantityIndex) else { return nil }
-        return food.quantities[selectedQuantityIndex]
-    }
-    private var effectiveServings: Double {
-        guard let q = pickedQuantity, q.count > 0 else { return 0 }
-        return amount / q.count
-    }
+    private var pickedQuantity: FoodQuantity? { selectedFood?.quantities[safe: selectedQuantityIndex] }
+    private var effectiveServings: Double { servingsScaled(pickedQuantity, amount: amount) }
     private var effectiveCalories: Int {
         if let q = pickedQuantity { return q.totals(servings: effectiveServings).calories }
         return calories ?? 0
     }
     private var canSave: Bool {
+        guard !isSaving else { return false }
         if selectedFood != nil { return pickedQuantity != nil && effectiveServings > 0 }
         if alsoSave { return (calories ?? 0) > 0 && !whatItIs.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         return (calories ?? 0) > 0
+    }
+    
+    private var manufacturerSuggestions: [String] {
+        suggestedManufacturers(for: manufacturer, in: knownManufacturers)
     }
 
     private var newCalsIn: Int { effectiveCalories + todayLump.eatenCalories }
@@ -83,11 +86,8 @@ struct AddCalsSheet: View {
     private var scaledMacroPreview: String {
         guard let q = pickedQuantity else { return "" }
         let t = q.totals(servings: effectiveServings)
-        var parts: [String] = []
-        if let p = t.protein { parts.append("P \(Int(p.rounded()))g") }
-        if let c = t.carbs { parts.append("C \(Int(c.rounded()))g") }
-        if let f = t.fat { parts.append("F \(Int(f.rounded()))g") }
-        return parts.isEmpty ? "" : "  ·  " + parts.joined(separator: " · ")
+        let summary = macroSummary(protein: t.protein, carbs: t.carbs, fat: t.fat)
+        return summary.isEmpty ? "" : "  ·  " + summary
     }
 
     private struct SearchKey: Equatable {
@@ -108,9 +108,13 @@ struct AddCalsSheet: View {
         SearchKey(term: searchText, allMeals: showAllFoods, meal: selectedMeal, reload: reloadToken)
     }
     
-    init(selectedDate: Date, initialSearch: String = "") {
+    init(selectedDate: Date, initialSearch: String = "", preselectedFood: PickedFood? = nil) {
         _selectedDate = State(initialValue: selectedDate)
         _searchText = State(initialValue: initialSearch)
+        _selectedFood = State(initialValue: preselectedFood)
+        if let food = preselectedFood {
+            _amount = State(initialValue: food.quantities.first?.count ?? 0)
+        }
     }
 
     // MARK: Body
@@ -122,7 +126,7 @@ struct AddCalsSheet: View {
             } else {
                 searchResults
             }
-        }
+        }.suggestionOverlay(manufacturerSuggestions) { manufacturer = $0 }
         .searchable(text: $searchText, prompt: "Search foods and past entries")
         .sheet(isPresented: $showingOFFSheet) {
             OpenFoodFactsSheet(term: searchText) { food in
@@ -132,10 +136,17 @@ struct AddCalsSheet: View {
         }
         .sheet(item: $editingFood) { food in
             NavigationStack {
-                FoodEditorView(existing: food, isModal: true)
+                if food.source == .customMeal {
+                    MealEditorView(existing: food, isModal: true)
+                } else {
+                    FoodEditorView(existing: food, isModal: true)
+                }
             }
             .onDisappear { reloadToken = UUID() }   // pick up any edits
         }
+        
+        .barcodeScanning { food in selectFood(food) }
+
         .navigationTitle("Add food")
         .task(id: searchKey) {
             if searchText.isEmpty {
@@ -148,18 +159,19 @@ struct AddCalsSheet: View {
                 try? await Task.sleep(for: .milliseconds(200))
                 guard !Task.isCancelled else { return }
                 let mine = await dataStore.foodItemActor.search(term: searchText)
-                let generic = FoodCatalogue.shared.search(searchText)
+                let generic = FoodCatalogue.shared.search(searchText, excluding: mine)
                 foodResults = mine.map(\.asPicked) + generic.map(\.asPicked)
                 let entries = await dataStore.calorieActor.searchCals(term: searchText, meal: nil)
                 entryResults = entries.filter { $0.foodItem == nil && $0.servingUnit == nil }
             }
         }
-        .onChange(of: whatItIs) { whatItIs = String(whatItIs.prefix(30)) }
         .task {
-            mealList = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
+            mealList = await dataStore.calorieActor.getOrderedListOfMeals()
             guard let start = mealList.first(where: { $0.mealUUID == preSelectedMeal }) ?? mealList.first else { return }
             selectedMeal = start.mealUUID
         }
+        
+        .task { knownManufacturers = await dataStore.knownManufacturers() }
     }
 
     // MARK: Logging form (shown when not searching)
@@ -189,14 +201,17 @@ struct AddCalsSheet: View {
 
                 HStack {
                     Button("Log") {
+                        isSaving = true
                         Task { await saveEntry(); dismiss() }
                     }.buttonStyle(.borderedProminent).disabled(!canSave)
 
                     Button("Log and add more") {
+                        isSaving = true
                         Task {
                             await saveEntry()
                             reloadToken = UUID()
                             resetInputs()
+                            isSaving = false
                             caloriesFocused = true
                         }
                     }.buttonStyle(.borderedProminent).disabled(!canSave)
@@ -219,6 +234,8 @@ struct AddCalsSheet: View {
 
         TextField("Name (optional)", text: $whatItIs)
         TextField("Manufacturer (optional)", text: $manufacturer)
+            .focused($manufacturerFocused)
+            .suggestionAnchor(manufacturerFocused && !manufacturerSuggestions.isEmpty)
 
         DisclosureGroup("Nutrition (optional)") {
             MacroEntryFields(protein: $protein, carbs: $carbs, fat: $fat)
@@ -233,13 +250,11 @@ struct AddCalsSheet: View {
                 Text("Millilitres").tag(FoodQuantityType.millilitres)
             }.pickerStyle(.menu)
 
-            HStack {
-                Text(saveServingUnit == .portion ? "Servings" : "Amount")
-                Spacer()
-                TextField("", value: $saveServingCount, format: .number)
-                    .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 90)
-                if saveServingUnit != .portion { Text(saveServingUnit.unitName) }
-            }
+            TextField("Serving name (optional), e.g. “1 medium banana”", text: $saveServingName)
+
+            LabeledDoubleRow(label: saveServingUnit == .portion ? "Servings" : "Amount",
+                            value: $saveServingCount,
+                            suffix: saveServingUnit != .portion ? saveServingUnit.unitName : nil)
         }
     }
 
@@ -260,27 +275,12 @@ struct AddCalsSheet: View {
         }
 
         if food.quantities.count > 1 {
-            Picker("Serving", selection: Binding(
-                get: { selectedQuantityIndex },
-                set: { newIndex in
-                    selectedQuantityIndex = newIndex
-                    if food.quantities.indices.contains(newIndex) { amount = food.quantities[newIndex].count }
-                }
-            )) {
-                ForEach(food.quantities.indices, id: \.self) { i in
-                    Text(food.quantities[i].label).tag(i)
-                }
-            }.pickerStyle(.menu)
+            ServingPicker(quantities: food.quantities, selectedIndex: $selectedQuantityIndex, amount: $amount)
         }
 
         if let q = pickedQuantity {
-            HStack {
-                Text(q.type == .portion ? "Portions" : "Amount")
-                Spacer()
-                TextField("", value: $amount, format: .number)
-                    .keyboardType(.decimalPad).multilineTextAlignment(.trailing).frame(maxWidth: 90)
-                if q.type != .portion { Text(q.type.unitName) }
-            }
+            LabeledDoubleRow(label: q.type == .portion ? "Portions" : "Amount", value: $amount,
+                            suffix: q.type != .portion ? q.type.unitName : nil)
             Text("**\(effectiveCalories.formatted())** kcal\(scaledMacroPreview)")
         }
     }
@@ -293,7 +293,7 @@ struct AddCalsSheet: View {
             if !foodResults.isEmpty {
                 Section("Foods") {
                     ForEach(foodResults) { food in
-                        pickedFoodRow(food) { selectFood(food) }
+                        PickedFoodRow(food: food) { selectFood(food) }
                             .swipeActions(edge: .leading) {           // swipe right → edit
                                 if !food.isGeneric, let id = food.persistedID {
                                     Button {
@@ -338,17 +338,7 @@ struct AddCalsSheet: View {
                 Text("No matches.").foregroundStyle(.secondary)
             }
             
-            if !settingsObj.offSearchDisabled {
-                Section {
-                    Button {
-                        showingOFFSheet = true
-                    } label: {
-                        Label("Search OpenFoodFacts", systemImage: "globe")
-                    }
-                } footer: {
-                    Text("Not finding it in your foods? Search the OpenFoodFacts database.")
-                }
-            }
+            openFoodFactsSearchSection(showing: $showingOFFSheet)
         }
     }
     
@@ -365,7 +355,7 @@ struct AddCalsSheet: View {
             } else {
                 ForEach(displayedItems) { item in
                     if let food = item.food {
-                        pickedFoodRow(food) { selectFood(food) }         // current recipe → scale fresh
+                        PickedFoodRow(food: food) { selectFood(food) }   // current recipe → scale fresh
                     } else {
                         CalorieEntryView(calories: item.entry.calories,
                                          narrative: item.entry.narrative ?? "Quick calories",
@@ -383,34 +373,6 @@ struct AddCalsSheet: View {
         }
     }
     
-    @ViewBuilder
-    private func pickedFoodRow(_ food: PickedFood, onTap: @escaping () -> Void) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(food.name)
-                    if food.isGeneric {
-                        Text("Generic").font(.caption2)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(.secondary.opacity(0.15), in: Capsule())
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                let caption = [food.manufacturer, food.quantities.first?.label]
-                    .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-                if !caption.isEmpty {
-                    Text(caption).font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-            if let first = food.quantities.first {
-                Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
-    }
-    
     // MARK: Selection handlers
 
     private func selectFood(_ food: PickedFood) {
@@ -424,7 +386,8 @@ struct AddCalsSheet: View {
         if let picked = await resolveFood(for: entry) {
             // A logged food or generic → scaling mode, prefilled from the past entry.
             selectedFood = picked
-            selectedQuantityIndex = picked.quantities.firstIndex(where: { $0.type == entry.servingUnit }) ?? 0
+            selectedQuantityIndex = bestServingIndex(in: picked.quantities, forUnit: entry.servingUnit,
+                                                     calories: entry.calories, servingAmount: entry.servingAmount)
             amount = entry.servingAmount ?? (picked.quantities.first?.count ?? 1)
             alsoSave = false
             searchText = ""
@@ -440,27 +403,11 @@ struct AddCalsSheet: View {
         }
     }
     
-    /// Resolves the food behind a logged entry so re-adding behaves like a fresh log: the saved FoodItem,
-    /// the bundled generic (by name), or a one-serving reconstruction from the entry's own stamp.
-    private func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
-        if let id = entry.foodItem, let food = await dataStore.foodItemActor.fetch(id: id) {
-            return food.asPicked
-        }
-        guard let unit = entry.servingUnit else { return nil }   // no serving stamp → genuine quick entry
-        let name = entry.narrative ?? ""
-        if let match = FoodCatalogue.shared.search(name).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
-            return match.asPicked
-        }
-        let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,
-                             protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
-        return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
-                          manufacturer: entry.manufacturer, quantities: [q])
-    }
-
     /// For the recent list: entries linked to a live food show that food's current recipe (and re-add it fresh); archived or deleted foods are dropped so we don't suggest something you've retired; genuine quick entries keep their own values. One row per food, batched to one lookup per food.
     private func resolveRecents(_ entries: [CalorieEntry]) async -> [RecentItem] {
         var foodCache: [UUID: FoodItem?] = [:]
         var seenFoods = Set<UUID>()
+        var seenGenericNames = Set<String>()
         var items: [RecentItem] = []
         for entry in entries {
             if let id = entry.foodItem {
@@ -470,6 +417,7 @@ struct AddCalsSheet: View {
                 items.append(RecentItem(id: entry.id, entry: entry, food: food.asPicked))
             } else if entry.servingUnit != nil {
                 let name = entry.narrative ?? ""
+                guard seenGenericNames.insert(name.lowercased()).inserted else { continue } // dedupe by name
                 let generic = FoodCatalogue.shared.search(name)
                     .first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.asPicked
                 items.append(RecentItem(id: entry.id, entry: entry, food: generic))
@@ -491,8 +439,10 @@ struct AddCalsSheet: View {
                                          date: selectedDate, meal: selectedMeal)
         } else if alsoSave {
             let mfr = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
+            let servName = saveServingName.trimmingCharacters(in: .whitespacesAndNewlines)
             let quantity = FoodQuantity(type: saveServingUnit, count: saveServingCount,
-                                        calories: calories!, protein: protein, carbs: carbs, fat: fat)
+                                        calories: calories!, protein: protein, carbs: carbs, fat: fat,
+                                        servingName: servName.isEmpty ? nil : servName)
             let food = FoodItem(name: whatItIs.trimmingCharacters(in: .whitespacesAndNewlines),
                                 manufacturer: mfr.isEmpty ? nil : mfr,
                                 quantities: [quantity], source: .userInput)
@@ -500,6 +450,7 @@ struct AddCalsSheet: View {
             let newFoodName = food.name
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
+            if newFoodMfr != nil { await dataStore.invalidateManufacturersCache() }
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
                                                           manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,
@@ -525,6 +476,7 @@ struct AddCalsSheet: View {
         alsoSave = false
         saveServingUnit = .portion
         saveServingCount = 1
+        saveServingName = ""
         selectedFood = nil
         selectedQuantityIndex = 0
         amount = 0

@@ -27,8 +27,7 @@ struct WeightGoalSheet: View {
 
     @State private var goalWasInvalid: Bool = false
 
-    private enum Field { case kilos, pounds, stones, poundsPart }
-    @FocusState private var focusedField: Field?
+    @FocusState private var focusedField: WeightEntryField?
 
     @State private var toLose: Double = 0
     @State private var daysToGo: Int = 0
@@ -36,6 +35,11 @@ struct WeightGoalSheet: View {
     
     /// The minimum BMI that Budgie Diet will let the user aim for.
     private let healthyBMIFloor = 18.5
+
+    /// A general low-weight floor used only when no height is on file, so BMI can't be computed.
+    /// 40kg is below the healthy-BMI-range floor for essentially any adult height, so it's a
+    /// reasonable independent check rather than leaving the underweight warning silently disabled.
+    private let noHeightWeightFloor = 40.0
 
     /// The unit the user has chosen for displaying/entering weights.
     private var unit: weightUnits {
@@ -45,18 +49,7 @@ struct WeightGoalSheet: View {
     /// The goal the user has entered, converted to kilograms for storage.
     /// Returns nil when nothing meaningful has been entered.
     private var enteredKilos: Double? {
-        switch unit {
-        case .kilograms:
-            return kilosField
-        case .pounds:
-            guard let pounds = poundsField else { return nil }
-            return pounds * lbInKg
-        case .stonepounds:
-            let stones = stonesField ?? 0
-            let pounds = poundsPart ?? 0
-            guard stones != 0 || pounds != 0 else { return nil }
-            return StonePounds(stones: stones, pounds: pounds).kilos
-        }
+        kilograms(kg: kilosField, lb: poundsField, st: stonesField, stLb: poundsPart, unit: unit)
     }
     
     /// The BMI implied by the entered goal weight and the user's stored height.
@@ -73,7 +66,14 @@ struct WeightGoalSheet: View {
         guard let bmi = goalBMI else { return false }
         return bmi < healthyBMIFloor
     }
-    
+
+    /// Whether the entered goal is very low, for when no height is on file to compute a real BMI.
+    /// Only applies when goalBMI can't be calculated at all — never overrides the BMI-based check.
+    private var goalIsExtremelyLowWithoutHeight: Bool {
+        guard goalBMI == nil, let goal = enteredKilos, goal > 0 else { return false }
+        return goal < noHeightWeightFloor
+    }
+
     /// The lowest weight in the healthy BMI range (18.5) for the user's stored height.
     /// Rounded up to the nearest 0.1 kg so the figure shown is never itself underweight.
     /// Returns nil when height is unavailable.
@@ -87,48 +87,25 @@ struct WeightGoalSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    switch unit {
-                    case .kilograms:
-                        HStack {
-                            TextField("Goal", value: $kilosField, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.decimalPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .kilos)
-                            Text("kg")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                        }
-                    case .pounds:
-                        HStack {
-                            TextField("Goal", value: $poundsField, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.decimalPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .pounds)
-                            Text("lbs")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                        }
-                    case .stonepounds:
-                        HStack {
-                            TextField("0", value: $stonesField, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .stones)
-                            Text("st")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                            TextField("0", value: $poundsPart, format: .number)
-                                .font(.largeTitle)
-                                .keyboardType(.numberPad)
-                                .autocorrectionDisabled()
-                                .focused($focusedField, equals: .poundsPart)
-                            Text("lb")
-                                .font(.largeTitle)
-                                .foregroundStyle(.secondary)
-                        }
+                    WeightUnitEntryFields(unit: unit, placeholder: "Goal",
+                                          kilos: $kilosField, pounds: $poundsField,
+                                          stones: $stonesField, poundsPart: $poundsPart,
+                                          focus: $focusedField)
+
+                    // Shown here, above the Add button, so it's seen before the goal can be
+                    // committed rather than below it where it could be missed entirely.
+                    if goalIsUnderweight, let minWeight = minimumHealthyWeight {
+                        Label("This goal weight is in the underweight range (a BMI below 18.5) for the height stored in Budgie Diet. The lowest healthy weight for your height is around \(renderWeight(kilos: minWeight)). Aiming for below a healthy weight carries real and serious health risks. Please consider discussing this goal with your doctor before continuing.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
+                    } else if goalIsExtremelyLowWithoutHeight {
+                        Label("This goal weight is very low. Without your height on file, Budgie Diet can't check it against a healthy range, but a weight this low carries real and serious health risks for almost everyone. Please consider discussing this goal with your doctor before continuing, and add your height in Settings so this can be checked properly.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
                     }
 
                     Button("Add") {
@@ -148,13 +125,6 @@ struct WeightGoalSheet: View {
                 }
 
                 Section {
-                    if goalIsUnderweight, let minWeight = minimumHealthyWeight {
-                        Label("This goal weight is in the underweight range (a BMI below 18.5) for the height I have stored for you. The lowest healthy weight for your height is around \(renderWeight(kilos: minWeight)). Aiming for below a healthy weight carries real and serious health risks. Please consider discussing this goal with your doctor before continuing.", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
-                            .lineLimit(nil)
-                            .fixedSize(horizontal: false, vertical: false)
-                        Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
-                    }
                     if let goal = enteredKilos {
                         // If the user's target is 0 they've expressly said they don't want their
                         // weight to change, so a lose/gain framing isn't meaningful — say nothing.
@@ -176,13 +146,13 @@ struct WeightGoalSheet: View {
                                     Divider()
                                     Label("Timescales given are estimates, and are not personalised. Your actual results will vary. This app is not medical advice.", systemImage: "info.circle")
                                         .lineLimit(nil)
-                                        .fixedSize(horizontal: false, vertical: false)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 } else {
                                     Text("Assuming you meet your target surplus every day, this will take you \(friendlyDuration).")
                                     Divider()
                                     Label("Timescales given are estimates, and are not personalised. Your actual results will vary. Gaining muscle from a caloric surplus, rather than fat, requires strength training and a balanced, protein-rich diet. This app is not medical advice.", systemImage: "info.circle")
                                         .lineLimit(nil)
-                                        .fixedSize(horizontal: false, vertical: false)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
                         }
@@ -191,18 +161,10 @@ struct WeightGoalSheet: View {
             }
 
             .navigationTitle("Set weight goal")
-
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { focusedField = nil }
-                }
-            }
+            .keyboardDoneButton(clearing: $focusedField)
         }
 
-        .alert("Please enter a weight above zero.", isPresented: $goalWasInvalid) {
-            Button("OK", role: .cancel) { }
-        }
+        .okAlert("Please enter a weight above zero.", isPresented: $goalWasInvalid)
 
         .onAppear {
             if settingsObj.weightGoal != 0 {
@@ -227,7 +189,7 @@ struct WeightGoalSheet: View {
     }
 
     /// The field to return focus to when the entry is rejected.
-    private var firstField: Field {
+    private var firstField: WeightEntryField {
         switch unit {
         case .kilograms: return .kilos
         case .pounds: return .pounds
@@ -237,20 +199,21 @@ struct WeightGoalSheet: View {
 
     private func recalculate() {
         guard let goal = enteredKilos, goal > 0, todayLump.weightToday != 0 else {
-            toLose = 0
-            daysToGo = 0
-            friendlyDuration = ""
+            toLose = 0; daysToGo = 0; friendlyDuration = ""
             return
         }
         // Positive => need to lose; negative => need to gain.
         toLose = todayLump.weightToday - goal
 
+        // A deficit can't reach a higher goal weight, nor a surplus a lower one — so there's no
+        // timescale to quote when the goal sits the other side of where they are now.
+        let movingTowardGoal = settingsObj.surplusMode ? toLose < 0 : toLose > 0
+        guard movingTowardGoal else { daysToGo = 0; friendlyDuration = ""; return }
+
         let magnitude = abs(toLose)
-        if settingsObj.surplusMode {
-            daysToGo = getDaysToGain(weight: magnitude, surplus: -settingsObj.desiredDeficit)
-        } else {
-            daysToGo = getDaysToLose(weight: magnitude, deficit: settingsObj.desiredDeficit)
-        }
+        daysToGo = settingsObj.surplusMode
+            ? getDaysToGain(weight: magnitude, surplus: -settingsObj.desiredDeficit)
+            : getDaysToLose(weight: magnitude, deficit: settingsObj.desiredDeficit)
         friendlyDuration = formatDuration(days: daysToGo)
     }
 }

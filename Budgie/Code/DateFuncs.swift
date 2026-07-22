@@ -40,6 +40,22 @@ func getStartOfDay(date: Date) -> Date {
     return calendar.startOfDay(for: date)
 }
 
+/// Every day's start-of-day date in `[from, to)`, one per calendar day — used to densify a
+/// day-bucketed series so a day with no data still gets an explicit (zero) entry rather than being
+/// omitted, which would otherwise narrow a chart's x-axis to only the days that happened to have data.
+func datesInRange(from: Date, to: Date) -> [Date] {
+    let calendar = Calendar.current
+    var day = calendar.startOfDay(for: from)
+    let end = calendar.startOfDay(for: to)
+    var days: [Date] = []
+    while day < end {
+        days.append(day)
+        guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+        day = next
+    }
+    return days
+}
+
 /// Returns midnight on the day before the date passed. For example, if you passed this function 19:02 on the 29th June, this would return 00:00 on the 28th June.
 func getMidnightOnDayBefore(date: Date) -> Date { midnight(daysOffset: -1, from: date) }
 
@@ -61,22 +77,28 @@ func getPercentOfDayDone() -> Double {
     return Double(minutesIntoDay()) / 1440
 }
 
-/// Used to weight the user's "left to eat" figure based on the time into the day and the closeness to the user's set "final meal time". Weights more generously the closer to final meal time it is.
-func weightCanEatNow(input: Int) -> Int {
-    let mealTime = max(settingsObj.finalMealTime, 1)
-    let minsNow  = minutesIntoDay() + 1
-    guard minsNow < mealTime else { return input }
+/// The "left to eat" square-law ramp plus meal-reserve release, taking its inputs explicitly rather
+/// than reading globals — shared by `weightCanEatNow()` below and the widget, which can't trust its
+/// own process's `settingsObj`/clock reads to be current and previously carried a duplicate copy.
+func canEatNow(budget: Int, minsIntoDay: Int, finalMealTime: Int) -> Int {
+    let mealTime = max(finalMealTime, 1)
+    let minsNow = minsIntoDay + 1
+    guard minsNow < mealTime else { return budget }
 
-    var factor = Double(minsNow) / Double(mealTime)
-    factor = factor * factor
+    let factor = pow(Double(minsNow) / Double(mealTime), 2)
 
     // Ease the reserved meal back into the budget over the final stretch before
     // meal time, so it arrives gradually rather than all at once.
     let releaseWindow = 45.0
     let released = max(0, Double(minsNow) - (Double(mealTime) - releaseWindow)) / releaseWindow
-    let reserved = Double(input) * mealReserveFraction * (1 - released)
+    let reserved = Double(budget) * mealReserveFraction * (1 - released)
 
-    return Int(min(Double(input) * factor, Double(input) - reserved))
+    return Int(min(Double(budget) * factor, Double(budget) - reserved))
+}
+
+/// Used to weight the user's "left to eat" figure based on the time into the day and the closeness to the user's set "final meal time". Weights more generously the closer to final meal time it is.
+func weightCanEatNow(input: Int) -> Int {
+    canEatNow(budget: input, minsIntoDay: minutesIntoDay(), finalMealTime: settingsObj.finalMealTime)
 }
 
 /// Return the weighting style to use based on the user's settings.
@@ -179,16 +201,6 @@ func getCurrentTimeonDate(date: Date) -> Date {
     let newDateComps = DateComponents(year: year, month: month, day: day, hour: hours, minute: mins, second: seconds)
     let newDate = calendar.date(from: newDateComps)
     return newDate ?? date
-}
-
-extension Calendar {
-    /// Returns the number of days between two dates.
-    func numberOfDaysBetween(_ from: Date, and to: Date) -> Int {
-        let fromDate = startOfDay(for: from) // <1>
-        let toDate = startOfDay(for: to) // <2>
-        let numberOfDays = dateComponents([.day], from: fromDate, to: toDate)
-        return numberOfDays.day ?? 0
-    }
 }
 
 func timeToMinsIntoDay(time: Date) -> Int {

@@ -32,23 +32,6 @@ struct TodayFoodList: View {
             : dataLump.cleansedMealList
     }
 
-    struct FoodHeaderView: View {
-        let name: String
-        let calsText: String
-
-        var body: some View {
-            HStack {
-                Text(name.uppercased())
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(calsText.uppercased())
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
     /// The per-meal footer: eaten calories, plus "/ target" when allocations are on.
     @ViewBuilder
     private func mealTotalRow(for meal: Meal) -> some View {
@@ -66,18 +49,12 @@ struct TodayFoodList: View {
     /// One meal's block: header, its entries (if any), a divider when there are entries, and the total row.
     @ViewBuilder
     private func mealSection(for meal: Meal, entries: [CalorieEntry]) -> some View {
-        FoodHeaderView(name: meal.name, calsText: "CALORIES")
+        SectionHeaderRow(leftText: meal.name, rightText: "CALORIES")
         ForEach(entries) { entry in
             CalorieEntryView(calories: entry.calories, narrative: entry.narrative ?? "Quick calories")
         }
         if !entries.isEmpty {
-            HStack {
-                Spacer()
-                VStack {
-                    Divider()
-                        .frame(maxWidth: 50)
-                }
-            }
+            CenteredDivider(maxWidth: 50)
         }
         mealTotalRow(for: meal)
         Spacer()
@@ -87,7 +64,7 @@ struct TodayFoodList: View {
     private var healthKitSection: some View {
         if dataLump.healthKitCalories != 0 {
             Spacer()
-            FoodHeaderView(name: "FROM OTHER APPS", calsText: "CALORIES")
+            SectionHeaderRow(leftText: "FROM OTHER APPS", rightText: "CALORIES")
             // "Date" doesn't matter too much because it doesn't display where "realEntry" is false so we can pass whatever we want.
             CalorieEntryView(calories: dataLump.healthKitCalories, narrative: "Calories from Apple Health")
             Spacer()
@@ -95,17 +72,19 @@ struct TodayFoodList: View {
     }
 
     var body: some View {
+        // Computed once per body evaluation rather than once per meal iteration below.
+        let grouped = groupedByMeal
         if allocationsOn {
             // Planning view: show every meal with its target, even those with no food yet.
             ForEach(displayedMeals) { meal in
-                mealSection(for: meal, entries: groupedByMeal[meal.mealUUID] ?? [])
+                mealSection(for: meal, entries: grouped[meal.mealUUID] ?? [])
             }
             healthKitSection
         } else if !dataLump.foodList.isEmpty || dataLump.healthKitCalories != 0 {
             // Original behaviour: only meals that actually have food.
             if !dataLump.foodList.isEmpty {
                 ForEach(displayedMeals) { meal in
-                    let entries = groupedByMeal[meal.mealUUID] ?? []
+                    let entries = grouped[meal.mealUUID] ?? []
                     if !entries.isEmpty {
                         mealSection(for: meal, entries: entries)
                     }

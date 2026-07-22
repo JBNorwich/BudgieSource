@@ -84,12 +84,12 @@ struct FitnessView: View {
                     unit: "kcal",
                     colour: moveColour
                 )
-                todayLump.activitySummary.exerciseTimeGoal != nil
-                    ? FitnessStat(title: "Exercise", value: todayLump.activitySummary.appleExerciseTime.doubleValue(for: .minute()), goal: todayLump.activitySummary.exerciseTimeGoal?.doubleValue(for: .minute()) ?? 0, unit: "min", colour: exerciseColour)
-                    : nil
-                todayLump.activitySummary.standHoursGoal != nil
-                    ? FitnessStat(title: "Stand", value: todayLump.activitySummary.appleStandHours.doubleValue(for: .count()), goal: todayLump.activitySummary.standHoursGoal?.doubleValue(for: .count()) ?? 0, unit: "hrs", colour: standColour)
-                    : nil
+                if let exerciseGoal = todayLump.activitySummary.exerciseTimeGoal {
+                    FitnessStat(title: "Exercise", value: todayLump.activitySummary.appleExerciseTime.doubleValue(for: .minute()), goal: exerciseGoal.doubleValue(for: .minute()), unit: "min", colour: exerciseColour)
+                }
+                if let standGoal = todayLump.activitySummary.standHoursGoal {
+                    FitnessStat(title: "Stand", value: todayLump.activitySummary.appleStandHours.doubleValue(for: .count()), goal: standGoal.doubleValue(for: .count()), unit: "hrs", colour: standColour)
+                }
                 Spacer()
             }
         }

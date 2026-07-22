@@ -15,11 +15,65 @@
 
 import SwiftUI
 
+/// One of the "Easy/Moderate/Hard" deficit choices — same shape (button + expected loss + whale-facts
+/// comparison), differing only in these values. The "No deficit"/"Very hard" choices have genuinely
+/// different shapes (no loss/comparison rows, or a confirmation gate) and stay bespoke below.
+private struct DeficitOption {
+    let label: String
+    let kcal: Int
+    let footer: String
+    let metricLoss: String
+    let imperialLoss: String
+    let comparison: String
+    let whaleFactor: String
+}
+
 struct BudgetHelperView: View {
     @Binding var isPresented: Bool
     var hideZero: Bool = false
     @State var displaying1000kcalWarning: Bool = false
-    
+
+    private static let deficitOptions: [DeficitOption] = [
+        DeficitOption(label: "Easy", kcal: 250,
+                      footer: "Most people will find this easy to stick to.",
+                      metricLoss: "225g a week", imperialLoss: "½lb a week",
+                      comparison: "Chocolate bar", whaleFactor: "0.000000833333333 whales"),
+        DeficitOption(label: "Moderate", kcal: 500,
+                      footer: "This is a good recommended starting point for people with a bit of weight to lose - not too hard, not too easy.",
+                      metricLoss: "450g a week", imperialLoss: "1lb a week",
+                      comparison: "Two cupcakes", whaleFactor: "0.000001666666667 whales"),
+        DeficitOption(label: "Hard", kcal: 750,
+                      footer: "This level of deficit may work if you exercise a lot or have a significant amount of weight to lose. Otherwise, you may not be able to eat enough on the budget that this will give you.",
+                      metricLoss: "700g a week", imperialLoss: "1½lb a week",
+                      comparison: "Half a roast chicken", whaleFactor: "0.0000025 whales"),
+    ]
+
+    @ViewBuilder
+    private func deficitSection(_ option: DeficitOption) -> some View {
+        Section(footer: Text(option.footer)) {
+            Button("\(option.label) - \(option.kcal)kcal per day") {
+                settingsObj.surplusMode = false
+                settingsObj.desiredDeficit = option.kcal
+                isPresented = false
+            }.fontWeight(.bold)
+            HStack {
+                Text("**Expected weight loss**")
+                Spacer()
+                Text(settingsObj.impMetric == 0 ? option.metricLoss : option.imperialLoss)
+            }
+            HStack {
+                Text("**Same calories as**")
+                Spacer()
+                if settingsObj.whalesEverywhere != true {
+                    Text(option.comparison)
+                } else {
+                    Text(option.whaleFactor)
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+        }
+    }
+
     var body: some View {
 
         Form {
@@ -32,94 +86,14 @@ struct BudgetHelperView: View {
                 Section(footer: Text("Choose this if your goal is to maintain your current weight.")) {
                     Button("No deficit at all")
                     {
+                        settingsObj.surplusMode = false
                         settingsObj.desiredDeficit = 0
                         isPresented = false
                     } .fontWeight(.bold)
                 }
             }
-            Section(footer: Text("Most people will find this easy to stick to.")) {
-                Button("Easy - 250kcal per day")
-                {
-                    settingsObj.desiredDeficit = 250
-                    isPresented = false
-                } .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-                HStack{
-                    Text("**Expected weight loss**")
-                    Spacer()
-                    if settingsObj.impMetric == 0 {
-                        Text("225g a week")
-                    } else {
-                        Text("½lb a week")
-                    }
-                    
-                }
-                HStack{
-                    Text("**Same calories as**")
-                    Spacer()
-                    if settingsObj.whalesEverywhere != true
-                    {
-                        Text("Chocolate bar")
-                    } else {
-                        Text("0.000000833333333 whales")
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
-            }
-            Section(footer: Text("This is a good recommended starting point for people with a bit of weight to lose - not too hard, not too easy.")) {
-                Button("Moderate - 500kcal per day")
-                {
-                    settingsObj.desiredDeficit = 500
-                    isPresented = false
-                } .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-                HStack{
-                    Text("**Expected weight loss**")
-                    Spacer()
-                    if settingsObj.impMetric == 0 {
-                        Text("450g a week")
-                    } else {
-                        Text("1lb a week")
-                    }
-                }
-                HStack{
-                    Text("**Same calories as**")
-                    Spacer()
-                    if settingsObj.whalesEverywhere != true
-                    {
-                        Text("Two cupcakes")
-                    } else {
-                        Text("0.000001666666667 whales")
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
-            }
-            Section(footer: Text("This level of deficit may work for you if you exercise a lot, or you are very overweight. Otherwise, you may not be able to eat enough on the budget that this will give you.")) {
-                Button("Hard - 750kcal per day")
-                {
-                    settingsObj.desiredDeficit = 750
-                    isPresented = false
-                } .fontWeight(/*@START_MENU_TOKEN@*/.bold/*@END_MENU_TOKEN@*/)
-                HStack{
-                    
-                    Text("**Expected weight loss**")
-                    Spacer()
-                    if settingsObj.impMetric == 0 {
-                        Text("700g a week")
-                    } else {
-                        Text("1½lb a week")
-                    }
-                    
-                }
-                HStack{
-                    Text("**Same calories as**")
-                    Spacer()
-                    if settingsObj.whalesEverywhere != true
-                    {
-                        Text("Half a roast chicken")
-                    } else {
-                        Text("0.0000025 whales")
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
+            ForEach(Self.deficitOptions, id: \.label) { option in
+                deficitSection(option)
             }
             if settingsObj.whalesEverywhere != true {
                 Section(footer: Text("This level of deficit is really only appropriate for people with a significant amount of weight to lose, and even then might make it hard to get enough energy and nutrients. If you're not sure if this applies to you, discuss this with your doctor before choosing this option.")) {
@@ -144,6 +118,7 @@ struct BudgetHelperView: View {
             ThousandKcalWarningSheet(
                 isDisplayed: $displaying1000kcalWarning,
                 onConfirm: {
+                    settingsObj.surplusMode = false
                     settingsObj.desiredDeficit = 1000
                     isPresented = false
                 }
@@ -190,6 +165,9 @@ struct ThousandKcalWarningSheet: View {
             .disabled(secondsRemaining > 0)
         }
         .padding()
+        // This choice needs an explicit tap either way — swiping away must not leave an
+        // extreme deficit set with neither the wait nor the acknowledgement having happened.
+        .interactiveDismissDisabled(true)
         .task {
             for _ in 0..<5 {
                 try? await Task.sleep(for: .seconds(1))

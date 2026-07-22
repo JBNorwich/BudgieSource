@@ -17,14 +17,201 @@ import Foundation
 import SwiftUI
 import SwiftData
 
-/// Class used for querying iCloud hosted key-value storage.
-class CloudSettings {
-    private let defaults = NSUbiquitousKeyValueStore.default
-    
-    func sync() {
-        defaults.synchronize()
+/// Common shape of `NSUbiquitousKeyValueStore` and `UserDefaults` — lets `CloudSettings` and `UserSettings` share one
+/// set of accessor implementations instead of each declaring its own.
+protocol KeyValueBacking: AnyObject {
+    func object(forKey key: String) -> Any?
+    func set(_ value: Any?, forKey key: String)
+}
+extension NSUbiquitousKeyValueStore: KeyValueBacking {}
+extension UserDefaults: KeyValueBacking {}
+
+/// Settings that are stored identically in `CloudSettings` (iCloud key-value store) and the legacy `UserSettings`
+/// (local `UserDefaults`, kept only to migrate existing users into iCloud). Each property's store key is always
+/// given explicitly, even when it matches the property name, so that renaming a property here can never silently
+/// change which key is read from storage.
+protocol SharedSettingsStore: AnyObject {
+    var store: KeyValueBacking? { get }
+}
+
+extension SharedSettingsStore {
+    var onCloud: Bool {
+        get { store?.object(forKey: "onCloud") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "onCloud") }
     }
-    
+
+    var desiredDeficit: Int {
+        get { store?.object(forKey: "desiredDeficit") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "desiredDeficit") }
+    }
+
+    var isFirstRun: Bool {
+        get { store?.object(forKey: "firstRun") as? Bool ?? true }
+        set { store?.set(newValue, forKey: "firstRun") }
+    }
+
+    var manualBMR: Int {
+        get { store?.object(forKey: "manualBMR") as? Int ?? 2000 }
+        set { store?.set(newValue, forKey: "manualBMR") }
+    }
+
+    var manualActive: Int {
+        get { store?.object(forKey: "manualActive") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "manualActive") }
+    }
+
+    var surplusMode: Bool {
+        get { store?.object(forKey: "surplusMode") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "surplusMode") }
+    }
+
+    var weight: Int {
+        get { store?.object(forKey: "weight") as? Int ?? 90 }
+        set { store?.set(newValue, forKey: "weight") }
+    }
+
+    var height: Int {
+        get { store?.object(forKey: "height") as? Int ?? 175 }
+        set { store?.set(newValue, forKey: "height") }
+    }
+
+    var birthYear: Int {
+        get { store?.object(forKey: "birthYear") as? Int ?? 2000 }
+        set { store?.set(newValue, forKey: "birthYear") }
+    }
+
+    var impMetric: Int {
+        get { store?.object(forKey: "impMetric") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "impMetric") }
+    }
+
+    /// The stored key predates this property's current name and is not renamed, to avoid orphaning existing users'
+    /// stored value.
+    var userSex: Int {
+        get { store?.object(forKey: "userGender") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "userGender") }
+    }
+
+    var bmrMultiplier: Double {
+        get { store?.object(forKey: "bmrMultiplier") as? Double ?? 0.2 }
+        set { store?.set(newValue, forKey: "bmrMultiplier") }
+    }
+
+    var whalesEverywhere: Bool {
+        get { store?.object(forKey: "whalesEverywhere") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "whalesEverywhere") }
+    }
+
+    /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all. -2 is no weighting down. 3 is the old (pre-quotient) default.
+    var weightingStyle: Int {
+        get { store?.object(forKey: "weightingStyle") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "weightingStyle") }
+    }
+
+    var hideTodayInDetail: Bool {
+        get { store?.object(forKey: "hideTodayInDetail") as? Bool ?? true }
+        set { store?.set(newValue, forKey: "hideTodayInDetail") }
+    }
+
+    var shownExplainer: Bool {
+        get { store?.object(forKey: "shownExplainer") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "shownExplainer") }
+    }
+
+    var donated: Bool {
+        get { store?.object(forKey: "donated") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "donated") }
+    }
+
+    var differentWeights: Bool {
+        get { store?.object(forKey: "differentWeights") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "differentWeights") }
+    }
+
+    var monWeight: Int {
+        get { store?.object(forKey: "monWeight") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "monWeight") }
+    }
+
+    var tuesWeight: Int {
+        get { store?.object(forKey: "tuesWeight") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "tuesWeight") }
+    }
+
+    var wedsWeight: Int {
+        get { store?.object(forKey: "wedsWeight") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "wedsWeight") }
+    }
+
+    var thursWeight: Int {
+        get { store?.object(forKey: "thursWeight") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "thursWeight") }
+    }
+
+    var friWeight: Int {
+        get { store?.object(forKey: "friWeight") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "friWeight") }
+    }
+
+    var satWeight: Int {
+        get { store?.object(forKey: "satWeight") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "satWeight") }
+    }
+
+    var sunWeight: Int {
+        get { store?.object(forKey: "sunWeight") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "sunWeight") }
+    }
+
+    var useFitnessGoal: Bool {
+        get { store?.object(forKey: "useFitnessGoal") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "useFitnessGoal") }
+    }
+
+    var capBudget: Bool {
+        get { store?.object(forKey: "capBudget") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "capBudget") }
+    }
+
+    var capBudgetCals: Int {
+        get { store?.object(forKey: "capBudgetCals") as? Int ?? 2000 }
+        set { store?.set(newValue, forKey: "capBudgetCals") }
+    }
+
+    var finalMealTime: Int {
+        get { store?.object(forKey: "finalMealTime") as? Int ?? 1080 }
+        set { store?.set(newValue, forKey: "finalMealTime") }
+    }
+
+    var waterGoal: Int {
+        get { store?.object(forKey: "waterGoal") as? Int ?? 2000 }
+        set { store?.set(newValue, forKey: "waterGoal") }
+    }
+
+    var weightGoal: Double {
+        get { store?.object(forKey: "weightGoal") as? Double ?? 0 }
+        set { store?.set(newValue, forKey: "weightGoal") }
+    }
+
+    var startWeight: Double {
+        get { store?.object(forKey: "startWeight") as? Double ?? 0 }
+        set { store?.set(newValue, forKey: "startWeight") }
+    }
+
+    var weightDisplayUnit: Int {
+        get { store?.object(forKey: "weightDisplayUnit") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "weightDisplayUnit") }
+    }
+}
+
+/// Class used for querying iCloud hosted key-value storage.
+class CloudSettings: SharedSettingsStore {
+    let store: KeyValueBacking? = NSUbiquitousKeyValueStore.default
+
+    func sync() {
+        NSUbiquitousKeyValueStore.default.synchronize()
+    }
+
     /// Function to copy existing settings from UserSettings into the CloudKit based storage.
     func copyFromLocal(localObj: UserSettings) {
         self.desiredDeficit = localObj.desiredDeficit
@@ -65,222 +252,56 @@ class CloudSettings {
         localObj.onCloud = true
         self.sync()
     }
-    
-    var onCloud: Bool {
-        get { return defaults.object(forKey: "onCloud") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "onCloud")}
-    }
-    
-    var desiredDeficit: Int {
-        get { return defaults.object(forKey: "desiredDeficit") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "desiredDeficit")}
-    }
-    
-    var isFirstRun: Bool {
-        get { return defaults.object(forKey: "firstRun") as? Bool ?? true }
-        set { defaults.set(newValue, forKey: "firstRun")}
-    }
-    
-    var manualBMR: Int {
-        get { return defaults.object(forKey: "manualBMR") as? Int ?? 2000 }
-        set { defaults.set(newValue, forKey: "manualBMR")}
-    }
-    
-    var manualActive: Int {
-        get { return defaults.object(forKey: "manualActive") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "manualActive")}
-    }
-    
-    var surplusMode: Bool {
-        get { return defaults.object(forKey: "surplusMode") as? Bool ?? false}
-        set { defaults.set(newValue, forKey: "surplusMode")}
-    }
-    
-    var weight: Int {
-        get { return defaults.object(forKey: "weight") as? Int ?? 90 }
-        set { defaults.set(newValue, forKey: "weight")}
-    }
-    
-    var height: Int {
-        get { return defaults.object(forKey: "height") as? Int ?? 175 }
-        set { defaults.set(newValue, forKey: "height")}
-    }
-    
-    var birthYear: Int {
-        get { return defaults.object(forKey: "birthYear") as? Int ?? 2000 }
-        set { defaults.set(newValue, forKey: "birthYear")}
-    }
-    
-    var impMetric: Int {
-        get { return defaults.object(forKey: "impMetric") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "impMetric")}
-    }
-    
-    var userSex: Int {
-        get { return defaults.object(forKey: "userGender") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "userGender")}
-    }
-    
-    var bmrMultiplier: Double {
-        get { return defaults.object(forKey: "bmrMultiplier") as? Double ?? 0.2 }
-        set { defaults.set(newValue, forKey: "bmrMultiplier")}
-    }
-    
-    var whalesEverywhere: Bool {
-        get { return defaults.object(forKey: "whalesEverywhere") as? Bool ?? false}
-        set { defaults.set(newValue, forKey: "whalesEverywhere")}
-    }
-    
-    /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all. -2 is no weighting down. 3 is the old (pre-quotient) default.
-    var weightingStyle: Int {
-        get { return defaults.object(forKey: "weightingStyle") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "weightingStyle")}
-    }
-    
-    var hideTodayInDetail: Bool {
-        get { return defaults.object(forKey: "hideTodayInDetail") as? Bool ?? true }
-        set { defaults.set(newValue, forKey: "hideTodayInDetail")}
-    }
-    
-    var shownExplainer: Bool {
-        get { return defaults.object(forKey: "shownExplainer") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "shownExplainer")}
-    }
-    
-    var donated: Bool {
-        get { return defaults.object(forKey: "donated") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "donated")}
-    }
-    
-    var differentWeights: Bool {
-        get { return defaults.object(forKey: "differentWeights") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "differentWeights")}
-    }
-    
-    var monWeight: Int {
-        get { return defaults.object(forKey: "monWeight") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "monWeight")}
-    }
-    
-    var tuesWeight: Int {
-        get { return defaults.object(forKey: "tuesWeight") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "tuesWeight")}
-    }
-    
-    var wedsWeight: Int {
-        get { return defaults.object(forKey: "wedsWeight") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "wedsWeight")}
-    }
-    
-    var thursWeight: Int {
-        get { return defaults.object(forKey: "thursWeight") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "thursWeight")}
-    }
-    
-    var friWeight: Int {
-        get { return defaults.object(forKey: "friWeight") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "friWeight")}
-    }
-    
-    var satWeight: Int {
-        get { return defaults.object(forKey: "satWeight") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "satWeight")}
-    }
-    
-    var sunWeight: Int {
-        get { return defaults.object(forKey: "sunWeight") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "sunWeight")}
-    }
-    
-    var useFitnessGoal: Bool {
-        get { return defaults.object(forKey: "useFitnessGoal") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "useFitnessGoal")}
-    }
-    
-    var capBudget: Bool {
-        get { return defaults.object(forKey: "capBudget") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "capBudget")}
-    }
-    
-    var capBudgetCals: Int {
-        get { return defaults.object(forKey: "capBudgetCals") as? Int ?? 2000 }
-        set { defaults.set(newValue, forKey: "capBudgetCals")}
-    }
-    
-    var finalMealTime: Int {
-        get { return defaults.object(forKey: "finalMealTime") as? Int ?? 1080 }
-        set { defaults.set(newValue, forKey: "finalMealTime")}
-    }
-    
-    var waterGoal: Int {
-        get { return defaults.object(forKey: "waterGoal") as? Int ?? 2000 }
-        set { defaults.set(newValue, forKey: "waterGoal")}
-    }
-    
-    var weightGoal: Double {
-        get { return defaults.object(forKey: "weightGoal") as? Double ?? 0 }
-        set { defaults.set(newValue, forKey: "weightGoal") }
-    }
-    
-    var startWeight: Double {
-        get { return defaults.object(forKey: "startWeight") as? Double ?? 0 }
-        set { defaults.set(newValue, forKey: "startWeight") }
-    }
-    
-    var weightDisplayUnit: Int {
-        get { return defaults.object(forKey: "weightDisplayUnit") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "weightDisplayUnit")}
-    }
-    
+
     var snacksUUID: UUID? {
         get {
-            guard let uuidString = defaults.string(forKey: "snacksUUID") else {
+            guard let uuidString = store?.object(forKey: "snacksUUID") as? String else {
                 return nil
             }
             return UUID(uuidString: uuidString)
         }
-        set { defaults.set(newValue?.uuidString, forKey: "snacksUUID")}
+        set { store?.set(newValue?.uuidString, forKey: "snacksUUID") }
     }
-    
+
     var waterDisplayUnit: Int {
-        get { return defaults.object(forKey: "waterDisplayUnit") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "waterDisplayUnit")}
+        get { store?.object(forKey: "waterDisplayUnit") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "waterDisplayUnit") }
     }
-    
+
     var useMealAllocations: Bool {
-        get { return defaults.object(forKey: "useMealAllocations") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "useMealAllocations") }
+        get { store?.object(forKey: "useMealAllocations") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "useMealAllocations") }
     }
-    
+
     var waterFromActivity: Bool {
-        get { return defaults.object(forKey: "waterFromActivity") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "waterFromActivity") }
+        get { store?.object(forKey: "waterFromActivity") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "waterFromActivity") }
     }
-    
+
     var disableWeightFeatures: Bool {
-        get { return defaults.object(forKey: "disableWeightFeatures") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "disableWeightFeatures") }
+        get { store?.object(forKey: "disableWeightFeatures") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "disableWeightFeatures") }
     }
-    
+
     // MARK: - Budget snapshot (published by the iPhone for platforms without HealthKit)
 
     /// The most recent total daily budget the iPhone calculated. Not live — always show it alongside `budgetSnapshotDate` so the user knows how current it is.
     var snapshotBudget: Int {
-        get { defaults.object(forKey: "snapshotBudget") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotBudget") }
+        get { store?.object(forKey: "snapshotBudget") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotBudget") }
     }
     var snapshotAtCap: Bool {
-        get { defaults.object(forKey: "snapshotAtCap") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "snapshotAtCap") }
+        get { store?.object(forKey: "snapshotAtCap") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "snapshotAtCap") }
     }
     var snapshotAtMin: Bool {
-        get { defaults.object(forKey: "snapshotAtMin") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "snapshotAtMin") }
+        get { store?.object(forKey: "snapshotAtMin") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "snapshotAtMin") }
     }
     /// When the iPhone last published the snapshot (seconds since 1970). 0 means never.
     var snapshotTimestamp: Double {
-        get { defaults.object(forKey: "snapshotTimestamp") as? Double ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotTimestamp") }
+        get { store?.object(forKey: "snapshotTimestamp") as? Double ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotTimestamp") }
     }
     /// The snapshot's publish time, or nil if nothing has been published yet.
     var budgetSnapshotDate: Date? {
@@ -293,115 +314,115 @@ class CloudSettings {
     }
 
     var snapshotActiveCalories: Int {
-        get { defaults.object(forKey: "snapshotActiveCalories") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotActiveCalories") }
+        get { store?.object(forKey: "snapshotActiveCalories") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotActiveCalories") }
     }
-    
+
     var snapshotBasalCalories: Int {
-        get { defaults.object(forKey: "snapshotBasalCalories") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotBasalCalories") }
+        get { store?.object(forKey: "snapshotBasalCalories") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotBasalCalories") }
     }
-    
+
     var snapShotHKCalories: Int {
-        get { defaults.object(forKey: "snapshotHKCalories") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotHKCalories") }
+        get { store?.object(forKey: "snapshotHKCalories") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotHKCalories") }
     }
-    
+
     var snapShotHKWater: Int {
-        get { defaults.object(forKey: "snapshotHKWater") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotHKWater") }
+        get { store?.object(forKey: "snapshotHKWater") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotHKWater") }
     }
-    
+
     var snapshotProjectedBasal: Int {
-        get { defaults.object(forKey: "snapshotProjectedBasal") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotProjectedBasal") }
+        get { store?.object(forKey: "snapshotProjectedBasal") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotProjectedBasal") }
     }
-    
+
     var snapshotProjectedActive: Int {
-        get { defaults.object(forKey: "snapshotProjectedActive") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotProjectedActive") }
+        get { store?.object(forKey: "snapshotProjectedActive") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotProjectedActive") }
     }
-    
+
     var snapShotHKProtein: Int {
-        get { defaults.object(forKey: "snapshotHKProtein") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotHKProtein") }
+        get { store?.object(forKey: "snapshotHKProtein") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotHKProtein") }
     }
     var snapShotHKFat: Int {
-        get { defaults.object(forKey: "snapshotHKFat") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotHKFat") }
+        get { store?.object(forKey: "snapshotHKFat") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotHKFat") }
     }
     var snapShotHKCarbs: Int {
-        get { defaults.object(forKey: "snapshotHKCarbs") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "snapshotHKCarbs") }
+        get { store?.object(forKey: "snapshotHKCarbs") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "snapshotHKCarbs") }
     }
-    
-    /// The `whatsNewVersion` whose "What's New" sheet the user has already seen. Defaults to "2.0" so everyone upgrading from an older build sees the current sheet once. Holds thee *content* version, not the bundle version — it's shared via iCloud and the iOS/Mac apps carry different bundle versions.
+
+    /// The `whatsNewVersion` whose "What's New" sheet the user has already seen. Defaults to "3.2" so everyone upgrading from an older build sees the current sheet once. Holds the *content* version, not the bundle version — it's shared via iCloud and the iOS/Mac apps carry different bundle versions.
     var lastOpenedVersion: String {
-        get { defaults.string(forKey: "lastOpenedVersion") ?? "3.2" }
-        set { defaults.set(newValue, forKey: "lastOpenedVersion") }
+        get { store?.object(forKey: "lastOpenedVersion") as? String ?? "3.2" }
+        set { store?.set(newValue, forKey: "lastOpenedVersion") }
     }
-    
+
     /// Whether the last published snapshot was computed from estimated (manual) activity rather than real HealthKit data. Lets publishers avoid downgrading a real snapshot with a background estimated one (e.g. a locked-phone recompute with no HK access).
     var snapshotEstimated: Bool {
-        get { defaults.object(forKey: "snapshotEstimated") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "snapshotEstimated") }
+        get { store?.object(forKey: "snapshotEstimated") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "snapshotEstimated") }
     }
-    
+
     var hasDoneFoodItemMigration: Bool {
-        get { defaults.object(forKey: "hasDoneFoodItemMigration") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "hasDoneFoodItemMigration") }
+        get { store?.object(forKey: "hasDoneFoodItemMigration") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "hasDoneFoodItemMigration") }
     }
-    
+
     var offSearchDisabled: Bool {
-        get { defaults.object(forKey: "offSearchDisabled") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "offSearchDisabled") }
+        get { store?.object(forKey: "offSearchDisabled") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "offSearchDisabled") }
     }
-    
+
     var offSearchConsented: Bool {
-        get { defaults.object(forKey: "offSearchConsented") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "offSearchConsented") }
+        get { store?.object(forKey: "offSearchConsented") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "offSearchConsented") }
     }
-    
+
     // MARK: - Macros
 
     /// Master switch for the whole macro feature. Default off = macros ON, matching disableWeightFeatures / offSearchDisabled.
     var disableMacros: Bool {
-        get { return defaults.object(forKey: "disableMacros") as? Bool ?? false }
-        set { defaults.set(newValue, forKey: "disableMacros") }
+        get { store?.object(forKey: "disableMacros") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "disableMacros") }
     }
 
     /// 0 = no goal, 1 = fixed grams, 2 = percentage of the daily budget.
     var macroGoalMode: Int {
-        get { return defaults.object(forKey: "macroGoalMode") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "macroGoalMode") }
+        get { store?.object(forKey: "macroGoalMode") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "macroGoalMode") }
     }
 
     /// Fixed gram targets (macroGoalMode == 1). 0 means "not set" — that macro shows its total only, no ring.
     var proteinGoalGrams: Int {
-        get { return defaults.object(forKey: "proteinGoalGrams") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "proteinGoalGrams") }
+        get { store?.object(forKey: "proteinGoalGrams") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "proteinGoalGrams") }
     }
     var fatGoalGrams: Int {
-        get { return defaults.object(forKey: "fatGoalGrams") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "fatGoalGrams") }
+        get { store?.object(forKey: "fatGoalGrams") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "fatGoalGrams") }
     }
     var carbsGoalGrams: Int {
-        get { return defaults.object(forKey: "carbsGoalGrams") as? Int ?? 0 }
-        set { defaults.set(newValue, forKey: "carbsGoalGrams") }
+        get { store?.object(forKey: "carbsGoalGrams") as? Int ?? 0 }
+        set { store?.set(newValue, forKey: "carbsGoalGrams") }
     }
 
     /// Percentage-of-budget split (macroGoalMode == 2). Defaults 30/30/40 — a balanced starting point, not attributed to any authority. Kept summing to 100 by the settings UI.
     var proteinPercent: Int {
-        get { return defaults.object(forKey: "proteinPercent") as? Int ?? 30 }
-        set { defaults.set(newValue, forKey: "proteinPercent") }
+        get { store?.object(forKey: "proteinPercent") as? Int ?? 30 }
+        set { store?.set(newValue, forKey: "proteinPercent") }
     }
     var fatPercent: Int {
-        get { return defaults.object(forKey: "fatPercent") as? Int ?? 30 }
-        set { defaults.set(newValue, forKey: "fatPercent") }
+        get { store?.object(forKey: "fatPercent") as? Int ?? 30 }
+        set { store?.set(newValue, forKey: "fatPercent") }
     }
     var carbsPercent: Int {
-        get { return defaults.object(forKey: "carbsPercent") as? Int ?? 40 }
-        set { defaults.set(newValue, forKey: "carbsPercent") }
+        get { store?.object(forKey: "carbsPercent") as? Int ?? 40 }
+        set { store?.set(newValue, forKey: "carbsPercent") }
     }
 
     /// The effective per-macro gram goals for the day, or nil where no goal applies (mode off, or a grams-mode value left at 0). Percentage mode derives grams from `budget` at 4 kcal/g (protein, carbs) and 9 kcal/g (fat). Central so the rings and any preview all read the same figures.
@@ -424,178 +445,10 @@ class CloudSettings {
 }
 
 /// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.
-class UserSettings {
-    private let defaults = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
-    
-    init()
-    {
-        
-    }
-    
-    var onCloud: Bool {
-        get { return defaults?.value(forKey: "onCloud") as? Bool ?? false }
-        set { defaults?.set(newValue, forKey: "onCloud")}
-    }
-    
-    var desiredDeficit: Int {
-        get { return defaults?.value(forKey: "desiredDeficit") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "desiredDeficit")}
-    }
-        
-    var isFirstRun: Bool {
-        get { return defaults?.value(forKey: "firstRun") as? Bool ?? true }
-        set { defaults?.set(newValue, forKey: "firstRun")}
-    }
-    
-    var manualBMR: Int {
-        get { return defaults?.value(forKey: "manualBMR") as? Int ?? 2000 }
-        set { defaults?.set(newValue, forKey: "manualBMR")}
-    }
-    
-    var manualActive: Int {
-        get { return defaults?.value(forKey: "manualActive") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "manualActive")}
-    }
-    
-    var surplusMode: Bool {
-        get { return defaults?.value(forKey: "surplusMode") as? Bool ?? false}
-        set { defaults?.set(newValue, forKey: "surplusMode")}
-    }
-    
-    var weight: Int {
-        get { return defaults?.value(forKey: "weight") as? Int ?? 90 }
-        set { defaults?.set(newValue, forKey: "weight")}
-    }
-    
-    var height: Int {
-        get { return defaults?.value(forKey: "height") as? Int ?? 175 }
-        set { defaults?.set(newValue, forKey: "height")}
-    }
-    
-    var birthYear: Int {
-        get { return defaults?.value(forKey: "birthYear") as? Int ?? 2000 }
-        set { defaults?.set(newValue, forKey: "birthYear")}
-    }
-    
-    var impMetric: Int {
-        get { return defaults?.value(forKey: "impMetric") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "impMetric")}
-    }
-    
-    var userSex: Int {
-        get { return defaults?.value(forKey: "userGender") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "userGender")}
-    }
-    
-    var bmrMultiplier: Double {
-        get { return defaults?.value(forKey: "bmrMultiplier") as? Double ?? 0.2 }
-        set { defaults?.set(newValue, forKey: "bmrMultiplier")}
-    }
-    
-    var whalesEverywhere: Bool {
-        get { return defaults?.value(forKey: "whalesEverywhere") as? Bool ?? false}
-        set { defaults?.set(newValue, forKey: "whalesEverywhere")}
-    }
-    
-    /// 0 is regular. -1 is forgiving. 1 is harsh. 2 is no projection at all. -2 is no weighting down. 3 is the old (pre-quotient) default.
-    var weightingStyle: Int {
-        get { return defaults?.value(forKey: "weightingStyle") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "weightingStyle")}
-    }
-    
-    var hideTodayInDetail: Bool {
-        get { return defaults?.value(forKey: "hideTodayInDetail") as? Bool ?? true }
-        set { defaults?.set(newValue, forKey: "hideTodayInDetail")}
-    }
-    
-    var shownExplainer: Bool {
-        get { return defaults?.value(forKey: "shownExplainer") as? Bool ?? false }
-        set { defaults?.set(newValue, forKey: "shownExplainer")}
-    }
-    
-    var donated: Bool {
-        get { return defaults?.value(forKey: "donated") as? Bool ?? false }
-        set { defaults?.set(newValue, forKey: "donated")}
-    }
-    
-    var differentWeights: Bool {
-        get { return defaults?.value(forKey: "differentWeights") as? Bool ?? false }
-        set { defaults?.set(newValue, forKey: "differentWeights")}
-    }
-    
-    var monWeight: Int {
-        get { return defaults?.value(forKey: "monWeight") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "monWeight")}
-    }
-    
-    var tuesWeight: Int {
-        get { return defaults?.value(forKey: "tuesWeight") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "tuesWeight")}
-    }
-    
-    var wedsWeight: Int {
-        get { return defaults?.value(forKey: "wedsWeight") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "wedsWeight")}
-    }
-    
-    var thursWeight: Int {
-        get { return defaults?.value(forKey: "thursWeight") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "thursWeight")}
-    }
-    
-    var friWeight: Int {
-        get { return defaults?.value(forKey: "friWeight") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "friWeight")}
-    }
-    
-    var satWeight: Int {
-        get { return defaults?.value(forKey: "satWeight") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "satWeight")}
-    }
-    
-    var sunWeight: Int {
-        get { return defaults?.value(forKey: "sunWeight") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "sunWeight")}
-    }
-    
-    var useFitnessGoal: Bool {
-        get { return defaults?.value(forKey: "useFitnessGoal") as? Bool ?? false }
-        set { defaults?.set(newValue, forKey: "useFitnessGoal")}
-    }
-    
-    var capBudget: Bool {
-        get { return defaults?.value(forKey: "capBudget") as? Bool ?? false }
-        set { defaults?.set(newValue, forKey: "capBudget")}
-    }
-    
-    var capBudgetCals: Int {
-        get { return defaults?.value(forKey: "capBudgetCals") as? Int ?? 2000 }
-        set { defaults?.set(newValue, forKey: "capBudgetCals")}
-    }
-    
-    var finalMealTime: Int {
-        get { return defaults?.value(forKey: "finalMealTime") as? Int ?? 1080 }
-        set { defaults?.set(newValue, forKey: "finalMealTime")}
-    }
-    
-    var waterGoal: Int {
-        get { return defaults?.value(forKey: "waterGoal") as? Int ?? 2000 }
-        set { defaults?.set(newValue, forKey: "waterGoal")}
-    }
-    
-    var weightGoal: Double {
-        get { return defaults?.value(forKey: "weightGoal") as? Double ?? 0 }
-        set { defaults?.set(newValue, forKey: "weightGoal") }
-    }
-    
-    var startWeight: Double {
-        get { return defaults?.value(forKey: "startWeight") as? Double ?? 0 }
-        set { defaults?.set(newValue, forKey: "startWeight") }
-    }
-    
-    var weightDisplayUnit: Int {
-        get { return defaults?.value(forKey: "weightDisplayUnit") as? Int ?? 0 }
-        set { defaults?.set(newValue, forKey: "weightDisplayUnit")}
+class UserSettings: SharedSettingsStore {
+    let store: KeyValueBacking?
+
+    init() {
+        store = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
     }
 }
-

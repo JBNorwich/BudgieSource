@@ -1,11 +1,3 @@
-//
-//  OFFProduct.swift
-//  Budgie Diet
-//
-//  Created by Joe Baldwin on 12/07/2026.
-//
-
-
 // Copyright 2026 Joseph Baldwin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -55,7 +47,7 @@ enum OpenFoodFacts {
         ]
 
         var request = URLRequest(url: comps.url!)
-        request.setValue("Budgie Diet/3.3 (https://github.com/JBNorwich/BudgieSource)", forHTTPHeaderField: "User-Agent")
+        request.setValue("Budgie Diet/3.4 (https://github.com/JBNorwich/BudgieSource)", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -93,10 +85,48 @@ enum OpenFoodFacts {
             .sorted { $0.1 > $1.1 }        // most words matched first
             .map { $0.0 }
     }
+
+    /// Exact product lookup by barcode. A single deterministic match — no ranking needed, unlike free-text search.
+    static func lookup(barcode: String) async throws -> OFFProduct? {
+        let digits = barcode.filter(\.isNumber)
+        guard !digits.isEmpty else { return nil }
+
+        var comps = URLComponents(string: "https://world.openfoodfacts.org/api/v2/product/\(digits)")!
+        comps.queryItems = [
+            .init(name: "fields", value: "product_name,brands,code,serving_size,serving_quantity,nutriments")
+        ]
+
+        var request = URLRequest(url: comps.url!)
+        request.setValue("Budgie Diet/3.4 (https://github.com/JBNorwich/BudgieSource)", forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let http = response as? HTTPURLResponse {
+            if http.statusCode == 429 { throw SearchError.rateLimited }
+            // A barcode simply not existing in OpenFoodFacts is a normal "not found" outcome, not a
+            // server problem — don't scare the user with a "server unavailable" message for it.
+            if http.statusCode == 404 { return nil }
+            guard (200...299).contains(http.statusCode) else { throw SearchError.serverUnavailable }
+            let contentType = http.value(forHTTPHeaderField: "Content-Type") ?? ""
+            guard contentType.contains("json") else { throw SearchError.serverUnavailable }
+        }
+
+        do {
+            let decoded = try JSONDecoder().decode(ProductResponse.self, from: data)
+            return decoded.product?.toProduct()
+        } catch is DecodingError {
+            throw SearchError.serverUnavailable
+        }
+    }
 }
 
 private struct SearchResponse: Decodable {
     let products: [LenientProduct]
+}
+
+private struct ProductResponse: Decodable {
+    let product: ProductDTO?
 }
 
 /// Wraps each product so one malformed entry is skipped rather than failing the whole response.
@@ -117,26 +147,44 @@ private struct ProductDTO: Decodable {
 
     struct Nutriments: Decodable {
         let energyKcal100g: FlexibleDouble?
+        let energyKJ100g: FlexibleDouble?
+        let energy100g: FlexibleDouble?
         let proteins100g: FlexibleDouble?
         let carbohydrates100g: FlexibleDouble?
         let fat100g: FlexibleDouble?
 
         enum CodingKeys: String, CodingKey {
             case energyKcal100g = "energy-kcal_100g"
+            case energyKJ100g = "energy-kj_100g"
+            case energy100g = "energy_100g"
             case proteins100g = "proteins_100g"
             case carbohydrates100g = "carbohydrates_100g"
             case fat100g = "fat_100g"
+        }
+
+        /// Calories per 100 g/ml. Prefers the direct kcal field, then falls back to a kJ value
+        /// (÷4.184) — many EU-packaged products report only kJ, and OpenFoodFacts' generic
+        /// `energy_100g` field defaults to kJ too. nil when neither is usable.
+        var kcalPer100: Double? {
+            if let kcal = energyKcal100g?.value, kcal >= 0 { return kcal }
+            if let kj = energyKJ100g?.value ?? energy100g?.value, kj >= 0 { return kj / 4.184 }
+            return nil
         }
     }
 
     func toProduct() -> OFFProduct? {
         guard let rawName = product_name?.trimmingCharacters(in: .whitespacesAndNewlines), !rawName.isEmpty,
-              let kcal100 = nutriments?.energyKcal100g?.value else { return nil } // skip products with no usable nutrition
+              let kcal100 = nutriments?.kcalPer100, kcal100 >= 0 else { return nil } // skip products with no usable/negative energy
+
+        // Discard implausible negative macro values rather than propagating them into the app's own store.
+        let protein100 = nutriments?.proteins100g?.value.flatMap { $0 >= 0 ? $0 : nil }
+        let carbs100 = nutriments?.carbohydrates100g?.value.flatMap { $0 >= 0 ? $0 : nil }
+        let fat100 = nutriments?.fat100g?.value.flatMap { $0 >= 0 ? $0 : nil }
 
         let per100 = FoodQuantity(type: .grams, count: 100, calories: Int(kcal100.rounded()),
-                                 protein: nutriments?.proteins100g?.value,
-                                 carbs: nutriments?.carbohydrates100g?.value,
-                                 fat: nutriments?.fat100g?.value)
+                                 protein: protein100,
+                                 carbs: carbs100,
+                                 fat: fat100)
 
        var quantities: [FoodQuantity] = []
        if let grams = serving_quantity?.value, grams > 0 {
@@ -144,9 +192,9 @@ private struct ProductDTO: Decodable {
            quantities.append(FoodQuantity(
                type: .portion, count: 1,
                calories: Int((kcal100 * factor).rounded()),
-               protein: nutriments?.proteins100g?.value.map { $0 * factor },
-               carbs: nutriments?.carbohydrates100g?.value.map { $0 * factor },
-               fat: nutriments?.fat100g?.value.map { $0 * factor },
+               protein: protein100.map { $0 * factor },
+               carbs: carbs100.map { $0 * factor },
+               fat: fat100.map { $0 * factor },
                servingName: (serving_size?.isEmpty ?? true) ? "1 serving" : serving_size))
        }
        quantities.append(per100)

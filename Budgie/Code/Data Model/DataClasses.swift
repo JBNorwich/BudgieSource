@@ -70,20 +70,17 @@ class TodayLump: ObservableObject {
     /// Whether a request that queued behind an in-flight update wanted to publish the snapshot. OR-combined so a foreground publish isn't lost when it queues behind a background pass.
     var queuedPublishSnapshot: Bool = false
     
-    func recalculateBudget() {
-        let uncapped = totalProjCalories - settingsObj.desiredDeficit
-        var budget = max(uncapped, 1200)
-        // Capping exists to stop a deficit budget ballooning when you burn more than expected;
-        // it makes no sense against a surplus, so it's ignored in surplus mode.
-        let atCap = settingsObj.capBudget && !settingsObj.surplusMode && budget > settingsObj.capBudgetCals
-        if atCap { budget = max(settingsObj.capBudgetCals, 1200) }
-        // Only flag the minimum when the 1,200 floor actually kicked in — not when the
-        // budget legitimately works out at exactly 1,200.
-        let atMin = uncapped < 1200 || (atCap && settingsObj.capBudgetCals < 1200)
+    /// Whether the measured week genuinely shows movement AWAY from the goal — as distinct from
+    /// there simply being no target to project from. Only meaningful once food is logged consistently.
+    var movingAwayFromGoal: Bool {
+        consistentlyLoggedFood && measuredGoalRate <= 0
+    }
 
-        totalBudget = budget
-        budgetAtCap = atCap
-        budgetAtMin = atMin
+    func recalculateBudget() {
+        let result = computeBudget(averageBurn: totalProjCalories)
+        totalBudget = result.budget
+        budgetAtCap = result.atCap
+        budgetAtMin = result.atMin
     }
     
     /// The "real" budget that would be calculated if the budget was not capped. Only relevant if the user has turned on capping; otherwise this will just return whatever the budget is.
@@ -136,24 +133,11 @@ class TodayLump: ObservableObject {
     }
     
     var progressAgainstTarget: Double {
-        var returnVal: Double = 0
-        if self.currentTarget != 0 {
-            returnVal = Double(self.eatenCalories) / Double(self.currentTarget)
-        }
-        if returnVal > 2 {
-            returnVal = 2
-        } else if returnVal < 0 {
-            returnVal = 0
-        }
-        return returnVal
+        clampedProgress(eaten: self.eatenCalories, target: self.currentTarget)
     }
     
     var gaugeNumber: Int {
-        if self.progressAgainstTarget != 0 {
-            return Int(self.progressAgainstTarget * 100) - 100
-        } else {
-            return 0
-        }
+        Int(self.progressAgainstTarget * 100) - 100
     }
     
     var calsOutNow: Int {
@@ -161,24 +145,11 @@ class TodayLump: ObservableObject {
     }
     
     var waterGoalDone: Double {
-        let done = Double(self.waterToday) / Double(self.effectiveWaterGoal)
-
-        if done > 1 {
-            return 1
-        } else if done < 0 {
-            return 0
-        } else {
-            return done
-        }
+        min(max(Double(self.waterToday) / Double(self.effectiveWaterGoal), 0), 1)
     }
-    
+
     var waterGoalRem: Int {
-        let left = self.effectiveWaterGoal - self.waterToday
-        if left < 0 {
-            return 0
-        } else {
-            return left
-        }
+        max(self.effectiveWaterGoal - self.waterToday, 0)
     }
     
     // WEIGHT RELATED CALCULATED VARIABLES
@@ -236,7 +207,7 @@ class TodayLump: ObservableObject {
 
     /// Expected weekly weight change from the recorded average deficit (kg), unrounded — for maths.
     private var expectedWeeklyChangeExact: Double {
-        return Double(self.averageDeficit * 7) / 7700
+        return expectedWeeklyChange(averageDeficit: self.averageDeficit)
     }
 
     /// Expected weekly weight loss at the recorded deficit, rounded for display.
@@ -266,14 +237,7 @@ class TodayLump: ObservableObject {
     /// there's no meaningful expectation to compare against.
     var trendStanding: (standing: TrendStanding, lower: Double, upper: Double)? {
         guard performanceAgainstWeightTrend != nil else { return nil }
-        // Magnitudes in the goal direction: a deficit expects loss, a surplus expects gain.
-        let expected = abs(expectedWeeklyChangeExact)
-        let actual = settingsObj.surplusMode ? -weightTrend : weightTrend
-        let halfWidth = max(0.5 * expected, Self.onTargetHalfWidthFloor)
-        let standing: TrendStanding =
-            actual > expected + halfWidth ? .ahead :
-            actual < expected - halfWidth ? .behind : .onTarget
-        return (standing, max(0, expected - halfWidth), expected + halfWidth)
+        return weightTrendBand(averageDeficit: self.averageDeficit, weightTrend: self.weightTrend, surplusMode: settingsObj.surplusMode)
     }
 
     /// Measured daily energy imbalance in the direction of the user's goal: a deficit when
@@ -334,9 +298,7 @@ class TodayLump: ObservableObject {
     /// The user's water goal, topped up by 1 ml per active calorie burned today when
     /// the "increase goal with activity" setting is on.
     var effectiveWaterGoal: Int {
-        let base = settingsObj.waterFromActivity ? settingsObj.waterGoal + max(activeCalories, 0)
-                                                 : settingsObj.waterGoal
-        return max(base, 1)
+        waterGoal(activeCalories: activeCalories)
     }
     
     /// Applies a budget computed on another device (the iPhone). Used on platforms without HealthKit, where `recalculateBudget()` can't run because there's no activity data.
@@ -345,11 +307,6 @@ class TodayLump: ObservableObject {
         budgetAtCap = atCap
         budgetAtMin = atMin
     }
-}
-
-struct CalsPacket {
-    var date: Date
-    var cals: Int
 }
 
 /// Struct that holds an individual data point of weight.
@@ -366,4 +323,212 @@ struct EatenMacros {
     var protein: Int { hkProtein + ownProtein }
     var fat: Int { hkFat + ownFat }
     var carbs: Int { hkCarbs + ownCarbs }
+}
+
+/// One day's calorie picture for the calorie chart: HealthKit active/basal burn plus eaten calories
+/// (HealthKit + Budgie's own logged entries, merged). `totalCals`/`deficit` are derived so callers
+/// never need to re-add the pieces themselves.
+class ChartDataLump: Identifiable {
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var eatenCals: Int = 0
+    var activeCals: Int = 0
+    var basalCals: Int = 0
+    var totalCals: Int { activeCals + basalCals }
+    /// Positive when in deficit, negative when in surplus.
+    var deficit: Int { totalCals - eatenCals }
+}
+
+/// One day's macro totals (Budgie + HealthKit, already summed), in grams.
+struct MacroPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let protein: Int
+    let fat: Int
+    let carbs: Int
+}
+
+/// One day's water intake (Budgie + HealthKit, already summed), in millilitres.
+struct WaterPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let millilitres: Int
+}
+
+/// The water goal (ml) given a day's active-calorie burn: the base goal topped up 1ml per active
+/// calorie when "increase goal with activity" is on, floored at 1. Shared by
+/// `TodayLump.effectiveWaterGoal` (today's live figure, using today's `activeCalories`) and
+/// `waterGoalSeries` (each historical day's own figure, using that day's `activeCals`) so the two
+/// can never drift apart.
+func waterGoal(activeCalories: Int) -> Int {
+    let base = settingsObj.waterFromActivity ? settingsObj.waterGoal + max(activeCalories, 0) : settingsObj.waterGoal
+    return max(base, 1)
+}
+
+/// Builds a day-by-day water-goal series (ml) for `forDates`, keyed by date, from `calorieData`'s
+/// per-day active calories — the historical generalisation of `TodayLump.effectiveWaterGoal`, which
+/// only ever reflects today. Constant across days when "increase goal with activity" is off.
+func waterGoalSeries(calorieData: [ChartDataLump], forDates: [Date]) -> [Date: Int] {
+    let calendar = Calendar.current
+    let activeByDay = Dictionary(calorieData.map { (calendar.startOfDay(for: $0.date), $0.activeCals) }, uniquingKeysWith: { a, _ in a })
+    return Dictionary(uniqueKeysWithValues: forDates.map { date in
+        let day = calendar.startOfDay(for: date)
+        return (day, waterGoal(activeCalories: activeByDay[day] ?? 0))
+    })
+}
+
+/// Expected weekly weight change (kg) implied by a daily calorie deficit, unrounded. Positive when
+/// `averageDeficit` is positive (i.e. a deficit implies loss); 7700 kcal ≈ 1kg of body fat.
+func expectedWeeklyChange(averageDeficit: Int) -> Double {
+    Double(averageDeficit * 7) / 7700
+}
+
+/// The calorie budget for a given average daily burn (kcal): subtract the desired deficit/surplus,
+/// floor at 1,200kcal, then apply the optional cap. The exact formula `TodayLump.recalculateBudget()`
+/// uses for "today" (there, `averageBurn` is `totalProjCalories`) — generalised here so a historical
+/// day's budget can be derived from its own trailing-average burn instead of today's live figure,
+/// e.g. for a day-varying percentage-mode macro goal on the chart.
+func computeBudget(averageBurn: Int) -> (budget: Int, atCap: Bool, atMin: Bool) {
+    let uncapped = averageBurn - settingsObj.desiredDeficit
+    var budget = max(uncapped, 1200)
+    // Capping exists to stop a deficit budget ballooning when you burn more than expected;
+    // it makes no sense against a surplus, so it's ignored in surplus mode.
+    let atCap = settingsObj.capBudget && !settingsObj.surplusMode && budget > settingsObj.capBudgetCals
+    if atCap { budget = max(settingsObj.capBudgetCals, 1200) }
+    // Only flag the minimum when the 1,200 floor actually kicked in — not when the
+    // budget legitimately works out at exactly 1,200.
+    let atMin = uncapped < 1200 || (atCap && settingsObj.capBudgetCals < 1200)
+    return (budget, atCap, atMin)
+}
+
+/// Trailing-average window (days) used throughout the chart's rolling-average calculations — the
+/// weight trend and the macro/water goal series. Callers that need to pad a fetch so a rolling
+/// average has a full window from the first requested day (e.g. `macroGoalSeries`'s caller) should
+/// pad by this many days rather than a bare literal, so the window can't drift out of sync with it.
+let rollingAverageDays = 7
+
+/// The trailing N-day average of a day-keyed series, ending at (and including) `day` — nil if none
+/// of those days have a value. The shared rolling-average building block behind the weight-trend
+/// series and the historical per-day budgets used for macro-goal charting.
+func trailingAverage(_ values: [Date: Double], endingAt day: Date, days: Int = rollingAverageDays, calendar: Calendar = .current) -> Double? {
+    var total = 0.0, count = 0
+    for offset in 0..<days {
+        guard let d = calendar.date(byAdding: .day, value: -offset, to: day) else { continue }
+        if let v = values[calendar.startOfDay(for: d)] { total += v; count += 1 }
+    }
+    guard count > 0 else { return nil }
+    return total / Double(count)
+}
+
+/// Days of history needed before the first visible chart day to compute a weight-trend band there:
+/// the band compares a rolling average against ANOTHER rolling average ending `rollingAverageDays`
+/// before that, so two chained windows of history are needed before any band value exists.
+let weightTrendLookbackDays = rollingAverageDays * 2
+
+/// Classifies an observed weekly weight-trend change against a tolerance band derived from the
+/// expected change at a given average deficit. Shared by `TodayLump.trendStanding` (evaluated for
+/// the current week) and `weightTrendSeries` (evaluated once per historical day) so the "Expected
+/// …–…" figure shown on `WeightView` and the chart's expected-range band can never drift apart.
+func weightTrendBand(averageDeficit: Int, weightTrend: Double, surplusMode: Bool) -> (standing: TodayLump.TrendStanding, lower: Double, upper: Double) {
+    // Magnitudes in the goal direction: a deficit expects loss, a surplus expects gain.
+    let expected = abs(expectedWeeklyChange(averageDeficit: averageDeficit))
+    let actual = surplusMode ? -weightTrend : weightTrend
+    let halfWidth = max(0.5 * expected, TodayLump.onTargetHalfWidthFloor)
+    let standing: TodayLump.TrendStanding =
+        actual > expected + halfWidth ? .ahead :
+        actual < expected - halfWidth ? .behind : .onTarget
+    return (standing, max(0, expected - halfWidth), expected + halfWidth)
+}
+
+/// One day's weight-trend picture for the weight chart: the raw logged entry (if any), the smoothed
+/// trailing weekly average, and the range that average was expected to fall in given the recorded
+/// deficit — the day-by-day generalisation of `TodayLump`'s single-point "Expected …" figure.
+struct WeightTrendPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let actualWeight: Double?
+    let trendWeight: Double?
+    let expectedLower: Double?
+    let expectedUpper: Double?
+}
+
+/// Builds a day-by-day trend line + expected-range band from raw weight points and a per-day deficit
+/// series, using the same maths as `TodayLump.trendStanding`. For each day, `trendWeight` is the
+/// trailing 7-day average of `weightPoints` ending that day (nil until 7 days of coverage exist).
+/// `expectedLower`/`expectedUpper` compare that trend against the trend 7 days earlier — mirroring
+/// how `TodayLump` compares "last week's average" against "the week before's average" — using the
+/// trailing 7-day average deficit ending on the day as the expectation.
+func weightTrendSeries(weightPoints: [WeightPoint], deficitByDay: [Date: Int], surplusMode: Bool) -> [WeightTrendPoint] {
+    let calendar = Calendar.current
+    guard let firstDate = weightPoints.map(\.date).min() else { return [] }
+    let lastDate = weightPoints.map(\.date).max() ?? firstDate
+
+    let weightByDay = Dictionary(weightPoints.map { (calendar.startOfDay(for: $0.date), $0.kilos) }, uniquingKeysWith: { a, _ in a })
+    let deficitByDay = Dictionary(deficitByDay.map { (calendar.startOfDay(for: $0.key), Double($0.value)) }, uniquingKeysWith: { a, _ in a })
+
+    var points: [WeightTrendPoint] = []
+    var day = calendar.startOfDay(for: firstDate)
+    let end = calendar.startOfDay(for: lastDate)
+    while day <= end {
+        let trend = trailingAverage(weightByDay, endingAt: day, calendar: calendar)
+        var expectedLower: Double?
+        var expectedUpper: Double?
+        if let trend,
+           let anchorDay = calendar.date(byAdding: .day, value: -7, to: day),
+           let anchorTrend = trailingAverage(weightByDay, endingAt: anchorDay, calendar: calendar),
+           let avgDeficit = trailingAverage(deficitByDay, endingAt: day, calendar: calendar) {
+            let band = weightTrendBand(averageDeficit: Int(avgDeficit.rounded()), weightTrend: anchorTrend - trend, surplusMode: surplusMode)
+            let (lo, hi): (Double, Double) = surplusMode
+                ? (anchorTrend + band.lower, anchorTrend + band.upper)
+                : (anchorTrend - band.upper, anchorTrend - band.lower)
+            expectedLower = lo
+            expectedUpper = hi
+        }
+        points.append(WeightTrendPoint(date: day, actualWeight: weightByDay[day],
+                                       trendWeight: trend, expectedLower: expectedLower, expectedUpper: expectedUpper))
+        guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+        day = next
+    }
+    return points
+}
+
+/// One day's macro goal, in grams. Constant across days for a fixed-gram goal; varies day to day for
+/// a percentage-of-budget goal, since each day's budget is derived from THAT day's own trailing
+/// average burn rather than frozen at whatever today's budget happens to be. nil fields mean "no
+/// goal set for that macro" (matches `macroGoalGrams`'s own nil).
+struct MacroGoalPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let protein: Int?
+    let fat: Int?
+    let carbs: Int?
+}
+
+/// Builds a day-by-day macro-goal series for `forDates`, from `calorieData` (which should cover at
+/// least 7 days before the earliest date in `forDates`, so the first visible day still gets a full
+/// trailing average rather than a partial/noisy one). Each day's own trailing-average burn feeds
+/// `computeBudget` then `settingsObj.macroGoalGrams(budget:)` — the same two functions
+/// `TodayLump`/`MacroSummaryView` use for "today" — so a percentage-mode goal genuinely tracks each
+/// day's own budget instead of freezing at today's, and stays consistent with what's shown elsewhere.
+///
+/// `todayBudget`, when supplied, is used verbatim for today's point instead of a trailing average of
+/// `calorieData` — that average is built from `burnSeries`'s actually-measured burn only, which for
+/// today is necessarily a partial, still-in-progress figure, so it disagrees with the live budget
+/// (`TodayLump.totalBudget`, which folds in a projected remainder) shown everywhere else on today.
+func macroGoalSeries(calorieData: [ChartDataLump], forDates: [Date], todayBudget: Int? = nil) -> [MacroGoalPoint] {
+    let calendar = Calendar.current
+    let totalCalsByDay = Dictionary(calorieData.map { (calendar.startOfDay(for: $0.date), Double($0.totalCals)) }, uniquingKeysWith: { a, _ in a })
+    return forDates.map { rawDate in
+        let day = calendar.startOfDay(for: rawDate)
+        if let todayBudget, calendar.isDateInToday(day) {
+            let goals = settingsObj.macroGoalGrams(budget: todayBudget)
+            return MacroGoalPoint(date: day, protein: goals.protein, fat: goals.fat, carbs: goals.carbs)
+        }
+        guard let avgBurn = trailingAverage(totalCalsByDay, endingAt: day, calendar: calendar) else {
+            return MacroGoalPoint(date: day, protein: nil, fat: nil, carbs: nil)
+        }
+        let budget = computeBudget(averageBurn: Int(avgBurn.rounded())).budget
+        let goals = settingsObj.macroGoalGrams(budget: budget)
+        return MacroGoalPoint(date: day, protein: goals.protein, fat: goals.fat, carbs: goals.carbs)
+    }
 }

@@ -18,9 +18,10 @@ import SwiftUI
 struct FoodDatePicker: View {
     @Binding var curDate: Date
     @Binding var dateChanged: Bool
-    @State var prevDate: Date = Date()
-    @State var nextDate: Date = Date()
-    
+
+    private var prevDate: Date { getMidnightOnDayBefore(date: curDate) }
+    private var nextDate: Date { getMidnightOnDayAfter(date: curDate) }
+
     private var atToday: Bool {
         getStartOfDay(date: curDate) >= getStartOfDay(date: Date())
     }
@@ -56,14 +57,7 @@ struct FoodDatePicker: View {
             }
         
             .onChange(of: curDate) {
-                nextDate = getMidnightOnDayAfter(date: curDate)
-                prevDate = getMidnightOnDayBefore(date: curDate)
                 dateChanged = true
-            }
-        
-            .onAppear() {                
-                prevDate = getMidnightOnDayBefore(date: curDate)
-                nextDate = getMidnightOnDayAfter(date: curDate)
             }
     }
 }

@@ -35,6 +35,8 @@ struct MacAddFoodSheet: View {
     @State private var alsoSave = false
     @State private var saveServingUnit: FoodQuantityType = .portion
     @State private var saveServingCount: Double = 1
+    @State private var saveServingName: String = ""
+    @State private var knownManufacturers: [String] = []
 
     // Food selection (scaling an existing food)
     @State private var selectedFood: PickedFood?
@@ -47,6 +49,8 @@ struct MacAddFoodSheet: View {
     @State private var recent: [CalorieEntry] = []
     @State private var foodResults: [PickedFood] = []
     @State private var entryResults: [CalorieEntry] = []
+    @State private var customMealIDs: Set<UUID> = []
+    @State private var editingMeal: FoodItem?
     @State private var showingOFFSheet = false
     @State private var reloadToken = UUID()
 
@@ -84,14 +88,15 @@ struct MacAddFoodSheet: View {
     private var scaledMacroPreview: String {
         guard let q = pickedQuantity else { return "" }
         let t = q.totals(servings: effectiveServings)
-        var parts: [String] = []
-        if let p = t.protein { parts.append("P \(Int(p.rounded()))g") }
-        if let c = t.carbs { parts.append("C \(Int(c.rounded()))g") }
-        if let f = t.fat { parts.append("F \(Int(f.rounded()))g") }
-        return parts.isEmpty ? "" : "  ·  " + parts.joined(separator: " · ")
+        let summary = macroSummary(protein: t.protein, carbs: t.carbs, fat: t.fat)
+        return summary.isEmpty ? "" : "  ·  " + summary
     }
 
     private var queryKey: String { "\(searchText)|\(showAllFoods)|\(selectedMeal)|\(reloadToken)" }
+
+    private var manufacturerSuggestions: [String] {
+        suggestedManufacturers(for: manufacturer, in: knownManufacturers)
+    }
 
     // MARK: Body
 
@@ -140,13 +145,16 @@ struct MacAddFoodSheet: View {
         }
         .frame(width: 470, height: 640)
         .task { await loadMeals() }
+        .task { knownManufacturers = await dataStore.knownManufacturers() }
         .task(id: queryKey) { await loadSearch() }
-        .onChange(of: whatItIs) { whatItIs = String(whatItIs.prefix(30)) }
         .sheet(isPresented: $showingOFFSheet) {
             MacOFFSheet(term: searchText) { picked in
                 selectFood(picked)
                 showingOFFSheet = false
             }
+        }
+        .sheet(item: $editingMeal) { food in
+            MacMealEditorSheet(existing: food) { await loadSearch() }
         }
     }
 
@@ -158,6 +166,11 @@ struct MacAddFoodSheet: View {
             .textFieldStyle(.roundedBorder).font(.title2)
         TextField("Name (optional)", text: $whatItIs)
         TextField("Manufacturer (optional)", text: $manufacturer)
+            .textInputSuggestions {
+                ForEach(manufacturerSuggestions, id: \.self) { name in
+                    Text(name).textInputCompletion(name)
+                }
+            }
 
         DisclosureGroup("Nutrition (optional)") {
             MacMacroFields(protein: $protein, carbs: $carbs, fat: $fat)
@@ -171,6 +184,8 @@ struct MacAddFoodSheet: View {
                 Text("Grams").tag(FoodQuantityType.grams)
                 Text("Millilitres").tag(FoodQuantityType.millilitres)
             }.pickerStyle(.menu)
+
+            TextField("Serving name (optional), e.g. “1 medium banana”", text: $saveServingName)
 
             HStack {
                 Text(saveServingUnit == .portion ? "Servings" : "Amount")
@@ -300,6 +315,13 @@ struct MacAddFoodSheet: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { selectFood(food) }
+        .contextMenu {
+            if let id = food.persistedID, customMealIDs.contains(id) {
+                Button("Edit meal…") {
+                    Task { editingMeal = await dataStore.foodItemActor.fetch(id: id) }
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -317,7 +339,7 @@ struct MacAddFoodSheet: View {
     // MARK: Loading
 
     private func loadMeals() async {
-        mealList = (await dataStore.calorieActor.getListOfMeals()).sorted { $0.order < $1.order }
+        mealList = await dataStore.calorieActor.getOrderedListOfMeals()
         if !mealList.contains(where: { $0.mealUUID == selectedMeal }) {
             selectedMeal = mealList.first?.mealUUID ?? selectedMeal
         }
@@ -333,8 +355,9 @@ struct MacAddFoodSheet: View {
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
             let mine = await dataStore.foodItemActor.search(term: searchText)
-            let generic = FoodCatalogue.shared.search(searchText)
+            let generic = FoodCatalogue.shared.search(searchText, excluding: mine)
             foodResults = mine.map(\.asPicked) + generic.map(\.asPicked)
+            customMealIDs = Set(mine.filter { $0.source == .customMeal }.map(\.id))
             let entries = await dataStore.calorieActor.searchCals(term: searchText, meal: nil)
             entryResults = entries.filter { $0.foodItem == nil && $0.servingUnit == nil }
         }
@@ -352,7 +375,8 @@ struct MacAddFoodSheet: View {
     private func prefill(from entry: CalorieEntry) async {
         if let picked = await resolveFood(for: entry) {
             selectedFood = picked
-            selectedQuantityIndex = picked.quantities.firstIndex(where: { $0.type == entry.servingUnit }) ?? 0
+            selectedQuantityIndex = bestServingIndex(in: picked.quantities, forUnit: entry.servingUnit,
+                                                     calories: entry.calories, servingAmount: entry.servingAmount)
             amount = entry.servingAmount ?? (picked.quantities.first?.count ?? 1)
             alsoSave = false
             searchText = ""
@@ -367,23 +391,6 @@ struct MacAddFoodSheet: View {
         }
     }
 
-    /// Resolves the food behind a logged entry so re-adding behaves like a fresh log: the saved FoodItem,
-    /// the bundled generic (by name), or a one-serving reconstruction from the entry's own stamp.
-    private func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
-        if let id = entry.foodItem, let food = await dataStore.foodItemActor.fetch(id: id) {
-            return food.asPicked
-        }
-        guard let unit = entry.servingUnit else { return nil }
-        let name = entry.narrative ?? ""
-        if let match = FoodCatalogue.shared.search(name).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
-            return match.asPicked
-        }
-        let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,
-                             protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
-        return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
-                          manufacturer: entry.manufacturer, quantities: [q])
-    }
-
     // MARK: Persistence
 
     private func save(keepOpen: Bool) {
@@ -391,7 +398,16 @@ struct MacAddFoodSheet: View {
         Task {
             await saveEntry()
             await onSave()
-            if keepOpen { resetInputs(); reloadToken = UUID() } else { dismiss() }
+            if keepOpen {
+                resetInputs()
+                // Re-fetch rather than trust the stale local array: saveEntry() may have just
+                // invalidated the manufacturer cache (a brand-new manufacturer was saved), and the
+                // sheet is staying open for another entry that could reference it.
+                knownManufacturers = await dataStore.knownManufacturers()
+                reloadToken = UUID()
+            } else {
+                dismiss()
+            }
         }
     }
 
@@ -403,8 +419,10 @@ struct MacAddFoodSheet: View {
                                          date: selectedDate, meal: selectedMeal)
         } else if alsoSave {
             let mfr = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
+            let servName = saveServingName.trimmingCharacters(in: .whitespacesAndNewlines)
             let quantity = FoodQuantity(type: saveServingUnit, count: saveServingCount,
-                                        calories: calories!, protein: protein, carbs: carbs, fat: fat)
+                                        calories: calories!, protein: protein, carbs: carbs, fat: fat,
+                                        servingName: servName.isEmpty ? nil : servName)
             let food = FoodItem(name: whatItIs.trimmingCharacters(in: .whitespacesAndNewlines),
                                 manufacturer: mfr.isEmpty ? nil : mfr,
                                 quantities: [quantity], source: .userInput)
@@ -412,6 +430,7 @@ struct MacAddFoodSheet: View {
             let newFoodName = food.name
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
+            if newFoodMfr != nil { await dataStore.invalidateManufacturersCache() }
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
                                                           manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,
@@ -436,6 +455,7 @@ struct MacAddFoodSheet: View {
         alsoSave = false
         saveServingUnit = .portion
         saveServingCount = 1
+        saveServingName = ""
         selectedFood = nil
         selectedQuantityIndex = 0
         amount = 0

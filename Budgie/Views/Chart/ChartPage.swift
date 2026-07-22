@@ -14,76 +14,285 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import SwiftUI
-import Charts
+
+/// The metrics this page can chart. Weight has its own dedicated screen (`WeightHistoryView`,
+/// linked from `BudgetView`) rather than a tab here, matching how water/food already work: a
+/// view-only chart with a link out to the "hub" where editing actually happens, not two separate
+/// places to manage the same entries. Filtered by `ChartPage.availableMetrics` against the user's
+/// macro feature toggle before ever being offered or loaded.
+enum ChartMetric: String, CaseIterable, Identifiable, Hashable {
+    case calories, macros, water
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .calories: return "Calories"
+        case .macros:   return "Macros"
+        case .water:    return "Water"
+        }
+    }
+}
+
+enum ChartLoadPhase: Equatable {
+    case loading
+    case loaded(ChartMetric)
+    case empty(ChartMetric)
+
+    /// The metric this phase's content belongs to — nil while loading. Comparing this against
+    /// `selectedMetric` is how the loader tells "switched tabs" (show the spinner) apart from
+    /// "paged dates within the same tab" (keep the current chart up while refetching) — folded into
+    /// the phase itself so the two can't be tracked as separately-mutated state that drifts out of sync.
+    var metric: ChartMetric? {
+        switch self {
+        case .loading: return nil
+        case .loaded(let m), .empty(let m): return m
+        }
+    }
+}
+
+/// Identifies one load request: whichever combination of metric, date range and refresh count
+/// changes, SwiftUI cancels any in-flight `.task` and starts a fresh one — so a request that arrives
+/// mid-fetch always wins rather than being silently dropped.
+private struct ChartTaskKey: Equatable {
+    var metric: ChartMetric
+    var start: Date
+    var end: Date
+    var refreshNonce: Int
+}
 
 struct ChartPage: View {
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject var chartDataStore = ChartData()
     @EnvironmentObject var todayLump: TodayLump
-    @State var startDate: Date = Date()
-    @State var endDate: Date = Date()
-    @State var loadingDone: Bool = false
+
+    @State var selectedMetric: ChartMetric = .calories
+    @State var startDate: Date
+    @State var endDate: Date
     @State var dateChanged: Bool = false
-    
+    @State var refreshNonce: Int = 0
+    @State var phase: ChartLoadPhase = .loading
+
+    @State var calorieData: [ChartDataLump] = []
+    @State var macroData: [MacroPoint] = []
+    @State var macroGoalData: [MacroGoalPoint] = []
+    /// `macroGoalData` keyed by date, built once alongside it — an O(1) lookup for
+    /// `macroHistoryRow`, rather than rebuilding the dictionary on every row.
+    @State var macroGoalsByDate: [Date: MacroGoalPoint] = [:]
+    @State var waterData: [WaterPoint] = []
+    @State var waterGoalByDay: [Date: Int] = [:]
+    @State var openingWaterPage: Bool = false
+    @State var selWaterDate: Date = Date()
+
+    init() {
+        let end = getMidnightOnDayAfter(date: Date())
+        _endDate = State(initialValue: end)
+        _startDate = State(initialValue: getWeekBeforeDate(date: end))
+    }
+
+    /// Metrics whose feature toggle is on — macros can be turned off entirely, and per
+    /// ARCHITECTURE.md a disabled feature must not surface here in another guise.
+    private var availableMetrics: [ChartMetric] {
+        ChartMetric.allCases.filter { metric in
+            switch metric {
+            case .macros: return !settingsObj.disableMacros
+            case .calories, .water: return true
+            }
+        }
+    }
+
+    /// Matches ChartTableRow's shape: protein/fat/carbs (actual/goal) in the middle, the combined
+    /// kcal those macros represent as the right-hand headline figure.
+    private func macroHistoryRow(_ point: MacroPoint) -> some View {
+        let goal = macroGoalsByDate[point.date]
+        let macroCals = point.protein * 4 + point.carbs * 4 + point.fat * 9
+        return MetricRowLayout(date: point.date) {
+            VStack(spacing: 2) {
+                macroCardLine("PROTEIN", actual: point.protein, goal: goal?.protein)
+                macroCardLine("FAT", actual: point.fat, goal: goal?.fat)
+                macroCardLine("CARBS", actual: point.carbs, goal: goal?.carbs)
+            }
+        } right: {
+            VStack {
+                Text("FROM MACROS")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.5)
+                Spacer()
+                Text(macroCals.formatted())
+                    .font(.title)
+                    .minimumScaleFactor(0.1)
+                    .scaledToFit()
+                Text("kcal").font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func macroCardLine(_ label: String, actual: Int, goal: Int?) -> some View {
+        HStack {
+            Text(label).font(.caption)
+            Spacer()
+            if let goal {
+                Text("\(actual)/\(goal)g").font(.caption)
+            } else {
+                Text("\(actual)g").font(.caption)
+            }
+        }
+    }
+
+    /// Matches ChartTableRow's shape: that day's goal in the middle, absolute volume on the right.
+    /// Tap navigates to `WaterPage` for the day, same as before.
+    private func waterHistoryRow(_ point: WaterPoint) -> some View {
+        let goal = waterGoalByDay[point.date]
+        return MetricRowLayout(date: point.date) {
+            VStack(spacing: 2) {
+                HStack {
+                    Text("GOAL").font(.caption)
+                    Spacer()
+                    Text(goal.map { renderVolume(millilitres: $0) } ?? "–").font(.caption)
+                }
+            }
+        } right: {
+            VStack {
+                Spacer()
+                Text(renderVolume(millilitres: point.millilitres))
+                    .font(.title)
+                    .minimumScaleFactor(0.1)
+                    .scaledToFit()
+                Spacer()
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selWaterDate = point.date
+            openingWaterPage = true
+        }
+    }
+
+    private var pagingGesture: some Gesture {
+        pagingSwipeGesture(startDate: $startDate, endDate: $endDate, stepComponent: .day, stepValue: 7)
+    }
+
     var body: some View {
         VStack {
-            if loadingDone == true {
-                VStack {
-                    ChartDatePicker(startDate: $startDate, endDate: $endDate, dateChanged: $dateChanged)
-                    
-                    if !chartDataStore.returnedChartData.isEmpty {
-                        ChartView(chartData: $chartDataStore.returnedChartData)
-                        ChartTableView(chartData: chartDataStore.returnedChartData).environmentObject(todayLump)
-                    } else {
-                        Label("No data was returned. Either you have no data in Health, or you didn't give Budgie Diet permissions to see your data.", systemImage: "exclamationmark.octagon")
-                        Spacer()
+            if availableMetrics.count > 1 {
+                Picker("Metric", selection: $selectedMetric) {
+                    ForEach(availableMetrics) { metric in
+                        Text(metric.label).tag(metric)
                     }
-                    
-                }.padding()
-                .navigationTitle("History")
-            } else {
+                }
+                .pickerStyle(.segmented)
+            }
+
+            ChartDatePicker(startDate: $startDate, endDate: $endDate, dateChanged: $dateChanged)
+
+            switch phase {
+            case .loading:
                 ProgressView(label: {
                     Text("Loading")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 })
                 .progressViewStyle(.circular)
-                .navigationTitle("History")
-            }
-        }
-        .onChange(of: chartDataStore.dataUpdated)
-        {
-            if chartDataStore.dataUpdated == true {
-                loadingDone = false
-                chartDataStore.assembleChartData()
-                loadingDone = true
-                dateChanged = false
-            }
-        }
-    
-        .onChange(of: dateChanged, initial: false) {
-            if dateChanged == true {
-                chartDataStore.startDate = getStartOfDay(date: startDate)
-                chartDataStore.endDate = getStartOfDay(date: endDate)
-                loadingDone = false
-                Task {
-                    await chartDataStore.pokeForUpdate()
+                .frame(maxHeight: .infinity)
+            case .empty(_):
+                Label("No data was returned. Either you have no data in Health, or you didn't give Budgie Diet permissions to see your data.", systemImage: "exclamationmark.octagon")
+                Spacer()
+            case .loaded(_):
+                switch selectedMetric {
+                case .calories:
+                    CalorieChartView(chartData: calorieData)
+                        .gesture(pagingGesture)
+                    ChartTableView(chartData: calorieData.sorted { $0.date > $1.date }).environmentObject(todayLump)
+                case .macros:
+                    MacroChartView(macroData: macroData, goalData: macroGoalData)
+                        .gesture(pagingGesture)
+                    MetricHistoryList(rows: macroData.sorted { $0.date > $1.date }) { point in
+                        macroHistoryRow(point)
+                    }
+                case .water:
+                    WaterChartView(waterData: waterData, goalByDay: waterGoalByDay)
+                        .gesture(pagingGesture)
+                    MetricHistoryList(rows: waterData.sorted { $0.date > $1.date }) { point in
+                        waterHistoryRow(point)
+                    }
                 }
             }
         }
-        
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                dateChanged = true
+        .padding()
+        .navigationTitle("History")
+        .navigationDestination(isPresented: $openingWaterPage) {
+            WaterPage(curDate: selWaterDate).environmentObject(todayLump)
+        }
+        .task(id: ChartTaskKey(metric: selectedMetric, start: startDate, end: endDate, refreshNonce: refreshNonce)) {
+            // A feature toggled off while this metric was selected — fall back rather than load it.
+            guard availableMetrics.contains(selectedMetric) else {
+                selectedMetric = .calories
+                return
+            }
+            // Only show the spinner on a genuine metric switch (or the very first load) — paging the
+            // date range within the same metric (via the picker or a swipe) keeps the current chart
+            // visible while the new data loads, then cross-fades into it below, rather than flashing
+            // back to a blank spinner on every page.
+            if phase.metric != selectedMetric {
+                phase = .loading
+            }
+            switch selectedMetric {
+            case .calories:
+                let data = await dataStore.calorieSeries(from: startDate, to: endDate)
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    calorieData = data
+                    // Same reasoning as the macros/water cases below: `data` has one entry per day in
+                    // range regardless of whether anything was logged, so emptiness has to be judged
+                    // by content, not array length.
+                    let noData = data.allSatisfy { $0.eatenCals == 0 && $0.totalCals == 0 }
+                    phase = noData ? .empty(.calories) : .loaded(.calories)
+                }
+            case .macros:
+                // Padded by a week so the first visible day's percentage-mode goal is based on a
+                // full trailing average, not a partial one — see `macroGoalSeries`/`rollingAverageDays`.
+                // Only burn data is needed for the goal calculation, not the full calorie series.
+                let paddedStart = getWeekBeforeDate(date: startDate)
+                async let macroTask = dataStore.macroSeries(from: startDate, to: endDate)
+                async let burnTask = dataStore.burnSeries(from: paddedStart, to: endDate)
+                let (data, burnForGoals) = await (macroTask, burnTask)
+                guard !Task.isCancelled else { return }
+                let goals = macroGoalSeries(calorieData: burnForGoals, forDates: data.map(\.date),
+                                            todayBudget: todayLump.totalBudget)
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    macroData = data
+                    macroGoalData = goals
+                    macroGoalsByDate = Dictionary(uniqueKeysWithValues: goals.map { ($0.date, $0) })
+                    // `data` now has one entry per day in range regardless of whether anything was
+                    // logged (so the chart's x-axis always spans the full range) — "no data" means
+                    // every day is zero, not that the array itself is empty.
+                    let noData = data.allSatisfy { $0.protein == 0 && $0.fat == 0 && $0.carbs == 0 }
+                    phase = noData ? .empty(.macros) : .loaded(.macros)
+                }
+            case .water:
+                // Only burn data is needed for the activity-adjusted goal, not the full calorie series.
+                async let waterTask = dataStore.waterSeries(from: startDate, to: endDate)
+                async let burnTask = dataStore.burnSeries(from: startDate, to: endDate)
+                let (data, burnForGoal) = await (waterTask, burnTask)
+                guard !Task.isCancelled else { return }
+                let goals = waterGoalSeries(calorieData: burnForGoal, forDates: data.map(\.date))
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    waterData = data
+                    waterGoalByDay = goals
+                    // Same reasoning as the macros case above: `data` always has one entry per day
+                    // now, so emptiness has to be judged by content, not array length.
+                    let noData = data.allSatisfy { $0.millilitres == 0 }
+                    phase = noData ? .empty(.water) : .loaded(.water)
+                }
             }
         }
-        
-        .onAppear() {
-            loadingDone = false
-            startDate = chartDataStore.startDate
-            endDate = chartDataStore.endDate
-            Task {
-                await chartDataStore.pokeForUpdate()
+        .onChange(of: dateChanged) {
+            dateChanged = false
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                refreshNonce += 1
             }
         }
     }
@@ -92,11 +301,11 @@ struct ChartPage: View {
 #Preview {
     struct Preview: View {
         @State var lump = TodayLump()
-        
+
         var body: some View {
             ChartPage().environmentObject(lump)
         }
     }
-    
+
     return Preview()
 }

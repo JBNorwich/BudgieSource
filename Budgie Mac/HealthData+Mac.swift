@@ -50,21 +50,35 @@ extension HealthData {
     }
 
     /// The Mac equivalent of `updateLump`: no HealthKit, so the budget comes from the iPhone's snapshot and everything else is read straight from the shared SwiftData store.
-    @MainActor func updateLump(todayLump: TodayLump, publishSnapshot: Bool = true) async {
+    @MainActor func updateLump(todayLump: TodayLump, reloadWidgets: Bool = false, publishSnapshot: Bool = true) async {
         let todayStart = getStartOfDay(date: Date())
         let todayEnd = getMidnightOnDayAfter(date: todayStart)
 
         // Food today — Budgie's own entries only. The Mac can't see food logged in other apps'
         // HealthKit data; that's the known, accepted limitation.
-        let foodList = await calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
+        // Fan out the three independent fetches concurrently, mirroring the shared updateLump.
+        async let foodListTask = calorieActor.fetchCalsBetween(from: todayStart, to: todayEnd)
+        async let allMealsTask = calorieActor.getListOfMeals()
+        async let waterTask = waterActor.getTotalOnDate(date: todayStart)
+
+        // The snapshot is only meaningful if the iPhone published it today, within the last 4
+        // hours — otherwise it's a stale prior-day figure and must not be folded into today's totals.
+        let hkFresh = settingsObj.budgetSnapshotIsFresh
+        let snapshotCalories = hkFresh ? settingsObj.snapShotHKCalories : 0
+        let snapshotProtein = hkFresh ? settingsObj.snapShotHKProtein : 0
+        let snapshotFat = hkFresh ? settingsObj.snapShotHKFat : 0
+        let snapshotCarbs = hkFresh ? settingsObj.snapShotHKCarbs : 0
+        let snapshotWater = hkFresh ? settingsObj.snapShotHKWater : 0
+
+        let foodList = await foodListTask
         todayLump.foodList = foodList
-        todayLump.healthKitCalories = settingsObj.snapShotHKCalories
-        todayLump.eatenCalories = foodList.reduce(0) { $0 + $1.calories } + settingsObj.snapShotHKCalories
+        todayLump.healthKitCalories = snapshotCalories
+        todayLump.eatenCalories = foodList.reduce(0) { $0 + $1.calories } + snapshotCalories
         // Macros today — own entries plus the iPhone's snapshot of other-app macros (no HealthKit here).
-        todayLump.eatenProtein = Int(foodList.reduce(0.0) { $0 + ($1.protein ?? 0) }.rounded()) + settingsObj.snapShotHKProtein
-        todayLump.eatenFat     = Int(foodList.reduce(0.0) { $0 + ($1.fat ?? 0) }.rounded()) + settingsObj.snapShotHKFat
-        todayLump.eatenCarbs   = Int(foodList.reduce(0.0) { $0 + ($1.carbs ?? 0) }.rounded()) + settingsObj.snapShotHKCarbs
-        todayLump.allMeals = await calorieActor.getListOfMeals()
+        todayLump.eatenProtein = Int(foodList.reduce(0.0) { $0 + ($1.protein ?? 0) }.rounded()) + snapshotProtein
+        todayLump.eatenFat     = Int(foodList.reduce(0.0) { $0 + ($1.fat ?? 0) }.rounded()) + snapshotFat
+        todayLump.eatenCarbs   = Int(foodList.reduce(0.0) { $0 + ($1.carbs ?? 0) }.rounded()) + snapshotCarbs
+        todayLump.allMeals = await allMealsTask
         todayLump.cleansedMealList = await calorieActor.cleansedMealList(data: foodList)
         todayLump.mealTotalList = [:]
         for meal in todayLump.cleansedMealList {
@@ -73,7 +87,7 @@ extension HealthData {
         }
 
         // Water today.
-        todayLump.waterToday = await waterActor.getTotalOnDate(date: todayStart) + settingsObj.snapShotHKWater
+        todayLump.waterToday = await waterTask + snapshotWater
 
         // Budget — taken from the iPhone's published snapshot, not recomputed.
         todayLump.applyBudgetSnapshot(budget: settingsObj.snapshotBudget,

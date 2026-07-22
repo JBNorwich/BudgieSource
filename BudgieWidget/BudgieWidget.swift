@@ -27,11 +27,7 @@ struct TinyMeter: View {
     var totalBudg: Int
     var projBasal: Int
     var surplusMode: Bool = false
-
-    private var pathDiff: Double {
-        let d = progress / getPercentOfDayDone()
-        return d.isFinite ? d : 0
-    }
+    var targetProgress: Double
 
     var body: some View {
         ZStack {
@@ -43,7 +39,7 @@ struct TinyMeter: View {
                 .rotation(Angle(degrees: -90))
                 // GOES CLOCKWISE FROM EAST
                 .fill(.clear)
-                .stroke(budgetPathColour(diff: pathDiff, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
+                .stroke(budgetPathColour(diff: targetProgress, budget: totalBudg, projectedBasal: projBasal).gradient, style:StrokeStyle(lineWidth: 10, lineCap: .round))
                 .shadow(radius: 10)
             Text(abs(leftToEat).formatted())
                 .fontWeight(.heavy)
@@ -64,19 +60,18 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (BudgieEntry) -> ()) {
-        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000, surplusMode: false, useAllocations: false)
+        let entry = BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890,
+                                totalBudg: 3560, projBasal: 2000, surplusMode: false,
+                                useAllocations: false, targetProgress: 0.86)
         completion(entry)
     }
 
-    /// "Can eat now" at a given time, from the snapshot's raw numbers — the same
-    /// square-law ramp as weightCanEatNow(), but taking its inputs as parameters
-    /// because the widget can't trust settingsObj in its own process.
-    private func canEat(at date: Date, budget: Int, eaten: Int, finalMealTime: Int) -> Int {
-        let cal = Calendar.current
-        let mins = (60 * cal.component(.hour, from: date)) + cal.component(.minute, from: date)
-        var factor = Double(mins + 1) / Double(max(finalMealTime, 1))
-        if factor > 1 { factor = 1 } else { factor *= factor }
-        return Int(Double(budget) * factor) - eaten
+    /// "Can eat now" at a given time, from the snapshot's raw numbers — shares its math with
+    /// `weightCanEatNow()` via `canEatNow(budget:minsIntoDay:finalMealTime:)`, since the widget can't
+    /// trust settingsObj/the wall clock in its own process and has to pass its own inputs explicitly.
+    private func canEat(at date: Date, budget: Int, eaten: Int, finalMealTime: Int, cal: Calendar) -> Int {
+        let minsIntoDay = (60 * cal.component(.hour, from: date)) + cal.component(.minute, from: date)
+        return canEatNow(budget: budget, minsIntoDay: minsIntoDay, finalMealTime: finalMealTime) - eaten
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
@@ -121,7 +116,10 @@ struct Provider: TimelineProvider {
             let entryDate = now.addingTimeInterval(Double(i) * 15 * 60)
             let leftToEat = useAllocations
                 ? budget - eaten
-                : canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal)
+                : canEat(at: entryDate, budget: budget, eaten: eaten, finalMealTime: finalMeal, cal: cal)
+            // The paced target is just what's left plus what's gone — clamped like progressAgainstTarget.
+            let target = leftToEat + eaten
+            let targetProgress = clampedProgress(eaten: eaten, target: target)
             entries.append(BudgieEntry(date: entryDate,
                                        leftToEat: leftToEat,
                                        progressDbl: progress,
@@ -129,7 +127,8 @@ struct Provider: TimelineProvider {
                                        totalBudg: budget,
                                        projBasal: projBasal,
                                        surplusMode: surplus,
-                                       useAllocations: useAllocations))
+                                       useAllocations: useAllocations,
+                                       targetProgress: targetProgress))
         }
 
         // Reload after the last entry as before, but never later than midnight, so the stale
@@ -149,6 +148,8 @@ struct BudgieEntry: TimelineEntry {
     let surplusMode: Bool
     let useAllocations: Bool
     var isStale: Bool = false
+    /// Eaten ÷ the paced target, matching TodayLump.progressAgainstTarget — so the widget's ring colour agrees with the phone's. Computed per entry date, not at render time.
+    var targetProgress: Double = 0
 }
 
 struct BudgieWidgetEntryView : View {
@@ -185,38 +186,36 @@ struct BudgieWidgetEntryView : View {
                     Spacer()
                     HStack {
                         Spacer()
-                        TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode)
+                        TinyMeter(leftToEat: entry.leftToEat, progress: entry.progressDbl, totalBudg: entry.totalBudg, projBasal: entry.projBasal, surplusMode: entry.surplusMode, targetProgress: entry.targetProgress)
                             .frame(maxWidth: 50, maxHeight: 50)
                     }
                 }
                 VStack {
-                    VStack {
+                    HStack {
+                        Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode, usingAllocations: entry.useAllocations).uppercased())
+                            .font(.caption)
+                        Spacer()
+                    }
+                    HStack {
+                        Text(abs(entry.leftToEat).formatted())
+                            .font(.title)
+                        Spacer()
+                    }
+
+                    // no value in showing left to eat if it's the same as the remaining budget
+                    if entry.totalBudgRem != entry.leftToEat {
                         HStack {
-                            Text(budgetStatusLabel(leftToEat: entry.leftToEat, surplusMode: entry.surplusMode, usingAllocations: entry.useAllocations).uppercased())
+                            Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
                                 .font(.caption)
                             Spacer()
                         }
                         HStack {
-                            Text(abs(entry.leftToEat).formatted())
+                            Text(abs(entry.totalBudgRem).formatted())
                                 .font(.title)
                             Spacer()
                         }
-
-                        // no value in showing left to eat if it's the same as the remaining budget
-                        if entry.totalBudgRem != entry.leftToEat {
-                            HStack {
-                                Text((entry.totalBudgRem > -1 ? "Budget left" : "Over budget").uppercased())
-                                    .font(.caption)
-                                Spacer()
-                            }
-                            HStack {
-                                Text(abs(entry.totalBudgRem).formatted())
-                                    .font(.title)
-                                Spacer()
-                            }
-                        }
-                        Spacer()
                     }
+                    Spacer()
                 }
             }
         }
@@ -283,9 +282,3 @@ struct BudgieWidget: Widget {
         .supportedFamilies([.systemSmall, .accessoryCircular])
     }
 }
-//
-//#Preview(as: .systemSmall) {
-//    BudgieWidget()
-//} timeline: {
-//    BudgieEntry(date: Date(), leftToEat: 428, progressDbl: 0.75, totalBudgRem: 890, totalBudg: 3560, projBasal: 2000)
-//}

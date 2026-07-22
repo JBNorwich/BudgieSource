@@ -79,19 +79,17 @@ let foregroundStyleDict: KeyValuePairs = (["Forgiving": Color.blue, "Default": C
 
 struct AdjustWeighting: View {
     @State private var refreshID = UUID()
-    
-    private func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>) -> Binding<T> {
-        Binding(
-            get: { settingsObj[keyPath: keyPath] },
-            set: { newValue in
-                settingsObj[keyPath: keyPath] = newValue
-                refreshID = UUID() // forces redraw on update
-            }
-        )
-    }
-    
+
+    private static let dayWeightKeyPaths: [(String, ReferenceWritableKeyPath<CloudSettings, Int>)] = [
+        ("Monday", \.monWeight), ("Tuesday", \.tuesWeight), ("Wednesday", \.wedsWeight),
+        ("Thursday", \.thursWeight), ("Friday", \.friWeight), ("Saturday", \.satWeight), ("Sunday", \.sunWeight)
+    ]
+
+    // Depends only on hard-coded constants (weightForGraph's own inputs), never on any @State, so it's
+    // computed once here rather than being rebuilt on every redraw this view already forces via refreshID.
+    private let object = WeightingChartObject()
+
     var body: some View {
-        let object = WeightingChartObject()
         let xdata = Array(0...23)   // sample nr is computed at nr*60 minutes, i.e. hour nr
         Form {
             Section(header: Text("Style of calorie weighting"), footer: Text(.init(weightingText))) {
@@ -120,20 +118,16 @@ struct AdjustWeighting: View {
                     .padding()
                     .frame(minHeight: 200)
                 
-                Toggle("Weight differently each day", isOn: settingBinding(\.differentWeights))
+                Toggle("Weight differently each day", isOn: settingBinding(\.differentWeights, refresh: $refreshID))
                     .toggleStyle(SwitchToggleStyle())
                 if !settingsObj.differentWeights {
-                    Picker("Weighting style", selection: settingBinding(\.weightingStyle)) {
+                    Picker("Weighting style", selection: settingBinding(\.weightingStyle, refresh: $refreshID)) {
                         WeightOptions()
                     }.pickerStyle(.menu)
                 } else {
-                    Picker("Monday", selection: settingBinding(\.monWeight)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Tuesday", selection: settingBinding(\.tuesWeight)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Wednesday", selection: settingBinding(\.wedsWeight)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Thursday", selection: settingBinding(\.thursWeight)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Friday", selection: settingBinding(\.friWeight)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Saturday", selection: settingBinding(\.satWeight)) { WeightOptions() }.pickerStyle(.menu)
-                    Picker("Sunday", selection: settingBinding(\.sunWeight)) { WeightOptions() }.pickerStyle(.menu)
+                    ForEach(Self.dayWeightKeyPaths, id: \.0) { label, keyPath in
+                        Picker(label, selection: settingBinding(keyPath, refresh: $refreshID)) { WeightOptions() }.pickerStyle(.menu)
+                    }
                 }
             }
         }.frame(maxHeight: .infinity)

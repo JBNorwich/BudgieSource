@@ -26,28 +26,25 @@ struct GaugeView: View {
         return "On target"
     }
     
+    private var standing: (text: String, colour: Color) {
+        switch budgetStanding(diff: todayLump.progressAgainstTarget,
+                              budget: todayLump.totalBudget,
+                              projectedBasal: todayLump.projectedBasal) {
+        case .wellUnder:    return ("Below target", .blue)
+        case .onTarget:     return ("On target", .green)
+        case .slightlyOver: return ("Slightly over", .yellow)
+        case .over:         return ("Above target", .red)
+        }
+    }
+    
     var body: some View {
         HStack {
             VStack {
-                Gauge(value: todayLump.progressAgainstTarget, in: 0...2) {
-                } currentValueLabel: {
-                    if todayLump.gaugeNumber > 0 {
-                        Text("+" + todayLump.gaugeNumber.formatted() + "%")
-                    } else if todayLump.gaugeNumber < 0 {
-                        Text("-" + (-todayLump.gaugeNumber).formatted() + "%")
-                    } else {
-                        Text("0%")
-                    }
-                } minimumValueLabel: {
-                    Text("")
-                        .foregroundColor(.teal)
-                } maximumValueLabel: {
-                    Text("")
-                        .foregroundColor(.red)
-                }.gaugeStyle(.accessoryCircular)
-                    .tint(gradient)
+                AccessoryCircularGauge(value: todayLump.progressAgainstTarget, range: 0...2, gradient: gradient) {
+                    Text(todayLump.gaugeNumber.formatted(.number.sign(strategy: .always(includingZero: false))) + "%")
+                }
                     .padding()
-                    .animation(.easeInOut, value: todayLump.progressToday)
+                Spacer()
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Eaten against target")
@@ -55,16 +52,7 @@ struct GaugeView: View {
             Divider()
             VStack {
                 HStack {
-                    if (todayLump.progressAgainstTarget < 0.95) {
-                        Text("**Below target**")
-                            .foregroundColor(.blue)
-                    } else if todayLump.progressAgainstTarget > 1.05 {
-                        Text("**Above target**")
-                            .foregroundColor(.red)
-                    } else {
-                        Text("**On target**")
-                            .foregroundColor(.teal)
-                    }
+                    StatusHeadline(text: standing.text, color: standing.colour)
                     Spacer()
                 }
                 HStack {
@@ -84,11 +72,26 @@ struct GaugeView: View {
                     Spacer()
                 }
                 #endif
-                if settingsObj.hideTodayInDetail == true && (todayLump.activeEstimated || todayLump.basalEstimated) {
+                if settingsObj.hideTodayInDetail == true &&
+                    (todayLump.activeEstimated || todayLump.basalEstimated || todayLump.budgetAtCap || todayLump.budgetAtMin) {
                     Divider()
-                    HStack {
-                        Text("Some of your calorie burn figures are estimated, so your budget doesn't reflect your real activity.")
-                        Spacer()
+                    if todayLump.activeEstimated || todayLump.basalEstimated {
+                        HStack {
+                            Text("Some of your calorie burn figures are estimated, so your budget doesn't reflect your real activity.")
+                            Spacer()
+                        }
+                    }
+                    if todayLump.budgetAtCap {
+                        HStack {
+                            Text("Your budget for today has been capped at the amount chosen in Settings.")
+                            Spacer()
+                        }
+                    }
+                    if todayLump.budgetAtMin {
+                        HStack {
+                            Text("Your budget was calculated as lower than the minimum of 1,200 calories, so it has been set at that amount.")
+                            Spacer()
+                        }
                     }
                 }
             }

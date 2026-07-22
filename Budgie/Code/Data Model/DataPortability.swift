@@ -46,11 +46,16 @@ struct FoodItemDTO: Codable {
     var barcode: String?
     var dateCreated: Date
     var syncNonce: Int
+    // Optional (unlike everything above) so a backup written before custom meals existed still
+    // decodes — a missing key just means "not a meal", which FoodItem(restoring:) defaults to.
+    var components: [MealComponent]?
+    var batchYield: Double?
 
     init(_ f: FoodItem) {
         id = f.id; name = f.name; manufacturer = f.manufacturer; source = f.source
         quantities = f.quantities; archived = f.archived; barcode = f.barcode
         dateCreated = f.dateCreated; syncNonce = f.syncNonce
+        components = f.components; batchYield = f.batchYield
     }
 }
 

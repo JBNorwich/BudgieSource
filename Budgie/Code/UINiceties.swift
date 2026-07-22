@@ -16,6 +16,51 @@
 import Foundation
 import SwiftUI
 
+/// Eaten ÷ target, clamped to 0...2 — shared by `TodayLump.progressAgainstTarget` and the widget's
+/// per-entry equivalent, so both compute the same ring-colour figure the same way.
+func clampedProgress(eaten: Int, target: Int) -> Double {
+    guard target != 0 else { return 0 }
+    return min(max(Double(eaten) / Double(target), 0), 2)
+}
+
+extension Double {
+    /// Safe Double → Int for user-entered or scaled values (e.g. a serving amount multiplied through
+    /// a food's stamped calories/macros): clamps non-finite or out-of-range doubles instead of
+    /// trapping, unlike `Int(_:)`, which crashes on NaN, ±infinity, or anything outside Int's range.
+    var safeInt: Int {
+        guard isFinite else { return 0 }
+        return Int(max(Double(Int.min), min(Double(Int.max), self)).rounded())
+    }
+}
+
+/// Resolves whichever unit's fields the user actually entered into kilograms. `nil` means nothing
+/// meaningful was entered for that unit (not zero) — shared by the weight-log and weight-goal sheets,
+/// which otherwise each carried an identical copy of this per-unit dispatch.
+func kilograms(kg: Double?, lb: Double?, st: Int?, stLb: Int?, unit: weightUnits) -> Double? {
+    switch unit {
+    case .kilograms:
+        return kg
+    case .pounds:
+        guard let lb else { return nil }
+        return lb * lbInKg
+    case .stonepounds:
+        let s = st ?? 0, p = stLb ?? 0
+        guard s != 0 || p != 0 else { return nil }
+        return StonePounds(stones: s, pounds: p).kilos
+    }
+}
+
+/// A two-way binding onto a `CloudSettings` property that also bumps `refresh` on write, forcing a
+/// redraw — `CloudSettings` isn't `ObservableObject` (it's a thin wrapper over iCloud key-value
+/// storage), so views that bind directly to it need this to pick up their own writes. Shared by every
+/// settings screen, which otherwise each declared their own identical copy of this.
+func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>, refresh: Binding<UUID>) -> Binding<T> {
+    Binding(
+        get: { settingsObj[keyPath: keyPath] },
+        set: { settingsObj[keyPath: keyPath] = $0; refresh.wrappedValue = UUID() }
+    )
+}
+
 func getActivityNarrative(activityLevel: Double) -> String {
     switch activityLevel {
         
@@ -46,8 +91,71 @@ func calcBMR(height: Int, weight: Int, age: Int, sex: Int)-> Int {
 
 func getBudgieGreeting() -> String {
     let greetingArray = ["Hi.", "Hello.", "Cheep.", "Tweet.", "Chirp.", "Aah! You found me!", "...moo?"]
-    
+
     return greetingArray.randomElement()!
+}
+
+/// Case-insensitive substring matches for manufacturer autocomplete, excluding an exact match
+/// (nothing to suggest once it's been typed in full). Shared by every food-entry sheet.
+func suggestedManufacturers(for query: String, in known: [String], limit: Int = 5) -> [String] {
+    let q = query.trimmingCharacters(in: .whitespaces)
+    guard !q.isEmpty else { return [] }
+    return known
+        .filter { $0.localizedCaseInsensitiveContains(q) && $0.localizedCaseInsensitiveCompare(q) != .orderedSame }
+        .prefix(limit).map { $0 }
+}
+
+/// A compact "P Xg · C Xg · F Xg" line, listing only the macros that were actually recorded
+/// (rounded to whole grams). Shared by every place that previews or displays an entry's macros.
+func macroSummary(protein: Double?, carbs: Double?, fat: Double?) -> String {
+    [("P", protein), ("C", carbs), ("F", fat)]
+        .compactMap { label, value in value.map { "\(label) \($0.safeInt)g" } }
+        .joined(separator: " · ")
+}
+
+/// Resolves the food behind a logged entry so re-adding it behaves like a fresh log: the saved
+/// FoodItem, the bundled generic (by name), or a one-serving reconstruction from the entry's own
+/// stamp. Shared by the iOS and Mac add-food sheets.
+func resolveFood(for entry: CalorieEntry) async -> PickedFood? {
+    if let id = entry.foodItem, let food = await dataStore.foodItemActor.fetch(id: id) {
+        return food.asPicked
+    }
+    guard let unit = entry.servingUnit else { return nil }   // no serving stamp → genuine quick entry
+    let name = entry.narrative ?? ""
+    let entryManufacturer = entry.manufacturer ?? ""
+    if let match = FoodCatalogue.shared.search(name).first(where: {
+        let nameMatches = $0.name.caseInsensitiveCompare(name) == .orderedSame
+        let manufacturerMatches = ($0.manufacturer ?? "").caseInsensitiveCompare(entryManufacturer) == .orderedSame
+        return nameMatches && manufacturerMatches
+    }) {
+        return match.asPicked
+    }
+    let q = FoodQuantity(type: unit, count: entry.servingAmount ?? 1, calories: entry.calories,
+                         protein: entry.protein, carbs: entry.carbs, fat: entry.fat)
+    return PickedFood(id: UUID(), persistedID: nil, name: name.isEmpty ? "Food" : name,
+                      manufacturer: entry.manufacturer, quantities: [q])
+}
+
+/// Best serving to re-open a past logged entry on: the one matching the entry's unit and, when
+/// several share that unit, the one whose per-unit calorie rate is closest to what was actually
+/// logged — so a food with two same-unit servings (e.g. "1 slice" and "1 loaf") re-opens on the one
+/// the entry really used, rather than whichever happens to come first. Shared by every screen that
+/// re-opens a past CalorieEntry against a food's current servings.
+func bestServingIndex(in quantities: [FoodQuantity], forUnit unit: FoodQuantityType?,
+                      calories: Int, servingAmount: Double?) -> Int {
+    guard let unit else { return 0 }
+    let sameUnit = quantities.indices.filter { quantities[$0].type == unit }
+    guard let first = sameUnit.first else { return 0 }
+    guard let amount = servingAmount, amount > 0 else { return first }
+    let loggedRate = Double(calories) / amount
+    return sameUnit.min { servingRateGap(quantities[$0], loggedRate) < servingRateGap(quantities[$1], loggedRate) } ?? first
+}
+
+/// How far a serving's per-unit calorie rate is from a target rate — used to disambiguate two
+/// servings that share a unit type.
+private func servingRateGap(_ q: FoodQuantity, _ rate: Double) -> Double {
+    guard q.count > 0 else { return .greatestFiniteMagnitude }
+    return abs(Double(q.calories) / q.count - rate)
 }
 
 // WEIGHT RELATED STRUCTS/FUNCTIONS
@@ -165,6 +273,11 @@ func millilitres(from displayValue: Double, in unit: volumeUnits) -> Int {
     Int((displayValue * unit.millilitresPerUnit).rounded())
 }
 
+/// Converts a millilitre value into the given display unit — the inverse of `millilitres(from:in:)`.
+func displayValue(millilitres ml: Int, in unit: volumeUnits) -> Double {
+    Double(ml) / unit.millilitresPerUnit
+}
+
 /// Renders a volume given in millilitres into a formatted string, either using a supplied unit or the user's setting. Includes a suffix by default.
 func renderVolume(millilitres ml: Int, outputUnit: volumeUnits? = nil, includeSuffix: Bool = true) -> String {
     let usedUnit = outputUnit ?? volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
@@ -174,7 +287,7 @@ func renderVolume(millilitres ml: Int, outputUnit: volumeUnits? = nil, includeSu
         case .millilitres:
             returnString = ml.formatted()
         case .usFluidOunces, .imperialFluidOunces:
-            returnString = (Double(ml) / usedUnit.millilitresPerUnit)
+            returnString = displayValue(millilitres: ml, in: usedUnit)
                 .formatted(.number.precision(.fractionLength(0...1)))
     }
 
@@ -192,24 +305,39 @@ func budgetBlobColour(canEatNow: Int, surplusMode: Bool = settingsObj.surplusMod
     if canEatNow < -49 {
         return surplusMode ? .green : .red
     } else if canEatNow < 50 {
-        return surplusMode ? .red : .green
+        // Being close to today's budget reads the same way regardless of mode — it's on track,
+        // not a warning sign just because the mode happens to be surplus.
+        return .green
     } else {
         return .teal
     }
 }
 
-/// Colour of the progress ring. `diff` is the caller's progress metric (1.0 == on pace).
-func budgetPathColour(diff: Double, budget: Int, projectedBasal: Int) -> Color {
-    if diff < 0.25 {
-        return .blue
-    } else if diff < 1.05 {
-        return .green
-    } else if diff < 1.20 {
-        // A little over, but fine if the overage is smaller than the resting calories left to burn.
-        return (diff - 1) * Double(budget) < Double(projectedBasal) ? .green : .yellow
-    } else {
-        return .red          // ← single source of truth; fixes the watch's yellow "bad" bug
+/// Single source of truth for both the meter ring colour and the gauge's status label.
+enum BudgetStanding {
+    case wellUnder, onTarget, slightlyOver, over
+    var colour: Color {
+        switch self {
+        case .wellUnder:    return .blue
+        case .onTarget:     return .green
+        case .slightlyOver: return .yellow
+        case .over:         return .red
+        }
     }
+}
+
+func budgetStanding(diff: Double, budget: Int, projectedBasal: Int) -> BudgetStanding {
+    if diff < 0.25 { return .wellUnder }
+    if diff < 1.05 { return .onTarget }
+    if diff < 1.20 {
+        // a little over, but fine if the overage is under the resting calories left to burn
+        return (diff - 1) * Double(budget) < Double(projectedBasal) ? .onTarget : .slightlyOver
+    }
+    return .over
+}
+
+func budgetPathColour(diff: Double, budget: Int, projectedBasal: Int) -> Color {
+    budgetStanding(diff: diff, budget: budget, projectedBasal: projectedBasal).colour
 }
 
 /// Headline label above the meter.
@@ -221,6 +349,16 @@ func budgetStatusLabel(leftToEat: Int, surplusMode: Bool = settingsObj.surplusMo
         return leftToEat > -1 ? "Left today" : "Over budget by"
     } else {
         return leftToEat > -1 ? "Can eat now" : "Over target by"
+    }
+}
+
+extension View {
+    /// A simple informational alert with a single "OK" button — shared by every sheet that just needs
+    /// to tell the user why an action didn't go through.
+    func okAlert(_ message: String, isPresented: Binding<Bool>) -> some View {
+        alert(message, isPresented: isPresented) {
+            Button("OK", role: .cancel) { }
+        }
     }
 }
 

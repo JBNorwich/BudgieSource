@@ -57,13 +57,5 @@ struct Donate: View {
 }
 
 #Preview {
-    struct Preview: View {
-        @State var changed: Bool = true
-
-        var body: some View {
-            Donate()
-        }
-    }
-    
-    return Preview()
+    Donate()
 }

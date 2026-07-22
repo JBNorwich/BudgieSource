@@ -24,13 +24,6 @@ struct MacroSettingsView: View {
     private static let gramsFormat: IntegerFormatStyle<Int> = .number.precision(.integerLength(1...4))
     private static let percentFormat: IntegerFormatStyle<Int> = .number.precision(.integerLength(1...3))
 
-    private func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>) -> Binding<T> {
-        Binding(
-            get: { settingsObj[keyPath: keyPath] },
-            set: { settingsObj[keyPath: keyPath] = $0; refreshID = UUID() }
-        )
-    }
-
     private var enabledBinding: Binding<Bool> {
         Binding(get: { !settingsObj.disableMacros },
                 set: { settingsObj.disableMacros = !$0; refreshID = UUID() })
@@ -54,7 +47,7 @@ struct MacroSettingsView: View {
 
             if !settingsObj.disableMacros {
                 Section(header: Text("Daily goal"), footer: Text(goalFooter)) {
-                    Picker("Goal", selection: settingBinding(\.macroGoalMode)) {
+                    Picker("Goal", selection: settingBinding(\.macroGoalMode, refresh: $refreshID)) {
                         Text("None").tag(0)
                         Text("By grams").tag(1)
                         Text("By percentage").tag(2)
@@ -83,18 +76,13 @@ struct MacroSettingsView: View {
             }
         }
         .navigationTitle("Macros")
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") { fieldFocused = false }
-            }
-        }
+        .keyboardDoneButton($fieldFocused)
     }
 
     @ViewBuilder
     private func gramsField(_ label: String, _ keyPath: ReferenceWritableKeyPath<CloudSettings, Int>) -> some View {
         LabeledContent {
-            TextField("0", value: settingBinding(keyPath), format: MacroSettingsView.gramsFormat)
+            TextField("0", value: settingBinding(keyPath, refresh: $refreshID), format: MacroSettingsView.gramsFormat)
                 .multilineTextAlignment(.trailing)
                 .keyboardType(.numberPad)
                 .focused($fieldFocused)
@@ -105,7 +93,7 @@ struct MacroSettingsView: View {
     private func percentField(_ label: String, _ keyPath: ReferenceWritableKeyPath<CloudSettings, Int>) -> some View {
         LabeledContent {
             HStack(spacing: 2) {
-                TextField("0", value: settingBinding(keyPath), format: MacroSettingsView.percentFormat)
+                TextField("0", value: settingBinding(keyPath, refresh: $refreshID), format: MacroSettingsView.percentFormat)
                     .multilineTextAlignment(.trailing)
                     .keyboardType(.numberPad)
                     .focused($fieldFocused)

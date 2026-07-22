@@ -158,11 +158,16 @@ struct FirstRunWizard: View {
             .disabled(stepsTaken.isEmpty)
             .opacity(stepsTaken.isEmpty ? 0 : 1)
             .accessibilityLabel("Back")
-            ForEach(Step.allCases, id: \.self) { s in
-                Capsule()
-                    .frame(height: 4)
-                    .foregroundStyle(s <= step ? Color.accentColor : Color.secondary.opacity(0.3))
+            HStack(spacing: 8) {
+                ForEach(Step.allCases, id: \.self) { s in
+                    Capsule()
+                        .frame(height: 4)
+                        .foregroundStyle(s <= step ? Color.accentColor : Color.secondary.opacity(0.3))
+                }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Progress")
+            .accessibilityValue("Step \(step.rawValue + 1) of \(Step.allCases.count)")
         }
         .padding()
     }
@@ -208,7 +213,7 @@ struct FirstRunWizard: View {
         VStack(spacing: 24) {
             Spacer()
             Text("Connect Apple Health").font(.title2).bold()
-            Text("You need to do this to use Budgie Diet, as it lets me assess your recent activity to decide your budgets, log your water and weight, and bring in your data from other apps. It's really important! Please make sure you grant permissions after hitting the button!")
+            Text("You need to do this to use Budgie Diet, as it lets Budgie Diet assess your recent activity to decide your budgets, log your water and weight, and bring in your data from other apps. It's really important! Please make sure you grant permissions after hitting the button!")
                 .multilineTextAlignment(.center)
             Button("Authorise Health access") {
                 hkFailed = false
@@ -216,7 +221,7 @@ struct FirstRunWizard: View {
             }
             .buttonStyle(.borderedProminent)
             if hkFailed {
-                Text("I couldn't ask for Health access on this device. You can carry on, but your budgets will be based only on the figures you enter manually.")
+                Text("Health access couldn't be requested on this device. You can carry on, but your budgets will be based only on the figures you enter manually.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.red)
                 Button("Continue anyway") { go(to: .bmr) }
@@ -242,7 +247,7 @@ struct FirstRunWizard: View {
         VStack(spacing: 16) {
             VStack(spacing: 8) {
                 Text("Log your weight").font(.title2).bold()
-                Text("I couldn't find a recent weight in Apple Health, so pop your current weight in below. This sets your starting point and helps work out your budgets.")
+                Text("No recent weight was found in Apple Health, so pop your current weight in below. This sets your starting point and helps work out your budgets.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             }
@@ -296,6 +301,7 @@ struct FirstRunWizard: View {
                 case 1, 3:
                     go(to: .calorieTarget)
                 case 2:
+                    settingsObj.surplusMode = false
                     settingsObj.desiredDeficit = 0
                     go(to: .done)
                 default:
@@ -382,10 +388,8 @@ struct FirstRunWizard: View {
             Text(.init(healthDisclaimer))
                 .multilineTextAlignment(.center)
                 .font(.callout)
-            NavigationLink {
+            NavigationLink("Read full health disclaimer") {
                 Disclaimer(displayed: $disclaimerOn)
-            } label: {
-                Text("Read full health disclaimer")
             }
             Spacer()
             Button("Start using Budgie Diet") {

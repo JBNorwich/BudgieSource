@@ -45,11 +45,26 @@ extension WaterEntry {
 }
 
 @ModelActor actor WaterActor {
+    private func save(_ label: String) {
+        do { try modelContext.save() } catch { print("\(label) error: \(error)") }
+    }
+
+    /// Fetches with the standard `#if os(macOS) modelContext.rollback() #endif` guard applied first.
+    private func fetch<T>(_ descriptor: FetchDescriptor<T>) -> [T] {
+        #if os(macOS)
+        modelContext.rollback()
+        #endif
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+
     func addWater(object: WaterEntry) async {
         modelContext.insert(object)
         do {
             try modelContext.save()
         } catch {
+            // Don't leave the failed insert pending in the context — a later unrelated save
+            // elsewhere could otherwise silently persist this orphaned entry.
+            modelContext.delete(object)
             #if !os(macOS)
             if let hkUUID = object.healthKitUUID {
                 await dataStore.deleteHKSample(uuid: hkUUID, type: waterQuantityType)
@@ -58,7 +73,7 @@ extension WaterEntry {
             print("Water insertion error: \(error)")
         }
     }
-    
+
     func deleteEntries(objects: [WaterEntry]) async {
         for object in objects {
             #if !os(macOS)
@@ -68,40 +83,25 @@ extension WaterEntry {
             #endif
             modelContext.delete(object)
         }
-        do {
-            try modelContext.save()
-        } catch {
-            print("Water deletion error: \(error)")
-        }
+        save("Water deletion")
     }
-    
+
     func getTotalOnDate(date: Date) async -> Int {
-        #if os(macOS)
-        modelContext.rollback()
-        #endif
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
         let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > start && $0.date < end })
-        let entries = (try? modelContext.fetch(descriptor)) ?? []
-        return entries.reduce(0) { $0 + $1.quantity }
+        return fetch(descriptor).reduce(0) { $0 + $1.quantity }
     }
 
     func getEntriesOnDate(date: Date) async -> [WaterEntry] {
-        #if os(macOS)
-        modelContext.rollback()
-        #endif
         let start = getStartOfDay(date: date)
         let end = getMidnightOnDayAfter(date: start)
         let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > start && $0.date < end })
-        return (try? modelContext.fetch(descriptor)) ?? []
+        return fetch(descriptor)
     }
-    
+
     func fetchWaterBetween(from: Date, to: Date) async -> [WaterEntry] {
-        #if os(macOS)
-        modelContext.rollback()
-        #endif
-        let descriptor = FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > from && $0.date < to })
-        return (try? modelContext.fetch(descriptor)) ?? []
+        fetch(FetchDescriptor<WaterEntry>(predicate: #Predicate { $0.date > from && $0.date < to }))
     }
 
     func markWaterMirrored(entryID: UUID, healthKitUUID: UUID) {
@@ -119,7 +119,7 @@ extension WaterEntry {
 
     func wipeWater() {
         for e in (try? modelContext.fetch(FetchDescriptor<WaterEntry>())) ?? [] { modelContext.delete(e) }
-        do { try modelContext.save() } catch { print("Water wipe error: \(error)") }
+        save("Water wipe")
     }
 
     @discardableResult
@@ -127,7 +127,7 @@ extension WaterEntry {
         let existing = merge ? Set(((try? modelContext.fetch(FetchDescriptor<WaterEntry>())) ?? []).map(\.id)) : []
         var count = 0
         for dto in dtos where !existing.contains(dto.id) { modelContext.insert(WaterEntry(restoring: dto)); count += 1 }
-        do { try modelContext.save() } catch { print("Water import error: \(error)") }
+        save("Water import")
         return count
     }
 }

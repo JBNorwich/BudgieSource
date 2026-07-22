@@ -45,30 +45,36 @@ struct FoodHub: View {
     
     func doUpdates() async {
         loadingDone = false
-        
-        let newData = await dataStore.calorieActor.fetchCalsBetween(from: curDate, to: getMidnightOnDayAfter(date: curDate))
+        // Snapshot the date being fetched — if curDate moves on again before this finishes,
+        // these results are stale and must not overwrite whatever the newer fetch produces.
+        let fetchDate = curDate
+
+        let newData = await dataStore.calorieActor.fetchCalsBetween(from: fetchDate, to: getMidnightOnDayAfter(date: fetchDate))
         let budgieCalsOnDate = newData.reduce(0) { $0 + $1.calories }
-        async let hkEatenTask = dataStore.pullCalorieTotalForDate(date: curDate, type: eatenQuantityType, hkOnly: true)
-        async let activeTask = dataStore.pullCalorieTotalForDate(date: curDate, type: activeQuantityType, hkOnly: false)
-        async let basalTask = dataStore.pullCalorieTotalForDate(date: curDate, type: basalQuantityType, hkOnly: false)
-        async let macrosTask = dataStore.pullEatenMacros(startDate: curDate, endDate: getMidnightOnDayAfter(date: curDate))
+        async let hkEatenTask = dataStore.pullCalorieTotalForDate(date: fetchDate, type: eatenQuantityType, hkOnly: true)
+        async let activeTask = dataStore.pullCalorieTotalForDate(date: fetchDate, type: activeQuantityType, hkOnly: false)
+        async let basalTask = dataStore.pullCalorieTotalForDate(date: fetchDate, type: basalQuantityType, hkOnly: false)
+        async let macrosTask = dataStore.pullEatenMacros(startDate: fetchDate, endDate: getMidnightOnDayAfter(date: fetchDate))
         let (hkEaten, newActive, newBasal) = await (hkEatenTask, activeTask, basalTask)
-        macros = await macrosTask
-        
+        let newMacros = await macrosTask
+        let newMealList = await dataStore.calorieActor.cleansedMealList(data: newData)
+
+        guard fetchDate == curDate else { return }
+
         let newLump = ChartDataLump()
         newLump.eatenCals = hkEaten + budgieCalsOnDate
         newLump.activeCals = newActive
         newLump.basalCals = newBasal
-        newLump.date = curDate
-        
-        mealList = await dataStore.calorieActor.cleansedMealList(data: newData)
+        newLump.date = fetchDate
+
+        mealList = newMealList
+        macros = newMacros
         budgieData = newData.sorted { $0.date < $1.date }
         hkCalories = hkEaten
         dataLump = newLump
-        
-        timeToAddOn = getCurrentTimeonDate(date: curDate)
+
+        timeToAddOn = getCurrentTimeonDate(date: fetchDate)
         loadingDone = true
-        dateChanged = false
     }
     
     var body: some View {
@@ -130,6 +136,7 @@ struct FoodHub: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 NavigationLink {
                     FoodLibraryView()
+                        .environmentObject(todayLump)
                         .onDisappear {
                             Task {
                                 await doUpdates()                                  // refresh this screen
@@ -146,18 +153,13 @@ struct FoodHub: View {
             }
         }
         
-        .task {
+        // Keyed on curDate rather than a latched "did it change" flag, so a fast run of date
+        // taps can't skip a refetch, and SwiftUI cancels any still-in-flight fetch for a date
+        // that's no longer current.
+        .task(id: curDate) {
             await doUpdates()
         }
 
-        .onChange(of: dateChanged) {
-            // doUpdates() resets dateChanged to false when it finishes; only react to
-            // the true transition so each date change fetches exactly once.
-            if dateChanged {
-                Task { await doUpdates() }
-            }
-        }
-              
         .sheet(isPresented: $addSheetDisplayed) {
             NavigationStack {
                 AddCalsSheet(selectedDate: timeToAddOn, initialSearch: pendingSearch)
@@ -175,6 +177,7 @@ struct FoodHub: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                 TextField("Search foods to add", text: $foodSearch)
                     .submitLabel(.search)
+                    .autocorrectionDisabled()
                     .onSubmit { openSearch() }
                 if !foodSearch.isEmpty {
                     Button {

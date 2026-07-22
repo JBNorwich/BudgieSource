@@ -15,6 +15,30 @@
 
 import SwiftUI
 
+extension View {
+    /// A "Done" button above the keyboard that clears the given focus state(s) — shared by every
+    /// numeric-entry screen that otherwise repeated this toolbar verbatim.
+    func keyboardDoneButton(_ focuses: FocusState<Bool>.Binding...) -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focuses.forEach { $0.wrappedValue = false } }
+            }
+        }
+    }
+
+    /// Same as `keyboardDoneButton(_:)`, for a screen whose focus state is an optional field enum
+    /// rather than a plain `Bool` — "Done" clears it to `nil`.
+    func keyboardDoneButton<F>(clearing focus: FocusState<F?>.Binding) -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focus.wrappedValue = nil }
+            }
+        }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var todayLump: TodayLump
     
@@ -23,9 +47,6 @@ struct SettingsView: View {
     @State var surplusMode: Bool = false
     @State var useFitnessGoal: Bool = false
     @State var disclaimerDisplayed = false
-    @State var deficitLabel: String = "0"
-    @State var surpDefHeader: String = "Header goes here"
-    @State var surpDefExplainer: String = "Explainer goes here"
     @State private var showing1000Warning = false
     @State private var deficitBeforeWarning = 0
     
@@ -38,17 +59,7 @@ struct SettingsView: View {
     @State private var refreshID = UUID()
     
     private static let integerFieldFormat: IntegerFormatStyle<Int> = .number.grouping(.automatic).precision(.integerLength(1...4))
-    
-    private func settingBinding<T>(_ keyPath: ReferenceWritableKeyPath<CloudSettings, T>) -> Binding<T> {
-        Binding(
-            get: { settingsObj[keyPath: keyPath] },
-            set: { newValue in
-                settingsObj[keyPath: keyPath] = newValue
-                refreshID = UUID() // forces redraw on update
-            }
-        )
-    }
-    
+
     private var deficitBinding: Binding<Double> {
         Binding(
             get: {
@@ -74,7 +85,7 @@ struct SettingsView: View {
                 let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
                 return unit == .millilitres
                     ? settingsObj.waterGoal
-                    : Int((Double(settingsObj.waterGoal) / unit.millilitresPerUnit).rounded())
+                    : Int(displayValue(millilitres: settingsObj.waterGoal, in: unit).rounded())
             },
             set: { newValue in
                 let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
@@ -91,17 +102,33 @@ struct SettingsView: View {
         let unit = volumeUnits(rawValue: settingsObj.waterDisplayUnit) ?? .millilitres
         return "Daily water goal (\(unit.suffix))"
     }
-    
+
+    // Pure functions of settingsObj/deficitBinding rather than state mirrors kept in sync by
+    // refreshState() — SwiftUI just re-reads them whenever refreshID forces body to re-evaluate.
+    private var surpDefHeader: String {
+        settingsObj.surplusMode ? "Desired calorie surplus" : "Desired calorie deficit"
+    }
+    private var surpDefExplainer: String {
+        settingsObj.surplusMode
+            ? "This is the net calorie surplus you'd like Budgie Diet to help you land at."
+            : "This is the net calorie deficit you'd like Budgie Diet to help you land at."
+    }
+    private var deficitLabel: String {
+        deficitBinding.wrappedValue.formatted()
+    }
+
     private func refreshState() {
-        if settingsObj.surplusMode {
-            surpDefHeader = "Desired calorie surplus"
-            surpDefExplainer = "This is the net calorie surplus you'd like Budgie Diet to help you land at."
-        } else {
-            surpDefHeader = "Desired calorie deficit"
-            surpDefExplainer = "This is the net calorie deficit you'd like Budgie Diet to help you land at."
-        }
-        deficitLabel = deficitBinding.wrappedValue.formatted()
         refreshID = UUID()
+    }
+
+    @ViewBuilder
+    private func integerSettingRow(_ label: String, value: Binding<Int>, focus: FocusState<Bool>.Binding) -> some View {
+        LabeledContent(label) {
+            TextField("0", value: value, format: SettingsView.integerFieldFormat)
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.numberPad)
+                .focused(focus)
+        }
     }
     
     var body: some View {
@@ -150,71 +177,41 @@ struct SettingsView: View {
             
             Section(header: Text("Estimated daily calorie burn"), footer: Text("This is used when actual calorie data from Apple Health isn't available or is incomplete."))
             {
-                LabeledContent {
-                    TextField(settingsObj.manualBMR.formatted(), value: settingBinding(\.manualBMR), format: SettingsView.integerFieldFormat)
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                        .focused($focusResting)
-                } label: { Text("Resting calories") }
-                
-                LabeledContent {
-                    TextField(settingsObj.manualActive.formatted(), value: settingBinding(\.manualActive), format: SettingsView.integerFieldFormat)
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                        .focused($focusActive)
-                } label: {
-                    Text("Active calories")
-                }
+                integerSettingRow("Resting calories", value: settingBinding(\.manualBMR, refresh: $refreshID), focus: $focusResting)
+                integerSettingRow("Active calories", value: settingBinding(\.manualActive, refresh: $refreshID), focus: $focusActive)
                 Button("Calculate this for me") {
                     showingBMRHelper = true
                 }.sheet(isPresented: $showingBMRHelper, onDismiss: { refreshState() }) {
-                    BMRHelper(isPresented: $showingBMRHelper, manualBMR: settingBinding(\.manualBMR), manualActive: settingBinding(\.manualActive))
+                    BMRHelper(isPresented: $showingBMRHelper, manualBMR: settingBinding(\.manualBMR, refresh: $refreshID), manualActive: settingBinding(\.manualActive, refresh: $refreshID))
                         .presentationDragIndicator(.visible)
                 }
             }
             
             Section(header: Text("Water logging"), footer: Text("When this is on, your daily water goal increases based on your activity, to replace hydration lost when exercising."))
             {
-                Picker("Show volumes in", selection: settingBinding(\.waterDisplayUnit)) {
+                Picker("Show volumes in", selection: settingBinding(\.waterDisplayUnit, refresh: $refreshID)) {
                     Text(volumeUnits.millilitres.pickerLabel).tag(0)
                     Text(volumeUnits.usFluidOunces.pickerLabel).tag(1)
                     Text(volumeUnits.imperialFluidOunces.pickerLabel).tag(2)
                 }
-                LabeledContent {
-                    TextField(waterGoalBinding.wrappedValue.formatted(), value: waterGoalBinding, format: SettingsView.integerFieldFormat)
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                        .focused($focusWater)
-                } label: { Text(waterGoalLabel) }
-                Toggle("Increase goal with activity", isOn: settingBinding(\.waterFromActivity))
+                integerSettingRow(waterGoalLabel, value: waterGoalBinding, focus: $focusWater)
+                Toggle("Increase goal with activity", isOn: settingBinding(\.waterFromActivity, refresh: $refreshID))
             }
             
             Section(header: Text("Food logging"), footer: Text("Disabling OpenFoodFacts search stops Budgie Diet from searching it for nutritional information completely. You can still add and save foods manually.")) {
-                NavigationLink {
-                    MacroSettingsView().environmentObject(todayLump)
-                } label: {
-                    Text("Macro tracking and goals")
-                }
-                NavigationLink {
-                    AllocateBudgetView()
-                } label: {
-                    Text("Budget allocation")
-                }
-                NavigationLink {
-                    ManageMealsView()
-                } label: {
-                    Text("Manage meals")
-                }
-                Toggle("Disable OpenFoodFacts search", isOn: settingBinding(\.offSearchDisabled))
+                NavigationLink("Macro tracking and goals") { MacroSettingsView().environmentObject(todayLump) }
+                NavigationLink("Budget allocation") { AllocateBudgetView() }
+                NavigationLink("Manage meals") { ManageMealsView() }
+                Toggle("Disable OpenFoodFacts search", isOn: settingBinding(\.offSearchDisabled, refresh: $refreshID))
             }
             
             Section(header: Text("Weight tracking"), footer: Text("If you'd prefer to not see information about your weight, you can hide it here - you can turn it back on any time. This won't erase any data you've already logged.")) {
-                Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit)) {
+                Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit, refresh: $refreshID)) {
                     Text("Kilograms").tag(0)
                     Text("Pounds").tag(1)
                     Text("Stones & pounds").tag(2)
                 }
-                Toggle("Hide weight tracking features", isOn: settingBinding(\.disableWeightFeatures))
+                Toggle("Hide weight tracking features", isOn: settingBinding(\.disableWeightFeatures, refresh: $refreshID))
             }
             
             Section(header: Text("Surplus mode"), footer: Text("Turn this on to aim for a caloric surplus, rather than a deficit.")) {
@@ -227,29 +224,15 @@ struct SettingsView: View {
             }
             
             Section(header: Text("Advanced"), footer: Text(mealTimeText)) {
-                NavigationLink {
-                    DataManagementView().environmentObject(todayLump)
-                } label: {
-                    Text("Backup and restore")
-                }
-                NavigationLink {
-                    BudgetCap()
-                } label: {
-                    Text("Budget capping")
-                }
-                
-                NavigationLink {
-                    AdjustWeighting()
-                } label: {
-                    Text("Budget weighting options")
-                }
-                
+                NavigationLink("Backup and restore") { DataManagementView().environmentObject(todayLump) }
+                NavigationLink("Budget capping") { BudgetCap() }
+                NavigationLink("Budget weighting options") { AdjustWeighting() }
                 DatePicker("Typical evening meal time", selection: weightTimeBinding, displayedComponents: .hourAndMinute)
             }
             
             Section(header: Text("Other settings")) {
-                Toggle("Hide \"Today in detail\"", isOn: settingBinding(\.hideTodayInDetail))
-                Toggle("Put whales in various places", isOn: settingBinding(\.whalesEverywhere))
+                Toggle("Hide \"Today in detail\"", isOn: settingBinding(\.hideTodayInDetail, refresh: $refreshID))
+                Toggle("Put whales in various places", isOn: settingBinding(\.whalesEverywhere, refresh: $refreshID))
                 
             }
             
@@ -277,21 +260,9 @@ struct SettingsView: View {
                 }
             }
             
-            NavigationLink {
-                LicencesScreen()
-            } label: {
-                Text("Licences")
-            }
-            NavigationLink {
-                Donate()
-            } label: {
-                Text("Tip me a protein bar!")
-            }
-            NavigationLink {
-                Disclaimer(displayed: $disclaimerDisplayed)
-            } label: {
-                Text("Health disclaimer")
-            }
+            NavigationLink("Licences") { LicencesScreen() }
+            NavigationLink("Tip me a protein bar!") { Donate() }
+            NavigationLink("Health disclaimer") { Disclaimer(displayed: $disclaimerDisplayed) }
             Button("Send feedback/bug reports") {
                 openURL(URL(string: "mailto:budgieapp@icloud.com")!)
             }
@@ -334,19 +305,7 @@ struct SettingsView: View {
         
         .navigationTitle("Settings")
         .navigationBarBackButtonHidden(false)
-    
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-
-                Button("Done") {
-                    focusResting = false
-                    focusActive = false
-                    focusWater = false
-                }
-             }
-        }
-        
+        .keyboardDoneButton($focusResting, $focusActive, $focusWater)
         .healthDataAccessRequest(store: healthStore, shareTypes: [], readTypes: fitnessGoalSet, trigger: useFitnessGoal) { result in
             switch result {
             case .success(_):

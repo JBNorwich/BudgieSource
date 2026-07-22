@@ -33,6 +33,13 @@ struct WeightView: View {
 
     private var trendLabel: (text: String, color: Color) {
         guard haveTrendData else { return ("No trend yet", .secondary) }
+        // With no deficit/surplus goal, the user's desired trend is a band around zero — they
+        // never asked to move in either direction, so neither reads as good or bad.
+        guard hasDeficitTarget else {
+            if todayLump.weightTrend > 0.3 { return ("Trending down", .secondary) }
+            if todayLump.weightTrend < -0.3 { return ("Trending up", .secondary) }
+            return ("Static", .secondary)
+        }
         let downIsGood = !settingsObj.surplusMode
         if todayLump.weightTrend > 0.3 { return ("Trending down", downIsGood ? .green : .red) }
         if todayLump.weightTrend < -0.3 { return ("Trending up", downIsGood ? .red : .green) }
@@ -69,14 +76,10 @@ struct WeightView: View {
         } else {
             HStack {
                 VStack {
-                    Gauge(value: todayLump.weightGoalRemaining, in: 0...1) {
-                    } currentValueLabel: {
+                    AccessoryCircularGauge(value: todayLump.weightGoalRemaining, range: 0...1, gradient: gradient) {
                         Text(renderWeight(kilos: todayLump.weightToday, includeSuffix: false))
-                    }.gaugeStyle(.accessoryCircular)
-                        .tint(gradient)
-                        .scaleEffect(1.5)
+                    }
                         .padding()
-                        .animation(.easeInOut, value: todayLump.weightGoalRemaining)
                         .overlay(alignment: .bottom) {
                             Text("Goal: " + renderWeight(kilos: settingsObj.weightGoal, includeSuffix: true))
                                 .font(.caption2)
@@ -107,7 +110,7 @@ struct WeightView: View {
                 VStack(alignment: .leading) {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text("**\(trendLabel.text)**").foregroundColor(trendLabel.color)
+                            StatusHeadline(text: trendLabel.text, color: trendLabel.color)
                             HStack {
                                 if !haveTrendData {
                                     Text("Weigh in for a couple of weeks to see your weight trend.")
@@ -129,7 +132,7 @@ struct WeightView: View {
                             Divider()
                             VStack(alignment: .leading) {
                                 if let performance = performanceLabel {
-                                    Text("**\(performance.text)**").foregroundColor(performance.color)
+                                    StatusHeadline(text: performance.text, color: performance.color)
                                     Text("Expected\n\(renderWeight(kilos: performance.min)) - \(renderWeight(kilos: performance.max))")
                                         .foregroundColor(.secondary)
                                         .multilineTextAlignment(.leading)
@@ -160,10 +163,13 @@ struct WeightView: View {
                             Text("Expect to hit goal in **\(formatDuration(days: daysToGoal))**")
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)
-                        } else {
+                        } else if todayLump.movingAwayFromGoal {
                             Text(settingsObj.surplusMode
                                  ? "**In caloric deficit** over past week"
                                  : "**In caloric surplus** over past week")
+                        } else {
+                            Text("Log your food regularly to get predictions.")
+                                .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
                         }
                         Spacer()
                     }

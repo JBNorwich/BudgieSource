@@ -30,8 +30,11 @@ struct WaterPage: View {
     
     func doUpdates() async {
         timeToAddOn = getCurrentTimeonDate(date: curDate)
-        hkQuantity = await dataStore.getWaterOnDate(date: curDate).hk
-        budgieData = await dataStore.waterActor.getEntriesOnDate(date: curDate)
+        async let waterTask = dataStore.getWaterOnDate(date: curDate)
+        async let entriesTask = dataStore.waterActor.getEntriesOnDate(date: curDate)
+        let (water, entries) = await (waterTask, entriesTask)
+        hkQuantity = water.hk
+        budgieData = entries
         totalWater = hkQuantity + budgieData.reduce(0) { $0 + $1.quantity }
         dateChanged = false
     }

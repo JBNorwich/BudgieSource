@@ -33,9 +33,30 @@ struct OpenFoodFactsSheet: View {
     @State private var results: [OFFProduct] = []
     @State private var isSearching = false
     @State private var errorMessage: String?
+    @State private var creatingManually = false
+    
+    private var scannedBarcode: String? {
+        if case let .barcode(code) = mode { return code }
+        return nil
+    }
+
+    enum Mode {
+        case search(term: String)
+        case barcode(String)
+    }
+
+    private let mode: Mode
 
     init(term: String, onImport: @escaping (PickedFood) -> Void) {
+        mode = .search(term: term)
         _searchTerm = State(initialValue: term)
+        _showingConsent = State(initialValue: !settingsObj.offSearchConsented)
+        self.onImport = onImport
+    }
+
+    init(barcode: String, onImport: @escaping (PickedFood) -> Void) {
+        mode = .barcode(barcode)
+        _searchTerm = State(initialValue: "")
         _showingConsent = State(initialValue: !settingsObj.offSearchConsented)
         self.onImport = onImport
     }
@@ -54,6 +75,15 @@ struct OpenFoodFactsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                }
+            }
+            
+            .sheet(isPresented: $creatingManually) {
+                NavigationStack {
+                    FoodEditorView(isModal: true, prefilledBarcode: scannedBarcode) { picked in
+                        onImport(picked)
+                        dismiss()
+                    }
                 }
             }
         }
@@ -103,42 +133,78 @@ struct OpenFoodFactsSheet: View {
         .padding()
     }
 
+    @ViewBuilder
     private var searchView: some View {
+        switch mode {
+        case .search:
+            textSearchView
+        case .barcode(let barcode):
+            barcodeResultView(barcode)
+        }
+    }
+
+    @ViewBuilder
+    private var textSearchView: some View {
         Group {
             if isSearching {
                 ProgressView("Searching…")
             } else if let errorMessage {
-                ContentUnavailableView("Couldn't search", systemImage: "wifi.slash",
-                                       description: Text(errorMessage))
+                ContentUnavailableView("Couldn't search", systemImage: "wifi.slash", description: Text(errorMessage))
             } else if results.isEmpty {
                 ContentUnavailableView.search(text: searchTerm)
             } else {
-                List(results) { product in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(product.name)
-                            if let brand = product.brand {
-                                Text(brand).font(.caption).foregroundStyle(.secondary)
-                            }
-                            if let first = product.quantities.first {
-                                Text(first.label).font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        if let first = product.quantities.first {
-                            Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture { importProduct(product) }
-                }
+                List(results) { product in productRow(product) }
             }
         }
         .searchable(text: $searchTerm, prompt: "Search OpenFoodFacts")
         .onSubmit(of: .search) { Task { await runSearch() } }
-        .task { await runSearch() }   // initial search with the carried-over term
+        .task { await runSearch() }
     }
 
+    @ViewBuilder
+    private func barcodeResultView(_ barcode: String) -> some View {
+        Group {
+            if isSearching {
+                ProgressView("Looking up…")
+            } else if let errorMessage {
+                ContentUnavailableView("Couldn't look up", systemImage: "wifi.slash", description: Text(errorMessage))
+            } else if let product = results.first {
+                List { productRow(product) }
+            } else {
+                ContentUnavailableView {
+                    Label("Not found", systemImage: "barcode")
+                } description: {
+                    Text("This barcode isn't in OpenFoodFacts yet.")
+                } actions: {
+                    Button("Create it manually") { creatingManually = true }
+                        .buttonStyle(.borderedProminent)
+                }
+            }
+        }
+        .task { await runLookup(barcode: barcode) }
+    }
+    
+    @ViewBuilder
+    private func productRow(_ product: OFFProduct) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(product.name)
+                if let brand = product.brand {
+                    Text(brand).font(.caption).foregroundStyle(.secondary)
+                }
+                if let first = product.quantities.first {
+                    Text(first.label).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            if let first = product.quantities.first {
+                Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { importProduct(product) }
+    }
+    
     private func runSearch() async {
         let term = searchTerm.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !term.isEmpty else { results = []; return }
@@ -152,6 +218,22 @@ struct OpenFoodFactsSheet: View {
             errorMessage = "Food search is temporarily unavailable. Please try again in a moment."
         } catch {
             print("OFF search error: \(error)")
+            errorMessage = "Couldn't reach OpenFoodFacts. Check your connection and try again."
+        }
+        isSearching = false
+    }
+    
+    private func runLookup(barcode: String) async {
+        isSearching = true
+        errorMessage = nil
+        do {
+            results = if let product = try await OpenFoodFacts.lookup(barcode: barcode) { [product] } else { [] }
+        } catch OpenFoodFacts.SearchError.rateLimited {
+            errorMessage = "Too many searches just now — wait a moment and try again."
+        } catch OpenFoodFacts.SearchError.serverUnavailable {
+            errorMessage = "Food search is temporarily unavailable. Please try again in a moment."
+        } catch {
+            print("OFF lookup error: \(error)")
             errorMessage = "Couldn't reach OpenFoodFacts. Check your connection and try again."
         }
         isSearching = false

@@ -17,6 +17,19 @@ import SwiftUI
 import CoreData
 import Combine
 
+extension View {
+    /// Refreshes on CloudKit remote-store changes — the Mac target has no `@Query` auto-refresh for
+    /// SwiftData actors, so panes must explicitly reload when a background import lands. Shared by
+    /// every Mac pane/root view, which otherwise each wired up this same notification by hand.
+    /// A new file can't easily be added to the Mac target, so this lives here rather than its own file.
+    func onRemoteStoreChange(perform action: @escaping () async -> Void) -> some View {
+        onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange)
+            .receive(on: RunLoop.main)) { _ in
+            Task { await action() }
+        }
+    }
+}
+
 enum MacSection: String, CaseIterable, Identifiable, Hashable {
     case today = "Today", food = "Food", water = "Water"
     var id: Self { self }
@@ -56,9 +69,7 @@ struct MacRootView: View {
         }
         .containerBackground(backgroundGradient, for: .window)
         .task { await refreshLoop() }
-        .onReceive(NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange).receive(on: RunLoop.main)) { _ in
-            Task { @MainActor in await dataStore.updateLump(todayLump: todayLump) }
-        }
+        .onRemoteStoreChange { await dataStore.updateLump(todayLump: todayLump) }
         .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification).receive(on: RunLoop.main)) { _ in
             settingsObj.sync()
             needsPhoneSetup = settingsObj.isFirstRun

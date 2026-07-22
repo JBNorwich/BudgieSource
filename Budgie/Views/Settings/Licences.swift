@@ -46,6 +46,10 @@ struct LicencesScreen: View {
                 Section (header: Text("Apple trade marks")) {
                     Text("Apple Health, Apple Watch and Apple are all trademarks of Apple Inc., and are used in a purely descriptive sense. Apple Inc. does not endorse or have any connection with this software.")
                 }
+                
+                Section (header: Text("Other trade marks")) {
+                    Text("The food/supermarket brands whose names are included in this app are trade marks of their respective owners. In no way, shape or form should their inclusion be construed as an endorsement of Budgie Diet or to suggest an affiliation with Budgie Diet's developer.")
+                }
             }
             .navigationTitle("Licences")
         }
@@ -53,13 +57,5 @@ struct LicencesScreen: View {
 }
 
 #Preview {
-    struct Preview: View {
-        @State var changed: Bool = true
-
-        var body: some View {
-            LicencesScreen()
-        }
-    }
-    
-    return Preview()
+    LicencesScreen()
 }

@@ -24,6 +24,8 @@ struct MacEditFoodSheet: View {
 
     @State private var calories = 0
     @State private var narrative = ""
+    @State private var manufacturer = ""
+    @State private var knownManufacturers: [String] = []
     @State private var amount: Double = 0
     @State private var quantities: [FoodQuantity] = []
     @State private var selectedQuantityIndex = 0
@@ -62,11 +64,12 @@ struct MacEditFoodSheet: View {
     }
 
     private func macroLine(_ t: (calories: Int, protein: Double?, fat: Double?, carbs: Double?)) -> String {
-        var parts: [String] = []
-        if let p = t.protein { parts.append("P \(Int(p.rounded()))g") }
-        if let c = t.carbs { parts.append("C \(Int(c.rounded()))g") }
-        if let f = t.fat { parts.append("F \(Int(f.rounded()))g") }
-        return parts.isEmpty ? "" : "  ·  " + parts.joined(separator: " · ")
+        let summary = macroSummary(protein: t.protein, carbs: t.carbs, fat: t.fat)
+        return summary.isEmpty ? "" : "  ·  " + summary
+    }
+
+    private var manufacturerSuggestions: [String] {
+        suggestedManufacturers(for: manufacturer, in: knownManufacturers)
     }
 
     var body: some View {
@@ -109,6 +112,12 @@ struct MacEditFoodSheet: View {
                     TextField("Calories", value: $calories, format: .number)
                         .textFieldStyle(.roundedBorder).font(.title2)
                     TextField("Narrative (optional)", text: $narrative)
+                    TextField("Manufacturer (optional)", text: $manufacturer)
+                        .textInputSuggestions {
+                            ForEach(manufacturerSuggestions, id: \.self) { name in
+                                Text(name).textInputCompletion(name)
+                            }
+                        }
                     DisclosureGroup("Nutrition (optional)") {
                         MacMacroFields(protein: $protein, carbs: $carbs, fat: $fat)
                     }
@@ -136,11 +145,14 @@ struct MacEditFoodSheet: View {
         .frame(width: 440, height: 400)
         .task {
             mealList = await dataStore.calorieActor.getListOfMeals()
+            knownManufacturers = await dataStore.knownManufacturers()
             if isFoodEntry, let id = entry.foodItem {
                 let qs = await dataStore.foodItemActor.quantities(id: id)
                 quantities = qs
-                if let idx = qs.firstIndex(where: { $0.type == entry.servingUnit }) {
-                    selectedQuantityIndex = idx
+                if qs.contains(where: { $0.type == entry.servingUnit }) {
+                    selectedQuantityIndex = bestServingIndex(in: qs, forUnit: entry.servingUnit,
+                                                             calories: entry.calories,
+                                                             servingAmount: entry.servingAmount)
                 } else if let first = qs.first {
                     selectedQuantityIndex = 0
                     amount = first.count
@@ -150,6 +162,7 @@ struct MacEditFoodSheet: View {
         .onAppear {
             calories = entry.calories
             narrative = entry.narrative ?? "Quick calories"
+            manufacturer = entry.manufacturer ?? ""
             amount = entry.servingAmount ?? 0
             selectedDate = entry.date
             selectedMeal = entry.meal
@@ -157,7 +170,6 @@ struct MacEditFoodSheet: View {
             carbs = entry.carbs
             fat = entry.fat
         }
-        .onChange(of: narrative) { narrative = String(narrative.prefix(30)) }
         .alert(isFoodEntry ? "Amount must be above zero." : "Calories must be above zero.", isPresented: $valueWasZero) {
             Button("OK", role: .cancel) {}
         }
@@ -177,10 +189,13 @@ struct MacEditFoodSheet: View {
                                                              protein: t.protein, fat: t.fat, carbs: t.carbs,
                                                              date: selectedDate, meal: selectedMeal)
             } else {
+                let mfr = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
                 await dataStore.calorieActor.updateCalories(entry: entry,
                                                             calories: calories, narrative: narrative,
                                                             date: selectedDate, meal: selectedMeal,
+                                                            manufacturer: mfr.isEmpty ? nil : mfr,
                                                             protein: protein, fat: fat, carbs: carbs)
+                if !mfr.isEmpty { await dataStore.invalidateManufacturersCache() }
             }
             await dataStore.updateLump(todayLump: todayLump)
             await onSave(); dismiss()
