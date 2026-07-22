@@ -243,7 +243,6 @@ struct SpeakCanEatNowIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let lump = try await dataStore.freshLumpOrThrow()
-
         // With meal allocations on, "can eat now" isn't a user-facing figure — the app
         // replaces it with remaining budget, so answer in those terms to stay consistent.
         if settingsObj.useMealAllocations {
@@ -267,7 +266,11 @@ struct SpeakBudgetRemainingIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let lump = try await dataStore.freshLumpOrThrow()
-        return .result(dialog: budgetRemainingDialog(lump))
+        let v = lump.totalBudgetRem
+        let dialog: IntentDialog = v >= 0
+            ? "You have \(v.formatted()) calories left in your budget today."
+            : "You're about \((-v).formatted()) calories over your budget today."
+        return .result(dialog: dialog)
     }
 }
 
