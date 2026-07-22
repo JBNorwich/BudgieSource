@@ -24,6 +24,8 @@ struct MacEditFoodSheet: View {
 
     @State private var calories = 0
     @State private var narrative = ""
+    @State private var manufacturer = ""
+    @State private var knownManufacturers: [String] = []
     @State private var amount: Double = 0
     @State private var quantities: [FoodQuantity] = []
     @State private var selectedQuantityIndex = 0
@@ -66,6 +68,10 @@ struct MacEditFoodSheet: View {
         return summary.isEmpty ? "" : "  ·  " + summary
     }
 
+    private var manufacturerSuggestions: [String] {
+        suggestedManufacturers(for: manufacturer, in: knownManufacturers)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Form {
@@ -106,6 +112,12 @@ struct MacEditFoodSheet: View {
                     TextField("Calories", value: $calories, format: .number)
                         .textFieldStyle(.roundedBorder).font(.title2)
                     TextField("Narrative (optional)", text: $narrative)
+                    TextField("Manufacturer (optional)", text: $manufacturer)
+                        .textInputSuggestions {
+                            ForEach(manufacturerSuggestions, id: \.self) { name in
+                                Text(name).textInputCompletion(name)
+                            }
+                        }
                     DisclosureGroup("Nutrition (optional)") {
                         MacMacroFields(protein: $protein, carbs: $carbs, fat: $fat)
                     }
@@ -133,6 +145,7 @@ struct MacEditFoodSheet: View {
         .frame(width: 440, height: 400)
         .task {
             mealList = await dataStore.calorieActor.getListOfMeals()
+            knownManufacturers = await dataStore.knownManufacturers()
             if isFoodEntry, let id = entry.foodItem {
                 let qs = await dataStore.foodItemActor.quantities(id: id)
                 quantities = qs
@@ -149,6 +162,7 @@ struct MacEditFoodSheet: View {
         .onAppear {
             calories = entry.calories
             narrative = entry.narrative ?? "Quick calories"
+            manufacturer = entry.manufacturer ?? ""
             amount = entry.servingAmount ?? 0
             selectedDate = entry.date
             selectedMeal = entry.meal
@@ -175,10 +189,13 @@ struct MacEditFoodSheet: View {
                                                              protein: t.protein, fat: t.fat, carbs: t.carbs,
                                                              date: selectedDate, meal: selectedMeal)
             } else {
+                let mfr = manufacturer.trimmingCharacters(in: .whitespacesAndNewlines)
                 await dataStore.calorieActor.updateCalories(entry: entry,
                                                             calories: calories, narrative: narrative,
                                                             date: selectedDate, meal: selectedMeal,
+                                                            manufacturer: mfr.isEmpty ? nil : mfr,
                                                             protein: protein, fat: fat, carbs: carbs)
+                if !mfr.isEmpty { await dataStore.invalidateManufacturersCache() }
             }
             await dataStore.updateLump(todayLump: todayLump)
             await onSave(); dismiss()

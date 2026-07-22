@@ -139,6 +139,8 @@ struct MealEditorView: View {
                     } else {
                         Text("Serving no longer available").font(.caption).foregroundStyle(.secondary)
                     }
+                } else if !componentsLoaded {
+                    Text("Loading…").foregroundStyle(.secondary)
                 } else {
                     Text("Food no longer available").foregroundStyle(.secondary)
                 }
@@ -299,7 +301,7 @@ private struct MealComponentPickerView: View {
                 let created = FoodItem(name: selected.name, manufacturer: selected.manufacturer,
                                        quantities: selected.quantities, source: .userInput)
                 await dataStore.foodItemActor.insert(created)
-                if selected.manufacturer != nil { dataStore.invalidateManufacturersCache() }
+                if selected.manufacturer != nil { await dataStore.invalidateManufacturersCache() }
                 food = created
             }
         }

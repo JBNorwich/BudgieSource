@@ -32,7 +32,7 @@ struct BudgetCap: View {
                 Toggle("Cap budget", isOn: settingBinding(\.capBudget, refresh: $refreshID))
                 if settingsObj.capBudget {
                     LabeledContent("Cap") {
-                        TextField("", value: $capBudgetCals, format: .number .grouping(.automatic) .precision(.integerLength(4)))
+                        TextField("", value: $capBudgetCals, format: .number .grouping(.automatic) .precision(.integerLength(1...4)))
                             .multilineTextAlignment(.trailing)
                             .keyboardType(.numberPad)
                             .onSubmit { commitCap() }

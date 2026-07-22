@@ -178,7 +178,7 @@ struct EditCalsSheet: View {
                                                         meal: selectedMeal,
                                                         manufacturer: mfr.isEmpty ? nil : mfr,
                                                         protein: protein, fat: fat, carbs: carbs)
-            if !mfr.isEmpty { dataStore.invalidateManufacturersCache() }
+            if !mfr.isEmpty { await dataStore.invalidateManufacturersCache() }
         }
         await dataStore.updateLump(todayLump: todayLump)
     }

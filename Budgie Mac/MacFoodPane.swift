@@ -117,14 +117,13 @@ struct MacFoodPane: View {
                             .listRowSeparator(.hidden)
                         }
                     }
-                    if todayLump.healthKitCalories != 0 {
+                    if Calendar.current.isDateInToday(selectedDate) && todayLump.healthKitCalories != 0 {
                         Text("Calories from other apps")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .padding(.top, 10)
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                         HStack {
-                            Text("Calories from other apps")
                             Spacer()
                             Text("\(todayLump.healthKitCalories) kcal").monospacedDigit().foregroundStyle(.secondary)
                         }
@@ -333,6 +332,8 @@ struct MacMealEditorSheet: View {
                     } else {
                         Text("Serving no longer available").font(.caption).foregroundStyle(.secondary)
                     }
+                } else if !componentsLoaded {
+                    Text("Loading…").foregroundStyle(.secondary)
                 } else {
                     Text("Food no longer available").foregroundStyle(.secondary)
                 }
@@ -564,7 +565,7 @@ struct MacMealComponentPicker: View {
                 let created = FoodItem(name: selected.name, manufacturer: selected.manufacturer,
                                        quantities: selected.quantities, source: .userInput)
                 await dataStore.foodItemActor.insert(created)
-                if selected.manufacturer != nil { dataStore.invalidateManufacturersCache() }
+                if selected.manufacturer != nil { await dataStore.invalidateManufacturersCache() }
                 food = created
             }
         }

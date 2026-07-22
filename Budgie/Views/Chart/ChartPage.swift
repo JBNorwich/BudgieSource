@@ -243,7 +243,11 @@ struct ChartPage: View {
                 guard !Task.isCancelled else { return }
                 withAnimation(.easeInOut(duration: 0.25)) {
                     calorieData = data
-                    phase = data.isEmpty ? .empty(.calories) : .loaded(.calories)
+                    // Same reasoning as the macros/water cases below: `data` has one entry per day in
+                    // range regardless of whether anything was logged, so emptiness has to be judged
+                    // by content, not array length.
+                    let noData = data.allSatisfy { $0.eatenCals == 0 && $0.totalCals == 0 }
+                    phase = noData ? .empty(.calories) : .loaded(.calories)
                 }
             case .macros:
                 // Padded by a week so the first visible day's percentage-mode goal is based on a
@@ -254,7 +258,8 @@ struct ChartPage: View {
                 async let burnTask = dataStore.burnSeries(from: paddedStart, to: endDate)
                 let (data, burnForGoals) = await (macroTask, burnTask)
                 guard !Task.isCancelled else { return }
-                let goals = macroGoalSeries(calorieData: burnForGoals, forDates: data.map(\.date))
+                let goals = macroGoalSeries(calorieData: burnForGoals, forDates: data.map(\.date),
+                                            todayBudget: todayLump.totalBudget)
                 withAnimation(.easeInOut(duration: 0.25)) {
                     macroData = data
                     macroGoalData = goals

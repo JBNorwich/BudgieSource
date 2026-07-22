@@ -407,7 +407,7 @@ final class HealthData {
         let logNarrative = (narrative?.isEmpty ?? true) ? "Quick calories" : narrative!
         let newEntry = CalorieEntry(date: date, calories: calories, narrative: logNarrative, mealUUID: meal, isInHK: hkUUID != nil, healthKitUUID: hkUUID, manufacturer: manufacturer, protein: protein, fat: fat, carbs: carbs)
         await calorieActor.insertNewCals(object: newEntry)
-        if let manufacturer, !manufacturer.isEmpty { invalidateManufacturersCache() }
+        if let manufacturer, !manufacturer.isEmpty { await invalidateManufacturersCache() }
     }
     
     func addFoodEntry(foodItemID: UUID?, name: String, manufacturer: String? = nil, quantity: FoodQuantity, servings: Double, date: Date, meal: UUID) async {
@@ -429,7 +429,7 @@ final class HealthData {
                                     fat: totals.fat,
                                     carbs: totals.carbs)
         await calorieActor.insertNewCals(object: newEntry)
-        if let manufacturer, !manufacturer.isEmpty { invalidateManufacturersCache() }
+        if let manufacturer, !manufacturer.isEmpty { await invalidateManufacturersCache() }
     }
 
     func addWater(amount: Int, datetime: Date) async {
@@ -1028,20 +1028,36 @@ final class HealthData {
     }
 #endif
     
-    /// Cached result of `knownManufacturers()` — every food-entry sheet asks for this on open, and
-    /// without a cache each one repeats two full-table scans just to populate autocomplete. Cleared
-    /// by `invalidateManufacturersCache()` wherever a save could introduce a new manufacturer name.
-    private var manufacturersCache: [String]?
-    /// Bumped by `invalidateManufacturersCache()`. Lets `knownManufacturers()` notice an invalidation
-    /// that happened while it was awaiting its fetch, so it doesn't clobber the (now-correctly-nil)
-    /// cache with a result computed before that invalidation.
-    private var manufacturersCacheEpoch = 0
+    /// Serializes access to the manufacturer-name cache. `HealthData` itself is a plain nonisolated
+    /// class (the project builds with `SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated`), but this cache
+    /// is read from many concurrent SwiftUI `.task` contexts and invalidated from `FoodItemActor`
+    /// (a different executor) — plain stored properties here would race across those threads.
+    private actor ManufacturersCacheBox {
+        private var cache: [String]?
+        private var epoch = 0
+
+        func read() -> (cache: [String]?, epoch: Int) { (cache, epoch) }
+
+        /// Only commits if nothing invalidated the cache while the fetch that produced `names` was in
+        /// flight — otherwise `names` predates whatever save triggered the invalidation, and caching it
+        /// would silently hide that save's new manufacturer until some later, unrelated invalidation fires.
+        func commit(_ names: [String], ifEpoch expected: Int) {
+            guard expected == epoch else { return }
+            cache = names
+        }
+
+        func invalidate() {
+            cache = nil
+            epoch += 1
+        }
+    }
+    private let manufacturersCacheBox = ManufacturersCacheBox()
 
     /// Distinct manufacturer names the user has entered — across saved foods and logged entries —
     /// for autocomplete suggestions. Case-insensitively de-duplicated (first spelling wins), sorted.
     func knownManufacturers() async -> [String] {
-        if let manufacturersCache { return manufacturersCache }
-        let epoch = manufacturersCacheEpoch
+        let (cached, epoch) = await manufacturersCacheBox.read()
+        if let cached { return cached }
         async let savedTask = foodItemActor.manufacturers()
         async let loggedTask = calorieActor.manufacturers()
         let (saved, logged) = await (savedTask, loggedTask)
@@ -1051,20 +1067,14 @@ final class HealthData {
             result.append(name)
         }
         let sorted = result.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-        // Only commit to the cache if nothing invalidated it while this fetch was in flight —
-        // otherwise `sorted` predates whatever save triggered the invalidation, and caching it would
-        // silently hide that save's new manufacturer until some later, unrelated invalidation fires.
-        if epoch == manufacturersCacheEpoch {
-            manufacturersCache = sorted
-        }
+        await manufacturersCacheBox.commit(sorted, ifEpoch: epoch)
         return sorted
     }
 
     /// Clears the cached manufacturer list. Call after any save that could introduce a manufacturer
     /// name not already in the list, so the next autocomplete lookup picks it up.
-    func invalidateManufacturersCache() {
-        manufacturersCache = nil
-        manufacturersCacheEpoch += 1
+    func invalidateManufacturersCache() async {
+        await manufacturersCacheBox.invalidate()
     }
     
     /// One-off seed list of common manufacturer names bundled with the app, so autocomplete is useful

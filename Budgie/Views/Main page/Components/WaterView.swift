@@ -28,6 +28,8 @@ struct WaterView: View {
                 Text(renderVolume(millilitres: todayLump.waterToday))
             }
                 .padding(.top, 10)
+                .accessibilityLabel("Water intake")
+                .accessibilityValue("\(renderVolume(millilitres: todayLump.waterToday)) of \(renderVolume(millilitres: todayLump.effectiveWaterGoal)) goal")
             Spacer()
             if syncMonitor.isImporting && todayLump.waterToday == 0 {
                 Text("Syncing…")

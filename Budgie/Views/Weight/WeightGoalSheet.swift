@@ -36,6 +36,11 @@ struct WeightGoalSheet: View {
     /// The minimum BMI that Budgie Diet will let the user aim for.
     private let healthyBMIFloor = 18.5
 
+    /// A general low-weight floor used only when no height is on file, so BMI can't be computed.
+    /// 40kg is below the healthy-BMI-range floor for essentially any adult height, so it's a
+    /// reasonable independent check rather than leaving the underweight warning silently disabled.
+    private let noHeightWeightFloor = 40.0
+
     /// The unit the user has chosen for displaying/entering weights.
     private var unit: weightUnits {
         weightUnits(rawValue: settingsObj.weightDisplayUnit) ?? .kilograms
@@ -61,7 +66,14 @@ struct WeightGoalSheet: View {
         guard let bmi = goalBMI else { return false }
         return bmi < healthyBMIFloor
     }
-    
+
+    /// Whether the entered goal is very low, for when no height is on file to compute a real BMI.
+    /// Only applies when goalBMI can't be calculated at all — never overrides the BMI-based check.
+    private var goalIsExtremelyLowWithoutHeight: Bool {
+        guard goalBMI == nil, let goal = enteredKilos, goal > 0 else { return false }
+        return goal < noHeightWeightFloor
+    }
+
     /// The lowest weight in the healthy BMI range (18.5) for the user's stored height.
     /// Rounded up to the nearest 0.1 kg so the figure shown is never itself underweight.
     /// Returns nil when height is unavailable.
@@ -80,6 +92,22 @@ struct WeightGoalSheet: View {
                                           stones: $stonesField, poundsPart: $poundsPart,
                                           focus: $focusedField)
 
+                    // Shown here, above the Add button, so it's seen before the goal can be
+                    // committed rather than below it where it could be missed entirely.
+                    if goalIsUnderweight, let minWeight = minimumHealthyWeight {
+                        Label("This goal weight is in the underweight range (a BMI below 18.5) for the height stored in Budgie Diet. The lowest healthy weight for your height is around \(renderWeight(kilos: minWeight)). Aiming for below a healthy weight carries real and serious health risks. Please consider discussing this goal with your doctor before continuing.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
+                    } else if goalIsExtremelyLowWithoutHeight {
+                        Label("This goal weight is very low. Without your height on file, Budgie Diet can't check it against a healthy range, but a weight this low carries real and serious health risks for almost everyone. Please consider discussing this goal with your doctor before continuing, and add your height in Settings so this can be checked properly.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
+                    }
+
                     Button("Add") {
                         guard let goal = enteredKilos, goal > 0 else {
                             goalWasInvalid = true
@@ -97,13 +125,6 @@ struct WeightGoalSheet: View {
                 }
 
                 Section {
-                    if goalIsUnderweight, let minWeight = minimumHealthyWeight {
-                        Label("This goal weight is in the underweight range (a BMI below 18.5) for the height I have stored for you. The lowest healthy weight for your height is around \(renderWeight(kilos: minWeight)). Aiming for below a healthy weight carries real and serious health risks. Please consider discussing this goal with your doctor before continuing.", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
-                            .lineLimit(nil)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Link("Find out more", destination: URL(string: "https://www.nhs.uk/live-well/healthy-weight/managing-your-weight/advice-for-underweight-adults/")!)
-                    }
                     if let goal = enteredKilos {
                         // If the user's target is 0 they've expressly said they don't want their
                         // weight to change, so a lose/gain framing isn't meaningful — say nothing.

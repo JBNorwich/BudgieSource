@@ -510,11 +510,20 @@ struct MacroGoalPoint: Identifiable {
 /// `computeBudget` then `settingsObj.macroGoalGrams(budget:)` — the same two functions
 /// `TodayLump`/`MacroSummaryView` use for "today" — so a percentage-mode goal genuinely tracks each
 /// day's own budget instead of freezing at today's, and stays consistent with what's shown elsewhere.
-func macroGoalSeries(calorieData: [ChartDataLump], forDates: [Date]) -> [MacroGoalPoint] {
+///
+/// `todayBudget`, when supplied, is used verbatim for today's point instead of a trailing average of
+/// `calorieData` — that average is built from `burnSeries`'s actually-measured burn only, which for
+/// today is necessarily a partial, still-in-progress figure, so it disagrees with the live budget
+/// (`TodayLump.totalBudget`, which folds in a projected remainder) shown everywhere else on today.
+func macroGoalSeries(calorieData: [ChartDataLump], forDates: [Date], todayBudget: Int? = nil) -> [MacroGoalPoint] {
     let calendar = Calendar.current
     let totalCalsByDay = Dictionary(calorieData.map { (calendar.startOfDay(for: $0.date), Double($0.totalCals)) }, uniquingKeysWith: { a, _ in a })
     return forDates.map { rawDate in
         let day = calendar.startOfDay(for: rawDate)
+        if let todayBudget, calendar.isDateInToday(day) {
+            let goals = settingsObj.macroGoalGrams(budget: todayBudget)
+            return MacroGoalPoint(date: day, protein: goals.protein, fat: goals.fat, carbs: goals.carbs)
+        }
         guard let avgBurn = trailingAverage(totalCalsByDay, endingAt: day, calendar: calendar) else {
             return MacroGoalPoint(date: day, protein: nil, fat: nil, carbs: nil)
         }

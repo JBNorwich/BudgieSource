@@ -33,6 +33,13 @@ struct WeightView: View {
 
     private var trendLabel: (text: String, color: Color) {
         guard haveTrendData else { return ("No trend yet", .secondary) }
+        // With no deficit/surplus goal, the user's desired trend is a band around zero — they
+        // never asked to move in either direction, so neither reads as good or bad.
+        guard hasDeficitTarget else {
+            if todayLump.weightTrend > 0.3 { return ("Trending down", .secondary) }
+            if todayLump.weightTrend < -0.3 { return ("Trending up", .secondary) }
+            return ("Static", .secondary)
+        }
         let downIsGood = !settingsObj.surplusMode
         if todayLump.weightTrend > 0.3 { return ("Trending down", downIsGood ? .green : .red) }
         if todayLump.weightTrend < -0.3 { return ("Trending up", downIsGood ? .red : .green) }

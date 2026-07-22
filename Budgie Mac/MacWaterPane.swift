@@ -68,7 +68,7 @@ struct MacWaterPane: View {
                         }
                         .contextMenu { Button("Delete", role: .destructive) { delete([entry]) } }
                     }
-                    if settingsObj.snapShotHKWater != 0 {
+                    if Calendar.current.isDateInToday(selectedDate) && settingsObj.snapShotHKWater != 0 {
                         Text("LOGGED IN OTHER APPS")
                             .font(.subheadline).foregroundStyle(.secondary)
                             .listRowBackground(Color.clear)

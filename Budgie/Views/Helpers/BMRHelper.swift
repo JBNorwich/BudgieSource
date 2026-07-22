@@ -15,26 +15,19 @@
 
 import SwiftUI
 
-func showFootFromCM(cms: Int) -> Int {
-    let workingCms = Double(cms)
-    let feet = workingCms * 0.0328084
-    let feetShow = Int(floor(feet))
+/// Feet and inches derived from one rounded total-inches figure, so the two can never disagree
+/// (e.g. rounding separately could previously show "5ft 11in" for a height that's really 6ft 0in).
+private func feetAndInches(fromCM cms: Int) -> (feet: Int, inches: Int) {
+    let totalInches = Int((Double(cms) * 0.0328084 * 12).rounded())
+    return (totalInches / 12, totalInches % 12)
+}
 
-    return feetShow
+func showFootFromCM(cms: Int) -> Int {
+    feetAndInches(fromCM: cms).feet
 }
 
 func showInchesFromCM(cms: Int) -> Int {
-    let workingCms = Double(cms)
-    let feet = workingCms * 0.0328084 //5.74147
-    let feetShow = floor(feet) //5
-    let feetRest: Double = feet - feetShow //0.74147
-    let inches = (feetRest * 12).rounded(.up) // 9
-    var retInches = Int(inches)
-    if retInches > 11
-    {
-        retInches = 11
-    }
-    return retInches
+    feetAndInches(fromCM: cms).inches
 }
 
 func showCMfromFootIn(feet: Int, inches: Int) -> Int

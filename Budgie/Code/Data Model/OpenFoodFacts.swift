@@ -104,6 +104,9 @@ enum OpenFoodFacts {
 
         if let http = response as? HTTPURLResponse {
             if http.statusCode == 429 { throw SearchError.rateLimited }
+            // A barcode simply not existing in OpenFoodFacts is a normal "not found" outcome, not a
+            // server problem — don't scare the user with a "server unavailable" message for it.
+            if http.statusCode == 404 { return nil }
             guard (200...299).contains(http.statusCode) else { throw SearchError.serverUnavailable }
             let contentType = http.value(forHTTPHeaderField: "Content-Type") ?? ""
             guard contentType.contains("json") else { throw SearchError.serverUnavailable }
@@ -163,8 +166,8 @@ private struct ProductDTO: Decodable {
         /// (÷4.184) — many EU-packaged products report only kJ, and OpenFoodFacts' generic
         /// `energy_100g` field defaults to kJ too. nil when neither is usable.
         var kcalPer100: Double? {
-            if let kcal = energyKcal100g?.value { return kcal }
-            if let kj = energyKJ100g?.value ?? energy100g?.value { return kj / 4.184 }
+            if let kcal = energyKcal100g?.value, kcal >= 0 { return kcal }
+            if let kj = energyKJ100g?.value ?? energy100g?.value, kj >= 0 { return kj / 4.184 }
             return nil
         }
     }

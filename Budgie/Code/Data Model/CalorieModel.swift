@@ -215,7 +215,11 @@ actor CalorieActor {
             modelContext.insert(object)
             try modelContext.save()
         } catch {
-            #if !os(macOS)
+            #if os(macOS)
+            // Matches the rollback already applied before every fetch() on macOS — a failed save
+            // otherwise leaves this dangling unsaved entity for the next fetch to paper over.
+            modelContext.rollback()
+            #else
             if let hkUUID = object.healthKitUUID {
                 await deleteEatenSampleAndMacros(uuid: hkUUID)
             }

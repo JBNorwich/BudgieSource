@@ -356,7 +356,7 @@ class CloudSettings: SharedSettingsStore {
         set { store?.set(newValue, forKey: "snapshotHKCarbs") }
     }
 
-    /// The `whatsNewVersion` whose "What's New" sheet the user has already seen. Defaults to "2.0" so everyone upgrading from an older build sees the current sheet once. Holds thee *content* version, not the bundle version — it's shared via iCloud and the iOS/Mac apps carry different bundle versions.
+    /// The `whatsNewVersion` whose "What's New" sheet the user has already seen. Defaults to "3.2" so everyone upgrading from an older build sees the current sheet once. Holds the *content* version, not the bundle version — it's shared via iCloud and the iOS/Mac apps carry different bundle versions.
     var lastOpenedVersion: String {
         get { store?.object(forKey: "lastOpenedVersion") as? String ?? "3.2" }
         set { store?.set(newValue, forKey: "lastOpenedVersion") }

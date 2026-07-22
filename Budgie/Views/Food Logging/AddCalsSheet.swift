@@ -407,6 +407,7 @@ struct AddCalsSheet: View {
     private func resolveRecents(_ entries: [CalorieEntry]) async -> [RecentItem] {
         var foodCache: [UUID: FoodItem?] = [:]
         var seenFoods = Set<UUID>()
+        var seenGenericNames = Set<String>()
         var items: [RecentItem] = []
         for entry in entries {
             if let id = entry.foodItem {
@@ -416,6 +417,7 @@ struct AddCalsSheet: View {
                 items.append(RecentItem(id: entry.id, entry: entry, food: food.asPicked))
             } else if entry.servingUnit != nil {
                 let name = entry.narrative ?? ""
+                guard seenGenericNames.insert(name.lowercased()).inserted else { continue } // dedupe by name
                 let generic = FoodCatalogue.shared.search(name)
                     .first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.asPicked
                 items.append(RecentItem(id: entry.id, entry: entry, food: generic))
@@ -448,7 +450,7 @@ struct AddCalsSheet: View {
             let newFoodName = food.name
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
-            if newFoodMfr != nil { dataStore.invalidateManufacturersCache() }
+            if newFoodMfr != nil { await dataStore.invalidateManufacturersCache() }
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
                                                           manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,

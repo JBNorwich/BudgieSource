@@ -62,6 +62,9 @@ extension WaterEntry {
         do {
             try modelContext.save()
         } catch {
+            // Don't leave the failed insert pending in the context — a later unrelated save
+            // elsewhere could otherwise silently persist this orphaned entry.
+            modelContext.delete(object)
             #if !os(macOS)
             if let hkUUID = object.healthKitUUID {
                 await dataStore.deleteHKSample(uuid: hkUUID, type: waterQuantityType)

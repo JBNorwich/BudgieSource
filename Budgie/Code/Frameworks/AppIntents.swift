@@ -348,8 +348,8 @@ struct LogSavedFoodIntent: AppIntent {
         func results() async throws -> [FoodServingEntity] {
             guard let input,
                   let picked = await dataStore.foodItemActor.picked(id: input.food.id) else { return [] }
-            return picked.quantities.enumerated().map { idx, q in
-                FoodServingEntity(foodID: input.food.id, index: idx, label: q.label)
+            return picked.quantities.map { q in
+                FoodServingEntity(foodID: input.food.id, servingID: q.id, label: q.label)
             }
         }
     }
@@ -362,10 +362,11 @@ struct LogSavedFoodIntent: AppIntent {
         guard let item = await dataStore.foodItemActor.picked(id: food.id), !item.quantities.isEmpty else {
             return .result(dialog: "I couldn't find that saved food any more — it may have been removed.")
         }
-        // Resolve the chosen serving by its stable index, guarding it belongs to this food; else primary serving.
+        // Resolve the chosen serving by its stable id, guarding it belongs to this food; else primary serving.
         let q: FoodQuantity
-        if let s = serving, s.foodID == food.id, let idx = s.index, item.quantities.indices.contains(idx) {
-            q = item.quantities[idx]
+        if let s = serving, s.foodID == food.id, let servingID = s.servingID,
+           let match = item.quantities.first(where: { $0.id == servingID }) {
+            q = match
         } else {
             q = item.quantities.first!
         }
@@ -481,8 +482,9 @@ extension FoodQuery: EntityStringQuery {
     }
 }
 
-/// One serving definition of a specific saved food. The id encodes "<foodUUID>#<serving index>", so a saved
-/// Shortcut resolves back to the exact serving by position — immune to that serving later being renamed.
+/// One serving definition of a specific saved food. The id encodes "<foodUUID>#<servingUUID>", using
+/// FoodQuantity's own stable id rather than its position — immune to servings being reordered, added
+/// or removed on that food, which a positional index would silently resolve to the wrong serving.
 struct FoodServingEntity: AppEntity, Identifiable {
     var id: String
     @Property(title: "Serving") var label: String
@@ -492,10 +494,10 @@ struct FoodServingEntity: AppEntity, Identifiable {
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Serving"
 
     var foodID: UUID? { UUID(uuidString: id.components(separatedBy: "#").first ?? "") }
-    var index: Int? { Int(id.components(separatedBy: "#").last ?? "") }
+    var servingID: UUID? { UUID(uuidString: id.components(separatedBy: "#").last ?? "") }
 
-    init(foodID: UUID, index: Int, label: String) {
-        self.id = "\(foodID.uuidString)#\(index)"
+    init(foodID: UUID, servingID: UUID, label: String) {
+        self.id = "\(foodID.uuidString)#\(servingID.uuidString)"
         self.label = label
     }
     init(id: String, label: String) { self.id = id; self.label = label }
@@ -507,10 +509,10 @@ struct FoodServingQuery: EntityQuery {
         var out: [FoodServingEntity] = []
         for idString in identifiers {
             let probe = FoodServingEntity(id: idString, label: "")
-            guard let foodID = probe.foodID, let index = probe.index,
+            guard let foodID = probe.foodID, let servingID = probe.servingID,
                   let picked = await dataStore.foodItemActor.picked(id: foodID),
-                  picked.quantities.indices.contains(index) else { continue }
-            out.append(FoodServingEntity(foodID: foodID, index: index, label: picked.quantities[index].label))
+                  let quantity = picked.quantities.first(where: { $0.id == servingID }) else { continue }
+            out.append(FoodServingEntity(foodID: foodID, servingID: servingID, label: quantity.label))
         }
         return out
     }

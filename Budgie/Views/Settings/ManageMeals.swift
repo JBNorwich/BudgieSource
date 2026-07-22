@@ -87,7 +87,8 @@ struct ManageMealsView: View {
             TextField("Meal name", text: $newMealName)
             Button("Cancel", role: .cancel) { }
             Button("Add") {
-                let name = newMealName
+                let name = newMealName.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { return }
                 Task {
                     await dataStore.calorieActor.addMeal(name: name)
                     await reload()
@@ -105,8 +106,8 @@ struct ManageMealsView: View {
             TextField("Meal name", text: $renameText)
             Button("Cancel", role: .cancel) { mealBeingRenamed = nil }
             Button("Save") {
-                if let uuid = mealBeingRenamed?.mealUUID {
-                    let name = renameText
+                let name = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let uuid = mealBeingRenamed?.mealUUID, !name.isEmpty {
                     Task {
                         await dataStore.calorieActor.renameMeal(mealUUID: uuid, newName: name)
                         await reload()

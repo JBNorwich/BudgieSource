@@ -146,11 +146,16 @@ struct ContentView: View {
                 guard scenePhase == .active else {
                    return
                 }
+                // Mac pulls the latest iCloud key-value settings on every foreground; the watch
+                // never did, so a deficit/goal changed on the phone could lag here until the OS's
+                // own background propagation caught up.
+                settingsObj.sync()
                 Task {
                     await dataStore.updateLump(todayLump: todayLump)
                 }
             }
             .task {
+                settingsObj.sync()
                 if HKHealthStore.isHealthDataAvailable() {
                     hkTrigger.toggle()
                 }

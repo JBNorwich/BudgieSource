@@ -152,12 +152,29 @@ struct MealComponent: Codable, Identifiable {
     /// food. Matches by the specific serving id first (disambiguates two servings of the same type,
     /// e.g. "1 slice" vs "1 loaf"); falls back to matching by type alone if that serving was since
     /// removed, so an edited food doesn't just vanish from the meal. Nil if neither matches.
+    ///
+    /// The id match also requires the serving's type to still equal `servingUnit`: a serving's id is
+    /// stable even if its unit/count is later edited in place (e.g. 100g becomes "1 tub"), but
+    /// `servingAmount` was recorded in the *old* unit — reusing it against the new count would scale
+    /// by the wrong factor. Falling through to the type-based match (or nil) instead surfaces this the
+    /// same way an outright-removed serving already is, rather than silently computing a wrong total.
     func totals(in food: FoodItem) -> (calories: Int, protein: Double?, fat: Double?, carbs: Double?)? {
-        let quantity = food.quantities.first(where: { $0.id == servingID })
+        guard let t = rawTotals(in: food) else { return nil }
+        return (t.calories.safeInt, t.protein, t.fat, t.carbs)
+    }
+
+    /// Same resolution as `totals(in:)`, but with calories left as an unrounded `Double` — used when
+    /// summing several components into one meal total, so each ingredient isn't rounded to a whole
+    /// kcal before the sum (which drifts the reported per-serving total by a few kcal on meals with
+    /// several ingredients). `totals(in:)` still rounds for anywhere a single component's own total is
+    /// displayed on its own.
+    fileprivate func rawTotals(in food: FoodItem) -> (calories: Double, protein: Double?, fat: Double?, carbs: Double?)? {
+        let quantity = food.quantities.first(where: { $0.id == servingID && $0.type == servingUnit })
             ?? food.quantities.first(where: { $0.type == servingUnit })
         guard let quantity, quantity.count > 0 else { return nil }
-        let t = quantity.totals(servings: servingAmount / quantity.count)
-        return (t.calories, t.protein, t.fat, t.carbs)
+        let servings = servingAmount / quantity.count
+        return (Double(quantity.calories) * servings, quantity.protein.map { $0 * servings },
+                quantity.fat.map { $0 * servings }, quantity.carbs.map { $0 * servings })
     }
 }
 
@@ -172,8 +189,8 @@ extension FoodItem {
         var calories = 0.0
         var protein: Double?, carbs: Double?, fat: Double?
         for component in components {
-            guard let food = resolvedFoods[component.foodItemID], let t = component.totals(in: food) else { continue }
-            calories += Double(t.calories)
+            guard let food = resolvedFoods[component.foodItemID], let t = component.rawTotals(in: food) else { continue }
+            calories += t.calories
             if let p = t.protein { protein = (protein ?? 0) + p }
             if let c = t.carbs { carbs = (carbs ?? 0) + c }
             if let f = t.fat { fat = (fat ?? 0) + f }
@@ -352,7 +369,7 @@ actor FoodItemActor {
 
     /// Edits an existing item. Serving/calorie changes affect FUTURE logs only — past entries keep their stamped calories and macros. Name and manufacturer changes DO propagate to past linked entries, so a rename (or filling in a manufacturer) keeps already-logged items consistent. `components`/`batchYield` only apply to custom meals; leave them `nil` to leave the item's existing values untouched, so a caller that doesn't know about meals (e.g. the ordinary food editor) can never wipe a meal's ingredients just by reaching an item it doesn't recognise as one.
     func update(id: UUID, name: String, manufacturer: String?, quantities: [FoodQuantity],
-                components: [MealComponent]? = nil, batchYield: Double? = nil) {
+                components: [MealComponent]? = nil, batchYield: Double? = nil) async {
         guard let item = item(id: id) else { return }
         item.name = name
         item.manufacturer = manufacturer
@@ -362,7 +379,7 @@ actor FoodItemActor {
         save("FoodItem update")
         // A rename or newly-filled-in manufacturer can introduce a name autocomplete doesn't know
         // about yet — same invalidation HealthData.addCalories does when logging one directly.
-        if let manufacturer, !manufacturer.isEmpty { dataStore.invalidateManufacturersCache() }
+        if let manufacturer, !manufacturer.isEmpty { await dataStore.invalidateManufacturersCache() }
     }
 
     /// Archives / unarchives — pulls it from pickers without disturbing any entries that reference it.

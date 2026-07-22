@@ -305,7 +305,9 @@ func budgetBlobColour(canEatNow: Int, surplusMode: Bool = settingsObj.surplusMod
     if canEatNow < -49 {
         return surplusMode ? .green : .red
     } else if canEatNow < 50 {
-        return surplusMode ? .red : .green
+        // Being close to today's budget reads the same way regardless of mode — it's on track,
+        // not a warning sign just because the mode happens to be surplus.
+        return .green
     } else {
         return .teal
     }

@@ -430,7 +430,7 @@ struct MacAddFoodSheet: View {
             let newFoodName = food.name
             let newFoodMfr = food.manufacturer
             await dataStore.foodItemActor.insert(food)
-            if newFoodMfr != nil { dataStore.invalidateManufacturersCache() }
+            if newFoodMfr != nil { await dataStore.invalidateManufacturersCache() }
             await dataStore.calorieActor.linkQuickEntries(toFood: newFoodID, name: newFoodName,
                                                           manufacturer: newFoodMfr, quantity: quantity)
             await dataStore.addFoodEntry(foodItemID: newFoodID, name: newFoodName,

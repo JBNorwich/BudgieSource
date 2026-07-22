@@ -51,7 +51,10 @@ struct FoodEditorView: View {
         !isSaving
             && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !quantities.isEmpty
-            && quantities.allSatisfy { $0.count > 0 && $0.calories >= 0 }
+            && quantities.allSatisfy {
+                $0.count > 0 && $0.calories >= 0
+                    && ($0.protein ?? 0) >= 0 && ($0.carbs ?? 0) >= 0 && ($0.fat ?? 0) >= 0
+            }
     }
 
     private var manufacturerSuggestions: [String] {
@@ -59,30 +62,35 @@ struct FoodEditorView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Food") {
-                TextField("Name", text: $name)
-                TextField("Manufacturer (optional)", text: $manufacturer)
-                    .focused($manufacturerFocused)
-                    .suggestionAnchor(manufacturerFocused && !manufacturerSuggestions.isEmpty)
-            }
+        // suggestionOverlay must sit outside the clipping Form (per SuggestionAnchorKey's own
+        // documented convention, already followed by AddCalsSheet/EditCalsSheet) or the manufacturer
+        // dropdown gets clipped away instead of floating over the form.
+        Group {
+            Form {
+                Section("Food") {
+                    TextField("Name", text: $name)
+                    TextField("Manufacturer (optional)", text: $manufacturer)
+                        .focused($manufacturerFocused)
+                        .suggestionAnchor(manufacturerFocused && !manufacturerSuggestions.isEmpty)
+                }
 
-            ForEach(quantities.indices, id: \.self) { i in
-                Section("Serving \(i + 1)") {
-                    servingEditor(i)
-                    if quantities.count > 1 {
-                        Button("Remove serving", role: .destructive) {
-                            quantities.remove(at: i)
+                ForEach(quantities.indices, id: \.self) { i in
+                    Section("Serving \(i + 1)") {
+                        servingEditor(i)
+                        if quantities.count > 1 {
+                            Button("Remove serving", role: .destructive) {
+                                quantities.remove(at: i)
+                            }
                         }
                     }
                 }
-            }
 
-            Section {
-                Button {
-                    quantities.append(FoodQuantity(type: .grams, count: 100, calories: 0))
-                } label: {
-                    Label("Add serving", systemImage: "plus")
+                Section {
+                    Button {
+                        quantities.append(FoodQuantity(type: .grams, count: 100, calories: 0))
+                    } label: {
+                        Label("Add serving", systemImage: "plus")
+                    }
                 }
             }
         }
@@ -143,7 +151,7 @@ struct FoodEditorView: View {
             let saved = await dataStore.foodItemActor.insert(item)
             onSaved?(saved.asPicked)
         }
-        if cleanMfr != nil { dataStore.invalidateManufacturersCache() }
+        if cleanMfr != nil { await dataStore.invalidateManufacturersCache() }
     }
 }
 

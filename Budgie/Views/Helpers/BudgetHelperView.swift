@@ -43,7 +43,7 @@ struct BudgetHelperView: View {
                       metricLoss: "450g a week", imperialLoss: "1lb a week",
                       comparison: "Two cupcakes", whaleFactor: "0.000001666666667 whales"),
         DeficitOption(label: "Hard", kcal: 750,
-                      footer: "This level of deficit may work for you if you exercise a lot, or you are very overweight. Otherwise, you may not be able to eat enough on the budget that this will give you.",
+                      footer: "This level of deficit may work if you exercise a lot or have a significant amount of weight to lose. Otherwise, you may not be able to eat enough on the budget that this will give you.",
                       metricLoss: "700g a week", imperialLoss: "1½lb a week",
                       comparison: "Half a roast chicken", whaleFactor: "0.0000025 whales"),
     ]
@@ -165,6 +165,9 @@ struct ThousandKcalWarningSheet: View {
             .disabled(secondsRemaining > 0)
         }
         .padding()
+        // This choice needs an explicit tap either way — swiping away must not leave an
+        // extreme deficit set with neither the wait nor the acknowledgement having happened.
+        .interactiveDismissDisabled(true)
         .task {
             for _ in 0..<5 {
                 try? await Task.sleep(for: .seconds(1))
