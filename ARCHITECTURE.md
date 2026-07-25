@@ -95,7 +95,7 @@ In line with the above safety principles, the following are not and never will b
 - Suggestions of a goal weight (beyond strongly encouraging the user to not aim to be underweight, and then only if they try to set such a goal)
 - Tracking of body measurements such as waist measurements
 - Artificial intelligence coaching (results can be unpredictable and may contravene these safety guidelines, even if pre-prompted with them)
-- Artificial intelligence food calorie estimates - carries privacy issues and is grossly inaccurate even by food calorie measurement standards
+- Artificial intelligence food calorie estimates - carries privacy issues and is grossly inaccurate even by food calorie measurement standards, to the point where even Apple refuse to implement it
 
 # Tone of voice/messaging
 - Some whimsy is fine (e.g. the optional whale feature, the bird image and phrase at the bottom of BudgetView). Too much is bad and makes the app look unserious.
@@ -108,7 +108,7 @@ In line with the above safety principles, the following are not and never will b
 - While the app logo is a bird and the name is Budgie Diet, generally text shouldn't refer to birds or be bird-centric.
 - Don't refer to the user by name, or in the first or third person. The user is "you".
 - Don't be overfamiliar with the user.
-- The user's gender is only collected for the purpose of calculating their body mass index. It must not be surfaced, discussed or used in any other context.
+- The user's gender is only collected for the purpose of calculating their basal metabolic rate (BMR). It must not be surfaced, discussed or used in any other context.
 - Where spelling differs between American English and British English, use the British spelling.
 - Do not make assumptions about the user's lifestyle, motivations or goals.
 
