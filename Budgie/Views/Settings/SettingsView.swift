@@ -49,6 +49,8 @@ struct SettingsView: View {
     @State var disclaimerDisplayed = false
     @State private var showing1000Warning = false
     @State private var deficitBeforeWarning = 0
+    @State private var reminderEnabled = false
+    @State private var showingReminderDeniedAlert = false
     
     @FocusState private var focusResting: Bool
     @FocusState private var focusActive: Bool
@@ -77,6 +79,17 @@ struct SettingsView: View {
         Binding(
             get: { minsIntoDayIntoTime(mins: settingsObj.finalMealTime) },
             set: { settingsObj.finalMealTime = timeToMinsIntoDay(time: $0)})
+    }
+
+    // The reminder preference is device-local (UserSettings), not iCloud-synced: each device opts in
+    // on its own, so a notification never fires without that device's own permission.
+    private var reminderTimeBinding: Binding<Date> {
+        Binding(
+            get: { minsIntoDayIntoTime(mins: localSettings.foodReminderTime) },
+            set: {
+                localSettings.foodReminderTime = timeToMinsIntoDay(time: $0)
+                Task { await FoodReminder.reschedule(enabled: localSettings.foodReminderEnabled, minutesIntoDay: localSettings.foodReminderTime) }
+            })
     }
     
     private var waterGoalBinding: Binding<Int> {
@@ -204,7 +217,15 @@ struct SettingsView: View {
                 NavigationLink("Manage meals") { ManageMealsView() }
                 Toggle("Disable OpenFoodFacts search", isOn: settingBinding(\.offSearchDisabled, refresh: $refreshID))
             }
-            
+
+            Section(header: Text("Reminders"),
+                    footer: Text("Turn this on to get an optional daily reminder to log your food, at a time you choose. Budgie Diet will never send you any other notifications, ever.")) {
+                Toggle("Daily food logging reminder", isOn: $reminderEnabled)
+                if reminderEnabled {
+                    DatePicker("Reminder time", selection: reminderTimeBinding, displayedComponents: .hourAndMinute)
+                }
+            }
+
             Section(header: Text("Weight tracking"), footer: Text("If you'd prefer to not see information about your weight, you can hide it here - you can turn it back on any time. This won't erase any data you've already logged.")) {
                 Picker("Show weights in", selection: settingBinding(\.weightDisplayUnit, refresh: $refreshID)) {
                     Text("Kilograms").tag(0)
@@ -277,6 +298,7 @@ struct SettingsView: View {
         .onAppear() {
             surplusMode = settingsObj.surplusMode
             useFitnessGoal = settingsObj.useFitnessGoal
+            reminderEnabled = localSettings.foodReminderEnabled
             refreshState()
         }
         
@@ -302,7 +324,37 @@ struct SettingsView: View {
         {
             settingsObj.useFitnessGoal = useFitnessGoal
         }
-        
+
+        // Turning the reminder on asks for notification permission first; if that's refused (or was
+        // denied earlier) we revert the toggle rather than leave it showing a reminder that can't fire.
+        .onChange(of: reminderEnabled, initial: false) { _, isOn in
+            guard isOn else {
+                localSettings.foodReminderEnabled = false
+                Task { await FoodReminder.reschedule(enabled: false, minutesIntoDay: localSettings.foodReminderTime) }
+                return
+            }
+            Task {
+                if await FoodReminder.requestAuthorisation() {
+                    localSettings.foodReminderEnabled = true
+                    await FoodReminder.reschedule(enabled: true, minutesIntoDay: localSettings.foodReminderTime)
+                } else {
+                    localSettings.foodReminderEnabled = false
+                    reminderEnabled = false
+                    showingReminderDeniedAlert = true
+                }
+            }
+        }
+        .alert("Notifications are turned off", isPresented: $showingReminderDeniedAlert) {
+            // "app-settings:" is the value of UIApplication.openSettingsURLString — used directly so
+            // this view needn't import UIKit for a single constant. Opens Budgie Diet's Settings page.
+            Button("Open Settings") {
+                if let url = URL(string: "app-settings:") { openURL(url) }
+            }
+            Button("Not now", role: .cancel) { }
+        } message: {
+            Text("To get a daily reminder, allow notifications for Budgie Diet in the Settings app.")
+        }
+
         .navigationTitle("Settings")
         .navigationBarBackButtonHidden(false)
         .keyboardDoneButton($focusResting, $focusActive, $focusWater)

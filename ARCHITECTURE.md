@@ -86,7 +86,8 @@ This file is under the Expat licence:
 # Forbidden features
 In line with the above safety principles, the following are not and never will be implemented in Budgie Diet:
 
-- Push notifications - whether voluntarily set by the user or not
+- Push notifications that are involuntary, on by default, un-asked for and/or shame the user or make them feel bad.
+    - Before 3.6, voluntary opt-in notifications were forbidden. This has been softened to reflect that it is the user's choice, and an expected feature for a diet app. Any voluntary notifications should still be light touch, minimal, off by default and expressly opt-in. The push notification should be neutrally phrased, never surface or disclose budget information, judge the user's choices, shame them for not logging ("You've not logged today!") or otherwise suggest any compulsion.
 - Any other facility or mechanic that prompts the user to open the app
     - It is acceptable for the user to have a passive widget that displays (e.g.) their current budget, or *allows* them to log food, provided it does not directly encourage them to do so.
 - Streaks/awards, points or other "gamification" mechanics

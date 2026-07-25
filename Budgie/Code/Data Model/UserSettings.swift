@@ -444,11 +444,27 @@ class CloudSettings: SharedSettingsStore {
     }
 }
 
-/// Legacy class for local-only settings storage via UserDefaults. Only kept around to migrate existing users to CloudKit.
+/// Local-only settings storage via UserDefaults. Originally kept only to migrate existing users to
+/// CloudKit; it also holds the settings that are intentionally *per-device* rather than iCloud-synced —
+/// currently the opt-in food-logging reminder, which must be enabled explicitly on each device so a
+/// notification never fires without that device's own permission. See `FoodReminder`.
 class UserSettings: SharedSettingsStore {
     let store: KeyValueBacking?
 
     init() {
         store = UserDefaults(suiteName: "group.JoeBaldwin.Budgie")
+    }
+
+    /// Whether the single opt-in daily food-logging reminder is scheduled on *this device*. Off by
+    /// default, and deliberately not synced — each device must opt in on its own. See `FoodReminder`.
+    var foodReminderEnabled: Bool {
+        get { store?.object(forKey: "foodReminderEnabled") as? Bool ?? false }
+        set { store?.set(newValue, forKey: "foodReminderEnabled") }
+    }
+
+    /// The reminder's fire time, in minutes into the day. Defaults to 19:00; only meaningful once enabled.
+    var foodReminderTime: Int {
+        get { store?.object(forKey: "foodReminderTime") as? Int ?? 1140 }
+        set { store?.set(newValue, forKey: "foodReminderTime") }
     }
 }

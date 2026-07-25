@@ -88,5 +88,8 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        // Reconcile the scheduled reminder on launch — e.g. picks up a permission the user revoked in
+        // the Settings app since we last scheduled. No-op unless they've opted in on this device.
+        .task { await FoodReminder.reschedule(enabled: localSettings.foodReminderEnabled, minutesIntoDay: localSettings.foodReminderTime) }
     }
 }
