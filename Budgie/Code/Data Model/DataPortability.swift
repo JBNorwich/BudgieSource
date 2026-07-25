@@ -29,10 +29,14 @@ struct MealDTO: Codable {
     var order: Int
     var budgetPercent: Double
     var syncNonce: Int
+    // Optional so a backup written before start times existed still decodes — a missing key
+    // just means "no start time", which is exactly true of every meal in such a backup.
+    var startMinute: Int?
 
     init(_ m: Meal) {
         id = m.id; mealUUID = m.mealUUID; name = m.name
         order = m.order; budgetPercent = m.budgetPercent; syncNonce = m.syncNonce
+        startMinute = m.startMinute
     }
 }
 

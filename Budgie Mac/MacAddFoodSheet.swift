@@ -24,6 +24,7 @@ struct MacAddFoodSheet: View {
     @State private var selectedDate: Date
     @State private var selectedMeal: UUID = settingsObj.snacksUUID ?? UUID()
     @State private var mealList: [Meal] = []
+    @State private var didResolveInitialMeal = false
 
     // Manual entry
     @State private var calories: Int?
@@ -340,6 +341,14 @@ struct MacAddFoodSheet: View {
 
     private func loadMeals() async {
         mealList = await dataStore.calorieActor.getOrderedListOfMeals()
+        if !didResolveInitialMeal {
+            didResolveInitialMeal = true
+            if let resolved = await dataStore.calorieActor.resolveMealForNow(snacksFallback: settingsObj.snacksUUID),
+               mealList.contains(where: { $0.mealUUID == resolved }) {
+                selectedMeal = resolved
+                return
+            }
+        }
         if !mealList.contains(where: { $0.mealUUID == selectedMeal }) {
             selectedMeal = mealList.first?.mealUUID ?? selectedMeal
         }

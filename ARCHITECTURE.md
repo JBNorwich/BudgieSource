@@ -93,6 +93,8 @@ In line with the above safety principles, the following are not and never will b
     - It is acceptable to tell the user that they have achieved a goal that they set themselves, e.g. their weight goal, and congratulate them for doing so.
 - Suggestions of a goal weight (beyond strongly encouraging the user to not aim to be underweight, and then only if they try to set such a goal)
 - Tracking of body measurements such as waist measurements
+- Artificial intelligence coaching (results can be unpredictable and may contravene these safety guidelines, even if pre-prompted with them)
+- Artificial intelligence food calorie estimates - carries privacy issues and is grossly inaccurate even by food calorie measurement standards
 
 # Tone of voice/messaging
 - Some whimsy is fine (e.g. the optional whale feature, the bird image and phrase at the bottom of BudgetView). Too much is bad and makes the app look unserious.

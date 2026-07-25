@@ -36,7 +36,10 @@ func nonEmptyManufacturers(_ raw: [String?]) -> [String] {
     var order: Int = 0
     /// Percentage of the budget allocated to this meal, if that feature is turned on. 0 is unallocated.
     var budgetPercent: Double = 0
-    
+    /// Time of day this meal starts, as minutes from local midnight (0–1439). nil means the meal
+    /// doesn't take part in time-of-day auto-selection.
+    var startMinute: Int? = nil
+
     init(name: String, order: Int) {
         self.name = name.isEmpty ? "Unnamed meal" : name
         self.order = order
@@ -54,6 +57,7 @@ extension Meal {
         self.mealUUID = dto.mealUUID
         self.budgetPercent = dto.budgetPercent
         self.syncNonce = dto.syncNonce
+        self.startMinute = dto.startMinute
     }
 }
 
@@ -238,6 +242,11 @@ actor CalorieActor {
         let dinner = Meal(name: "Dinner", order: 2)
         let snacks = Meal(name: "Snacks/Other", order: 3)
 
+        breakfast.startMinute = 0        // 00:00
+        lunch.startMinute = 12 * 60      // 12:00
+        dinner.startMinute = 17 * 60     // 17:00
+        // Snacks/Other intentionally has no start time — it's the fallback for any uncovered time.
+
         modelContext.insert(breakfast)
         modelContext.insert(lunch)
         modelContext.insert(dinner)
@@ -353,6 +362,28 @@ actor CalorieActor {
         save("Meal rename")
     }
     
+    /// The mealUUID to pre-select when logging at `reference`'s time of day. Meals opt in by having a
+    /// `startMinute`; the one whose window (its start until the next meal's start) covers the current
+    /// minute wins. If the time is before every meal's start, falls back to `snacksFallback`.
+    func resolveMealForNow(reference: Date = Date(), snacksFallback: UUID?) -> UUID? {
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: reference)
+        let minutesNow = (comps.hour ?? 0) * 60 + (comps.minute ?? 0)
+        let chosen = getListOfMeals()
+            .compactMap { meal in meal.startMinute.map { (meal: meal, start: $0) } }
+            .filter { $0.start <= minutesNow }
+            .max { ($0.start, $0.meal.order) < ($1.start, $1.meal.order) }?
+            .meal
+        return chosen?.mealUUID ?? snacksFallback
+    }
+
+    /// Sets (or clears, with nil) a meal's start time. Persisted immediately.
+    func setMealStartMinute(mealUUID: UUID, minute: Int?) {
+        let descriptor = FetchDescriptor<Meal>(predicate: #Predicate<Meal> { $0.mealUUID == mealUUID })
+        guard let meal = (try? modelContext.fetch(descriptor))?.first else { return }
+        meal.startMinute = minute
+        save("Meal start time")
+    }
+
     /// Persists a new display order. `orderedUUIDs` lists the meal UUIDs in the desired order.
     func reorderMeals(orderedUUIDs: [UUID]) {
         let meals = getListOfMeals()

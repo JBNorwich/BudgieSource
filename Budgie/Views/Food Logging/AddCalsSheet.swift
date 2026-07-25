@@ -51,7 +51,7 @@ struct AddCalsSheet: View {
     // MARK: Shared
     @State private var mealList: [Meal] = []
     @State var selectedMeal: UUID = UUID()
-    var preSelectedMeal: UUID = settingsObj.snacksUUID ?? UUID()
+    var preSelectedMeal: UUID? = nil
     @State var selectedDate: Date
     @State private var reloadToken = UUID()
     @State private var isSaving = false
@@ -167,8 +167,14 @@ struct AddCalsSheet: View {
         }
         .task {
             mealList = await dataStore.calorieActor.getOrderedListOfMeals()
-            guard let start = mealList.first(where: { $0.mealUUID == preSelectedMeal }) ?? mealList.first else { return }
-            selectedMeal = start.mealUUID
+            if let preSelectedMeal, mealList.contains(where: { $0.mealUUID == preSelectedMeal }) {
+                selectedMeal = preSelectedMeal
+            } else if let resolved = await dataStore.calorieActor.resolveMealForNow(snacksFallback: settingsObj.snacksUUID),
+                      mealList.contains(where: { $0.mealUUID == resolved }) {
+                selectedMeal = resolved
+            } else if let first = mealList.first {
+                selectedMeal = first.mealUUID
+            }
         }
         
         .task { knownManufacturers = await dataStore.knownManufacturers() }

@@ -38,21 +38,27 @@ struct ManageMealsView: View {
 
     var body: some View {
         List {
-            Section(footer: Text("The “Snacks/Other” meal can’t be removed, so there’s always somewhere for your entries to live. Tap a meal to rename it, swipe left to delete.")) {
+            Section(footer: Text("Give a meal a start time and it’ll be picked automatically when you log after then. Anything logged before your earliest start time goes to “Snacks/Other”, which can’t be removed so there’s always somewhere for your entries to live. Tap a meal’s name to rename it, swipe left to delete.")) {
                 ForEach(meals) { meal in
                     HStack {
                         Text(meal.name)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                renameText = meal.name
+                                mealBeingRenamed = meal
+                            }
+                        Spacer()
+                        MealStartTimeControl(startMinute: meal.startMinute) { newMinute in
+                            Task {
+                                await dataStore.calorieActor.setMealStartMinute(mealUUID: meal.mealUUID, minute: newMinute)
+                                await reload()
+                            }
+                        }
                         if isProtected(meal) {
-                            Spacer()
                             Image(systemName: "lock.fill")
                                 .foregroundStyle(.secondary)
                                 .font(.footnote)
                         }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        renameText = meal.name
-                        mealBeingRenamed = meal
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if !isProtected(meal) {
@@ -196,5 +202,49 @@ private struct ReassignMealSheet: View {
                     ?? candidates.first?.mealUUID
             }
         }
+    }
+}
+
+/// Inline start-time control for a meal row: shows a time when one is set (with a clear button),
+/// or an "Add start time" affordance when it isn't. Changes are reported back via `onChange`
+/// rather than mutating the meal directly, so persistence stays on the actor.
+private struct MealStartTimeControl: View {
+    let startMinute: Int?
+    let onChange: (Int?) -> Void
+
+    private var timeBinding: Binding<Date> {
+        Binding(
+            get: { Self.date(fromMinute: startMinute ?? 0) },
+            set: { onChange(Self.minute(from: $0)) }
+        )
+    }
+
+    var body: some View {
+        if startMinute != nil {
+            HStack(spacing: 6) {
+                DatePicker("", selection: timeBinding, displayedComponents: .hourAndMinute)
+                    .labelsHidden()
+                Button {
+                    onChange(nil)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove start time")
+            }
+        } else {
+            Button("Add start time") { onChange(0) }
+                .font(.footnote)
+                .buttonStyle(.borderless)
+        }
+    }
+
+    private static func date(fromMinute minute: Int) -> Date {
+        Calendar.current.date(bySettingHour: minute / 60, minute: minute % 60, second: 0, of: Date()) ?? Date()
+    }
+    private static func minute(from date: Date) -> Int {
+        let c = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (c.hour ?? 0) * 60 + (c.minute ?? 0)
     }
 }
