@@ -97,6 +97,16 @@ struct MacRootView: View {
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 200, max: 260)
             .navigationTitle("Budgie Diet")
+            .safeAreaInset(edge: .bottom) {
+                Image("Budgie")
+                    .interpolation(.high)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 96)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, -25)
+                    .accessibilityHidden(true)
+            }
         } detail: {
             switch nav.section {
             case .today: TodayPane()
