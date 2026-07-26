@@ -129,6 +129,7 @@ struct MacAddFoodSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .textFieldStyle(.roundedBorder)
 
             Divider()
             HStack {
@@ -244,13 +245,16 @@ struct MacAddFoodSheet: View {
     @ViewBuilder
     private var searchSection: some View {
         Section {
-            HStack {
+            HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Search foods and past entries", text: $searchText).textFieldStyle(.plain)
+                TextField("Search foods", text: $searchText).textFieldStyle(.plain)
                 if !searchText.isEmpty {
                     Button { searchText = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain)
                 }
             }
+            .padding(6)
+            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color(nsColor: .separatorColor)))
         }
 
         if searchText.isEmpty {

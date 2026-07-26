@@ -129,6 +129,7 @@ struct MacEditFoodSheet: View {
                 DatePicker("Date", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
             }
             .formStyle(.grouped)
+            .textFieldStyle(.roundedBorder)
 
             Divider()
             HStack {
