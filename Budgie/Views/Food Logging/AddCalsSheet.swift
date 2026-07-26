@@ -152,7 +152,10 @@ struct AddCalsSheet: View {
             if searchText.isEmpty {
                 let scope = showAllFoods ? nil : mealList.first { $0.mealUUID == selectedMeal }
                 let recents = await dataStore.calorieActor.fetchCalsForMeal(scope)
-                displayedItems = await resolveRecents(recents)
+                guard !Task.isCancelled else { return }
+                let resolved = await resolveRecents(recents)
+                guard !Task.isCancelled else { return }
+                displayedItems = resolved
                 foodResults = []
                 entryResults = []
             } else {

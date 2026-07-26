@@ -93,7 +93,7 @@ struct MacAddFoodSheet: View {
         return summary.isEmpty ? "" : "  ·  " + summary
     }
 
-    private var queryKey: String { "\(searchText)|\(showAllFoods)|\(selectedMeal)|\(reloadToken)" }
+    private var queryKey: String { "\(searchText)|\(showAllFoods)|\(selectedMeal)|\(mealList.count)|\(reloadToken)" }
 
     private var manufacturerSuggestions: [String] {
         suggestedManufacturers(for: manufacturer, in: knownManufacturers)
@@ -361,7 +361,9 @@ struct MacAddFoodSheet: View {
     private func loadSearch() async {
         if searchText.isEmpty {
             let scope = showAllFoods ? nil : mealList.first { $0.mealUUID == selectedMeal }
-            recent = await dataStore.calorieActor.fetchCalsForMeal(scope)
+            let fetched = await dataStore.calorieActor.fetchCalsForMeal(scope)
+            guard !Task.isCancelled else { return }
+            recent = fetched
             foodResults = []
             entryResults = []
         } else {
@@ -500,7 +502,7 @@ struct MacMacroFields: View {
     }
 }
 
-// MARK: - OpenFoodFacts search (Mac). Lives here because a new file can't be added to the Mac target.
+// MARK: - OpenFoodFacts search (Mac).
 
 struct MacOFFSheet: View {
     @Environment(\.dismiss) private var dismiss

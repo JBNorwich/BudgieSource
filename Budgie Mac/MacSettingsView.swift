@@ -21,6 +21,8 @@ struct MacSettingsView: View {
     @State private var surplusMode = settingsObj.surplusMode
     @State private var showingHelper = false
     @State private var showing1000Warning = false
+    @State private var showingManageMeals = false
+    @State private var showingAllocateBudget = false
     @State private var deficitBeforeWarning = 0
 
     private func bind<T>(_ kp: ReferenceWritableKeyPath<CloudSettings, T>) -> Binding<T> {
@@ -154,6 +156,12 @@ struct MacSettingsView: View {
             } header: { Text("Macros") }
               footer: { Text(macroFooter) }
 
+            Section {
+                Button("Budget allocation…") { showingAllocateBudget = true }
+                Button("Manage meals…") { showingManageMeals = true }
+            } header: { Text("Meals") }
+              footer: { Text("Split your daily budget across your meals, rename or reorder them, and give each one a start time so it’s picked automatically when you log after then.") }
+
             Section() {
                 DatePicker("Typical evening meal time", selection: mealTimeBinding, displayedComponents: .hourAndMinute)
                 Toggle("Cap my daily budget", isOn: bind(\.capBudget))
@@ -173,6 +181,12 @@ struct MacSettingsView: View {
         .frame(width: 470, height: 640)
         .sheet(isPresented: $showingHelper) {
             MacBudgetHelperView(isPresented: $showingHelper)
+        }
+        .sheet(isPresented: $showingManageMeals) {
+            MacManageMealsSheet()
+        }
+        .sheet(isPresented: $showingAllocateBudget) {
+            MacAllocateBudgetSheet()
         }
         
         .sheet(isPresented: $showing1000Warning) {
