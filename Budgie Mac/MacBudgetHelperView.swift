@@ -78,7 +78,7 @@ struct MacBudgetHelperView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+            .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 10))
             .overlay { if bordered { RoundedRectangle(cornerRadius: 10).stroke(.red.opacity(0.4)) } }
         }
         .buttonStyle(.plain)

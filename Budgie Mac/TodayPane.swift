@@ -20,7 +20,6 @@ struct TodayPane: View {
     @State private var showAddFood = false
     @State private var showAddWater = false
     @State private var showDataView = false
-    @State private var greeting = getBudgieGreeting()
     @ObservedObject private var syncMonitor = CloudSyncMonitor.shared
 
     var body: some View {
@@ -75,17 +74,6 @@ struct TodayPane: View {
             .frame(maxWidth: .infinity)
 
             }
-            .background(alignment: .bottomLeading) {
-                HStack {
-                    Image("Budgie")
-                        .interpolation(.high)
-                        .resizable()
-                        .frame(maxWidth: 116, maxHeight: 100)
-                    Text(greeting)
-                    Spacer()
-                }
-                .padding(.horizontal, 28)
-        }
         .navigationTitle("Today")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {

@@ -190,7 +190,7 @@ func mealCard(isFirst: Bool, isLast: Bool) -> some View {
         bottomTrailingRadius: isLast ? 10 : 0,
         topTrailingRadius: isFirst ? 10 : 0
     )
-    .fill(.regularMaterial)
+    .fill(.thickMaterial)
 }
 
 // MARK: - Custom meal editor (Mac). Lives here, next to the Food pane that surfaces it, because a
