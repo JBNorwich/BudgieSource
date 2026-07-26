@@ -44,7 +44,6 @@ struct GaugeView: View {
                     Text(todayLump.gaugeNumber.formatted(.number.sign(strategy: .always(includingZero: false))) + "%")
                 }
                     .padding()
-                Spacer()
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Eaten against target")
