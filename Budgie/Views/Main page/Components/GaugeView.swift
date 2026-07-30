@@ -55,7 +55,7 @@ struct GaugeView: View {
                     Spacer()
                 }
                 HStack {
-                    Text("**\(todayLump.eatenCalories)** cals in - **\(todayLump.calsOutNow)** cals out")
+                    Text("**\(todayLump.eatenCalories.formatted())** cals in · **\(todayLump.calsOutNow.formatted())** cals out")
                     Spacer()
                 }
                 HStack {

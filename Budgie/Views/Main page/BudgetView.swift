@@ -127,9 +127,10 @@ struct BudgetView: View {
                                 VStack {
                                     HStack {
                                         Spacer()
-                                        Button("", systemImage: "questionmark.circle"){
+                                        Button("Help", systemImage: "questionmark.circle"){
                                             showingHelp = true
                                         }.frame(minHeight: 44)
+                                            .labelStyle(.iconOnly)
                                     }
                                     Spacer()
                                 }
@@ -425,10 +426,11 @@ struct GaugeLabelView: View {
         HStack{
             Label("Your target", systemImage: "gauge.with.needle")
             Spacer()
-            Button("", systemImage: "questionmark.circle") {
+            Button("Help", systemImage: "questionmark.circle") {
                 showingGaugeHelp = true
             }
             .buttonStyle(.plain)
+            .labelStyle(.iconOnly)
         }
     }
 }

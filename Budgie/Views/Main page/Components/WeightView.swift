@@ -138,8 +138,9 @@ struct WeightView: View {
                                         .multilineTextAlignment(.leading)
                                 } else {
                                     Text("Log your food regularly to see how you're tracking against your target.")
-                                        .font(.caption).foregroundColor(.secondary).multilineTextAlignment(.center)
-                                        .multilineTextAlignment(.leading)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
                                 }
                             }
                         }
