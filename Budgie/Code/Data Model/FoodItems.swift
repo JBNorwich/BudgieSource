@@ -104,12 +104,20 @@ extension FoodQuantityType {
 }
 
 extension FoodQuantity {
-    var label: String {
-        if let servingName, !servingName.isEmpty { return servingName }
+    /// How this serving reads at its own count — "100 g", "1 portion", or its friendly name.
+    var label: String { label(forAmount: count) }
+
+    /// How a particular amount of this serving reads — "45 g", "0.5 × Slice", "2 portions". Used
+    /// wherever a specific logged amount is described rather than the serving's own default.
+    func label(forAmount amount: Double) -> String {
+        if let servingName, !servingName.isEmpty {
+            let servings = count > 0 ? amount / count : 0
+            return servings == 1 ? servingName : "\(servings.formatted()) × \(servingName)"
+        }
         switch type {
-        case .portion: return count == 1 ? "1 portion" : "\(count.formatted()) portions"
-        case .grams: return "\(count.formatted()) g"
-        case .millilitres: return "\(count.formatted()) ml"
+        case .portion: return amount == 1 ? "1 portion" : "\(amount.formatted()) portions"
+        case .grams: return "\(amount.formatted()) g"
+        case .millilitres: return "\(amount.formatted()) ml"
         }
     }
 }

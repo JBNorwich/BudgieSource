@@ -132,10 +132,19 @@ struct ServingPicker: View {
 }
 
 /// Search-result row for a `PickedFood`: name (+ "Generic" badge), then a manufacturer/serving
-/// caption, with the first serving's calories on the trailing edge. Shared by every food search list.
+/// caption, with that serving's calories on the trailing edge. Shared by every food search list and
+/// by the recent re-add rows, which point it at the serving they will actually log.
 struct PickedFoodRow: View {
     var food: PickedFood
+    /// Which serving to describe, and how much of it — defaults to the food's first serving at its own
+    /// count (a fresh pick from search). A recent re-add passes what tapping the row will actually log,
+    /// so the row and the logging form can't show different figures.
+    var servingIndex: Int = 0
+    var amount: Double? = nil
     var onTap: () -> Void
+
+    private var quantity: FoodQuantity? { food.quantities[safe: servingIndex] }
+    private var shownAmount: Double { amount ?? quantity?.count ?? 0 }
 
     var body: some View {
         HStack {
@@ -149,15 +158,16 @@ struct PickedFoodRow: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                let caption = [food.manufacturer, food.quantities.first?.label]
+                let caption = [food.manufacturer, quantity?.label(forAmount: shownAmount)]
                     .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
                 if !caption.isEmpty {
                     Text(caption).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                 }
             }
             Spacer()
-            if let first = food.quantities.first {
-                Text("\(first.calories.formatted()) kcal").foregroundStyle(.secondary)
+            if let quantity {
+                let totals = quantity.totals(servings: servingsScaled(quantity, amount: shownAmount))
+                Text("\(totals.calories.formatted()) kcal").foregroundStyle(.secondary)
             }
         }
         .contentShape(Rectangle())

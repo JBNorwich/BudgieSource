@@ -102,6 +102,14 @@ struct AddCalsSheet: View {
         let id: UUID
         let entry: CalorieEntry
         let food: PickedFood?
+        /// Where the entry lands against that food: the serving and amount it was last logged at.
+        /// One value drives both the row's figures and its tap, so the two can't disagree.
+        let serving: RecentServing?
+    }
+
+    private struct RecentServing {
+        let index: Int
+        let amount: Double
     }
     
     private var searchKey: SearchKey {
@@ -364,7 +372,11 @@ struct AddCalsSheet: View {
             } else {
                 ForEach(displayedItems) { item in
                     if let food = item.food {
-                        PickedFoodRow(food: food) { selectFood(food) }   // current recipe → scale fresh
+                        // Current recipe, described and re-opened at the serving and amount last logged.
+                        PickedFoodRow(food: food, servingIndex: item.serving?.index ?? 0,
+                                      amount: item.serving?.amount) {
+                            selectFood(food, serving: item.serving)
+                        }
                     } else {
                         CalorieEntryView(calories: item.entry.calories,
                                          narrative: item.entry.narrative ?? "Quick calories",
@@ -384,10 +396,12 @@ struct AddCalsSheet: View {
     
     // MARK: Selection handlers
 
-    private func selectFood(_ food: PickedFood) {
+    /// Selects a food to scale. `serving` re-opens it on a past entry's serving and amount (a recent
+    /// re-add); without one it opens on the first serving at that serving's own count (a fresh pick).
+    private func selectFood(_ food: PickedFood, serving: RecentServing? = nil) {
         selectedFood = food
-        selectedQuantityIndex = 0
-        amount = food.quantities.first?.count ?? 0
+        selectedQuantityIndex = serving?.index ?? 0
+        amount = serving?.amount ?? (food.quantities.first?.count ?? 0)
         searchText = ""   // dismiss search → return to the form in scaling mode
     }
 
@@ -412,7 +426,16 @@ struct AddCalsSheet: View {
         }
     }
     
-    /// For the recent list: entries linked to a live food show that food's current recipe (and re-add it fresh); archived or deleted foods are dropped so we don't suggest something you've retired; genuine quick entries keep their own values. One row per food, batched to one lookup per food.
+    /// Where a past entry lands against a food's current recipe: the serving it was logged on, and how
+    /// much of it. Falls back to the serving's own count for an entry with no stamped amount.
+    private func recentServing(for entry: CalorieEntry, in food: PickedFood) -> RecentServing? {
+        let index = bestServingIndex(in: food.quantities, forUnit: entry.servingUnit,
+                                     calories: entry.calories, servingAmount: entry.servingAmount)
+        guard let amount = entry.servingAmount ?? food.quantities[safe: index]?.count else { return nil }
+        return RecentServing(index: index, amount: amount)
+    }
+
+    /// For the recent list: entries linked to a live food show that food's current recipe (re-added at the amount last logged); archived or deleted foods are dropped so we don't suggest something you've retired; genuine quick entries keep their own values. One row per food, batched to one lookup per food.
     private func resolveRecents(_ entries: [CalorieEntry]) async -> [RecentItem] {
         var foodCache: [UUID: FoodItem?] = [:]
         var seenFoods = Set<UUID>()
@@ -423,15 +446,18 @@ struct AddCalsSheet: View {
                 if !foodCache.keys.contains(id) { foodCache[id] = await dataStore.foodItemActor.fetch(id: id) }
                 guard let food = foodCache[id] ?? nil, !food.archived else { continue }   // gone or archived
                 guard seenFoods.insert(food.id).inserted else { continue }                 // dedupe by food
-                items.append(RecentItem(id: entry.id, entry: entry, food: food.asPicked))
+                let picked = food.asPicked
+                items.append(RecentItem(id: entry.id, entry: entry, food: picked,
+                                        serving: recentServing(for: entry, in: picked)))
             } else if entry.servingUnit != nil {
                 let name = entry.narrative ?? ""
                 guard seenGenericNames.insert(name.lowercased()).inserted else { continue } // dedupe by name
                 let generic = FoodCatalogue.shared.search(name)
                     .first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.asPicked
-                items.append(RecentItem(id: entry.id, entry: entry, food: generic))
+                items.append(RecentItem(id: entry.id, entry: entry, food: generic,
+                                        serving: generic.flatMap { recentServing(for: entry, in: $0) }))
             } else {
-                items.append(RecentItem(id: entry.id, entry: entry, food: nil))            // quick entry
+                items.append(RecentItem(id: entry.id, entry: entry, food: nil, serving: nil))   // quick entry
             }
         }
         return items

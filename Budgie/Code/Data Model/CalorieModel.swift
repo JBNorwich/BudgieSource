@@ -145,12 +145,20 @@ extension CalorieEntry {
 /// Actor to act on the CalorieEntry database.
 @ModelActor
 actor CalorieActor {
-    /// Fetches with the standard `#if os(macOS) modelContext.rollback() #endif` guard applied first.
+    /// Fetches with the standard `#if os(macOS) modelContext.rollback() #endif` guard applied first,
+    /// then materialises any lazily-faulted composite attribute before the results leave the actor.
     private func fetch<T>(_ descriptor: FetchDescriptor<T>) -> [T] {
         #if os(macOS)
         modelContext.rollback()
         #endif
-        return (try? modelContext.fetch(descriptor)) ?? []
+        let results = (try? modelContext.fetch(descriptor)) ?? []
+        // SwiftData resolves Codable attributes (`servingUnit`) lazily, by faulting back into this
+        // actor's context — plain Int/String/Double/UUID values arrive in the fetch snapshot, but a
+        // composite one doesn't. Callers hand these objects to the main actor, so the UI's first
+        // read would re-enter this context off-actor and can race a fetch already running on it.
+        // Reading it here caches it while we still hold the actor, leaving the UI's reads in-memory.
+        for entry in (results as? [CalorieEntry]) ?? [] { _ = entry.servingUnit }
+        return results
     }
 
     private func save(_ label: String? = nil) {
